@@ -1,45 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
 <html>
 <head>
-<title>Project Home Page</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content=
+  "HTML Tidy for Windows (vers 12 April 2005), see www.w3.org">
+<style type="text/css">
+    body { font-family: sans-serif }
+    tr.green-head { background-color: #ddffee } 
+    tr.green-row { background-color: #eeffee }
+    tr.blue-head { background-color: #ddeeff } 
+    tr.blue-row { background-color: #eeeeff }
+</style>
+
+  <title>wiseman: A Java implementation of WS-Management</title>
 </head>
 
-<body bgcolor="#FFFFFF" text="#000000">
-<h1>Default project home page </h1>
-<p>Congratulations on your new java.net project! </p>
-<p>This page is the home page for your new project. This content is appearing 
-  because you have selected the option <b>Use project index.html</b>. To edit 
-  the information displayed on this page, just use CVS to check out your project's 
-  CVS repository and edit index.html in directory www. You can get more information 
-  on how to set-up your local CVS client, click on <b>Version Control</b> on the 
-  left nav bar. </p>
-<p>If you don't want to use CVS to manage your home page, click on the <b>Edit 
-  project</b> link on this page and unclick the option <b>Use project index.html</b>. 
-  Your project home page contents will be generated from the <b>Edit project</b> 
-  field <b>Description</b>. Edit the text on that field to change your home page 
-  contents. Click on <b>Submit changes</b> to save your edits. </p>
-<p>If you are looking for <a href="https://java-net.dev.java.net/ProjectPages.html#templates">sample 
-  home page templates</a>, check out the <a href="https://java-net.dev.java.net/ProjectPages.html">java.net 
-  Project Starter Kit</a>. Copy either of the templates into your project's html 
-  to get started on your project's home page. </p>
-<p>You can find lots of helpful information in the Starter Kit to get your project 
-  started. Some of the things you will find in there include:</p>
-<ul>
-  <li>Hints on how to <a href="https://java-net.dev.java.net/ProjectPages.html#pages">set-up 
-    your project's</a> home page</li>
-  <li>Ideas on how to <a href="https://java-net.dev.java.net/ProjectPages.html#publicity">publicize 
-    your project</a> including RSS feeds</li>
-  <li>Hints on <a href="https://java-net.dev.java.net/pagedesign.html">project 
-    page HTML</a></li>
-  <li>Setting up project <a href="https://java-net.dev.java.net/ProjectPages.html#wiki">wiki 
-    pages</a></li>
-  <li>And places to go if <a href="https://java-net.dev.java.net/ProjectPages.html#feedback">you 
-    have questions</a>.</li>
-</ul>
-<p>Remember that you will attract more new members and your project team will 
-  work more effectively if you, as the project owner, supply sufficient information 
-  about your project for visitors to your project space. Good luck with your new 
-  project! </p>
+<body>
+  <h1>Project wiseman</h1>
+
+  <h3>Overview</h3>
+
+  <p>The wiseman project is an implementation of the WS-Management
+  specification for the Java SE platform. The project scope
+  includes the WS-Management specification and its dependent
+  specifications.</p>
+
+  <p>The project requires <a href=
+  "http://java.sun.com/j2se/1.5.0/index.jsp">J2SE 1.5.0</a> or
+  above, and is built on <a href="https://jaxb.dev.java.net/">JAXB
+  2.0</a> and <a href="https://saaj.dev.java.net/">SAAJ 1.3</a>
+  (part of the <a href="https://jax-rpc.dev.java.net/">JAX-RPC</a>
+  project). <a href="http://ant.apache.org/">Ant</a> scripts for
+  standalone and <a href="http://www.netbeans.org/">Netbeans 4</a>
+  builds are supplied.</p>
+
+  <h3>Tentative Schedule</h3>
+
+  <table border="0" cellpadding="2" summary="Schedule">
+    <tr class="green-head">
+      <th>Date</th>
+
+      <th>Milestone</th>
+
+      <th>Description</th>
+    </tr>
+
+    <tr class="green-row">
+      <td>Jun 2005</td>
+
+      <td>Initial release</td>
+
+      <td>Initial implementations of WS-Addressing, WS-Transfer,
+      WS-Enumeration and WS-Eventing</td>
+    </tr>
+
+    <tr class="green-row">
+      <td>Jul 2005</td>
+
+      <td>Documentation</td>
+
+      <td>Add Javadoc and developer documentation</td>
+    </tr>
+
+    <tr class="green-row">
+      <td>Aug 2005</td>
+
+      <td>Catalog</td>
+
+      <td>Implementation of the WS-Management Catalog</td>
+    </tr>
+
+    <tr class="green-row">
+      <td>Sep 2005</td>
+
+      <td>Advanced features</td>
+
+      <td>Fragment-level Transfer, Acknowledged Events, Hearbeats,
+      etc.</td>
+    </tr>
+  </table>
+
+  <h3>Events</h3>
+
+  <table border="0" cellpadding="2" summary="Events">
+    <tr class="blue-head">
+      <th>Date</th>
+
+      <th>Event</th>
+    </tr>
+
+    <tr class="blue-row">
+      <td>Jan 2005</td>
+
+      <td>Interop demo at <a href="http://www.dmtf.org">DMTF</a>
+      <a href=
+      "http://www.dmtf.org/apps/org/workgroup/interop/ws-cim/">WS-CIM</a>
+      face-to-face meeting</td>
+    </tr>
+
+    <tr class="blue-row">
+      <td>Apr 2005</td>
+
+      <td>Executive <a href=
+      "http://www.microsoft.com/presspass/exec/steve/2005/04-20ManagementSummit.asp">
+      Keynote</a> at the <a href=
+      "http://www.mms2005.com/ws/default.aspx">Microsoft Management
+      Summit</a></td>
+    </tr>
+
+    <tr class="blue-row">
+      <td>Apr 2005</td>
+
+      <td>Interop demo at <a href=
+      "http://www.microsoft.com/whdc/winhec/default.mspx">Microsoft
+      WinHEC</a></td>
+    </tr>
+
+    <tr class="blue-row">
+      <td>May 2005</td>
+
+      <td>WS-Management Interop Workshop</td>
+    </tr>
+
+    <tr class="blue-row">
+      <td>Jun 2005</td>
+
+      <td><a href=
+      "http://www.microsoft.com/events/teched2005/default.mspx">Microsoft
+      TechEd</a></td>
+    </tr>
+
+    <tr class="blue-row">
+      <td>Jun 2005</td>
+
+      <td><a href=
+      "https://www28.cplan.com/javaone05_93_1/session_details.jsp?isid=270854&amp;ilocation_id=93-1&amp;ilanguage=english">
+      BOF-9854</a> at <a href=
+      "http://java.sun.com/javaone/sf/index.jsp">JavaOne</a></td>
+    </tr>
+  </table>
+
+  <h3>Background Information</h3>
+
+  <p>The specifications to be implemented in the wiseman project
+  include:</p>
+
+  <p><a href="specs/2005/02/management.pdf">WS-Management,
+  2005/02</a></p>
+
+  <p>This specification identifies a core set of Web service
+  specifications and usage requirements to expose a common set of
+  operations that are central to all systems management. This
+  comprises the abilities to:</p>
+
+  <ul>
+    <li>Discover the presence of management resources and navigate
+    between them</li>
+
+    <li>Get, Put, Create, Rename, and Delete individual management
+    resources, such as settings and dynamic values</li>
+
+    <li>Enumerate the contents of containers and collections, such
+    as large tables and logs</li>
+
+    <li>Subscribe to events emitted by managed resources</li>
+
+    <li>Execute specific management methods with strongly typed
+    input and output parameters</li>
+  </ul>
+
+  <p><a href="specs/2005/02/catalog.pdf">WS-Management Catalog,
+  2005/02</a></p>
+
+  <p>This specification defines a metadata format for the discovery
+  of management functionality of resources, or endpoints. As
+  WS-Management supports the concept of multiple logical endpoints
+  residing at the same network address, this specification defines
+  a construct for a list of available logical endpoints or
+  "resources", their summary forms, compatible actions, schemas,
+  and WSDL representations.</p>
+
+  <p><a href="specs/2004/08/addressing.pdf">WS-Addressing,
+  2004/08</a></p>
+
+  <p>This specification defines a construct to identify/reference a
+  Web service endpoint for access and for addressing messages
+  between endpoints, and it defines a construct of message
+  information headers allowing uniform addressing of messages
+  independent of underlying transport.</p>
+
+  <p><a href="specs/2004/09/enumeration.pdf">WS-Enumeration,
+  2004/09</a></p>
+
+  <p>This specification defines a simple SOAP-based protocol for
+  the transfer of large data sets. Enumeration of the data by the
+  consumer is facilitated through a session abstraction, allowing
+  the consumer to request XML element information items from the
+  data source over the span of one or more SOAP messages.</p>
+
+  <p><a href="specs/2004/08/eventing.pdf">WS-Eventing,
+  2004/08</a></p>
+
+  <p>This specification defines a protocol for a Web service to
+  register interest with another Web service in order to receive
+  messages about events. The subscriber may manage the subscription
+  by interacting with a Web service designated by the event
+  source.</p>
+
+  <p><a href="specs/2004/09/transfer.pdf">WS-Transfer,
+  2004/09</a></p>
+
+  <p>This specification defines operations using Web services
+  infrastructure for sending and receiving XML representations of a
+  resource and for creating and deleting a resource and its
+  corresponding representation.</p>
 </body>
 </html>
-
