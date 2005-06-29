@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="wiseman" default="war" basedir=".">
+
+  <property file="project.properties"/>
+  <property file="${user.home}/.ant.properties"/>
+
+  <target name="init">
+    <tstamp />
+    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${build.dir}" />
+    <mkdir dir="${build.classes.dir}" />
+  </target>
+
+  <target name="clean" depends="test-clean, javadoc-clean">
+    <delete dir="${dist.dir}" />
+    <delete dir="${build.dir}" />
+    <delete dir="${build.classes.dir}" />
+  </target>
+
+  <path id="jaxb.compile.classpath">
+    <fileset dir="${jaxb.lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <path id="jaxrpc.compile.classpath">
+    <fileset dir="${jaxrpc.lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <path id="compile.classpath">
+    <path refid="jaxb.compile.classpath" />
+    <path refid="jaxrpc.compile.classpath" />
+    <path path="${build.classes.dir}" />
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="compile" depends="init">
+    <javac destdir="${build.classes.dir}"
+           debug="${debug}">
+      <classpath refid="compile.classpath" />
+      <src path="${gen.src.dir}" />
+      <src path="${src.dir}" />
+    </javac>
+    <copy todir="${build.classes.dir}">
+      <fileset dir="${src.dir}">
+        <include name="**/*.properties" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="jar" depends="compile">
+    <jar destfile="${jar.file}">
+      <fileset dir="${build.classes.dir}">
+        <include name="**/*" />
+      </fileset>
+    </jar>
+  </target>
+  
+  <target name="war" depends="compile">
+    <war destfile="${war.file}"
+         webxml="etc/web.xml">
+      <classes dir="${build.classes.dir}" />
+      <lib dir="${jaxb.lib.dir}">
+        <include name="jaxb-api.jar" />
+        <include name="jaxb-impl.jar" />
+        <include name="jsr173_1.0_api.jar" />
+      </lib>
+      <lib dir="${jaxrpc.lib.dir}">
+        <include name="saaj-api.jar" />
+        <include name="saaj-impl.jar" />
+        <include name="activation.jar" />
+        <include name="mail.jar" />
+      </lib>
+      <metainf dir=".">
+        <include name="LICENSE" />
+        <include name="NOTICE" />
+      </metainf>
+    </war>
+  </target>
+  
+  <target name="javadoc-init" depends="init">
+    <mkdir dir="${doc.dist.dir}" />
+  </target>
+
+  <target name="javadoc-clean">
+    <delete dir="${doc.dist.dir}" />
+  </target>
+  
+  <target name="javadoc" depends="compile,javadoc-init">
+    <javadoc destdir="${doc.dist.dir}"
+             access="public"
+             classpathref="compile.classpath">
+      <packageset dir="${src.dir}" 
+                  defaultexcludes="yes">
+        <include name="com/sun/ws/management/**" />
+      </packageset>
+      <packageset dir="${gen.src.dir}" 
+                  defaultexcludes="yes">
+        <include name="org/**" />
+      </packageset>
+    </javadoc>
+  </target>
+
+  <path id="test.compile.classpath">
+    <path refid="compile.classpath" />
+    <fileset dir="${test.lib.dir}">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="test-init" depends="init">
+    <mkdir dir="${test.build.dir}" />
+    <mkdir dir="${test.build.classes.dir}" />
+    <mkdir dir="${test.run.dir}" />
+  </target>
+
+  <target name="test-clean">
+    <delete dir="${test.build.classes.dir}" />
+    <delete dir="${test.build.dir}" />
+    <delete dir="${test.run.dir}" />
+  </target>
+  
+  <target name="test-compile" depends="compile,test-init">
+    <javac destdir="${test.build.classes.dir}"
+           debug="${debug}">
+      <classpath refid="test.compile.classpath" />
+      <src path="${test.src.dir}" />
+    </javac>
+  </target>
+
+  <path id="test.run.classpath">
+    <path refid="test.compile.classpath" />
+    <path path="${test.build.classes.dir}" />
+  </path>
+
+  <target name="test" depends="test-ui" />
+  
+  <target name="test-txt" depends="test-compile">
+    <java classname="junit.textui.TestRunner"
+          classpathref="test.run.classpath"
+          dir="${test.run.dir}"
+          fork="true">
+      <arg value="TestSuite" />
+      <jvmarg value="-Dwsman.host=localhost" />
+      <jvmarg value="-Dwsman.port=8080" />
+      <jvmarg value="-Dwsman.user=wsman" />
+      <jvmarg value="-Dwsman.password=secret" />
+      <jvmarg value="-Dwsman.basicauthentication=true" />
+    </java>
+  </target>
+
+  <target name="test-ui" depends="test-compile">
+    <java classname="junit.swingui.TestRunner"
+          classpathref="test.run.classpath"
+          dir="${test.run.dir}"
+          fork="true">
+      <arg value="-noloading" />
+      <arg value="TestSuite" />
+      <jvmarg value="-Dwsman.host=localhost" />
+      <jvmarg value="-Dwsman.port=8080" />
+      <jvmarg value="-Dwsman.user=wsman" />
+      <jvmarg value="-Dwsman.password=secret" />
+      <jvmarg value="-Dwsman.basicauthentication=true" />
+    </java>
+  </target>
+
+</project>

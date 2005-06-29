@@ -1,0 +1,18 @@
+Servlet API
+
+Copy the Servlet API jar from your favorite Servlet container here -
+  for Apache Tomcat, cp {tomcat.home}/common/lib/servlet-api.jar .
+  for Sun App Server, cp {sunappserver.home}/lib/j2ee.jar .
+  for Jetty, cp {jetty.home}/lib/javax.servlet.jar .
+
+************************************************************************
+Sun Microsystems will not be liable or responsible in any way for
+materials or code which you download or copy from another web site or
+another source. You are solely responsible for ensuring that you obtain,
+understand and comply with any applicable licenses for, or restrictions
+on, your use of any materials or code from other web sites or any other
+source (including other Sun materials or code which may be governed by
+different licenses and restrictions) and that you only use such
+materials or code when and as expressly permitted by the owner of such
+materials or code.
+************************************************************************
