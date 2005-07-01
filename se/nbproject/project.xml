@@ -81,7 +81,7 @@
                 <package-root>src</package-root>
                 <package-root>gen-src</package-root>
                 <package-root>test/src</package-root>
-                <classpath mode="compile">build/classes;lib/jaxb/jaxb-api.jar;lib/jaxb/jaxb-impl.jar;lib/jaxb/jaxb-xjc.jar;lib/jaxb/jaxb1-impl.jar;lib/jaxb/jsr173_1.0_api.jar;lib/jaxb/relaxngDatatype.jar;lib/jaxb/xsdlib.jar;lib/jaxrpc/activation.jar;lib/jaxrpc/mail.jar;lib/jaxrpc/saaj-api.jar;lib/jaxrpc/saaj-impl.jar;lib/servlet-api.jar;test/lib/junit.jar</classpath>
+                <classpath mode="compile">build/classes;lib/jaxb/activation.jar;lib/jaxb/jaxb-api.jar;lib/jaxb/jaxb-impl.jar;lib/jaxb/jaxb-xjc.jar;lib/jaxb/jsr173_1.0_api.jar;lib/jaxrpc/saaj-api.jar;lib/jaxrpc/saaj-impl.jar;lib/servlet-api.jar;test/lib/junit.jar</classpath>
                 <source-level>1.5</source-level>
             </compilation-unit>
         </java-data>
