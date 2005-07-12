@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.3 2005-07-12 21:23:28 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.4 2005-07-12 21:41:58 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -121,14 +121,15 @@ public final class HttpClient {
         }
         
         if (!Http.isContentTypeAcceptable(responseType)) {
-            if (LOG.isLoggable(Level.FINE)) {
-                final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            // dump the first 4k bytes of the response for help in debugging
+            if (LOG.isLoggable(Level.INFO)) {
                 final byte[] buffer = new byte[4096];
-                int nread = 0;
-                while ((nread = is.read(buffer)) > 0) {
+                int nread = is.read(buffer);
+                if (nread > 0) {
+                    final ByteArrayOutputStream bos = new ByteArrayOutputStream(buffer.length);
                     bos.write(buffer, 0, nread);
+                    LOG.info("Response discarded: " + new String(bos.toByteArray()));
                 }
-                LOG.fine("Response discarded: " + new String(bos.toByteArray()));
             }
             throw new IOException("Content-type of response not acceptable: " + responseType);
         }
