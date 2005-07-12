@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.1 2005-06-29 19:18:26 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.2 2005-07-12 20:36:55 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -113,12 +113,7 @@ public final class HttpClient {
             is = new BufferedInputStream(http.getInputStream());
         } else {
             final String detail = http.getResponseMessage();
-            if (LOG.isLoggable(Level.FINE)) {
-                LOG.fine("Connect to " + destination + " failed with error " + response +
-                        (detail == null ? "" : " - " + detail));
-            }
-            // could be a fault
-            is = new BufferedInputStream(http.getErrorStream());
+            throw new IOException(detail == null ? Integer.toString(response) : detail);
         }
         
         if (!Http.isContentTypeAcceptable(responseType)) {
