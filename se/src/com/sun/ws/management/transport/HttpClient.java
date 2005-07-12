@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.2 2005-07-12 20:36:55 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.3 2005-07-12 21:23:28 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -111,6 +111,10 @@ public final class HttpClient {
         final int response = http.getResponseCode();
         if (response == HttpURLConnection.HTTP_OK) {
             is = new BufferedInputStream(http.getInputStream());
+        } else if (response == HttpURLConnection.HTTP_BAD_REQUEST ||
+                   response == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+            // read the fault from the error stream
+            is = new BufferedInputStream(http.getErrorStream());
         } else {
             final String detail = http.getResponseMessage();
             throw new IOException(detail == null ? Integer.toString(response) : detail);
