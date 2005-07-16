@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.1 2005-06-29 19:18:19 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.2 2005-07-16 00:34:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -160,8 +160,8 @@ public class Enumeration extends Addressing {
     
     // context must not be null, the others can be null
     // context must be either java.lang.String or org.w3c.dom.Element
-    public void setPull(final Object context, final BigInteger maxChars,
-        final BigInteger maxElements, final Duration maxDuration)
+    public void setPull(final Object context, final int maxChars,
+        final int maxElements, final Duration maxDuration)
         throws JAXBException, SOAPException, DatatypeConfigurationException {
         
         removeChildren(getBody(), PULL);
@@ -171,11 +171,11 @@ public class Enumeration extends Addressing {
         contextType.getContent().add(context);
         pull.setEnumerationContext(contextType);
         
-        if (maxChars != null) {
-            pull.setMaxCharacters(maxChars);
+        if (maxChars > 0) {
+            pull.setMaxCharacters(BigInteger.valueOf((long) maxChars));
         }
-        if (maxElements != null) {
-            pull.setMaxElements(maxElements);
+        if (maxElements > 0) {
+            pull.setMaxElements(BigInteger.valueOf((long) maxElements));
         }
         if (maxDuration != null) {
             pull.setMaxTime(maxDuration);
