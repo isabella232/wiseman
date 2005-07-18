@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.4 2005-07-12 21:41:58 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.5 2005-07-18 22:48:33 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -26,7 +26,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PushbackInputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -48,8 +47,6 @@ public final class HttpClient {
     
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
     
-    private static boolean skipUnicodeBOM = false;
-    
     public static void setAuthenticator(final Authenticator auth) {
         Authenticator.setDefault(auth);
     }
@@ -65,10 +62,6 @@ public final class HttpClient {
     
     public static void setHostnameVerifier(final HostnameVerifier hv) {
         HttpsURLConnection.setDefaultHostnameVerifier(hv);
-    }
-    
-    public static void setSkipUnicodeBOM(final boolean state) {
-        skipUnicodeBOM = state;
     }
     
     public static Addressing sendRequest(final Addressing msg)
@@ -92,6 +85,7 @@ public final class HttpClient {
         conn.setRequestProperty("User-Agent", "Sun WS-Management Java System");
         final HttpURLConnection http = (HttpURLConnection) conn;
         http.setRequestMethod("POST");
+        http.setInstanceFollowRedirects(false);
         
         OutputStream os = null;
         try {
@@ -101,18 +95,13 @@ public final class HttpClient {
             if (os != null) { os.close(); }
         }
         
-        final String responseType = conn.getContentType();
-        if (responseType == null) {
-            throw new IOException("Content-type of response is null");
-        }
-        
         final InputStream is;
         
         final int response = http.getResponseCode();
         if (response == HttpURLConnection.HTTP_OK) {
             is = new BufferedInputStream(http.getInputStream());
         } else if (response == HttpURLConnection.HTTP_BAD_REQUEST ||
-                   response == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+                response == HttpURLConnection.HTTP_INTERNAL_ERROR) {
             // read the fault from the error stream
             is = new BufferedInputStream(http.getErrorStream());
         } else {
@@ -120,6 +109,7 @@ public final class HttpClient {
             throw new IOException(detail == null ? Integer.toString(response) : detail);
         }
         
+        final String responseType = conn.getContentType();
         if (!Http.isContentTypeAcceptable(responseType)) {
             // dump the first 4k bytes of the response for help in debugging
             if (LOG.isLoggable(Level.INFO)) {
@@ -131,44 +121,15 @@ public final class HttpClient {
                     LOG.info("Response discarded: " + new String(bos.toByteArray()));
                 }
             }
-            throw new IOException("Content-type of response not acceptable: " + responseType);
+            throw new IOException("Content-Type of response is not acceptable: " + responseType);
         }
         
         final Addressing addr;
         
-        if (skipUnicodeBOM) {
-            // there are three extra chars before the start of the soap envelope -
-            // the byte order mark @see http://www.unicode.org/faq/utf_bom.html
-            // TODO: handle this properly (eg set encoding to utf-16 if so indicated)
-            // TODO: delete this workaround when supported properly by JAXP/SAAJ
-            // Note: the problem does not manifest itself if both client and server are colocated
-            int skipped = 0;
-            final PushbackInputStream pbis = new PushbackInputStream(is, 4);
-            try {
-                // skip upto the first legal xml character
-                int c = pbis.read();
-                while (c != '<') {
-                    c = pbis.read();
-                    skipped ++;
-                }
-                pbis.unread(c);
-                
-                if (skipped > 0) {
-                    if (LOG.isLoggable(Level.FINE)) {
-                        LOG.fine("Skipped " + skipped + " bytes of Unicode BOM");
-                    }
-                }
-                
-                addr = new Addressing(pbis);
-            } finally {
-                if (pbis != null) { pbis.close(); }
-            }
-        } else {
-            try {
-                addr = new Addressing(is);
-            } finally {
-                if (is != null) { is.close(); }
-            }
+        try {
+            addr = new Addressing(is);
+        } finally {
+            if (is != null) { is.close(); }
         }
         
         log(addr);
