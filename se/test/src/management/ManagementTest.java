@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.1 2005-06-29 19:18:29 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.2 2005-07-19 18:33:58 akhilarora Exp $
  */
 
 package management;
@@ -54,9 +54,8 @@ import org.xmlsoap.schemas.ws._2005._02.management.SystemType;
 public class ManagementTest extends TestCase {
     
     private static final String UUID_SCHEME = "uuid:";
-    private static final String DESTINATION =
-            "http://" + System.getProperty("wsman.host", "localhost") + ":" +
-            System.getProperty("wsman.port", "8080") + "/wsman/";
+    private static final String DESTINATION = 
+            System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
     private static final String RESOURCE = "wsman:system/2005/02/this";
     private static final int TIMEOUT = 30000;
     

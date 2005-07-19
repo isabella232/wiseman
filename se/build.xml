@@ -144,8 +144,7 @@
           dir="${test.run.dir}"
           fork="true">
       <arg value="TestSuite" />
-      <jvmarg value="-Dwsman.host=localhost" />
-      <jvmarg value="-Dwsman.port=8080" />
+      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
       <jvmarg value="-Dwsman.user=wsman" />
       <jvmarg value="-Dwsman.password=secret" />
       <jvmarg value="-Dwsman.basicauthentication=true" />
@@ -159,8 +158,7 @@
           fork="true">
       <arg value="-noloading" />
       <arg value="TestSuite" />
-      <jvmarg value="-Dwsman.host=localhost" />
-      <jvmarg value="-Dwsman.port=8080" />
+      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
       <jvmarg value="-Dwsman.user=wsman" />
       <jvmarg value="-Dwsman.password=secret" />
       <jvmarg value="-Dwsman.basicauthentication=true" />
