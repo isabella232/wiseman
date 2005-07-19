@@ -1,0 +1,168 @@
+/*
+ * Copyright 2005 Sun Microsystems, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * $Id: EnumerationTest.java,v 1.1 2005-07-19 19:54:58 akhilarora Exp $
+ */
+
+package management;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.ObjectFactory;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
+
+/**
+ * Unit test for WS-Enumeration
+ */
+public class EnumerationTest extends TestBase {
+    
+    public EnumerationTest(final String testName) {
+        super(testName);
+    }
+    
+    public static junit.framework.Test suite() {
+        final junit.framework.TestSuite suite = new junit.framework.TestSuite(EnumerationTest.class);
+        return suite;
+    }
+    
+    public void testEnumerateVisual() throws Exception {
+        
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        
+        final EndpointReferenceType endTo = enu.createEndpointReference("http://host/endTo", null, null, null, null);
+        final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final FilterType filter = objectFactory.createFilterType();
+        filter.setDialect("http://mydomain/my.filter.dialect");
+        filter.getContent().add("my/filter/expression");
+        enu.setEnumerate(endTo, expires, filter);
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        
+        final Enumerate enu2 = e2.getEnumerate();
+        assertEquals(expires, enu2.getExpires());
+        assertEquals(endTo.getAddress().getValue(), enu2.getEndTo().getAddress().getValue());
+        assertEquals(filter.getDialect(), enu2.getFilter().getDialect());
+        assertEquals(filter.getContent().get(0), enu2.getFilter().getContent().get(0));
+    }
+    
+    public void testEnumerateResponseVisual() throws Exception {
+        
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
+        
+        final String context = "context";
+        final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
+        enu.setEnumerateResponse(context, expires);
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        
+        final EnumerateResponse er2 = e2.getEnumerateResponse();
+        assertEquals(expires, er2.getExpires());
+        assertEquals(context, er2.getEnumerationContext().getContent().get(0));
+    }
+    
+    public void testPullVisual() throws Exception {
+        
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.PULL_ACTION_URI);
+        
+        final String context = "context";
+        final int maxChars = 4096;
+        final int maxElements = 2;
+        final Duration duration = DatatypeFactory.newInstance().newDuration(30000);
+        enu.setPull(context, maxChars, maxElements, duration);
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        
+        final Pull p2 = e2.getPull();
+        assertEquals(context, p2.getEnumerationContext().getContent().get(0));
+        assertEquals(maxChars, p2.getMaxCharacters().intValue());
+        assertEquals(maxElements, p2.getMaxElements().intValue());
+        assertEquals(duration, p2.getMaxTime());
+    }
+    
+    public void testPullResponseVisual() throws Exception {
+        
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.PULL_RESPONSE_URI);
+        
+        final String context = "context";
+        final List<Object> items = new ArrayList<Object>();
+        final Document doc = enu.newDocument();
+        final Element itemElement = doc.createElementNS(NS_URI, NS_PREFIX + ":anItem");
+        items.add(itemElement);
+        enu.setPullResponse(items, context);
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        
+        final PullResponse pr2 = e2.getPullResponse();
+        assertEquals(context, pr2.getEnumerationContext().getContent().get(0));
+        assertEquals(itemElement.getNodeName(), ((Element) pr2.getItems().getAny().get(0)).getNodeName());
+        assertNull(pr2.getEndOfSequence());
+    }
+    
+    public void testReleaseVisual() throws Exception {
+        
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.RELEASE_ACTION_URI);
+        
+        final String context = "context";
+        enu.setRelease(context);
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        
+        final Release r2 = e2.getRelease();
+        assertEquals(context, r2.getEnumerationContext().getContent().get(0));
+    }
+}

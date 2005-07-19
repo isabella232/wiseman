@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.2 2005-07-19 18:33:58 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.3 2005-07-19 19:54:59 akhilarora Exp $
  */
 
 package management;
@@ -21,7 +21,6 @@ package management;
 import java.io.IOException;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
-import junit.framework.*;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -30,10 +29,8 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.xml.XmlBinding;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -51,48 +48,31 @@ import org.xmlsoap.schemas.ws._2005._02.management.SystemType;
 /**
  * Unit test for WS-Management
  */
-public class ManagementTest extends TestCase {
+public class ManagementTest extends TestBase {
     
-    private static final String UUID_SCHEME = "uuid:";
-    private static final String DESTINATION = 
-            System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
     private static final String RESOURCE = "wsman:system/2005/02/this";
     private static final int TIMEOUT = 30000;
     
-    private static final String NS_URI = "http://schemas.sun.com/servers/entry/v20z";
-    private static final String NS_PREFIX = "v20z";
-    
     private final Map<String, Object> selectors = new TreeMap();
     private final ObjectFactory of = new ObjectFactory();
-    
-    private FileOutputStream fos = null;
     
     public ManagementTest(final String testName) {
         super(testName);
     }
     
     protected void setUp() throws java.lang.Exception {
-        fos = new FileOutputStream("ManagementTest.xml", true);
-        Addressing.setXmlBinding(new XmlBinding());
-        final String basicAuth = System.getProperty("wsman.basicauthentication");
-        if ("true".equalsIgnoreCase(basicAuth)) {
-            HttpClient.setAuthenticator(new transport.BasicAuthenticator());
-        }
+        super.setUp();
         selectors.put("Name", "WSMAN");
     }
     
     protected void tearDown() throws java.lang.Exception {
-        fos.close();
         selectors.clear();
+        super.tearDown();
     }
     
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite(ManagementTest.class);
         return suite;
-    }
-    
-    public static void main(final java.lang.String[] args) {
-        junit.textui.TestRunner.run(suite());
     }
     
     public void testSet() throws Exception {
@@ -106,7 +86,7 @@ public class ManagementTest extends TestCase {
             uuid = UUID_SCHEME + UUID.randomUUID().toString();
             mgmt.setMessageId(uuid);
         }
-        mgmt.prettyPrint(fos);
+        mgmt.prettyPrint(logfile);
         // only the last one should remain
         assertEquals(uuid, mgmt.getMessageId());
         assertEquals(Transfer.DELETE_ACTION_URI, mgmt.getAction());
@@ -119,9 +99,9 @@ public class ManagementTest extends TestCase {
         mgmt.setTo(DESTINATION);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         
-        mgmt.prettyPrint(fos);
+        mgmt.prettyPrint(logfile);
         Addressing response = HttpClient.sendRequest(mgmt);
-        response.prettyPrint(fos);
+        response.prettyPrint(logfile);
         
         assertTrue("Missing ResourceURI accepted", response.getBody().hasFault());
         Fault fault = new SOAP(response).getFault();
@@ -179,7 +159,7 @@ public class ManagementTest extends TestCase {
         final EndpointReferenceType eprRename = mgmt.createEndpointReference(renameAddress, null, null, null, null);
         mgmt.setRename(eprRename);
         
-        mgmt.prettyPrint(fos);
+        mgmt.prettyPrint(logfile);
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         mgmt.writeTo(bos);

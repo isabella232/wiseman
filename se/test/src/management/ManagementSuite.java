@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementSuite.java,v 1.1 2005-06-29 19:18:29 akhilarora Exp $
+ * $Id: ManagementSuite.java,v 1.2 2005-07-19 19:54:59 akhilarora Exp $
  */
 
 package management;
@@ -34,7 +34,11 @@ public class ManagementSuite extends TestCase {
 
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite("ManagementSuite");
+        suite.addTest(management.AddressingTest.suite());
+        suite.addTest(management.EnumerationTest.suite());
+        suite.addTest(management.EventingTest.suite());
         suite.addTest(management.ManagementTest.suite());
+        suite.addTest(management.TransferTest.suite());
         return suite;
     }
 
