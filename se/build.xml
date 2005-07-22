@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.5 2005-07-19 21:23:11 akhilarora Exp $
+ $Id: build.xml,v 1.6 2005-07-22 01:46:06 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -140,6 +140,9 @@
   <target name="javadoc" depends="compile,javadoc-init">
     <javadoc destdir="${doc.dist.dir}"
              access="public"
+             use="true"
+             windowtitle="Wiseman API"
+             source="1.5"
              classpathref="compile.classpath">
       <packageset dir="${src.dir}" 
                   defaultexcludes="yes">
