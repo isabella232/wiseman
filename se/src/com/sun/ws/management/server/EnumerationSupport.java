@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.1 2005-07-22 01:45:15 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.2 2005-07-22 21:57:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -39,6 +39,7 @@ import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.soap.SOAPException;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
@@ -67,7 +68,7 @@ public final class EnumerationSupport {
         private int count;
         private Object clientContext;
         private XMLGregorianCalendar expiration;
-        private List<Object> items;
+        private List<Element> items;
         private EnumerationIterator iterator;
     }
     

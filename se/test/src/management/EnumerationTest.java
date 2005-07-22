@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.1 2005-07-19 19:54:58 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.2 2005-07-22 21:57:57 akhilarora Exp $
  */
 
 package management;
@@ -130,7 +130,7 @@ public class EnumerationTest extends TestBase {
         enu.setAction(Enumeration.PULL_RESPONSE_URI);
         
         final String context = "context";
-        final List<Object> items = new ArrayList<Object>();
+        final List<Element> items = new ArrayList<Element>();
         final Document doc = enu.newDocument();
         final Element itemElement = doc.createElementNS(NS_URI, NS_PREFIX + ":anItem");
         items.add(itemElement);

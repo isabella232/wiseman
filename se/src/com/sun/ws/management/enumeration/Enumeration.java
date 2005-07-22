@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.2 2005-07-16 00:34:32 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.3 2005-07-22 21:57:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -27,8 +27,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -184,7 +184,7 @@ public class Enumeration extends Addressing {
         getXmlBinding().marshal(pull, getBody());
     }
     
-    public void setPullResponse(final List<Object> items, final Object context) 
+    public void setPullResponse(final List<Element> items, final Object context) 
     throws JAXBException, SOAPException {
 
         removeChildren(getBody(), PULL_RESPONSE);
@@ -201,7 +201,7 @@ public class Enumeration extends Addressing {
         getXmlBinding().marshal(response, getBody());
     }
     
-    public void setFinalPullResponse(final List<Object> items) 
+    public void setFinalPullResponse(final List<Element> items) 
     throws JAXBException, SOAPException {
 
         removeChildren(getBody(), PULL_RESPONSE);

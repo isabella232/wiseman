@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.1 2005-07-22 01:45:14 akhilarora Exp $
+ * $Id: EnumerationIterator.java,v 1.2 2005-07-22 21:57:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.util.List;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * The inteface to be presented by a data source that would like to be 
@@ -61,7 +62,7 @@ public interface EnumerationIterator {
      * returned in the 
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
-    List<Object> next(final Document doc, final Object context,
+    List<Element> next(final Document doc, final Object context,
             final int startPos, final int count);
     /**
      * Indicates if there are more elements remaining in the iteration.
