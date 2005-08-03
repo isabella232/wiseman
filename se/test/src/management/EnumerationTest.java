@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.2 2005-07-22 21:57:57 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.3 2005-08-03 23:15:19 akhilarora Exp $
  */
 
 package management;
@@ -164,5 +164,59 @@ public class EnumerationTest extends TestBase {
         
         final Release r2 = e2.getRelease();
         assertEquals(context, r2.getEnumerationContext().getContent().get(0));
+    }
+
+    public void testEnumerate() throws Exception {
+        
+        final String RESOURCE = "wsman:test/java/system/properties";
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        enu.setEnumerate(null, null, null);
+        
+        final Management mgmt = new Management(enu);
+        mgmt.setTo(DESTINATION, RESOURCE);
+        
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        if (response.getBody().hasFault()) {
+            response.prettyPrint(System.err);
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration enuResponse = new Enumeration(response);
+        final EnumerateResponse enr = enuResponse.getEnumerateResponse();
+        String context = (String) enr.getEnumerationContext().getContent().get(0);
+        
+        boolean done = false;
+        do {
+            final Enumeration pullRequest = new Enumeration();
+            pullRequest.setAction(Enumeration.PULL_ACTION_URI);
+            pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+            pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+            pullRequest.setPull(context, 0, 3, null);
+            
+            final Management mp = new Management(pullRequest);
+            mp.setTo(DESTINATION, RESOURCE);
+            
+            final Addressing praddr = HttpClient.sendRequest(mp);
+            if (praddr.getBody().hasFault()) {
+                fail(praddr.getBody().getFault().getFaultString());
+            }
+            
+            final Enumeration pullResponse = new Enumeration(praddr);
+            final PullResponse pr = pullResponse.getPullResponse();
+            // update context for the next pull (if any)
+            if (pr.getEnumerationContext() != null) {
+                context = (String) pr.getEnumerationContext().getContent().get(0);
+            }
+            for (Object obj : pr.getItems().getAny()) {
+                final Element el = (Element) obj;
+                System.out.println(el.getNodeName() + " = " + el.getTextContent());
+            }
+            if (pr.getEndOfSequence() != null) {
+                done = true;
+            }
+        } while (!done);
     }
 }
