@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.6 2005-07-22 01:46:06 akhilarora Exp $
+ $Id: build.xml,v 1.7 2005-08-03 23:56:37 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -83,11 +83,11 @@
         <attribute name="Built-At" value="${DSTAMP}" />
         <attribute name="Specification-Title" value="WS-Management" />
         <attribute name="Specification-Version" value="02/2005" />
-        <attribute name="Implementation-Title" value="Wiseman SE" />
+        <attribute name="Implementation-Title" value="Wiseman SE Client" />
         <attribute name="Implementation-Version" value="0.2" />
         <attribute name="Implementation-Vendor" value="The Wiseman Project" />
         <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
-        <attribute name="sealed" value="true" />
+        <attribute name="Sealed" value="true" />
       </manifest>
       <metainf dir=".">
         <include name="LICENSE" />
@@ -97,6 +97,41 @@
   </target>
   
   <target name="war" depends="compile">
+    <war destfile="${war.file}"
+         webxml="etc/web.xml"
+         index="true">
+      <classes dir="${build.classes.dir}">
+        <exclude name="com/sun/ws/management/server/handler/wsman/test/**" />
+      </classes>
+      <lib dir="${jaxb.lib.dir}">
+        <include name="activation.jar" />
+        <include name="jaxb-api.jar" />
+        <include name="jaxb-impl.jar" />
+        <include name="jsr173_1.0_api.jar" />
+      </lib>
+      <lib dir="${jaxrpc.lib.dir}">
+        <include name="saaj-api.jar" />
+        <include name="saaj-impl.jar" />
+      </lib>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Built-At" value="${DSTAMP}" />
+        <attribute name="Specification-Title" value="WS-Management" />
+        <attribute name="Specification-Version" value="02/2005" />
+        <attribute name="Implementation-Title" value="Wiseman SE Server" />
+        <attribute name="Implementation-Version" value="0.2" />
+        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
+        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
+        <attribute name="Sealed" value="true" />
+      </manifest>
+      <metainf dir=".">
+        <include name="LICENSE" />
+        <include name="NOTICE" />
+      </metainf>
+    </war>
+  </target>
+  
+  <target name="test-war" depends="compile">
     <war destfile="${war.file}"
          webxml="etc/web.xml"
          index="true">
@@ -116,11 +151,11 @@
         <attribute name="Built-At" value="${DSTAMP}" />
         <attribute name="Specification-Title" value="WS-Management" />
         <attribute name="Specification-Version" value="02/2005" />
-        <attribute name="Implementation-Title" value="Wiseman SE" />
+        <attribute name="Implementation-Title" value="Wiseman SE Server Tests" />
         <attribute name="Implementation-Version" value="0.2" />
         <attribute name="Implementation-Vendor" value="The Wiseman Project" />
         <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
-        <attribute name="sealed" value="true" />
+        <attribute name="Sealed" value="true" />
       </manifest>
       <metainf dir=".">
         <include name="LICENSE" />
