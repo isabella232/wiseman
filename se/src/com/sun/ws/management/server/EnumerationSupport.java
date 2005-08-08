@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.2 2005-07-22 21:57:56 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.3 2005-08-08 21:30:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -25,6 +25,7 @@ import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
 import com.sun.ws.management.enumeration.TimedOutFault;
 import com.sun.ws.management.soap.FaultException;
 import java.math.BigInteger;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -73,29 +74,29 @@ public final class EnumerationSupport {
     }
     
     private EnumerationSupport() {}
-
-    /** 
-     * Initiate an 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate} 
-     * operation. 
-     *
-     * @param request The incoming SOAP message that contains the 
+    
+    /**
+     * Initiate an
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
-     * request. 
+     * operation.
      *
-     * @param response The empty SOAP message that will contain the 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse EnumerateResponse}. 
+     * @param request The incoming SOAP message that contains the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
+     * request.
      *
-     * @param enumIterator The data source that will provide the actual items 
+     * @param response The empty SOAP message that will contain the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse EnumerateResponse}.
+     *
+     * @param enumIterator The data source that will provide the actual items
      * to be returned as the result of the enumeration.
      *
-     * @param clientContext An Object provided by the data source that is 
-     * returned to the data source with each request for more elements to 
+     * @param clientContext An Object provided by the data source that is
+     * returned to the data source with each request for more elements to
      * help the data source retain context between subsequent operations.
-     * 
+     *
      * @throws FilteringNotSupportedFault if filtering is not supported.
-     * 
-     * @throws InvalidExpirationTimeFault if the expiration time specified in 
+     *
+     * @throws InvalidExpirationTimeFault if the expiration time specified in
      * the request is syntactically-invalid or is in the past.
      */
     public static void enumerate(final Enumeration request, final Enumeration response,
@@ -119,19 +120,27 @@ public final class EnumerationSupport {
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
         XMLGregorianCalendar expiration;
         if (expires == null) {
-            expiration = nowXml;
+            expiration = datatypeFactory.newXMLGregorianCalendar(now);
             expiration.add(defaultExpiration);
         } else {
             try {
-                expiration = datatypeFactory.newXMLGregorianCalendar(expires);
-            } catch (IllegalArgumentException arg) {
-                throw new InvalidExpirationTimeFault();
+                // first try if it's a Duration
+                final Duration duration = datatypeFactory.newDuration(expires);
+                expiration = datatypeFactory.newXMLGregorianCalendar(now);
+                expiration.add(duration);
+            } catch (IllegalArgumentException arg1) {
+                try {
+                    // now try if it's a calendar time
+                    expiration = datatypeFactory.newXMLGregorianCalendar(expires);
+                } catch (IllegalArgumentException arg2) {
+                    throw new InvalidExpirationTimeFault();
+                }
             }
         }
         if (nowXml.compare(expiration) > 0) {
             throw new InvalidExpirationTimeFault();
         }
-
+        
         final UUID context = UUID.randomUUID();
         
         final Context ctx = new Context();
@@ -140,7 +149,7 @@ public final class EnumerationSupport {
         ctx.iterator = enumIterator;
         ctx.expiration = expiration;
         contextMap.put(context, ctx);
-
+        
         final TimerTask ttask = new TimerTask() {
             public void run() {
                 final GregorianCalendar now = new GregorianCalendar();
@@ -162,24 +171,24 @@ public final class EnumerationSupport {
         response.setEnumerateResponse(context.toString(), expiration.toXMLFormat());
     }
     
-    /** 
-     * Handle a 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} 
-     * request. 
-     *
-     * @param request The incoming SOAP message that contains the 
+    /**
+     * Handle a
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
-     * request. 
+     * request.
      *
-     * @param response The empty SOAP message that will contain the 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}. 
+     * @param request The incoming SOAP message that contains the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+     * request.
      *
-     * @throws InvalidEnumerationContextFault if the supplied context is 
-     * missing, is not understood or is not found because it has expired or 
+     * @param response The empty SOAP message that will contain the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
+     *
+     * @throws InvalidEnumerationContextFault if the supplied context is
+     * missing, is not understood or is not found because it has expired or
      * the server has been restarted.
-     * 
-     * @throws TimedOutFault if the data source fails to provide the items to 
-     * be returned within the specified 
+     *
+     * @throws TimedOutFault if the data source fails to provide the items to
+     * be returned within the specified
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}.
      */
     public static void pull(final Enumeration request, final Enumeration response)
@@ -220,58 +229,49 @@ public final class EnumerationSupport {
             // no timeout - take as long as it takes
             ctx.items = ctx.iterator.next(doc, ctx.clientContext, ctx.cursor, ctx.count);
         } else {
-            // NOTE: ignoring fractions of a second
-            final long timeout = maxTime.getSeconds() * 1000;
-            final Thread thread = new Thread() {
+            final TimerTask ttask = new TimerTask() {
                 public void run() {
-                    ctx.items = ctx.iterator.next(doc, ctx.clientContext, ctx.cursor, ctx.count);
+                    ctx.iterator.cancel(ctx.clientContext);
                 }
             };
-            thread.start();
-            final long start = System.currentTimeMillis();
-            while (System.currentTimeMillis() - start < timeout) {
-                try {
-                    thread.wait(1000);
-                } catch (InterruptedException ignore) {
-                }
+            final long timeout = maxTime.getTimeInMillis(now);
+            final Timer timeoutTimer = new Timer(true);
+            timeoutTimer.schedule(ttask, new Date(timeout));
+            ctx.items = ctx.iterator.next(doc, ctx.clientContext, ctx.cursor, ctx.count);
+            if (ctx.items == null) {
+                throw new TimedOutFault();
             }
-            ctx.iterator.cancel(ctx.clientContext);
-            thread.interrupt();
         }
-        
-        if (ctx.items == null) {
-            throw new TimedOutFault();
-        }
-        
-        contextMap.remove(context);
         
         if (ctx.iterator.hasNext(ctx.clientContext, ctx.cursor)) {
             ctx.cursor = Integer.valueOf(ctx.cursor + ctx.items.size());
-            final UUID newContext = UUID.randomUUID();
-            contextMap.put(newContext, ctx);            
-            response.setPullResponse(ctx.items, newContext.toString());
+            // update value but not the key -
+            // otherwise Release may fail to find a context
+            contextMap.put(context, ctx);
+            response.setPullResponse(ctx.items, context.toString());
         } else {
             response.setFinalPullResponse(ctx.items);
+            contextMap.remove(context);
         }
         
         // no need to have this (potentially large object) hanging around
         ctx.items = null;
     }
     
-    /** 
+    /**
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release} an
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumeration} 
-     * in progress. 
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumeration}
+     * in progress.
      *
-     * @param request The incoming SOAP message that contains the 
+     * @param request The incoming SOAP message that contains the
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release}
-     * request. 
+     * request.
      *
-     * @param response The empty SOAP message that will contain the 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release} response. 
+     * @param response The empty SOAP message that will contain the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release} response.
      *
-     * @throws InvalidEnumerationContextFault if the supplied context is 
-     * missing, is not understood or is not found because it has expired or 
+     * @throws InvalidEnumerationContextFault if the supplied context is
+     * missing, is not understood or is not found because it has expired or
      * the server has been restarted.
      */
     public static void release(final Enumeration request, final Enumeration response)
