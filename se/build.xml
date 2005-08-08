@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.7 2005-08-03 23:56:37 akhilarora Exp $
+ $Id: build.xml,v 1.8 2005-08-08 20:14:42 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -96,7 +96,7 @@
     </jar>
   </target>
   
-  <target name="war" depends="compile">
+  <target name="dist-war" depends="compile">
     <war destfile="${war.file}"
          webxml="etc/web.xml"
          index="true">
@@ -131,7 +131,7 @@
     </war>
   </target>
   
-  <target name="test-war" depends="compile">
+  <target name="war" depends="compile">
     <war destfile="${war.file}"
          webxml="etc/web.xml"
          index="true">
