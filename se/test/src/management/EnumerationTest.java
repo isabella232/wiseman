@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.3 2005-08-03 23:15:19 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.4 2005-08-08 21:26:25 akhilarora Exp $
  */
 
 package management;
@@ -173,7 +173,8 @@ public class EnumerationTest extends TestBase {
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        enu.setEnumerate(null, null, null);
+        final DatatypeFactory factory = DatatypeFactory.newInstance();
+        enu.setEnumerate(null, factory.newDuration(60000).toString(), null);
         
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION, RESOURCE);
@@ -194,13 +195,14 @@ public class EnumerationTest extends TestBase {
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-            pullRequest.setPull(context, 0, 3, null);
+            pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
             
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION, RESOURCE);
             
             final Addressing praddr = HttpClient.sendRequest(mp);
             if (praddr.getBody().hasFault()) {
+                praddr.prettyPrint(System.err);
                 fail(praddr.getBody().getFault().getFaultString());
             }
             
