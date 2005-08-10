@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.1 2005-06-29 19:18:24 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.2 2005-08-10 21:52:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -43,8 +43,13 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
             InstantiationException, IllegalAccessException,
             FaultException, Throwable {
         
-        final String resource = request.getResourceURI();
         final String action = request.getAction();
+        final String resource = request.getResourceURI();
+        if (resource == null) {
+            throw new DestinationUnreachableFault(
+                    "Missing the " + Management.RESOURCE_URI.getLocalPart(),
+                    Management.INVALID_RESOURCE_URI_DETAIL);
+        }
         
         final String handlerClassName = createHandlerClassName(resource);
         if (LOG.isLoggable(Level.FINE)) {

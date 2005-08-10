@@ -13,55 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.1 2005-06-29 19:18:15 akhilarora Exp $
+ * $Id: Management.java,v 1.2 2005-08-10 21:52:56 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.addressing.DestinationUnreachableFault;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPHeaderElement;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2005._02.management.Locale;
-import org.xmlsoap.schemas.ws._2005._02.management.MaxEnvelopeSize;
-import org.xmlsoap.schemas.ws._2005._02.management.ObjectFactory;
-import org.xmlsoap.schemas.ws._2005._02.management.OperationTimeout;
-import org.xmlsoap.schemas.ws._2005._02.management.OptionSetType;
-import org.xmlsoap.schemas.ws._2005._02.management.OptionType;
-import org.xmlsoap.schemas.ws._2005._02.management.RenameType;
-import org.xmlsoap.schemas.ws._2005._02.management.SelectorSetType;
-import org.xmlsoap.schemas.ws._2005._02.management.SelectorType;
-import org.xmlsoap.schemas.ws._2005._02.management.SystemType;
+import org.xmlsoap.schemas.ws._2005._06.management.LocaleType;
+import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
+import org.xmlsoap.schemas.ws._2005._06.management.ObjectFactory;
+import org.xmlsoap.schemas.ws._2005._06.management.OptionSetType;
+import org.xmlsoap.schemas.ws._2005._06.management.OptionType;
+import org.xmlsoap.schemas.ws._2005._06.management.RenameType;
+import org.xmlsoap.schemas.ws._2005._06.management.ResourceURIType;
+import org.xmlsoap.schemas.ws._2005._06.management.SelectorSetType;
+import org.xmlsoap.schemas.ws._2005._06.management.SelectorType;
 
 public class Management extends Addressing {
     
     public static final String NS_PREFIX = "wsman";
-    public static final String NS_URI = "http://schemas.xmlsoap.org/ws/2005/02/management";
+    public static final String NS_URI = "http://schemas.xmlsoap.org/ws/2005/06/management";
     
-    public static final String RENAME_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/Rename";
-    public static final String RENAME_RESPONSE_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/RenameResponse";
-    public static final String EVENTS_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/Events";
-    public static final String HEARTBEAT_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/Heartbeat";
-    public static final String DROPPED_EVENTS_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/DroppedEvents";
-    public static final String ACK_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/Ack";
-    public static final String EVENT_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/Event";
-    public static final String BOOKMARK_EARLIEST_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/bookmark/earliest";
-    public static final String PUSH_WITH_ACK_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/PushWithAck";
-    public static final String PULL_URI = "http://schemas.xmlsoap.org/ws/2005/02/management/Pull";
+    public static final String RENAME_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Rename";
+    public static final String RENAME_RESPONSE_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/RenameResponse";
+    public static final String EVENTS_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Events";
+    public static final String HEARTBEAT_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Heartbeat";
+    public static final String DROPPED_EVENTS_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/DroppedEvents";
+    public static final String ACK_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Ack";
+    public static final String EVENT_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Event";
+    public static final String BOOKMARK_EARLIEST_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/bookmark/earliest";
+    public static final String PUSH_WITH_ACK_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/PushWithAck";
+    public static final String PULL_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Pull";
     
     public static final QName ACCESS_DENIED = new QName(NS_URI, "AccessDenied", NS_PREFIX);
     public static final String ACCESS_DENIED_REASON =
@@ -193,23 +187,12 @@ public class Management extends Addressing {
     public static final QName OPERATION_TIMEOUT = new QName(NS_URI, "OperationTimeout", NS_PREFIX);
     public static final QName SELECTOR_SET = new QName(NS_URI, "SelectorSet", NS_PREFIX);
     public static final QName OPTION_SET = new QName(NS_URI, "OptionSet", NS_PREFIX);
-    public static final QName SYSTEM = new QName(NS_URI, "System", NS_PREFIX);
     public static final QName MAX_ENVELOPE_SIZE = new QName(NS_URI, "MaxEnvelopeSize", NS_PREFIX);
     public static final QName LOCALE = new QName(NS_URI, "Locale", NS_PREFIX);
     public static final QName RENAME = new QName(NS_URI, "Rename", NS_PREFIX);
     public static final QName FAULT_DETAIL = new QName(NS_URI, "FaultDetail", NS_PREFIX);
     public static final QName URL = new QName(NS_URI, "URL", NS_PREFIX);
     public static final QName ENDPOINT_REFERENCE = new QName(NS_URI, "EndpointReference", NS_PREFIX);
-    
-    // TODO: remove this when not needed
-    // @deprecated - legacy support
-    private static final QName LEGACY_RESOURCE_URI =
-            new QName("http://schemas.xmlsoap.org/ws/2004/10/management", "ResourceURI", "wsmanold");
-    
-    // match a URI within an enclosing set of parentheses
-    // TODO: more sophisticated patterns are possible
-    // TODO: does this pattern match nested parentheses?
-    private static final Pattern PARENTHESES_PATTERN = Pattern.compile("\\(\\S+\\)");
     
     private ObjectFactory objectFactory = null;
     
@@ -234,25 +217,19 @@ public class Management extends Addressing {
     
     // setters
     
-    public void setTo(final String to, final String resource) throws JAXBException, SOAPException {
-        final String compositeTo = to.trim() + "?ResourceURI=(" + resource.trim() + ")";
-        super.setTo(compositeTo);
-    }
-    
-    // TODO: remove this method when not needed
-    // @deprecated - legacy support
-    public void setResourceURI(final String resource) throws SOAPException {
-        removeChildren(getHeader(), LEGACY_RESOURCE_URI);
-        final SOAPHeaderElement resourceElement =
-                getHeader().addHeaderElement(LEGACY_RESOURCE_URI);
-        resourceElement.addTextNode(resource.trim());
+    public void setResourceURI(final String resource) throws JAXBException, SOAPException {
+        removeChildren(getHeader(), RESOURCE_URI);
+        final ResourceURIType resType = objectFactory.createResourceURIType();
+        resType.setValue(resource);
+        final JAXBElement<ResourceURIType> resTypeElement =
+                objectFactory.createResourceURI(resType);
+        getXmlBinding().marshal(resTypeElement, getHeader());
     }
     
     public void setTimeout(final Duration duration) throws JAXBException, SOAPException {
         removeChildren(getHeader(), OPERATION_TIMEOUT);
-        final OperationTimeout timeoutElement = objectFactory.createOperationTimeout();
-        timeoutElement.setValue(duration);
-        getXmlBinding().marshal(timeoutElement, getHeader());
+        final JAXBElement<Duration> durationElement = objectFactory.createOperationTimeout(duration);
+        getXmlBinding().marshal(durationElement, getHeader());
     }
     
     public void setSelectors(final Map<String, Object> selectors) throws JAXBException, SOAPException {
@@ -270,20 +247,16 @@ public class Management extends Addressing {
         getXmlBinding().marshal(selectorSetElement, getHeader());
     }
     
-    public void setSystem(final SystemType system) throws JAXBException, SOAPException {
-        removeChildren(getHeader(), SYSTEM);
-        final JAXBElement<SystemType> systemElement = objectFactory.createSystem(system);
-        getXmlBinding().marshal(systemElement, getHeader());
-    }
-    
-    public void setMaxEnvelopeSize(final MaxEnvelopeSize size) throws JAXBException, SOAPException {
+    public void setMaxEnvelopeSize(final MaxEnvelopeSizeType size) throws JAXBException, SOAPException {
         removeChildren(getHeader(), MAX_ENVELOPE_SIZE);
-        getXmlBinding().marshal(size, getHeader());
+        final JAXBElement<MaxEnvelopeSizeType> sizeElement = objectFactory.createMaxEnvelopeSize(size);
+        getXmlBinding().marshal(sizeElement, getHeader());
     }
     
-    public void setLocale(final Locale locale) throws JAXBException, SOAPException {
+    public void setLocale(final LocaleType locale) throws JAXBException, SOAPException {
         removeChildren(getHeader(), LOCALE);
-        getXmlBinding().marshal(locale, getHeader());
+        final JAXBElement<LocaleType> localeElelment = objectFactory.createLocale(locale);
+        getXmlBinding().marshal(localeElelment, getHeader());
     }
     
     public void setOptions(final Map<String, String> options) throws JAXBException, SOAPException {
@@ -312,41 +285,13 @@ public class Management extends Addressing {
     // getters
     
     public String getResourceURI() throws JAXBException, SOAPException {
-        // TODO: remove this when not needed
-        // @deprecated - legacy support
-        final SOAPElement[] resources = getChildren(getHeader(), LEGACY_RESOURCE_URI);
-        if (resources.length > 0) {
-            return resources[0].getValue();
-        }
-        
-        final String to = getTo();
-        if (to == null) {
-            return null;
-        }
-        
-        // TODO: more sophisticated patterns are possible
-        final String[] parts = to.split("\\?ResourceURI=");
-        
-        if (parts.length < 2) {
-            throw new DestinationUnreachableFault("Missing ResourceURI",
-                    Management.INVALID_RESOURCE_URI_DETAIL);
-        }
-        
-        for (int i=0; i < parts.length; i++) {
-            final Matcher matcher = PARENTHESES_PATTERN.matcher(parts[i]);
-            if (matcher.find()) {
-                // skip the parentheses themselves
-                return parts[i].substring(matcher.start() + 1, matcher.end() - 1).trim();
-            }
-        }
-        
-        throw new DestinationUnreachableFault("Could not extract ResourceURI from To",
-                Management.INVALID_RESOURCE_URI_DETAIL);
+        Object value = unbind(getHeader(), RESOURCE_URI);
+        return value == null ? null : ((JAXBElement<ResourceURIType>) value).getValue().getValue();
     }
     
     public Duration getTimeout() throws JAXBException, SOAPException {
         Object value = unbind(getHeader(), OPERATION_TIMEOUT);
-        return value == null ? null : ((OperationTimeout) value).getValue();
+        return value == null ? null : ((JAXBElement<Duration>) value).getValue();
     }
     
     public Map<String, Object> getSelectors() throws JAXBException, SOAPException {
@@ -379,19 +324,14 @@ public class Management extends Addressing {
         return optionMap;
     }
     
-    public SystemType getSystem() throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), SYSTEM);
-        return value == null ? null : ((JAXBElement<SystemType>) value).getValue();
-    }
-    
-    public MaxEnvelopeSize getMaxEnvelopeSize() throws JAXBException, SOAPException {
+    public MaxEnvelopeSizeType getMaxEnvelopeSize() throws JAXBException, SOAPException {
         Object value = unbind(getHeader(), MAX_ENVELOPE_SIZE);
-        return value == null ? null : (MaxEnvelopeSize) value;
+        return value == null ? null : ((JAXBElement<MaxEnvelopeSizeType>) value).getValue();
     }
     
-    public Locale getLocale() throws JAXBException, SOAPException {
+    public LocaleType getLocale() throws JAXBException, SOAPException {
         Object value = unbind(getHeader(), LOCALE);
-        return value == null ? null : (Locale) value;
+        return value == null ? null : ((JAXBElement<LocaleType>) value).getValue();
     }
     
     public EndpointReferenceType getRename() throws JAXBException, SOAPException {

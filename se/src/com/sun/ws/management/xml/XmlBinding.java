@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.1 2005-06-29 19:18:27 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.2 2005-08-10 21:52:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -35,8 +35,8 @@ public final class XmlBinding implements ValidationEventHandler {
             "org.xmlsoap.schemas.ws._2004._08.eventing:" +
             "org.xmlsoap.schemas.ws._2004._09.enumeration:" +
             "org.xmlsoap.schemas.ws._2004._09.transfer:" +
-            "org.xmlsoap.schemas.ws._2005._02.management:" +
-            "org.xmlsoap.schemas.ws._2005._02.wsmancat";
+            "org.xmlsoap.schemas.ws._2005._06.management:" +
+            "org.xmlsoap.schemas.ws._2005._06.wsmancat";
     
     private final JAXBContext context;
     private final Marshaller marshaller;

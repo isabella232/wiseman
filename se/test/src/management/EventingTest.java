@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.2 2005-08-10 00:30:32 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.3 2005-08-10 21:52:57 akhilarora Exp $
  */
 
 package management;
@@ -194,7 +194,8 @@ public class EventingTest extends TestBase {
         evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, null);
 
         final Management mgmt = new Management(evt);
-        mgmt.setTo(DESTINATION, "wsman:test/eventing");
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/eventing");
         
         final Addressing addr = HttpClient.sendRequest(mgmt);
         if (addr.getBody().hasFault()) {
