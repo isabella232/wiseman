@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.8 2005-08-08 20:14:42 akhilarora Exp $
+ $Id: build.xml,v 1.9 2005-08-10 01:52:42 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -215,6 +215,31 @@
       <classpath refid="test.compile.classpath" />
       <src path="${test.src.dir}" />
     </javac>
+  </target>
+  
+  <target name="events-war" depends="test-compile">
+    <war destfile="${events.war.file}"
+         webxml="etc/events-web.xml"
+         index="true">
+      <classes dir="${test.build.classes.dir}">
+        <include name="server/EventsReceiverServlet.class" />
+      </classes>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Built-At" value="${DSTAMP}" />
+        <attribute name="Specification-Title" value="WS-Management" />
+        <attribute name="Specification-Version" value="02/2005" />
+        <attribute name="Implementation-Title" value="Wiseman SE Events Receiver" />
+        <attribute name="Implementation-Version" value="0.2" />
+        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
+        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
+        <attribute name="Sealed" value="true" />
+      </manifest>
+      <metainf dir=".">
+        <include name="LICENSE" />
+        <include name="NOTICE" />
+      </metainf>
+    </war>
   </target>
 
   <path id="test.run.classpath">

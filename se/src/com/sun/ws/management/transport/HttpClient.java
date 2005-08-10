@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.6 2005-08-10 00:23:03 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.7 2005-08-10 01:52:42 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -150,7 +150,7 @@ public final class HttpClient {
         final URL destination = new URL(to);
         final URLConnection conn = destination.openConnection();
         conn.setAllowUserInteraction(false);
-        conn.setDoInput(false);
+        conn.setDoInput(true);
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", Http.SOAP_MIME_TYPE_WITH_CHARSET);
         conn.setRequestProperty("User-Agent", "Sun WS-Management Java System");
