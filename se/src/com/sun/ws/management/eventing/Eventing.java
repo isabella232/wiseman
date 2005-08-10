@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.1 2005-06-29 19:18:21 akhilarora Exp $
+ * $Id: Eventing.java,v 1.2 2005-08-10 00:25:15 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -104,6 +104,8 @@ public class Eventing extends Addressing {
     public static final QName GET_STATUS_RESPONSE = new QName(NS_URI, "GetStatusResponse", NS_PREFIX);
     public static final QName UNSUBSCRIBE = new QName(NS_URI, "Unsubscribe", NS_PREFIX);
     public static final QName SUBSCRIPTION_END = new QName(NS_URI, "SubscriptionEnd", NS_PREFIX);
+    public static final QName IDENTIFIER = new QName(NS_URI, "Identifier", NS_PREFIX);
+    public static final QName NOTIFY_TO = new QName(NS_URI, "NotifyTo", NS_PREFIX);
 
     private ObjectFactory objectFactory = null;
     
