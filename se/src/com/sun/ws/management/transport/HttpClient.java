@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.5 2005-07-18 22:48:33 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.6 2005-08-10 00:23:03 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -139,12 +139,18 @@ public final class HttpClient {
     
     public static int sendResponse(final Addressing msg) throws IOException, SOAPException, JAXBException {
         
+        final String to = msg.getTo();
+        if (to == null) {
+            throw new IllegalArgumentException("Required Element is missing: " +
+                    Addressing.TO);
+        }
+        
         log(msg);
         
-        final URL destination = new URL(msg.getTo());
+        final URL destination = new URL(to);
         final URLConnection conn = destination.openConnection();
         conn.setAllowUserInteraction(false);
-        conn.setDoInput(true);
+        conn.setDoInput(false);
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", Http.SOAP_MIME_TYPE_WITH_CHARSET);
         conn.setRequestProperty("User-Agent", "Sun WS-Management Java System");
