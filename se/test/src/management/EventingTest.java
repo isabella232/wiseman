@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.1 2005-07-19 19:54:58 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.2 2005-08-10 00:30:32 akhilarora Exp $
  */
 
 package management;
 
+import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.xml.XmlBinding;
-import junit.framework.*;
+import com.sun.ws.management.transport.HttpClient;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
+import java.util.UUID;
 import javax.xml.datatype.DatatypeFactory;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
@@ -178,5 +178,32 @@ public class EventingTest extends TestBase {
         assertEquals(mgrAddress, sub2.getSubscriptionManager().getAddress().getValue());
         assertEquals(Eventing.SOURCE_SHUTTING_DOWN_STATUS, sub2.getStatus());
         assertEquals(reason, sub2.getReason().get(0).getValue());
+    }
+    
+    public void testEventing() throws Exception {
+        final Eventing evt = new Eventing();
+        evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+        evt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final DeliveryType delivery = objectFactory.createDeliveryType();
+        delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
+        final String recvrAddress = "http://localhost:8080/events";
+        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
+        evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, null);
+
+        final Management mgmt = new Management(evt);
+        mgmt.setTo(DESTINATION, "wsman:test/eventing");
+        
+        final Addressing addr = HttpClient.sendRequest(mgmt);
+        if (addr.getBody().hasFault()) {
+            addr.prettyPrint(System.err);
+            fail(addr.getBody().getFault().getFaultString());
+        }
+        
+        final Eventing response = new Eventing(addr);
+        final SubscribeResponse subr = response.getSubscribeResponse();
+        final EndpointReferenceType mgr = subr.getSubscriptionManager();
     }
 }
