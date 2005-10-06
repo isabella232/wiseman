@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.4 2005-08-10 21:52:57 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.5 2005-10-06 19:09:49 akhilarora Exp $
  */
 
 package management;
@@ -34,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import org.w3._2003._05.soap_envelope.Fault;
@@ -103,14 +104,16 @@ public class ManagementTest extends TestBase {
         response.prettyPrint(logfile);
         
         assertTrue("Missing ResourceURI accepted", response.getBody().hasFault());
-        Fault fault = new SOAP(response).getFault();
+        final Fault fault = new SOAP(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
         assertEquals(Management.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
         assertEquals(Management.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
         for (final Object detail : fault.getDetail().getAny()) {
-            if ((Management.FAULT_DETAIL.getPrefix() + ":" +
-                    Management.FAULT_DETAIL.getLocalPart()).equals(((Node) detail).getNodeName())) {
-                assertEquals(Management.INVALID_RESOURCE_URI_DETAIL, ((Node) detail).getFirstChild().getNodeValue());
+            if (detail instanceof Node) {
+                final Node de = (Node) detail;
+            } else {
+                final String str = ((JAXBElement<String>) detail).getValue();
+                assertEquals(Management.INVALID_RESOURCE_URI_DETAIL, str);
             }
         }
     }
@@ -154,7 +157,7 @@ public class ManagementTest extends TestBase {
         
         mgmt.prettyPrint(logfile);
         
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         mgmt.writeTo(bos);
         final Management m2 = new Management(new ByteArrayInputStream(bos.toByteArray()));
         
@@ -198,12 +201,14 @@ public class ManagementTest extends TestBase {
         selectorMap.put("SystemName", "sun-v20z-1");
         mgmt.setSelectors(selectorMap);
         
-        Addressing response = HttpClient.sendRequest(mgmt);
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        Document doc = response.getBody().extractContentAsDocument();
+        final Document doc = response.getBody().extractContentAsDocument();
         final OutputFormat format = new OutputFormat(doc);
         format.setLineWidth(72);
         format.setIndenting(true);
@@ -222,8 +227,10 @@ public class ManagementTest extends TestBase {
         mgmt.setResourceURI(RESOURCE);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        mgmt.prettyPrint(logfile);
         
-        Addressing response = HttpClient.sendRequest(mgmt);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
@@ -262,21 +269,40 @@ public class ManagementTest extends TestBase {
         doValidation(mgmt5, Addressing.NS_PREFIX + ":MessageID");
     }
     
-    private void doValidation(final Management mgmt, final String elementName)
-    throws IOException, SOAPException, JAXBException, FaultException {
-        
+    private void doValidation(final Management mgmt, final String elementName) throws Exception {
+        mgmt.prettyPrint(logfile);
         try {
             mgmt.validate();
             fail("Validation succeeded with no " + elementName);
         } catch (FaultException ignore) {}
         
         if (mgmt.getTo() != null) {
-            Addressing response = HttpClient.sendRequest(mgmt);
+            final Addressing response = HttpClient.sendRequest(mgmt);
             assertTrue(response.getBody().hasFault());
-            Fault fault = new SOAP(response).getFault();
+            final Fault fault = new SOAP(response).getFault();
             assertEquals(SOAP.SENDER, fault.getCode().getValue());
             assertEquals(Addressing.MESSAGE_INFORMATION_HEADER_REQUIRED, fault.getCode().getSubcode().getValue());
             assertEquals(Addressing.MESSAGE_INFORMATION_HEADER_REQUIRED_REASON, fault.getReason().getText().get(0).getValue());
         }
+    }
+    
+    public void testAccessDenied() throws Exception {
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.GET_ACTION_URI);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/accessDenied");
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (!response.getBody().hasFault()) {
+            fail("AccessDenied fault not returned");
+        }
+        final Fault fault = new SOAP(response).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(Management.ACCESS_DENIED, fault.getCode().getSubcode().getValue());
+        assertEquals(Management.ACCESS_DENIED_REASON, fault.getReason().getText().get(0).getValue());
     }
 }

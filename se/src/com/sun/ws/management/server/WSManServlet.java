@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.1 2005-06-29 19:18:24 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.2 2005-10-06 19:09:48 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
+import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.Management;
@@ -134,6 +135,8 @@ public class WSManServlet extends HttpServlet {
             dispatcher.validateRequest();
             dispatcher.dispatch();
             dispatcher.sendResponse(os, resp, null);
+        } catch (SecurityException sx) {
+            dispatcher.sendResponse(os, resp, new AccessDeniedFault());
         } catch (FaultException fex) {
             dispatcher.sendResponse(os, resp, fex);
         } catch (Throwable th) {
