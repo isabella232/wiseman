@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.2 2005-08-10 21:52:56 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.3 2005-10-26 19:32:20 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -32,6 +32,7 @@ import javax.xml.soap.SOAPException;
 public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
     private static final Logger LOG = Logger.getLogger(ReflectiveRequestDispatcher.class.getName());
+    private static final Class<Handler> HANDLER_INTERFACE = Handler.class;
     private static final Class[] HANDLER_PARAMS = { String.class, String.class, Management.class, Management.class };
     private static final String HANDLER_PREFIX = ReflectiveRequestDispatcher.class.getPackage().getName() + ".handler";
     
@@ -65,7 +66,15 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
                     Management.INVALID_RESOURCE_URI_DETAIL);
         }
         
-        // TODO: verify that handlerClass implements the Handler interface
+        // verify that handlerClass implements the Handler interface
+        if (!HANDLER_INTERFACE.isAssignableFrom(handlerClass)) {
+            throw new DestinationUnreachableFault(
+                    "Handler " +
+                    handlerClassName +
+                    " does not implement the Handler interface for resource " + resource,
+                    Management.INVALID_RESOURCE_URI_DETAIL);
+        }
+        
         final Method method;
         try {
             method = handlerClass.getDeclaredMethod("handle", HANDLER_PARAMS);

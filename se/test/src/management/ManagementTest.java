@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.5 2005-10-06 19:09:49 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.6 2005-10-26 19:32:22 akhilarora Exp $
  */
 
 package management;
@@ -298,11 +298,31 @@ public class ManagementTest extends TestBase {
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         if (!response.getBody().hasFault()) {
-            fail("AccessDenied fault not returned");
+            fail("fault not returned");
         }
         final Fault fault = new SOAP(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
         assertEquals(Management.ACCESS_DENIED, fault.getCode().getSubcode().getValue());
         assertEquals(Management.ACCESS_DENIED_REASON, fault.getReason().getText().get(0).getValue());
+    }
+    
+    public void testNonHandler() throws Exception {
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.GET_ACTION_URI);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/nonHandler");
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (!response.getBody().hasFault()) {
+            fail("fault not returned");
+        }
+        final Fault fault = new SOAP(response).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(Management.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
+        assertEquals(Management.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
     }
 }
