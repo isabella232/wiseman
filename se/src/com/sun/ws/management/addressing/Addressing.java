@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.1 2005-06-29 19:18:17 akhilarora Exp $
+ * $Id: Addressing.java,v 1.2 2005-10-27 22:41:01 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -100,32 +100,28 @@ public class Addressing extends SOAP {
     }
     
     public void validate() throws SOAPException, JAXBException, FaultException {
-        final Document doc = newDocument();
-        validateElementPresent(doc, getAction(), ACTION);
-        validateElementPresent(doc, getTo(), TO);
-        validateElementPresent(doc, getMessageId(), MESSAGE_ID);
-        validateElementPresent(doc, getReplyTo(), REPLY_TO);
+        validateElementPresent(getAction(), ACTION);
+        validateElementPresent(getTo(), TO);
+        validateElementPresent(getMessageId(), MESSAGE_ID);
+        validateElementPresent(getReplyTo(), REPLY_TO);
         final String replyToAddress = getReplyTo().getAddress().getValue();
-        validateElementPresent(doc, replyToAddress, ADDRESS);
+        validateElementPresent(replyToAddress, ADDRESS);
         
-        validateURISyntax(doc, getAction());
-        validateURISyntax(doc, getTo());
-        validateURISyntax(doc, getMessageId());
-        validateURISyntax(doc, replyToAddress);
+        validateURISyntax(getAction());
+        validateURISyntax(getTo());
+        validateURISyntax(getMessageId());
+        validateURISyntax(replyToAddress);
     }
     
-    protected void validateElementPresent(final Document doc,
-            final Object element, final QName elementName) throws FaultException {
-        
+    protected void validateElementPresent(final Object element, final QName elementName) throws FaultException {
         if (element == null) {
             throw new MessageInformationHeaderRequiredFault(
                     elementName.getPrefix() + COLON + elementName.getLocalPart());
         }
     }
     
-    protected void validateURISyntax(final Document doc, final String uri)
+    protected void validateURISyntax(final String uri)
     throws FaultException {
-        
         try {
             new URI(uri);
         } catch (URISyntaxException syntax) {
