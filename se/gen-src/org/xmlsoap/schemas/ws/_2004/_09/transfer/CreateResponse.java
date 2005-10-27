@@ -6,11 +6,9 @@
 //
 
 
-package org.xmlsoap.schemas.ws._2004._08.eventing;
+package org.xmlsoap.schemas.ws._2004._09.transfer;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.xml.bind.annotation.AccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -20,22 +18,20 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.namespace.QName;
-import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 
 /**
- * Java class for SubscribeResponse element declaration.
+ * Java class for CreateResponse element declaration.
  *  <p>The following schema fragment specifies the expected content contained within this class.
  * <p>
  * <pre>
- * &lt;element name="SubscribeResponse">
+ * &lt;element name="CreateResponse">
  *   &lt;complexType>
  *     &lt;complexContent>
  *       &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *         &lt;sequence>
- *           &lt;element name="SubscriptionManager" type="{http://schemas.xmlsoap.org/ws/2004/08/addressing}EndpointReferenceType"/>
- *           &lt;element name="Expires" type="{http://schemas.xmlsoap.org/ws/2004/08/eventing}ExpirationType"/>
+ *           &lt;element name="ResourceCreated" type="{http://schemas.xmlsoap.org/ws/2004/08/addressing}EndpointReferenceType"/>
  *           &lt;any/>
  *         &lt;/sequence>
  *       &lt;/restriction>
@@ -47,102 +43,65 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
  */
 @XmlAccessorType(AccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "subscriptionManager",
-    "expires",
+    "resourceCreated",
     "any"
 })
-@XmlRootElement(name = "SubscribeResponse")
-public class SubscribeResponse {
+@XmlRootElement(name = "CreateResponse")
+public class CreateResponse {
 
-    @XmlElement(name = "SubscriptionManager", namespace = "http://schemas.xmlsoap.org/ws/2004/08/eventing")
-    protected EndpointReferenceType subscriptionManager;
-    @XmlElement(name = "Expires", namespace = "http://schemas.xmlsoap.org/ws/2004/08/eventing")
-    protected String expires;
+    @XmlElement(name = "ResourceCreated")
+    protected EndpointReferenceType resourceCreated;
     @XmlAnyElement(lax = true)
-    protected List<Object> any;
+    protected Object any;
     @XmlAnyAttribute
     private Map<QName, String> otherAttributes = new HashMap<QName, String>();
 
     /**
-     * Gets the value of the subscriptionManager property.
+     * Gets the value of the resourceCreated property.
      * 
      * @return
      *     possible object is
      *     {@link EndpointReferenceType }
      *     
      */
-    public EndpointReferenceType getSubscriptionManager() {
-        return subscriptionManager;
+    public EndpointReferenceType getResourceCreated() {
+        return resourceCreated;
     }
 
     /**
-     * Sets the value of the subscriptionManager property.
+     * Sets the value of the resourceCreated property.
      * 
      * @param value
      *     allowed object is
      *     {@link EndpointReferenceType }
      *     
      */
-    public void setSubscriptionManager(EndpointReferenceType value) {
-        this.subscriptionManager = value;
-    }
-
-    /**
-     * Gets the value of the expires property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
-     */
-    public String getExpires() {
-        return expires;
-    }
-
-    /**
-     * Sets the value of the expires property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
-     */
-    public void setExpires(String value) {
-        this.expires = value;
-    }
-
-    protected List<Object> _getAny() {
-        if (any == null) {
-            any = new ArrayList<Object>();
-        }
-        return any;
+    public void setResourceCreated(EndpointReferenceType value) {
+        this.resourceCreated = value;
     }
 
     /**
      * Gets the value of the any property.
      * 
-     * <p>
-     * This accessor method returns a reference to the live list,
-     * not a snapshot. Therefore any modification you make to the
-     * returned list will be present inside the JAXB object.
-     * This is why there is not a <CODE>set</CODE> method for the any property.
-     * 
-     * <p>
-     * For example, to add a new item, do as follows:
-     * <pre>
-     *    getAny().add(newItem);
-     * </pre>
-     * 
-     * 
-     * <p>
-     * Objects of the following type(s) are allowed in the list
-     * {@link Element }
-     * {@link Object }
-     * 
-     * 
+     * @return
+     *     possible object is
+     *     {@link Object }
+     *     
      */
-    public List<Object> getAny() {
-        return this._getAny();
+    public Object getAny() {
+        return any;
+    }
+
+    /**
+     * Sets the value of the any property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Object }
+     *     
+     */
+    public void setAny(Object value) {
+        this.any = value;
     }
 
     /**
