@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.3 2005-10-26 19:32:20 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.4 2005-10-31 18:41:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -42,7 +42,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
     public void dispatch() throws JAXBException, SOAPException,
             InstantiationException, IllegalAccessException,
-            FaultException, Throwable {
+            FaultException, Exception {
         
         final String action = request.getAction();
         final String resource = request.getResourceURI();
@@ -101,7 +101,12 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
             method.invoke(handler, action, resource, request, response);
         } catch (InvocationTargetException itex) {
             // the cause might be FaultException if a Fault is being indicated by the handler
-            throw itex.getCause();
+            final Throwable cause = itex.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            } else {
+                throw new Exception(cause);
+            }
         }
     }
     

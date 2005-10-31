@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.1 2005-06-29 19:18:24 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.2 2005-10-31 18:41:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -141,7 +141,7 @@ public class RequestDispatcher {
     
     // default implementation is empty: subclasses will override
     public void dispatch()
-    throws JAXBException, SOAPException, FaultException, Throwable {
+    throws JAXBException, SOAPException, FaultException, Exception {
     }
     
     public void validateRequest()

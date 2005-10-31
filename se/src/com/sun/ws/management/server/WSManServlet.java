@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.2 2005-10-06 19:09:48 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.3 2005-10-31 18:41:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -22,6 +22,7 @@ import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.Http;
 import java.io.BufferedInputStream;
@@ -31,8 +32,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -41,6 +50,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
 
 public class WSManServlet extends HttpServlet {
@@ -54,6 +64,7 @@ public class WSManServlet extends HttpServlet {
             "</This> ";
     
     private static final Properties wsmanProperties = new Properties();
+    private static final ExecutorService pool = Executors.newCachedThreadPool();
     
     public static Map<Object, Object> getProperties() {
         return Collections.unmodifiableMap(wsmanProperties);
@@ -130,10 +141,16 @@ public class WSManServlet extends HttpServlet {
         final Management request = new Management(is);
         log(request);
         
+        long timeout = 0;
+        final Duration timeoutDuration = request.getTimeout();
+        if (timeoutDuration != null) {
+            timeout = timeoutDuration.getTimeInMillis(new Date());
+        }
+        
         final RequestDispatcher dispatcher = createDispatcher(request, req);
         try {
             dispatcher.validateRequest();
-            dispatcher.dispatch();
+            dispatch(dispatcher, timeout);
             dispatcher.sendResponse(os, resp, null);
         } catch (SecurityException sx) {
             dispatcher.sendResponse(os, resp, new AccessDeniedFault());
@@ -142,6 +159,22 @@ public class WSManServlet extends HttpServlet {
         } catch (Throwable th) {
             log(th.getMessage(), th);
             dispatcher.sendResponse(os, resp, new InternalErrorFault(th));
+        }
+    }
+    
+    private void dispatch(final RequestDispatcher dispatcher, final long timeout) throws JAXBException, SOAPException, Exception {
+        if (timeout == 0) {
+            dispatcher.dispatch();
+        } else {
+            FutureTask<?> task = new FutureTask<Object>(new Callable<Object>() {
+                public Object call() throws Exception { dispatcher.dispatch(); return null; }
+            });
+            Future<?> future = pool.submit(task);
+            try {
+                future.get(timeout, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException tx) {
+                throw new TimedOutFault();
+            }
         }
     }
     
