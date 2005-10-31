@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.1 2005-06-29 19:18:25 akhilarora Exp $
+ * $Id: SOAP.java,v 1.2 2005-10-31 21:23:53 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -33,6 +33,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPHeaderElement;
 import org.w3._2003._05.soap_envelope.Detail;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3._2003._05.soap_envelope.Faultcode;
@@ -55,6 +56,8 @@ public class SOAP extends Message {
     public static final QName BODY = new QName(NS_URI, "Body", NS_PREFIX);
     public static final QName SENDER = new QName(NS_URI, "Sender", NS_PREFIX);
     public static final QName RECEIVER = new QName(NS_URI, "Receiver", NS_PREFIX);
+    
+    public static final String TRUE = "true";
     
     private static XmlBinding binding = null;
     
@@ -92,6 +95,21 @@ public class SOAP extends Message {
     }
     
     public void validate() throws SOAPException, JAXBException, FaultException {
+    }
+    
+    public SOAPHeaderElement[] getAllMustUnderstand() throws SOAPException {
+        final SOAPElement[] headers = getChildren(getHeader());
+        final List<SOAPElement> ml = new ArrayList<SOAPElement>(headers.length);
+        for (final SOAPElement hdr : headers) {
+            if (hdr instanceof SOAPHeaderElement) {
+                final SOAPHeaderElement she = (SOAPHeaderElement) hdr;
+                final String mu = she.getAttributeValue(MUST_UNDERSTAND);
+                if (TRUE.equalsIgnoreCase(mu)) {
+                    ml.add(she);
+                }
+            }
+        }
+        return (SOAPHeaderElement[]) ml.toArray(new SOAPHeaderElement[ml.size()]);
     }
     
     protected SOAPElement[] getChildren(final SOAPElement parent) throws SOAPException {

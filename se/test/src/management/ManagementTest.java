@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.7 2005-10-31 18:41:15 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.8 2005-10-31 21:23:53 akhilarora Exp $
  */
 
 package management;
@@ -33,6 +33,7 @@ import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import javax.xml.soap.SOAPHeaderElement;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -224,6 +225,13 @@ public class ManagementTest extends TestBase {
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         mgmt.prettyPrint(logfile);
+        
+        final SOAPHeaderElement[] she = mgmt.getAllMustUnderstand();
+        // wsa:Action, wsa:To, wsa:MessageID are the three headers with MU=1
+        assertEquals(3, she.length);
+        for (final SOAPHeaderElement hdr : she) {
+            assertTrue(hdr.getMustUnderstand());
+        }
         
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
