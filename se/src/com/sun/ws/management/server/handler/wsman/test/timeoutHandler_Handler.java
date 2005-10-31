@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: timeoutHandler_Handler.java,v 1.1 2005-10-31 18:41:14 akhilarora Exp $
+ * $Id: timeoutHandler_Handler.java,v 1.2 2005-10-31 22:58:33 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -26,9 +26,7 @@ public class timeoutHandler_Handler implements Handler {
     public void handle(final String action, final String resource,
             final Management request, final Management response) throws Exception {
         while (true) {
-            try {
-                Thread.currentThread().sleep(Long.MAX_VALUE);
-            } catch (InterruptedException ignore) {}
+            Thread.currentThread().sleep(Long.MAX_VALUE);
         }
     }
 }
