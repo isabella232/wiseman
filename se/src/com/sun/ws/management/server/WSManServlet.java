@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.3 2005-10-31 18:41:13 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.4 2005-10-31 22:55:05 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -174,6 +174,8 @@ public class WSManServlet extends HttpServlet {
                 future.get(timeout, TimeUnit.MILLISECONDS);
             } catch (TimeoutException tx) {
                 throw new TimedOutFault();
+            } finally {
+                future.cancel(true);
             }
         }
     }
