@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.4 2005-10-31 22:55:05 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.5 2005-11-01 22:44:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -56,6 +57,7 @@ import javax.xml.soap.SOAPException;
 public class WSManServlet extends HttpServlet {
     
     private static final Logger LOG = Logger.getLogger(WSManServlet.class.getName());
+    private static final long DEFAULT_TIMEOUT = 30000;
     
     private static final String THIS =
             "<This xmlns=\"http://schemas.xmlsoap.org/ws/2005/02/management\"> \n" +
@@ -141,7 +143,7 @@ public class WSManServlet extends HttpServlet {
         final Management request = new Management(is);
         log(request);
         
-        long timeout = 0;
+        long timeout = DEFAULT_TIMEOUT;
         final Duration timeoutDuration = request.getTimeout();
         if (timeoutDuration != null) {
             timeout = timeoutDuration.getTimeInMillis(new Date());
@@ -162,21 +164,21 @@ public class WSManServlet extends HttpServlet {
         }
     }
     
-    private void dispatch(final RequestDispatcher dispatcher, final long timeout) throws JAXBException, SOAPException, Exception {
-        if (timeout == 0) {
-            dispatcher.dispatch();
-        } else {
-            FutureTask<?> task = new FutureTask<Object>(new Callable<Object>() {
-                public Object call() throws Exception { dispatcher.dispatch(); return null; }
-            });
-            Future<?> future = pool.submit(task);
-            try {
-                future.get(timeout, TimeUnit.MILLISECONDS);
-            } catch (TimeoutException tx) {
-                throw new TimedOutFault();
-            } finally {
-                future.cancel(true);
-            }
+    private void dispatch(final RequestDispatcher dispatcher, final long timeout) throws Throwable {
+        FutureTask<?> task = new FutureTask<Object>(dispatcher);
+        // the Future returned by pool.submit does not propagate
+        // ExecutionException, perform the get on FutureTask itself
+        pool.submit(task);
+        try {
+            task.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (ExecutionException ex) {
+            throw ex.getCause();
+        } catch (InterruptedException ix) {
+            // ignore
+        } catch (TimeoutException tx) {
+            throw new TimedOutFault();
+        } finally {
+            task.cancel(true);
         }
     }
     

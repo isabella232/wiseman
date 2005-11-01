@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.2 2005-10-31 18:41:13 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.3 2005-11-01 22:44:11 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletResponse;
@@ -36,7 +37,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-public class RequestDispatcher {
+public abstract class RequestDispatcher implements Callable {
     
     private static final Logger LOG = Logger.getLogger(RequestDispatcher.class.getName());
     private static final String UUID_SCHEME = "uuid:";
@@ -137,11 +138,6 @@ public class RequestDispatcher {
             final byte[] content = baos.toByteArray();
             LOG.fine(new String(content));
         }
-    }
-    
-    // default implementation is empty: subclasses will override
-    public void dispatch()
-    throws JAXBException, SOAPException, FaultException, Exception {
     }
     
     public void validateRequest()

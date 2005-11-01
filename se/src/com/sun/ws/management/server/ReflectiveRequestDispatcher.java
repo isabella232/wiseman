@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.4 2005-10-31 18:41:13 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.5 2005-11-01 22:44:11 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -40,10 +40,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         super(req);
     }
     
-    public void dispatch() throws JAXBException, SOAPException,
-            InstantiationException, IllegalAccessException,
-            FaultException, Exception {
-        
+    public Management call() throws Exception {        
         final String action = request.getAction();
         final String resource = request.getResourceURI();
         if (resource == null) {
@@ -108,6 +105,8 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
                 throw new Exception(cause);
             }
         }
+        
+        return response;
     }
     
     private String createHandlerClassName(final String resource) {
