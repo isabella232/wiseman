@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.8 2005-11-08 22:35:10 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.9 2005-11-08 22:45:50 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -40,6 +40,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
+
 public final class HttpClient {
     
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
