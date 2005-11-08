@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.2 2005-10-31 21:23:53 akhilarora Exp $
+ * $Id: SOAP.java,v 1.3 2005-11-08 22:32:08 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -138,6 +138,13 @@ public class SOAP extends Message {
         return binding.unmarshal(elements[0]);
     }
     
+    protected void removeChildren(final SOAPElement parent) throws SOAPException {
+        SOAPElement[] elements = getChildren(parent);
+        for (final SOAPElement se : elements) {
+            se.detachNode();
+        }
+    }
+    
     protected void removeChildren(final SOAPElement parent, final QName qname) throws SOAPException {
         SOAPElement[] elements = getChildren(parent, qname);
         for (final SOAPElement se : elements) {
@@ -151,6 +158,7 @@ public class SOAP extends Message {
         
         final List<Node> nodeList = new ArrayList<Node>();
         final Document doc = newDocument();
+        
         if (text != null) {
             final Element textElement = createElement(doc, SOAP.TEXT);
             setAttribute(textElement, XML.LANG, XML.DEFAULT_LANG);
@@ -211,7 +219,7 @@ public class SOAP extends Message {
     private void setFault(final QName code, final QName subcode, final String reason,
             final Node... details) throws JAXBException, SOAPException {
         
-        removeChildren(getBody(), FAULT);
+        removeChildren(getBody());
 
         final Fault fault = objectFactory.createFault();
 
