@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.7 2005-08-10 01:52:42 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.8 2005-11-08 22:35:10 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
 
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.Message;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +40,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
-
 public final class HttpClient {
     
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
@@ -64,52 +61,71 @@ public final class HttpClient {
         HttpsURLConnection.setDefaultHostnameVerifier(hv);
     }
     
-    public static Addressing sendRequest(final Addressing msg)
-    throws IOException, JAXBException, SOAPException {
-        
-        final String to = msg.getTo();
+    private static HttpURLConnection initConnection(final String to) throws IOException {
         if (to == null) {
             throw new IllegalArgumentException("Required Element is missing: " +
-                    Addressing.TO);
+              Addressing.TO);
         }
         
-        log(msg);
+        final URL dest = new URL(to);
+        final URLConnection conn = dest.openConnection();
         
-        final URL destination = new URL(to);
-        final URLConnection conn = destination.openConnection();
         conn.setAllowUserInteraction(false);
         conn.setDoInput(true);
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", Http.SOAP_MIME_TYPE_WITH_CHARSET);
-        conn.setRequestProperty("Accept", Http.SOAP_MIME_TYPE_WITH_CHARSET);
         conn.setRequestProperty("User-Agent", "Sun WS-Management Java System");
+        
         final HttpURLConnection http = (HttpURLConnection) conn;
         http.setRequestMethod("POST");
-        http.setInstanceFollowRedirects(false);
         
+        return http;
+    }
+    
+    // type of data can be Message or byte[], others will throw IllegalArgumentException
+    private static void transfer(final URLConnection conn, final Object data)
+    throws IOException, SOAPException, JAXBException {
         OutputStream os = null;
         try {
-            os = new BufferedOutputStream(conn.getOutputStream());
-            msg.writeTo(os);
+            os = conn.getOutputStream();
+            if (data instanceof Message)
+                ((Message) data).writeTo(os);
+            else if (data instanceof byte[]) {
+                os.write((byte[]) data);
+            } else {
+                throw new IllegalArgumentException("Type of data not handled: " +
+                  data.getClass().getName());
+            }
         } finally {
             if (os != null) { os.close(); }
         }
+    }
+    
+    public static Addressing sendRequest(final Addressing msg)
+    throws IOException, JAXBException, SOAPException {
+        
+        log(msg);
+        
+        final HttpURLConnection http = initConnection(msg.getTo());
+        http.setRequestProperty("Accept", Http.SOAP_MIME_TYPE_WITH_CHARSET);
+        http.setInstanceFollowRedirects(false);
+        
+        transfer(http, msg);
         
         final InputStream is;
-        
         final int response = http.getResponseCode();
         if (response == HttpURLConnection.HTTP_OK) {
-            is = new BufferedInputStream(http.getInputStream());
+            is = http.getInputStream();
         } else if (response == HttpURLConnection.HTTP_BAD_REQUEST ||
-                response == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+          response == HttpURLConnection.HTTP_INTERNAL_ERROR) {
             // read the fault from the error stream
-            is = new BufferedInputStream(http.getErrorStream());
+            is = http.getErrorStream();
         } else {
             final String detail = http.getResponseMessage();
             throw new IOException(detail == null ? Integer.toString(response) : detail);
         }
         
-        final String responseType = conn.getContentType();
+        final String responseType = http.getContentType();
         if (!Http.isContentTypeAcceptable(responseType)) {
             // dump the first 4k bytes of the response for help in debugging
             if (LOG.isLoggable(Level.INFO)) {
@@ -125,7 +141,6 @@ public final class HttpClient {
         }
         
         final Addressing addr;
-        
         try {
             addr = new Addressing(is);
         } finally {
@@ -137,34 +152,17 @@ public final class HttpClient {
         return addr;
     }
     
+    public static int sendResponse(final String to, final byte[] bits) throws IOException, SOAPException, JAXBException {
+        log(bits);
+        HttpURLConnection http = initConnection(to);
+        transfer(http, bits);
+        return http.getResponseCode();
+    }
+    
     public static int sendResponse(final Addressing msg) throws IOException, SOAPException, JAXBException {
-        
-        final String to = msg.getTo();
-        if (to == null) {
-            throw new IllegalArgumentException("Required Element is missing: " +
-                    Addressing.TO);
-        }
-        
         log(msg);
-        
-        final URL destination = new URL(to);
-        final URLConnection conn = destination.openConnection();
-        conn.setAllowUserInteraction(false);
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type", Http.SOAP_MIME_TYPE_WITH_CHARSET);
-        conn.setRequestProperty("User-Agent", "Sun WS-Management Java System");
-        final HttpURLConnection http = (HttpURLConnection) conn;
-        http.setRequestMethod("POST");
-        
-        OutputStream os = null;
-        try {
-            os = new BufferedOutputStream(conn.getOutputStream());
-            msg.writeTo(os);
-        } finally {
-            if (os != null) { os.close(); }
-        }
-        
+        HttpURLConnection http = initConnection(msg.getTo());
+        transfer(http, msg);
         return http.getResponseCode();
     }
     
@@ -175,6 +173,12 @@ public final class HttpClient {
             msg.writeTo(baos);
             final byte[] content = baos.toByteArray();
             LOG.fine(new String(content));
+        }
+    }
+    
+    private static void log(final byte[] bits) {
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.fine(new String(bits));
         }
     }
 }
