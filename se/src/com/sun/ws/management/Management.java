@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.2 2005-08-10 21:52:56 akhilarora Exp $
+ * $Id: Management.java,v 1.3 2005-11-08 22:40:19 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -143,6 +143,7 @@ public class Management extends Addressing {
     public static final String INVALID_RESOURCE_URI_DETAIL = "wsman:faultDetail/InvalidResourceURI";
     public static final String FILTERING_REQUIRED_DETAIL = "wsman:faultDetail/FilteringRequired";
     public static final String URI_LIMIT_EXCEEDED_DETAIL = "wsman:faultDetail/URILimitExceeded";
+    public static final String MIN_ENVELOPE_LIMIT_DETAIL = "wsman:faultDetail/MinimumEnvelopeLimit";
     public static final String MAX_ENVELOPE_SIZE_DETAIL = "wsman:faultDetail/MaxEnvelopeSize";
     public static final String MAX_ENVELOPE_SIZE_EXCEEDED_DETAIL = "wsman:faultDetail/MaxEnvelopeSizeExceeded";
     public static final String SERVICE_ENVELOPE_LIMIT_DETAIL = "wsman:faultDetail/ServiceEnvelopeLimit";

@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.5 2005-11-01 22:44:12 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.6 2005-11-08 22:40:20 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
 import com.sun.ws.management.AccessDeniedFault;
+import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.Http;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -35,11 +37,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -53,17 +53,20 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
+import org.w3c.dom.Node;
+import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
 
 public class WSManServlet extends HttpServlet {
     
     private static final Logger LOG = Logger.getLogger(WSManServlet.class.getName());
     private static final long DEFAULT_TIMEOUT = 30000;
+    private static final long MIN_ENVELOPE_SIZE = 8192;
     
     private static final String THIS =
-            "<This xmlns=\"http://schemas.xmlsoap.org/ws/2005/02/management\"> \n" +
-            "<Vendor> Sun Microsystems, Inc. http://www.sun.com </Vendor> \n" +
-            "<Version> 0.2 </Version> \n" +
-            "</This> ";
+      "<This xmlns=\"http://schemas.xmlsoap.org/ws/2005/02/management\"> \n" +
+      "<Vendor> Sun Microsystems, Inc. http://www.sun.com </Vendor> \n" +
+      "<Version> 0.2 </Version> \n" +
+      "</This> ";
     
     private static final Properties wsmanProperties = new Properties();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
@@ -98,13 +101,13 @@ public class WSManServlet extends HttpServlet {
     }
     
     public void doGet(final HttpServletRequest req,
-            final HttpServletResponse resp) throws ServletException, IOException {
+      final HttpServletResponse resp) throws ServletException, IOException {
         
         doPost(req, resp);
     }
     
     public void doPost(final HttpServletRequest req,
-            final HttpServletResponse resp) throws ServletException, IOException {
+      final HttpServletResponse resp) throws ServletException, IOException {
         
         if (!Http.isContentTypeAcceptable(req.getContentType())) {
             resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
@@ -132,13 +135,13 @@ public class WSManServlet extends HttpServlet {
     }
     
     protected RequestDispatcher createDispatcher(final Management request,
-            final HttpServletRequest req) throws SOAPException, JAXBException, IOException {
+      final HttpServletRequest req) throws SOAPException, JAXBException, IOException {
         return new ReflectiveRequestDispatcher(request);
     }
     
     protected void handle(final InputStream is, final OutputStream os,
-            final HttpServletRequest req, final HttpServletResponse resp)
-            throws SOAPException, JAXBException, IOException {
+      final HttpServletRequest req, final HttpServletResponse resp)
+      throws SOAPException, JAXBException, IOException {
         
         final Management request = new Management(is);
         log(request);
@@ -150,17 +153,31 @@ public class WSManServlet extends HttpServlet {
         }
         
         final RequestDispatcher dispatcher = createDispatcher(request, req);
+        
+        long maxEnvelopeSize = Long.MAX_VALUE;
+        final MaxEnvelopeSizeType maxSize = request.getMaxEnvelopeSize();
+        if (maxSize != null) {
+            maxEnvelopeSize = maxSize.getValue();
+        }
+        if (maxEnvelopeSize < MIN_ENVELOPE_SIZE) {
+            final Node[] details =
+              SOAP.createFaultDetail("MaxEnvelopeSize is set too small to encode faults " +
+              "(needs to be atleast " + MIN_ENVELOPE_SIZE + ")", Management.MIN_ENVELOPE_LIMIT_DETAIL, null, null);
+            dispatcher.sendResponse(os, resp, new EncodingLimitFault(details), Long.MAX_VALUE);
+            return;
+        }
+        
         try {
             dispatcher.validateRequest();
             dispatch(dispatcher, timeout);
-            dispatcher.sendResponse(os, resp, null);
+            dispatcher.sendResponse(os, resp, null, maxEnvelopeSize);
         } catch (SecurityException sx) {
-            dispatcher.sendResponse(os, resp, new AccessDeniedFault());
+            dispatcher.sendResponse(os, resp, new AccessDeniedFault(), maxEnvelopeSize);
         } catch (FaultException fex) {
-            dispatcher.sendResponse(os, resp, fex);
+            dispatcher.sendResponse(os, resp, fex, maxEnvelopeSize);
         } catch (Throwable th) {
             log(th.getMessage(), th);
-            dispatcher.sendResponse(os, resp, new InternalErrorFault(th));
+            dispatcher.sendResponse(os, resp, new InternalErrorFault(th), maxEnvelopeSize);
         }
     }
     

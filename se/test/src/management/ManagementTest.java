@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.8 2005-10-31 21:23:53 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.9 2005-11-08 22:40:20 akhilarora Exp $
  */
 
 package management;
@@ -350,5 +350,73 @@ public class ManagementTest extends TestBase {
         assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
         assertEquals(Management.TIMED_OUT, fault.getCode().getSubcode().getValue());
         assertEquals(Management.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
+    }
+    
+    public void testMaxEnvelopeSizeTooSmall() throws Exception {
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.GET_ACTION_URI);
+        mgmt.setTo(DESTINATION);
+        // the particular handler used does not matter in this case -
+        // a fault should be returned before a handler is invoked
+        mgmt.setResourceURI("wsman:test/timeoutHandler");
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        final MaxEnvelopeSizeType maxEnvSize = new MaxEnvelopeSizeType();
+        maxEnvSize.setValue(4);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (!response.getBody().hasFault()) {
+            fail("fault not returned");
+        }
+        
+        final Fault fault = new SOAP(response).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(Management.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
+        assertEquals(Management.ENCODING_LIMIT_REASON, fault.getReason().getText().get(0).getValue());
+        for (final Object detail : fault.getDetail().getAny()) {
+            if (detail instanceof Node) {
+                final Node de = (Node) detail;
+            } else {
+                final String str = ((JAXBElement<String>) detail).getValue();
+                assertEquals(Management.MIN_ENVELOPE_LIMIT_DETAIL, str);
+            }
+        }
+    }
+    
+    public void testMaxEnvelopeSizeTooBig() throws Exception {
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.GET_ACTION_URI);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/hugeEnvelopeCreator");
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        final MaxEnvelopeSizeType maxEnvSize = new MaxEnvelopeSizeType();
+        maxEnvSize.setValue(8192 + 1);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (!response.getBody().hasFault()) {
+            fail("fault not returned");
+        }
+        
+        final Fault fault = new SOAP(response).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(Management.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
+        assertEquals(Management.ENCODING_LIMIT_REASON, fault.getReason().getText().get(0).getValue());
+        for (final Object detail : fault.getDetail().getAny()) {
+            if (detail instanceof Node) {
+                final Node de = (Node) detail;
+            } else {
+                final String str = ((JAXBElement<String>) detail).getValue();
+                assertEquals(Management.MAX_ENVELOPE_SIZE_DETAIL, str);
+            }
+        }
     }
 }

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.3 2005-11-01 22:44:11 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.4 2005-11-08 22:40:19 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
+import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.Management;
-import com.sun.ws.management.Message;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
+import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 public abstract class RequestDispatcher implements Callable {
@@ -44,6 +45,8 @@ public abstract class RequestDispatcher implements Callable {
     
     protected final Management request;
     protected final Management response;
+    
+    private boolean responseTooBig = false;
     
     public RequestDispatcher(final Management req) throws JAXBException, SOAPException {
         
@@ -87,8 +90,8 @@ public abstract class RequestDispatcher implements Callable {
     }
     
     public void sendResponse(final OutputStream os,
-            final HttpServletResponse resp, final FaultException fex)
-            throws SOAPException, JAXBException, IOException {
+      final HttpServletResponse resp, final FaultException fex, final long maxEnvelopeSize)
+      throws SOAPException, JAXBException, IOException {
         
         if (fex != null) {
             new SOAP(response).setFault(fex);
@@ -107,41 +110,51 @@ public abstract class RequestDispatcher implements Callable {
         }
         
         fillReturnAddress();
-        sendReply(os);
-    }
-    
-    protected int sendAsyncReply()
-    throws IOException, SOAPException, JAXBException {
-        return HttpClient.sendResponse(response);
-    }
-    
-    private void sendReply(final OutputStream os)
-    throws SOAPException, JAXBException, IOException {
         
-        log(response);
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        response.writeTo(baos);
+        final byte[] content = baos.toByteArray();
+        
+        log(content);
+        
+        if (content.length > maxEnvelopeSize) {
+            // although we check earlier that the maxEnvelopeSize is > 8192, we still
+            // need to use the responseTooBig flag to break possible infinite recursion if
+            // the serialization of the EncodingLimitFault happens to exceed 8192 bytes
+            if (responseTooBig) {
+                LOG.warning("MaxEnvelopeSize set too small to send an EncodingLimitFault");
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            } else {
+                responseTooBig = true;
+                final Node[] details = SOAP.createFaultDetail(null, Management.MAX_ENVELOPE_SIZE_DETAIL, null, null);
+                sendResponse(os, resp, new EncodingLimitFault(details), maxEnvelopeSize);
+            }
+            return;
+        }
+        
         final String dest = response.getTo();
         if (Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
-            response.writeTo(os);
+            os.write(content);
         } else {
-            final int status = sendAsyncReply();
+            final int status = sendAsyncReply(response.getTo(), content);
             if (status != HttpURLConnection.HTTP_OK) {
                 throw new IOException("Response to " + dest + " returned " + status);
             }
         }
     }
     
-    protected static void log(final Message msg) throws IOException, SOAPException {
-        // expensive serialization ahead, so check first
-        if (LOG.isLoggable(Level.FINE)) {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            msg.writeTo(baos);
-            final byte[] content = baos.toByteArray();
-            LOG.fine(new String(content));
-        }
+    protected int sendAsyncReply(final String to, final byte[] bits) throws IOException, SOAPException, JAXBException {
+        return HttpClient.sendResponse(to, bits);
     }
     
     public void validateRequest()
     throws SOAPException, JAXBException, FaultException {
         request.validate();
+    }
+    
+    private static void log(final byte[] bits) {
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.fine(new String(bits));
+        }
     }
 }
