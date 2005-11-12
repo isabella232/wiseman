@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.2 2005-08-10 00:25:15 akhilarora Exp $
+ * $Id: Eventing.java,v 1.3 2005-11-12 01:27:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -106,7 +106,7 @@ public class Eventing extends Addressing {
     public static final QName SUBSCRIPTION_END = new QName(NS_URI, "SubscriptionEnd", NS_PREFIX);
     public static final QName IDENTIFIER = new QName(NS_URI, "Identifier", NS_PREFIX);
     public static final QName NOTIFY_TO = new QName(NS_URI, "NotifyTo", NS_PREFIX);
-
+    
     private ObjectFactory objectFactory = null;
     
     public Eventing() throws SOAPException, JAXBException {
@@ -129,26 +129,50 @@ public class Eventing extends Addressing {
     }
     
     public void setSubscribe(final EndpointReferenceType endTo, final String deliveryMode,
-            final EndpointReferenceType notifyTo, final String expires, final FilterType filter)
+            final EndpointReferenceType notifyTo, final String expires, final FilterType filter,
+            final Element... extensions)
             throws SOAPException, JAXBException {
         
         removeChildren(getBody(), SUBSCRIBE);
         final Subscribe sub = objectFactory.createSubscribe();
-        sub.setEndTo(endTo);
+        
+        if (endTo != null) {
+            sub.setEndTo(endTo);
+        }
         
         final DeliveryType delivery = objectFactory.createDeliveryType();
-        delivery.setMode(deliveryMode);
+        
+        if (deliveryMode != null) {
+            delivery.setMode(deliveryMode);
+        }
+        
         if (notifyTo != null) {
             final Document doc = newDocument();
-            final Element notifyElement = doc.createElementNS(NS_URI, NS_PREFIX + ":" + "NotifyTo");
+            final Element notifyElement = doc.createElementNS(
+                    NOTIFY_TO.getNamespaceURI(),
+                    NOTIFY_TO.getPrefix() + COLON +
+                    NOTIFY_TO.getLocalPart());
             doc.appendChild(notifyElement);
             getXmlBinding().marshal(notifyTo, notifyElement);
             delivery.getContent().add(doc.getDocumentElement());
         }
+        
+        if (extensions != null) {
+            for (final Element ext : extensions) {
+                delivery.getContent().add(ext);
+            }
+        }
+        
         sub.setDelivery(delivery);
         
-        sub.setExpires(expires);
-        sub.setFilter(filter);
+        if (expires != null) {
+            sub.setExpires(expires);
+        }
+        
+        if (filter != null) {
+            sub.setFilter(filter);
+        }
+        
         getXmlBinding().marshal(sub, getBody());
     }
     
