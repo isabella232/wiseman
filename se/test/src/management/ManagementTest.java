@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.9 2005-11-08 22:40:20 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.10 2005-12-08 22:11:57 akhilarora Exp $
  */
 
 package management;
+
 import com.sun.ws.management.Management;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
