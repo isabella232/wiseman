@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.1 2005-12-07 05:30:14 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.2 2005-12-09 00:05:49 akhilarora Exp $
  */
 
 package demo;
@@ -139,6 +139,25 @@ public final class CmdLineDemo {
         }
     }
     
+    private static void sendRelease() throws Exception {
+        Management mgmt = new Management();
+        mgmt.setTo(dest);
+        mgmt.setResourceURI(resource);
+        mgmt.setAction(Enumeration.RELEASE_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId("uuid:" + UUID.randomUUID().toString());
+        Enumeration enu = new Enumeration(mgmt);
+        enu.setRelease(enumContext);
+        
+        System.out.println("\n  ---- release request ----  \n");
+        mgmt.prettyPrint(System.out);
+        
+        Addressing addr = HttpClient.sendRequest(mgmt);
+        
+        System.out.println("\n  ---- release response ----  \n");
+        addr.prettyPrint(System.out);
+    }
+    
     private static void handleGetResponse(Addressing addr) throws Exception {
         Transfer xf = new Transfer(addr);
     }
@@ -180,6 +199,8 @@ public final class CmdLineDemo {
         // continue pulling if there's more
         if (response.getEndOfSequence() == null) {
             sendRequest();
+        } else {
+            sendRelease();
         }
     }
     

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.5 2005-08-10 21:52:57 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.6 2005-12-09 00:05:50 akhilarora Exp $
  */
 
 package management;
@@ -134,7 +134,7 @@ public class EnumerationTest extends TestBase {
         final Document doc = enu.newDocument();
         final Element itemElement = doc.createElementNS(NS_URI, NS_PREFIX + ":anItem");
         items.add(itemElement);
-        enu.setPullResponse(items, context);
+        enu.setPullResponse(items, context, true);
         
         enu.prettyPrint(logfile);
         

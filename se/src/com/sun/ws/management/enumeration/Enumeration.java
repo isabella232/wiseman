@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.3 2005-07-22 21:57:56 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.4 2005-12-09 00:05:48 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -184,7 +184,7 @@ public class Enumeration extends Addressing {
         getXmlBinding().marshal(pull, getBody());
     }
     
-    public void setPullResponse(final List<Element> items, final Object context) 
+    public void setPullResponse(final List<Element> items, final Object context, final boolean haveMore) 
     throws JAXBException, SOAPException {
 
         removeChildren(getBody(), PULL_RESPONSE);
@@ -198,20 +198,9 @@ public class Enumeration extends Addressing {
         contextType.getContent().add(context);
         response.setEnumerationContext(contextType);
         
-        getXmlBinding().marshal(response, getBody());
-    }
-    
-    public void setFinalPullResponse(final List<Element> items) 
-    throws JAXBException, SOAPException {
-
-        removeChildren(getBody(), PULL_RESPONSE);
-        final PullResponse response = objectFactory.createPullResponse();
-        
-        ItemListType itemList = objectFactory.createItemListType();
-        itemList.getAny().addAll(items);
-        response.setItems(itemList);
-        
-        response.setEndOfSequence("");
+        if (!haveMore) {
+            response.setEndOfSequence("");
+        }
         
         getXmlBinding().marshal(response, getBody());
     }
