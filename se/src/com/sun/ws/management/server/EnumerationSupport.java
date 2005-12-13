@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.4 2005-12-09 00:05:49 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.5 2005-12-13 21:12:00 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -245,13 +245,16 @@ public final class EnumerationSupport {
         
         final boolean haveMore = ctx.iterator.hasNext(ctx.clientContext, ctx.cursor);
         ctx.cursor = Integer.valueOf(ctx.cursor + ctx.items.size());
-        // update value but not the key -
-        // otherwise Release may fail to find a context
-        contextMap.put(context, ctx);
-        response.setPullResponse(ctx.items, context.toString(), haveMore);
-        // do not remove the context if done -
-        // the client might want to call release explicitly -
-        // otherwise release will fault with an invalid context
+        if (haveMore) {
+            // update value but not the key -
+            // otherwise Release may fail to find a context
+            contextMap.put(context, ctx);
+            response.setPullResponse(ctx.items, context.toString(), true);
+        } else {
+            // remove the context - a subsequent release will fault with an invalid context
+            contextMap.remove(context);
+            response.setPullResponse(ctx.items, null, false);
+        }
         
         // no need to have this (potentially large object) hanging around
         ctx.items = null;

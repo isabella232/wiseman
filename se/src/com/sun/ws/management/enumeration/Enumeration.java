@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.4 2005-12-09 00:05:48 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.5 2005-12-13 21:11:59 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -194,11 +194,11 @@ public class Enumeration extends Addressing {
         itemList.getAny().addAll(items);
         response.setItems(itemList);
         
-        final EnumerationContextType contextType = objectFactory.createEnumerationContextType();
-        contextType.getContent().add(context);
-        response.setEnumerationContext(contextType);
-        
-        if (!haveMore) {
+        if (haveMore) {
+            final EnumerationContextType contextType = objectFactory.createEnumerationContextType();
+            contextType.getContent().add(context);
+            response.setEnumerationContext(contextType);
+        } else {
             response.setEndOfSequence("");
         }
         
