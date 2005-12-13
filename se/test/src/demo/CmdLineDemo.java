@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.2 2005-12-09 00:05:49 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.3 2005-12-13 21:13:04 akhilarora Exp $
  */
 
 package demo;
@@ -109,8 +109,8 @@ public final class CmdLineDemo {
             if (enumContext == null) {
                 enu.setEnumerate(null, null, null);
             } else {
-                // pull two items at a time to make things interesting
-                enu.setPull(enumContext, -1, 2, null);
+                // pull a few items at a time to make things interesting
+                enu.setPull(enumContext, -1, 3, null);
             }
         }
         
@@ -199,8 +199,6 @@ public final class CmdLineDemo {
         // continue pulling if there's more
         if (response.getEndOfSequence() == null) {
             sendRequest();
-        } else {
-            sendRelease();
         }
     }
     
