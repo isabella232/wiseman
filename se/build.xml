@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.10 2005-08-10 21:52:39 akhilarora Exp $
+ $Id: build.xml,v 1.11 2005-12-13 21:13:54 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -283,4 +283,32 @@
     </java>
   </target>
 
+  <target name="demo-get" depends="client,test-compile">
+    <java classname="demo.CmdLineDemo"
+          classpathref="test.run.classpath"
+          dir="${test.run.dir}"
+          fork="true">
+      <arg value="get" />
+      <arg value="wsman:system/2005/02/this" />
+      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+      <jvmarg value="-Dwsman.user=wsman" />
+      <jvmarg value="-Dwsman.password=secret" />
+      <jvmarg value="-Dwsman.basicauthentication=true" />
+    </java>
+  </target>
+
+  <target name="demo-enum" depends="client,test-compile">
+    <java classname="demo.CmdLineDemo"
+          classpathref="test.run.classpath"
+          dir="${test.run.dir}"
+          fork="true">
+      <arg value="enumerate" />
+      <arg value="wsman:test/java/system/properties" />
+      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+      <jvmarg value="-Dwsman.user=wsman" />
+      <jvmarg value="-Dwsman.password=secret" />
+      <jvmarg value="-Dwsman.basicauthentication=true" />
+    </java>
+  </target>
+  
 </project>
