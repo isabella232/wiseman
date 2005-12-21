@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.3 2005-11-12 01:27:02 akhilarora Exp $
+ * $Id: Eventing.java,v 1.4 2005-12-21 23:48:05 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -176,13 +176,19 @@ public class Eventing extends Addressing {
         getXmlBinding().marshal(sub, getBody());
     }
     
-    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires)
-    throws SOAPException, JAXBException {
+    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires,
+            final Object... extensions)
+            throws SOAPException, JAXBException {
         
         removeChildren(getBody(), SUBSCRIBE_RESPONSE);
         final SubscribeResponse response = objectFactory.createSubscribeResponse();
         response.setSubscriptionManager(mgr);
         response.setExpires(expires);
+        if (extensions != null) {
+            for (final Object ext : extensions) {
+                response.getAny().add(ext);
+            }
+        }
         getXmlBinding().marshal(response, getBody());
     }
     

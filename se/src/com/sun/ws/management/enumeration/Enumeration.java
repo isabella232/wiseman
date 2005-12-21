@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.5 2005-12-13 21:11:59 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.6 2005-12-21 23:48:05 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -101,6 +101,7 @@ public class Enumeration extends Addressing {
     public static final QName RELEASE = new QName(NS_URI, "Release", NS_PREFIX);
     public static final QName ENUMERATION_END = new QName(NS_URI, "EnumerationEnd", NS_PREFIX);
     public static final QName SUPPORTED_DIALECT = new QName(NS_URI, "SupportedDialect", NS_PREFIX);
+    public static final QName ENUMERATION_CONTEXT = new QName(NS_URI, "EnumerationContext", NS_PREFIX);
     
     private ObjectFactory objectFactory = null;
     

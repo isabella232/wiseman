@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.1 2005-11-12 01:29:15 akhilarora Exp $
+ * $Id: EventingExtensionsTest.java,v 1.2 2005-12-21 23:48:07 akhilarora Exp $
  */
 
 package management;
 
+import com.sun.ws.management.Management;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.transport.HttpClient;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
+import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2005._06.management.BookmarkType;
 import org.xmlsoap.schemas.ws._2005._06.management.ConnectionRetryType;
 import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
@@ -101,5 +109,74 @@ public class EventingExtensionsTest extends TestBase {
         
         assertEquals(maxElements, ((JAXBElement<Long>) delivery2.getContent().get(5)).getValue());
         assertEquals(maxTime, ((JAXBElement<Duration>) delivery2.getContent().get(6)).getValue());
+    }
+    
+    public void testPullMode() throws Exception {
+        final EventingExtensions evtx = new EventingExtensions();
+        evtx.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        evtx.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        evtx.setTo(DESTINATION);
+        evtx.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+        evtx.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null, null);
+        
+        final Management mgmt = new Management(evtx);
+        mgmt.setResourceURI("wsman:test/pullSource");
+        
+        mgmt.prettyPrint(logfile);
+        Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        String context = null;
+        final EventingExtensions evtx2 = new EventingExtensions(response);
+        final SubscribeResponse subr = evtx2.getSubscribeResponse();
+        for (final Object obj : subr.getAny()) {
+            if (obj instanceof Element) {
+                final Element contextElement = (Element) obj;
+                if (Enumeration.ENUMERATION_CONTEXT.getLocalPart().equals(contextElement.getLocalName()) &&
+                        Enumeration.ENUMERATION_CONTEXT.getNamespaceURI().equals(contextElement.getNamespaceURI())) {
+                    context = contextElement.getTextContent();
+                    break;
+                }
+            }
+        }
+        assertNotNull(context);
+        
+        boolean done = false;
+        do {
+            final Enumeration en = new Enumeration();
+            en.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+            en.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+            en.setTo(DESTINATION);
+            en.setAction(Enumeration.PULL_ACTION_URI);
+            final Duration pullDuration = DatatypeFactory.newInstance().newDuration(5000);
+            en.setPull(context, -1, 2, pullDuration);
+            
+            final Management mgmt2 = new Management(en);
+            mgmt2.setResourceURI("wsman:test/pullSource");
+            
+            mgmt2.prettyPrint(logfile);
+            Addressing response2 = HttpClient.sendRequest(mgmt2);
+            response2.prettyPrint(logfile);
+            if (response2.getBody().hasFault()) {
+                fail(response2.getBody().getFault().getFaultString());
+            }
+            
+            final Enumeration pullResponse = new Enumeration(response2);
+            final PullResponse pr = pullResponse.getPullResponse();
+            // update context for the next pull (if any)
+            if (pr.getEnumerationContext() != null) {
+                context = (String) pr.getEnumerationContext().getContent().get(0);
+            }
+            for (Object obj : pr.getItems().getAny()) {
+                final Element el = (Element) obj;
+                System.out.println(el.getNodeName() + " = " + el.getTextContent());
+            }
+            if (pr.getEndOfSequence() != null) {
+                done = true;
+            }
+        } while (!done);
     }
 }

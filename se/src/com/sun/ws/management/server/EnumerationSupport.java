@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.5 2005-12-13 21:12:00 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.6 2005-12-21 23:48:06 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -23,6 +23,8 @@ import com.sun.ws.management.enumeration.FilteringNotSupportedFault;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
 import com.sun.ws.management.enumeration.TimedOutFault;
+import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
 import java.math.BigInteger;
 import java.util.Date;
@@ -41,6 +43,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.soap.SOAPException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
@@ -108,14 +111,33 @@ public final class EnumerationSupport {
             defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
         }
         
+        String filterDialect = null;
+        String filter = null;
+        String expires = null;
+        
         final Enumerate enumerate = request.getEnumerate();
-        final FilterType filterType = enumerate.getFilter();
-        if (filterType != null) {
-            // TODO: add support for filtering
-            throw new FilteringNotSupportedFault();
+        if (enumerate == null) {
+            // see if this is a pull event mode subscribe request
+            final EventingExtensions evtx = new EventingExtensions(request);
+            final Subscribe subscribe = evtx.getSubscribe();
+            if (subscribe == null) {
+                throw new InvalidMessageFault();
+            }
+            final org.xmlsoap.schemas.ws._2004._08.eventing.FilterType filterType = subscribe.getFilter();
+            if (filterType != null) {
+                // TODO: add support for filtering
+                throw new FilteringNotSupportedFault();
+            }
+            expires = subscribe.getExpires();
+        } else {
+            final FilterType filterType = enumerate.getFilter();
+            if (filterType != null) {
+                // TODO: add support for filtering
+                throw new FilteringNotSupportedFault();
+            }
+            expires = enumerate.getExpires();
         }
         
-        final String expires = enumerate.getExpires();
         final GregorianCalendar now = new GregorianCalendar();
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
         XMLGregorianCalendar expiration;
@@ -168,7 +190,13 @@ public final class EnumerationSupport {
         };
         cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
         
-        response.setEnumerateResponse(context.toString(), expiration.toXMLFormat());
+        if (enumerate == null) {
+            // this is a pull event mode subscribe request
+            final EventingExtensions evtx = new EventingExtensions(response);
+            evtx.setSubscribeResponse(null, expiration.toXMLFormat(), context);
+        } else {
+            response.setEnumerateResponse(context.toString(), expiration.toXMLFormat());
+        }
     }
     
     /**
