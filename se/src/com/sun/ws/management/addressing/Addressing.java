@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.2 2005-10-27 22:41:01 akhilarora Exp $
+ * $Id: Addressing.java,v 1.3 2006-01-26 00:43:17 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -29,7 +29,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
-import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedQName;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -171,8 +171,18 @@ public class Addressing extends SOAP {
             return;
         }
         
+        final Node header = getHeader();
         for (final Object param : params.getAny()) {
-            getXmlBinding().marshal(param, getHeader());
+            // cannot simply use the following - we get a JAXB unable to marshal exception
+            // getXmlBinding().marshal(param, getHeader());
+            if (param instanceof Node) {
+                final Node node = (Node) param;
+                // TODO: can be a performance hog if the node is deeply nested
+                header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
+            } else {
+                throw new RuntimeException("ReferenceParam " + param.toString() + 
+                        " of class " + param.getClass() + " is being ignored");
+            }
         }
     }
     

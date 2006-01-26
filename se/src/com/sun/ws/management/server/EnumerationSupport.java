@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.6 2005-12-21 23:48:06 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.7 2006-01-26 00:43:18 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -193,7 +193,7 @@ public final class EnumerationSupport {
         if (enumerate == null) {
             // this is a pull event mode subscribe request
             final EventingExtensions evtx = new EventingExtensions(response);
-            evtx.setSubscribeResponse(null, expiration.toXMLFormat(), context);
+            evtx.setSubscribeResponse(null, expiration.toXMLFormat(), context.toString());
         } else {
             response.setEnumerateResponse(context.toString(), expiration.toXMLFormat());
         }

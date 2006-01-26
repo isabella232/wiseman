@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.4 2005-12-21 23:48:05 akhilarora Exp $
+ * $Id: Eventing.java,v 1.5 2006-01-26 00:43:18 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -108,6 +108,7 @@ public class Eventing extends Addressing {
     public static final QName NOTIFY_TO = new QName(NS_URI, "NotifyTo", NS_PREFIX);
     
     private ObjectFactory objectFactory = null;
+    private org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory aof = null;
     
     public Eventing() throws SOAPException, JAXBException {
         super();
@@ -126,6 +127,7 @@ public class Eventing extends Addressing {
     
     private void init() throws SOAPException, JAXBException {
         objectFactory = new ObjectFactory();
+        aof = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
     }
     
     public void setSubscribe(final EndpointReferenceType endTo, final String deliveryMode,
@@ -153,7 +155,7 @@ public class Eventing extends Addressing {
                     NOTIFY_TO.getPrefix() + COLON +
                     NOTIFY_TO.getLocalPart());
             doc.appendChild(notifyElement);
-            getXmlBinding().marshal(notifyTo, notifyElement);
+            getXmlBinding().marshal(aof.createEndpointReference(notifyTo), notifyElement);
             delivery.getContent().add(doc.getDocumentElement());
         }
         

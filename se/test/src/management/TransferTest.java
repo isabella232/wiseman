@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferTest.java,v 1.1 2005-07-19 19:54:59 akhilarora Exp $
+ * $Id: TransferTest.java,v 1.2 2006-01-26 00:43:18 akhilarora Exp $
  */
 
 package management;
@@ -65,13 +65,13 @@ public class TransferTest extends TestBase {
         temp.appendChild(doc.createTextNode("75"));
         doc.appendChild(temp);
         
-        final ObjectFactory aof = new ObjectFactory();
-        final Body body = aof.createBody();
+        final ObjectFactory sof = new ObjectFactory();
+        final Body body = sof.createBody();
         final List<Object> bodyElements = body.getAny();
         bodyElements.add(doc.getDocumentElement());
         
         xf.getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
-        xf.getXmlBinding().marshal(body, xf.getBody());
+        xf.getXmlBinding().marshal(sof.createBody(body), xf.getBody());
         
         xf.prettyPrint(logfile);
     }
