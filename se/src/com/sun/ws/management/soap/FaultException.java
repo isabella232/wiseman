@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: FaultException.java,v 1.1 2005-06-29 19:18:25 akhilarora Exp $
+ * $Id: FaultException.java,v 1.2 2006-01-28 01:11:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
 
-import java.util.List;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPException;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -52,6 +53,10 @@ public abstract class FaultException extends RuntimeException {
     
     public Node[] getDetails() {
         return details;
+    }
+    
+    // subclasses may override if they need to encode additional information to a fault 
+    public void encode(final SOAPEnvelope env)  throws SOAPException {
     }
     
     public String toString() {

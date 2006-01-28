@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.3 2005-11-08 22:32:08 akhilarora Exp $
+ * $Id: SOAP.java,v 1.4 2006-01-28 01:11:34 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -56,7 +56,9 @@ public class SOAP extends Message {
     public static final QName BODY = new QName(NS_URI, "Body", NS_PREFIX);
     public static final QName SENDER = new QName(NS_URI, "Sender", NS_PREFIX);
     public static final QName RECEIVER = new QName(NS_URI, "Receiver", NS_PREFIX);
+    public static final QName NOT_UNDERSTOOD = new QName(NS_URI, "NotUnderstood", NS_PREFIX);
     
+    public static final String NOT_UNDERSTOOD_REASON = "Header not understood";
     public static final String TRUE = "true";
     
     private static XmlBinding binding = null;
@@ -214,15 +216,17 @@ public class SOAP extends Message {
     
     public void setFault(final FaultException ex) throws JAXBException, SOAPException {
         setFault(ex.getCode(), ex.getSubcode(), ex.getReason(), ex.getDetails());
+        // allow subclasses an opportunity to encode additional information
+        ex.encode(getEnvelope());
     }
     
     private void setFault(final QName code, final QName subcode, final String reason,
             final Node... details) throws JAXBException, SOAPException {
         
         removeChildren(getBody());
-
+        
         final Fault fault = objectFactory.createFault();
-
+        
         final Faultcode faultcode = objectFactory.createFaultcode();
         faultcode.setValue(code);
         fault.setCode(faultcode);
@@ -235,7 +239,7 @@ public class SOAP extends Message {
         
         final Reasontext reasontext = objectFactory.createReasontext();
         reasontext.setValue(reason);
-        reasontext.setLang(XML.DEFAULT_LANG);        
+        reasontext.setLang(XML.DEFAULT_LANG);
         final Faultreason faultreason = objectFactory.createFaultreason();
         faultreason.getText().add(reasontext);
         fault.setReason(faultreason);
