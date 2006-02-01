@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.3 2005-11-08 22:40:19 akhilarora Exp $
+ * $Id: Management.java,v 1.4 2006-02-01 21:50:30 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -195,91 +195,84 @@ public class Management extends Addressing {
     public static final QName URL = new QName(NS_URI, "URL", NS_PREFIX);
     public static final QName ENDPOINT_REFERENCE = new QName(NS_URI, "EndpointReference", NS_PREFIX);
     
-    private ObjectFactory objectFactory = null;
+    public static final ObjectFactory FACTORY = new ObjectFactory();
     
-    public Management() throws SOAPException, JAXBException {
+    public Management() throws SOAPException {
         super();
-        init();
     }
     
-    public Management(final Addressing addr) throws SOAPException, JAXBException {
+    public Management(final Addressing addr) throws SOAPException {
         super(addr);
-        init();
     }
     
-    public Management(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public Management(final InputStream is) throws SOAPException, IOException {
         super(is);
-        init();
-    }
-    
-    private void init() throws SOAPException, JAXBException {
-        objectFactory = new ObjectFactory();
     }
     
     // setters
     
     public void setResourceURI(final String resource) throws JAXBException, SOAPException {
         removeChildren(getHeader(), RESOURCE_URI);
-        final ResourceURIType resType = objectFactory.createResourceURIType();
+        final ResourceURIType resType = FACTORY.createResourceURIType();
         resType.setValue(resource);
         final JAXBElement<ResourceURIType> resTypeElement =
-                objectFactory.createResourceURI(resType);
+                FACTORY.createResourceURI(resType);
         getXmlBinding().marshal(resTypeElement, getHeader());
     }
     
     public void setTimeout(final Duration duration) throws JAXBException, SOAPException {
         removeChildren(getHeader(), OPERATION_TIMEOUT);
-        final JAXBElement<Duration> durationElement = objectFactory.createOperationTimeout(duration);
+        final JAXBElement<Duration> durationElement = FACTORY.createOperationTimeout(duration);
         getXmlBinding().marshal(durationElement, getHeader());
     }
     
     public void setSelectors(final Map<String, Object> selectors) throws JAXBException, SOAPException {
         removeChildren(getHeader(), SELECTOR_SET);
-        final SelectorSetType selectorSet = objectFactory.createSelectorSetType();
+        final SelectorSetType selectorSet = FACTORY.createSelectorSetType();
         final Iterator<String> ki = selectors.keySet().iterator();
         while (ki.hasNext()) {
             final String key = ki.next();
-            final SelectorType selector = objectFactory.createSelectorType();
+            final SelectorType selector = FACTORY.createSelectorType();
             selector.setName(key);
             selector.getContent().add(selectors.get(key));
             selectorSet.getSelector().add(selector);
         }
-        final JAXBElement<SelectorSetType> selectorSetElement = objectFactory.createSelectorSet(selectorSet);
+        final JAXBElement<SelectorSetType> selectorSetElement = FACTORY.createSelectorSet(selectorSet);
         getXmlBinding().marshal(selectorSetElement, getHeader());
     }
     
     public void setMaxEnvelopeSize(final MaxEnvelopeSizeType size) throws JAXBException, SOAPException {
         removeChildren(getHeader(), MAX_ENVELOPE_SIZE);
-        final JAXBElement<MaxEnvelopeSizeType> sizeElement = objectFactory.createMaxEnvelopeSize(size);
+        final JAXBElement<MaxEnvelopeSizeType> sizeElement = FACTORY.createMaxEnvelopeSize(size);
         getXmlBinding().marshal(sizeElement, getHeader());
     }
     
     public void setLocale(final LocaleType locale) throws JAXBException, SOAPException {
         removeChildren(getHeader(), LOCALE);
-        final JAXBElement<LocaleType> localeElelment = objectFactory.createLocale(locale);
+        final JAXBElement<LocaleType> localeElelment = FACTORY.createLocale(locale);
         getXmlBinding().marshal(localeElelment, getHeader());
     }
     
     public void setOptions(final Map<String, String> options) throws JAXBException, SOAPException {
         removeChildren(getHeader(), OPTION_SET);
-        final OptionSetType optionSet = objectFactory.createOptionSetType();
+        final OptionSetType optionSet = FACTORY.createOptionSetType();
         final Iterator<String> ki = options.keySet().iterator();
         while (ki.hasNext()) {
             final String key = ki.next();
-            final OptionType option = objectFactory.createOptionType();
+            final OptionType option = FACTORY.createOptionType();
             option.setName(key);
             option.setValue(options.get(key));
             optionSet.getOption().add(option);
         }
-        final JAXBElement<OptionSetType> optionSetElement = objectFactory.createOptionSet(optionSet);
+        final JAXBElement<OptionSetType> optionSetElement = FACTORY.createOptionSet(optionSet);
         getXmlBinding().marshal(optionSetElement, getHeader());
     }
     
     public void setRename(final EndpointReferenceType epr) throws JAXBException, SOAPException {
         removeChildren(getBody(), RENAME);
-        final RenameType rename = objectFactory.createRenameType();
-        rename.getAny().add(wrapEndpointReference(epr));
-        final JAXBElement<RenameType> renameElement = objectFactory.createRename(rename);
+        final RenameType rename = FACTORY.createRenameType();
+        rename.getAny().add(Addressing.FACTORY.createEndpointReference(epr));
+        final JAXBElement<RenameType> renameElement = FACTORY.createRename(rename);
         getXmlBinding().marshal(renameElement, getBody());
     }
     

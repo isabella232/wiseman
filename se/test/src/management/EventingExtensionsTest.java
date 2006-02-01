@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.2 2005-12-21 23:48:07 akhilarora Exp $
+ * $Id: EventingExtensionsTest.java,v 1.3 2006-02-01 21:50:39 akhilarora Exp $
  */
 
 package management;
@@ -33,7 +33,6 @@ import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
@@ -58,7 +57,6 @@ public class EventingExtensionsTest extends TestBase {
     public void testSubscribeVisual() throws Exception {
         final EventingExtensions evtx = new EventingExtensions();
         evtx.setAction(Eventing.SUBSCRIBE_ACTION_URI);
-        final ObjectFactory objectFactory = new ObjectFactory();
         
         final ConnectionRetryType retry = new ConnectionRetryType();
         final int retryCount = 3;

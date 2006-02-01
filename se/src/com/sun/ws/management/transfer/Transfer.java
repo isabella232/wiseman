@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Transfer.java,v 1.1 2005-06-29 19:18:26 akhilarora Exp $
+ * $Id: Transfer.java,v 1.2 2006-02-01 21:50:38 akhilarora Exp $
  */
 
 package com.sun.ws.management.transfer;
@@ -21,7 +21,6 @@ package com.sun.ws.management.transfer;
 import com.sun.ws.management.addressing.Addressing;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
@@ -46,21 +45,15 @@ public class Transfer extends Addressing {
     public static final String INVALID_REPRESENTATION_REASON = 
         "The XML content was invalid.";
 
-    public Transfer() throws SOAPException, JAXBException {
+    public Transfer() throws SOAPException {
         super();
-        init();
     }
         
-    public Transfer(final Addressing addr) throws SOAPException, JAXBException {
+    public Transfer(final Addressing addr) throws SOAPException {
         super(addr);
-        init();
     }
     
-    public Transfer(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public Transfer(final InputStream is) throws SOAPException, IOException {
         super(is);
-        init();
-    }
-    
-    private void init() throws SOAPException, JAXBException {
     }
 }

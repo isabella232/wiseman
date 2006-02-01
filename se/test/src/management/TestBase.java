@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.1 2005-07-19 19:54:59 akhilarora Exp $
+ * $Id: TestBase.java,v 1.2 2006-02-01 21:50:40 akhilarora Exp $
  */
 
 package management;
 
+import com.sun.ws.management.soap.SOAP;
 import junit.framework.*;
 import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.xml.XmlBinding;
 import java.io.FileOutputStream;
 
@@ -45,7 +45,7 @@ public abstract class TestBase extends TestCase {
     protected void setUp() throws java.lang.Exception {
         logfile = new FileOutputStream(getClass().getCanonicalName() + "." + 
                 getName() + ".Output.xml");
-        Addressing.setXmlBinding(new XmlBinding());
+        SOAP.setXmlBinding(new XmlBinding());
         final String basicAuth = System.getProperty("wsman.basicauthentication");
         if ("true".equalsIgnoreCase(basicAuth)) {
             HttpClient.setAuthenticator(new transport.BasicAuthenticator());

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.6 2005-12-09 00:05:50 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.7 2006-02-01 21:50:39 akhilarora Exp $
  */
 
 package management;
@@ -61,8 +61,7 @@ public class EnumerationTest extends TestBase {
         
         final EndpointReferenceType endTo = enu.createEndpointReference("http://host/endTo", null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
-        final ObjectFactory objectFactory = new ObjectFactory();
-        final FilterType filter = objectFactory.createFilterType();
+        final FilterType filter = Enumeration.FACTORY.createFilterType();
         filter.setDialect("http://mydomain/my.filter.dialect");
         filter.getContent().add("my/filter/expression");
         enu.setEnumerate(endTo, expires, filter);

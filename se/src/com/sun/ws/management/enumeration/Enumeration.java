@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.6 2005-12-21 23:48:05 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.7 2006-02-01 21:50:33 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -103,25 +103,18 @@ public class Enumeration extends Addressing {
     public static final QName SUPPORTED_DIALECT = new QName(NS_URI, "SupportedDialect", NS_PREFIX);
     public static final QName ENUMERATION_CONTEXT = new QName(NS_URI, "EnumerationContext", NS_PREFIX);
     
-    private ObjectFactory objectFactory = null;
+    public static final ObjectFactory FACTORY = new ObjectFactory();
     
-    public Enumeration() throws SOAPException, JAXBException {
+    public Enumeration() throws SOAPException {
         super();
-        init();
     }
     
-    public Enumeration(final Addressing addr) throws SOAPException, JAXBException {
+    public Enumeration(final Addressing addr) throws SOAPException {
         super(addr);
-        init();
     }
     
-    public Enumeration(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public Enumeration(final InputStream is) throws SOAPException, IOException {
         super(is);
-        init();
-    }
-    
-    private void init() throws SOAPException, JAXBException {
-        objectFactory = new ObjectFactory();
     }
     
     public void setEnumerate(final EndpointReferenceType endTo, 
@@ -129,7 +122,7 @@ public class Enumeration extends Addressing {
             throws JAXBException, SOAPException {
 
         removeChildren(getBody(), ENUMERATE);
-        final Enumerate enu = objectFactory.createEnumerate();
+        final Enumerate enu = FACTORY.createEnumerate();
         if (endTo != null) {
             enu.setEndTo(endTo);
         }
@@ -146,9 +139,9 @@ public class Enumeration extends Addressing {
     throws JAXBException, SOAPException {
 
         removeChildren(getBody(), ENUMERATE_RESPONSE);
-        final EnumerateResponse response = objectFactory.createEnumerateResponse();
+        final EnumerateResponse response = FACTORY.createEnumerateResponse();
         
-        final EnumerationContextType contextType = objectFactory.createEnumerationContextType();
+        final EnumerationContextType contextType = FACTORY.createEnumerationContextType();
         contextType.getContent().add(context);
         response.setEnumerationContext(contextType);
         
@@ -166,9 +159,9 @@ public class Enumeration extends Addressing {
         throws JAXBException, SOAPException, DatatypeConfigurationException {
         
         removeChildren(getBody(), PULL);
-        final Pull pull = objectFactory.createPull();
+        final Pull pull = FACTORY.createPull();
         
-        final EnumerationContextType contextType = objectFactory.createEnumerationContextType();
+        final EnumerationContextType contextType = FACTORY.createEnumerationContextType();
         contextType.getContent().add(context);
         pull.setEnumerationContext(contextType);
         
@@ -189,14 +182,14 @@ public class Enumeration extends Addressing {
     throws JAXBException, SOAPException {
 
         removeChildren(getBody(), PULL_RESPONSE);
-        final PullResponse response = objectFactory.createPullResponse();
+        final PullResponse response = FACTORY.createPullResponse();
         
-        ItemListType itemList = objectFactory.createItemListType();
+        ItemListType itemList = FACTORY.createItemListType();
         itemList.getAny().addAll(items);
         response.setItems(itemList);
         
         if (haveMore) {
-            final EnumerationContextType contextType = objectFactory.createEnumerationContextType();
+            final EnumerationContextType contextType = FACTORY.createEnumerationContextType();
             contextType.getContent().add(context);
             response.setEnumerationContext(contextType);
         } else {
@@ -208,9 +201,9 @@ public class Enumeration extends Addressing {
     
     public void setRelease(final Object context) throws JAXBException, SOAPException {
         removeChildren(getBody(), RELEASE);
-        final Release release = objectFactory.createRelease();
+        final Release release = FACTORY.createRelease();
         
-        final EnumerationContextType contextType = objectFactory.createEnumerationContextType();
+        final EnumerationContextType contextType = FACTORY.createEnumerationContextType();
         contextType.getContent().add(context);
         release.setEnumerationContext(contextType);
         

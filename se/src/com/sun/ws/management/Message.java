@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.1 2005-06-29 19:18:15 akhilarora Exp $
+ * $Id: Message.java,v 1.2 2006-02-01 21:50:31 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -101,19 +101,19 @@ public abstract class Message {
                 qname.getPrefix() + COLON + qname.getLocalPart(), value);
     }
     
-    public Message() throws SOAPException, JAXBException {
+    public Message() throws SOAPException {
         preInit();
         msg = msgFactory.createMessage();
         init();
     }
     
-    public Message(final Message message) throws SOAPException, JAXBException {
+    public Message(final Message message) throws SOAPException {
         preInit();
         msg = message.msg;
         init();
     }
     
-    public Message(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public Message(final InputStream is) throws SOAPException, IOException {
         preInit();
         msg = msgFactory.createMessage(MIME_HEADER_XML, is);
         init();
@@ -153,7 +153,7 @@ public abstract class Message {
         return new String(bos.toByteArray());
     }
     
-    private void init() throws SOAPException, JAXBException {
+    private void init() throws SOAPException {
         soap = msg.getSOAPPart();
         hdr = msg.getSOAPHeader();
         env = soap.getEnvelope();

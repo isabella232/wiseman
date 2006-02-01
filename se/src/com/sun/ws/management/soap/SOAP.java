@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.4 2006-01-28 01:11:34 akhilarora Exp $
+ * $Id: SOAP.java,v 1.5 2006-02-01 21:50:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -63,29 +63,18 @@ public class SOAP extends Message {
     
     private static XmlBinding binding = null;
     
-    private ObjectFactory objectFactory = null;
+    public static final ObjectFactory FACTORY = new ObjectFactory();
     
-    public SOAP() throws SOAPException, JAXBException {
+    public SOAP() throws SOAPException {
         super();
-        init();
     }
     
-    public SOAP(final SOAP soap) throws SOAPException, JAXBException {
+    public SOAP(final SOAP soap) throws SOAPException {
         super(soap);
-        init();
     }
     
-    public SOAP(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public SOAP(final InputStream is) throws SOAPException, IOException {
         super(is);
-        init();
-    }
-    
-    private void init() throws SOAPException, JAXBException {
-        objectFactory = new ObjectFactory();
-        // use a default if none has been set so far
-        if (binding == null) {
-            binding = new XmlBinding();
-        }
     }
     
     public static void setXmlBinding(final XmlBinding bind) {
@@ -135,6 +124,9 @@ public class SOAP extends Message {
     protected Object unbind(final SOAPElement parent, final QName qname) throws JAXBException, SOAPException {
         final SOAPElement[] elements = getChildren(parent, qname);
         if (elements.length == 0) {
+            return null;
+        }
+        if (elements[0] == null) {
             return null;
         }
         return binding.unmarshal(elements[0]);
@@ -225,26 +217,26 @@ public class SOAP extends Message {
         
         removeChildren(getBody());
         
-        final Fault fault = objectFactory.createFault();
+        final Fault fault = FACTORY.createFault();
         
-        final Faultcode faultcode = objectFactory.createFaultcode();
+        final Faultcode faultcode = FACTORY.createFaultcode();
         faultcode.setValue(code);
         fault.setCode(faultcode);
         
         if (subcode != null) {
-            final Subcode faultsubcode = objectFactory.createSubcode();
+            final Subcode faultsubcode = FACTORY.createSubcode();
             faultsubcode.setValue(subcode);
             faultcode.setSubcode(faultsubcode);
         }
         
-        final Reasontext reasontext = objectFactory.createReasontext();
+        final Reasontext reasontext = FACTORY.createReasontext();
         reasontext.setValue(reason);
         reasontext.setLang(XML.DEFAULT_LANG);
-        final Faultreason faultreason = objectFactory.createFaultreason();
+        final Faultreason faultreason = FACTORY.createFaultreason();
         faultreason.getText().add(reasontext);
         fault.setReason(faultreason);
         
-        final Detail faultdetail = objectFactory.createDetail();
+        final Detail faultdetail = FACTORY.createDetail();
         final List<Object> detailsList = faultdetail.getAny();
         if (details != null) {
             for (final Node detail : details) {
@@ -253,7 +245,7 @@ public class SOAP extends Message {
             fault.setDetail(faultdetail);
         }
         
-        final JAXBElement<Fault> faultElement = objectFactory.createFault(fault);
+        final JAXBElement<Fault> faultElement = FACTORY.createFault(fault);
         getXmlBinding().marshal(faultElement, getBody());
     }
     

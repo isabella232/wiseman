@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Catalog.java,v 1.2 2005-10-26 19:24:12 akhilarora Exp $
+ * $Id: Catalog.java,v 1.3 2006-02-01 21:50:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.catalog;
@@ -21,7 +21,6 @@ package com.sun.ws.management.catalog;
 import com.sun.ws.management.addressing.Addressing;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 
 public class Catalog extends Addressing {
@@ -29,22 +28,15 @@ public class Catalog extends Addressing {
     public static final String NS_PREFIX = "wsmancat";
     public static final String NS_URI = "http://schemas.xmlsoap.org/ws/2005/06/wsmancat";
 
-    public Catalog() throws SOAPException, JAXBException {
+    public Catalog() throws SOAPException {
         super();
-        init();
     }
         
-    public Catalog(final Addressing addr) throws SOAPException, JAXBException {
+    public Catalog(final Addressing addr) throws SOAPException {
         super(addr);
-        init();
     }
     
-    public Catalog(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public Catalog(final InputStream is) throws SOAPException, IOException {
         super(is);
-        init();
     }
-    
-    private void init() throws SOAPException, JAXBException {
-    }
-
 }

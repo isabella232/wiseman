@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: AddressingTest.java,v 1.1 2005-07-19 19:54:58 akhilarora Exp $
+ * $Id: AddressingTest.java,v 1.2 2006-02-01 21:50:38 akhilarora Exp $
  */
 
 package management;
@@ -59,28 +59,27 @@ public class AddressingTest extends TestBase {
         final String uuid = UUID_SCHEME + UUID.randomUUID().toString();
         addr.setMessageId(uuid);
         
-        final ObjectFactory factory = new ObjectFactory();
         addr.getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
         
-        final ReferencePropertiesType propsFrom = factory.createReferencePropertiesType();
+        final ReferencePropertiesType propsFrom = Addressing.FACTORY.createReferencePropertiesType();
         final Document tempDoc = addr.newDocument();
         final Element temperature = tempDoc.createElementNS(NS_URI, NS_PREFIX + ":" + "temperature");
         temperature.appendChild(tempDoc.createTextNode("75"));
         tempDoc.appendChild(temperature);
         propsFrom.getAny().add(tempDoc.getDocumentElement());
         
-        final ReferenceParametersType paramsFrom = factory.createReferenceParametersType();
+        final ReferenceParametersType paramsFrom = Addressing.FACTORY.createReferenceParametersType();
         final Document unitsDoc = addr.newDocument();
         final Element units = unitsDoc.createElementNS(NS_URI, NS_PREFIX + ":" + "units");
         units.setAttributeNS(NS_URI, NS_PREFIX + ":" + "type", "celsius");
         unitsDoc.appendChild(units);
         paramsFrom.getAny().add(unitsDoc.getDocumentElement());
         
-        final AttributedQName portTypeFrom = factory.createAttributedQName();
+        final AttributedQName portTypeFrom = Addressing.FACTORY.createAttributedQName();
         final QName portType = new QName(NS_URI, "thePortType", NS_PREFIX);
         portTypeFrom.setValue(portType);
         
-        final ServiceNameType serviceNameFrom = factory.createServiceNameType();
+        final ServiceNameType serviceNameFrom = Addressing.FACTORY.createServiceNameType();
         final String portName = "thePortName";
         serviceNameFrom.setPortName(portName);
         final QName serviceName = new QName(NS_URI, "theServiceName", NS_PREFIX);

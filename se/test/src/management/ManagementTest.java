@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.10 2005-12-08 22:11:57 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.11 2006-02-01 21:50:40 akhilarora Exp $
  */
 
 package management;
@@ -52,7 +52,6 @@ public class ManagementTest extends TestBase {
     private static final int TIMEOUT = 30000;
     
     private final Map<String, Object> selectors = new TreeMap();
-    private final ObjectFactory of = new ObjectFactory();
     
     public ManagementTest(final String testName) {
         super(testName);
@@ -131,14 +130,14 @@ public class ManagementTest extends TestBase {
         mgmt.setTimeout(timeout);
         mgmt.setSelectors(selectors);
         
-        final MaxEnvelopeSizeType maxEnvSize = of.createMaxEnvelopeSizeType();
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
         final long envSize = 4096;
         maxEnvSize.setValue(envSize);
         final String envPolicy = "Skip";
         maxEnvSize.setPolicy(envPolicy);
         mgmt.setMaxEnvelopeSize(maxEnvSize);
         
-        final LocaleType locale = of.createLocaleType();
+        final LocaleType locale = Management.FACTORY.createLocaleType();
         final String localeString = "en-US";
         locale.setValue(localeString);
         mgmt.setLocale(locale);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.3 2005-08-10 21:52:57 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.4 2006-02-01 21:50:39 akhilarora Exp $
  */
 
 package management;
@@ -54,15 +54,14 @@ public class EventingTest extends TestBase {
     public void testSubscribeVisual() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
-        final ObjectFactory objectFactory = new ObjectFactory();
         final String mgrAddress = "http://host/mgr";
         final EndpointReferenceType mgr = evt.createEndpointReference(mgrAddress, null, null, null, null);
-        final DeliveryType delivery = objectFactory.createDeliveryType();
+        final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
         delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
         final String recvrAddress = "http://host/notifyTo";
         final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
-        final FilterType filter = objectFactory.createFilterType();
+        final FilterType filter = Eventing.FACTORY.createFilterType();
         filter.setDialect("http://mydomain/my.filter.dialect");
         filter.getContent().add("my/filter/expression");
         evt.setSubscribe(mgr, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, filter);
@@ -83,7 +82,6 @@ public class EventingTest extends TestBase {
     public void testSubscribeResponseVisual() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-        final ObjectFactory objectFactory = new ObjectFactory();
         final String mgrAddress = "http://host/mgr";
         final EndpointReferenceType mgr = evt.createEndpointReference(mgrAddress, null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
@@ -163,7 +161,6 @@ public class EventingTest extends TestBase {
     public void testSubscriptionEndVisual() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.SUBSCRIPTION_END_ACTION_URI);
-        final ObjectFactory objectFactory = new ObjectFactory();
         final String mgrAddress = "http://host/mgr";
         final EndpointReferenceType mgr = evt.createEndpointReference(mgrAddress, null, null, null, null);
         final String reason = "getting tired";
@@ -185,8 +182,7 @@ public class EventingTest extends TestBase {
         evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
         evt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        final ObjectFactory objectFactory = new ObjectFactory();
-        final DeliveryType delivery = objectFactory.createDeliveryType();
+        final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
         delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
         final String recvrAddress = "http://localhost:8080/events";
         final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);

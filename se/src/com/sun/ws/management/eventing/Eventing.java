@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.5 2006-01-26 00:43:18 akhilarora Exp $
+ * $Id: Eventing.java,v 1.6 2006-02-01 21:50:34 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -107,27 +107,18 @@ public class Eventing extends Addressing {
     public static final QName IDENTIFIER = new QName(NS_URI, "Identifier", NS_PREFIX);
     public static final QName NOTIFY_TO = new QName(NS_URI, "NotifyTo", NS_PREFIX);
     
-    private ObjectFactory objectFactory = null;
-    private org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory aof = null;
+    public static final ObjectFactory FACTORY = new ObjectFactory();
     
-    public Eventing() throws SOAPException, JAXBException {
+    public Eventing() throws SOAPException {
         super();
-        init();
     }
     
-    public Eventing(final Addressing addr) throws SOAPException, JAXBException {
+    public Eventing(final Addressing addr) throws SOAPException {
         super(addr);
-        init();
     }
     
-    public Eventing(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public Eventing(final InputStream is) throws SOAPException, IOException {
         super(is);
-        init();
-    }
-    
-    private void init() throws SOAPException, JAXBException {
-        objectFactory = new ObjectFactory();
-        aof = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
     }
     
     public void setSubscribe(final EndpointReferenceType endTo, final String deliveryMode,
@@ -136,13 +127,13 @@ public class Eventing extends Addressing {
             throws SOAPException, JAXBException {
         
         removeChildren(getBody(), SUBSCRIBE);
-        final Subscribe sub = objectFactory.createSubscribe();
+        final Subscribe sub = FACTORY.createSubscribe();
         
         if (endTo != null) {
             sub.setEndTo(endTo);
         }
         
-        final DeliveryType delivery = objectFactory.createDeliveryType();
+        final DeliveryType delivery = FACTORY.createDeliveryType();
         
         if (deliveryMode != null) {
             delivery.setMode(deliveryMode);
@@ -155,7 +146,7 @@ public class Eventing extends Addressing {
                     NOTIFY_TO.getPrefix() + COLON +
                     NOTIFY_TO.getLocalPart());
             doc.appendChild(notifyElement);
-            getXmlBinding().marshal(aof.createEndpointReference(notifyTo), notifyElement);
+            getXmlBinding().marshal(Addressing.FACTORY.createEndpointReference(notifyTo), notifyElement);
             delivery.getContent().add(doc.getDocumentElement());
         }
         
@@ -183,7 +174,7 @@ public class Eventing extends Addressing {
             throws SOAPException, JAXBException {
         
         removeChildren(getBody(), SUBSCRIBE_RESPONSE);
-        final SubscribeResponse response = objectFactory.createSubscribeResponse();
+        final SubscribeResponse response = FACTORY.createSubscribeResponse();
         response.setSubscriptionManager(mgr);
         response.setExpires(expires);
         if (extensions != null) {
@@ -196,34 +187,34 @@ public class Eventing extends Addressing {
     
     public void setRenew(final String expires) throws SOAPException, JAXBException {
         removeChildren(getBody(), RENEW);
-        final Renew renew = objectFactory.createRenew();
+        final Renew renew = FACTORY.createRenew();
         renew.setExpires(expires.trim());
         getXmlBinding().marshal(renew, getBody());
     }
     
     public void setRenewResponse(final String expires) throws SOAPException, JAXBException {
         removeChildren(getBody(), RENEW_RESPONSE);
-        final RenewResponse response = objectFactory.createRenewResponse();
+        final RenewResponse response = FACTORY.createRenewResponse();
         response.setExpires(expires);
         getXmlBinding().marshal(response, getBody());
     }
     
     public void setGetStatus() throws SOAPException, JAXBException {
         removeChildren(getBody(), GET_STATUS);
-        final GetStatus status = objectFactory.createGetStatus();
+        final GetStatus status = FACTORY.createGetStatus();
         getXmlBinding().marshal(status, getBody());
     }
     
     public void setGetStatusResponse(final String expires) throws SOAPException, JAXBException {
         removeChildren(getBody(), GET_STATUS_RESPONSE);
-        final GetStatusResponse response = objectFactory.createGetStatusResponse();
+        final GetStatusResponse response = FACTORY.createGetStatusResponse();
         response.setExpires(expires);
         getXmlBinding().marshal(response, getBody());
     }
     
     public void setUnsubscribe() throws SOAPException, JAXBException {
         removeChildren(getBody(), UNSUBSCRIBE);
-        final Unsubscribe unsub = objectFactory.createUnsubscribe();
+        final Unsubscribe unsub = FACTORY.createUnsubscribe();
         getXmlBinding().marshal(unsub, getBody());
     }
     
@@ -240,12 +231,12 @@ public class Eventing extends Addressing {
         }
         
         removeChildren(getBody(), SUBSCRIPTION_END);
-        final SubscriptionEnd end = objectFactory.createSubscriptionEnd();
+        final SubscriptionEnd end = FACTORY.createSubscriptionEnd();
         end.setSubscriptionManager(mgr);
         end.setStatus(status);
         
         if (reason != null) {
-            final LanguageSpecificStringType localizedReason = objectFactory.createLanguageSpecificStringType();
+            final LanguageSpecificStringType localizedReason = FACTORY.createLanguageSpecificStringType();
             localizedReason.setLang(XML.DEFAULT_LANG);
             localizedReason.setValue(reason);
             end.getReason().add(localizedReason);

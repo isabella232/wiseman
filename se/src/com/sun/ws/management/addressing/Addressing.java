@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.3 2006-01-26 00:43:17 akhilarora Exp $
+ * $Id: Addressing.java,v 1.4 2006-02-01 21:50:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -78,25 +78,18 @@ public class Addressing extends SOAP {
     public static final QName RELATES_TO = new QName(NS_URI, "RelatesTo", NS_PREFIX);
     public static final QName RETRY_AFTER = new QName(NS_URI, "RetryAfter", NS_PREFIX);
     
-    private ObjectFactory objectFactory = null;
+    public static final ObjectFactory FACTORY = new ObjectFactory();
     
-    public Addressing() throws SOAPException, JAXBException {
+    public Addressing() throws SOAPException {
         super();
-        init();
     }
     
-    public Addressing(final Addressing addr) throws SOAPException, JAXBException {
+    public Addressing(final Addressing addr) throws SOAPException {
         super(addr);
-        init();
     }
     
-    public Addressing(final InputStream is) throws SOAPException, JAXBException, IOException {
+    public Addressing(final InputStream is) throws SOAPException, IOException {
         super(is);
-        init();
-    }
-    
-    private void init() throws SOAPException, JAXBException {
-        objectFactory = new ObjectFactory();
     }
     
     public void validate() throws SOAPException, JAXBException, FaultException {
@@ -134,9 +127,9 @@ public class Addressing extends SOAP {
             final ReferencePropertiesType props, final ReferenceParametersType params,
             final AttributedQName portType, final ServiceNameType serviceName) throws JAXBException {
         
-        final EndpointReferenceType epr = objectFactory.createEndpointReferenceType();
+        final EndpointReferenceType epr = FACTORY.createEndpointReferenceType();
         
-        final AttributedURI addressURI = objectFactory.createAttributedURI();
+        final AttributedURI addressURI = FACTORY.createAttributedURI();
         addressURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
         addressURI.setValue(address.trim());
         epr.setAddress(addressURI);
@@ -158,10 +151,6 @@ public class Addressing extends SOAP {
         }
         
         return epr;
-    }
-    
-    protected JAXBElement<EndpointReferenceType> wrapEndpointReference(final EndpointReferenceType epr) {
-        return objectFactory.createEndpointReference(epr);
     }
     
     // setters
@@ -188,28 +177,28 @@ public class Addressing extends SOAP {
     
     public void setAction(final String action) throws JAXBException, SOAPException {
         removeChildren(getHeader(), ACTION);
-        final AttributedURI actionURI = objectFactory.createAttributedURI();
+        final AttributedURI actionURI = FACTORY.createAttributedURI();
         actionURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
         actionURI.setValue(action.trim());
-        JAXBElement<AttributedURI> actionElement = objectFactory.createAction(actionURI);
+        JAXBElement<AttributedURI> actionElement = FACTORY.createAction(actionURI);
         getXmlBinding().marshal(actionElement, getHeader());
     }
     
     public void setTo(final String to) throws JAXBException, SOAPException {
         removeChildren(getHeader(), TO);
-        final AttributedURI toURI = objectFactory.createAttributedURI();
+        final AttributedURI toURI = FACTORY.createAttributedURI();
         toURI.setValue(to.trim());
         toURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
-        final JAXBElement<AttributedURI> toElement = objectFactory.createTo(toURI);
+        final JAXBElement<AttributedURI> toElement = FACTORY.createTo(toURI);
         getXmlBinding().marshal(toElement, getHeader());
     }
     
     public void setMessageId(final String msgId) throws JAXBException, SOAPException {
         removeChildren(getHeader(), MESSAGE_ID);
-        final AttributedURI msgIdURI = objectFactory.createAttributedURI();
+        final AttributedURI msgIdURI = FACTORY.createAttributedURI();
         msgIdURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
         msgIdURI.setValue(msgId.trim());
-        final JAXBElement<AttributedURI> msgIdElement = objectFactory.createMessageID(msgIdURI);
+        final JAXBElement<AttributedURI> msgIdElement = FACTORY.createMessageID(msgIdURI);
         getXmlBinding().marshal(msgIdElement, getHeader());
     }
     
@@ -220,7 +209,7 @@ public class Addressing extends SOAP {
     
     public void setReplyTo(final EndpointReferenceType epr) throws JAXBException, SOAPException {
         removeChildren(getHeader(), REPLY_TO);
-        final JAXBElement<EndpointReferenceType> element = objectFactory.createReplyTo(epr);
+        final JAXBElement<EndpointReferenceType> element = FACTORY.createReplyTo(epr);
         getXmlBinding().marshal(element, getHeader());
     }
     
@@ -231,7 +220,7 @@ public class Addressing extends SOAP {
     
     public void setFaultTo(final EndpointReferenceType epr) throws JAXBException, SOAPException {
         removeChildren(getHeader(), FAULT_TO);
-        final JAXBElement<EndpointReferenceType> element = objectFactory.createFaultTo(epr);
+        final JAXBElement<EndpointReferenceType> element = FACTORY.createFaultTo(epr);
         getXmlBinding().marshal(element, getHeader());
     }
     
@@ -242,22 +231,22 @@ public class Addressing extends SOAP {
     
     public void setFrom(final EndpointReferenceType epr) throws JAXBException, SOAPException {
         removeChildren(getHeader(), FROM);
-        final JAXBElement<EndpointReferenceType> element = objectFactory.createFrom(epr);
+        final JAXBElement<EndpointReferenceType> element = FACTORY.createFrom(epr);
         getXmlBinding().marshal(element, getHeader());
     }
     
     public void addRelatesTo(final String relationshipURI) throws JAXBException {
-        final Relationship relationship = objectFactory.createRelationship();
+        final Relationship relationship = FACTORY.createRelationship();
         relationship.setValue(relationshipURI.trim());
-        final JAXBElement<Relationship> element = objectFactory.createRelatesTo(relationship);
+        final JAXBElement<Relationship> element = FACTORY.createRelatesTo(relationship);
         getXmlBinding().marshal(element, getHeader());
     }
     
     public void addRelatesTo(final String relationshipURI, final QName relationshipType) throws JAXBException {
-        final Relationship relationship = objectFactory.createRelationship();
+        final Relationship relationship = FACTORY.createRelationship();
         relationship.setRelationshipType(relationshipType);
         relationship.setValue(relationshipURI.trim());
-        final JAXBElement<Relationship> element = objectFactory.createRelatesTo(relationship);
+        final JAXBElement<Relationship> element = FACTORY.createRelatesTo(relationship);
         getXmlBinding().marshal(element, getHeader());
     }
     

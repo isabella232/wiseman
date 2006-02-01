@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferTest.java,v 1.2 2006-01-26 00:43:18 akhilarora Exp $
+ * $Id: TransferTest.java,v 1.3 2006-02-01 21:50:40 akhilarora Exp $
  */
 
 package management;
 
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import java.util.List;
 import java.util.UUID;
 import org.w3._2003._05.soap_envelope.Body;
-import org.w3._2003._05.soap_envelope.ObjectFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -65,13 +65,12 @@ public class TransferTest extends TestBase {
         temp.appendChild(doc.createTextNode("75"));
         doc.appendChild(temp);
         
-        final ObjectFactory sof = new ObjectFactory();
-        final Body body = sof.createBody();
+        final Body body = SOAP.FACTORY.createBody();
         final List<Object> bodyElements = body.getAny();
         bodyElements.add(doc.getDocumentElement());
         
         xf.getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
-        xf.getXmlBinding().marshal(sof.createBody(body), xf.getBody());
+        xf.getXmlBinding().marshal(SOAP.FACTORY.createBody(body), xf.getBody());
         
         xf.prettyPrint(logfile);
     }

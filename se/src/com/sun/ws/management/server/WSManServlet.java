@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.6 2005-11-08 22:40:20 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.7 2006-02-01 21:50:36 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,6 +27,7 @@ import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.Http;
+import com.sun.ws.management.xml.XmlBinding;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -63,10 +64,10 @@ public class WSManServlet extends HttpServlet {
     private static final long MIN_ENVELOPE_SIZE = 8192;
     
     private static final String THIS =
-      "<This xmlns=\"http://schemas.xmlsoap.org/ws/2005/02/management\"> \n" +
-      "<Vendor> Sun Microsystems, Inc. http://www.sun.com </Vendor> \n" +
-      "<Version> 0.2 </Version> \n" +
-      "</This> ";
+            "<This xmlns=\"http://schemas.xmlsoap.org/ws/2005/02/management\"> \n" +
+            "<Vendor> Sun Microsystems, Inc. http://www.sun.com </Vendor> \n" +
+            "<Version> 0.2 </Version> \n" +
+            "</This> ";
     
     private static final Properties wsmanProperties = new Properties();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
@@ -94,6 +95,13 @@ public class WSManServlet extends HttpServlet {
                 throw new ServletException(iex);
             }
         }
+        
+        try {
+            SOAP.setXmlBinding(new XmlBinding());
+        } catch (JAXBException jex) {
+            LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
+            throw new ServletException(jex);
+        }
     }
     
     public String getServletInfo() {
@@ -101,13 +109,13 @@ public class WSManServlet extends HttpServlet {
     }
     
     public void doGet(final HttpServletRequest req,
-      final HttpServletResponse resp) throws ServletException, IOException {
+            final HttpServletResponse resp) throws ServletException, IOException {
         
         doPost(req, resp);
     }
     
     public void doPost(final HttpServletRequest req,
-      final HttpServletResponse resp) throws ServletException, IOException {
+            final HttpServletResponse resp) throws ServletException, IOException {
         
         if (!Http.isContentTypeAcceptable(req.getContentType())) {
             resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
@@ -135,13 +143,13 @@ public class WSManServlet extends HttpServlet {
     }
     
     protected RequestDispatcher createDispatcher(final Management request,
-      final HttpServletRequest req) throws SOAPException, JAXBException, IOException {
+            final HttpServletRequest req) throws SOAPException, JAXBException, IOException {
         return new ReflectiveRequestDispatcher(request);
     }
     
     protected void handle(final InputStream is, final OutputStream os,
-      final HttpServletRequest req, final HttpServletResponse resp)
-      throws SOAPException, JAXBException, IOException {
+            final HttpServletRequest req, final HttpServletResponse resp)
+            throws SOAPException, JAXBException, IOException {
         
         final Management request = new Management(is);
         log(request);
@@ -161,8 +169,8 @@ public class WSManServlet extends HttpServlet {
         }
         if (maxEnvelopeSize < MIN_ENVELOPE_SIZE) {
             final Node[] details =
-              SOAP.createFaultDetail("MaxEnvelopeSize is set too small to encode faults " +
-              "(needs to be atleast " + MIN_ENVELOPE_SIZE + ")", Management.MIN_ENVELOPE_LIMIT_DETAIL, null, null);
+                    SOAP.createFaultDetail("MaxEnvelopeSize is set too small to encode faults " +
+                    "(needs to be atleast " + MIN_ENVELOPE_SIZE + ")", Management.MIN_ENVELOPE_LIMIT_DETAIL, null, null);
             dispatcher.sendResponse(os, resp, new EncodingLimitFault(details), Long.MAX_VALUE);
             return;
         }
