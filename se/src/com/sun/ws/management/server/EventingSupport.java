@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.1 2005-08-10 00:30:31 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.2 2006-02-06 21:41:08 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -23,6 +23,7 @@ import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.FilteringNotSupportedFault;
 import com.sun.ws.management.eventing.InvalidExpirationTimeFault;
+import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.HttpClient;
 import java.io.IOException;
@@ -112,6 +113,12 @@ public final class EventingSupport {
                     }
                 }
             }
+        }
+        if (notifyTo == null) {
+            throw new InvalidMessageFault("Event destination not specified: missing NotifyTo element");
+        }
+        if (notifyTo.getAddress() == null) {
+            throw new InvalidMessageFault("Event destination not specified: missing NotifyTo.Address element");
         }
         
         final String expires = subscribe.getExpires();
