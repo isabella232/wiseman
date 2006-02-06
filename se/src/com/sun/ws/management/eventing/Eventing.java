@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.6 2006-02-01 21:50:34 akhilarora Exp $
+ * $Id: Eventing.java,v 1.7 2006-02-06 21:38:35 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -27,6 +27,7 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
@@ -145,9 +146,16 @@ public class Eventing extends Addressing {
                     NOTIFY_TO.getNamespaceURI(),
                     NOTIFY_TO.getPrefix() + COLON +
                     NOTIFY_TO.getLocalPart());
-            doc.appendChild(notifyElement);
             getXmlBinding().marshal(Addressing.FACTORY.createEndpointReference(notifyTo), notifyElement);
-            delivery.getContent().add(doc.getDocumentElement());
+            
+            // JAXB wraps the notifyTo EPR into an wsa:EndpointReference enclosing element, unwrap it
+            final Node epr = notifyElement.getFirstChild();
+            for (final Node node : unwrapEndpointReference(epr)) {
+                notifyElement.appendChild(node);
+            }
+            notifyElement.removeChild(epr);
+            
+            delivery.getContent().add(notifyElement);
         }
         
         if (extensions != null) {
