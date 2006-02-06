@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.1 2005-08-10 00:30:32 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.2 2006-02-06 21:42:27 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -58,7 +58,7 @@ public class eventing_Handler implements Handler {
                             LOG.fine("Sent event " + msg.getMessageId());
                         }
                     } catch (Throwable th) {
-                        LOG.warning("Failed to deliver event: " + th.getMessage());
+                        LOG.log(Level.SEVERE, "Failed to deliver event", th);
                     }
                     if (++eventCount > 4) {
                         eventTimer.cancel();
