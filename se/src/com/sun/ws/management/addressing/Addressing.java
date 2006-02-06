@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.4 2006-02-01 21:50:31 akhilarora Exp $
+ * $Id: Addressing.java,v 1.5 2006-02-06 21:37:30 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -24,12 +24,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedQName;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -77,6 +80,7 @@ public class Addressing extends SOAP {
     public static final QName ADDRESS = new QName(NS_URI, "Address", NS_PREFIX);
     public static final QName RELATES_TO = new QName(NS_URI, "RelatesTo", NS_PREFIX);
     public static final QName RETRY_AFTER = new QName(NS_URI, "RetryAfter", NS_PREFIX);
+    public static final QName ENDPOINT_REFERENCE = new QName(NS_URI, "EndpointReference", NS_PREFIX);
     
     public static final ObjectFactory FACTORY = new ObjectFactory();
     
@@ -153,6 +157,19 @@ public class Addressing extends SOAP {
         return epr;
     }
     
+    public Node[] unwrapEndpointReference(final Node wrappedEPR) {
+        if (ENDPOINT_REFERENCE.getLocalPart().equals(wrappedEPR.getLocalName()) &&
+                ENDPOINT_REFERENCE.getNamespaceURI().equals(wrappedEPR.getNamespaceURI())) {
+            final NodeList children = wrappedEPR.getChildNodes();
+            final List<Node> nl = new ArrayList<Node>(children.getLength());
+            for (int i = children.getLength() - 1; i >= 0; i--) {
+                nl.add(children.item(i));
+            }
+            return (Node[]) nl.toArray(new Node[nl.size()]);
+        }
+        throw new IllegalArgumentException("Can only unwrap EndpointReferences");
+    }
+    
     // setters
     
     public void addHeaders(final ReferenceParametersType params) throws JAXBException {
@@ -169,7 +186,7 @@ public class Addressing extends SOAP {
                 // TODO: can be a performance hog if the node is deeply nested
                 header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
             } else {
-                throw new RuntimeException("ReferenceParam " + param.toString() + 
+                throw new RuntimeException("ReferenceParam " + param.toString() +
                         " of class " + param.getClass() + " is being ignored");
             }
         }
