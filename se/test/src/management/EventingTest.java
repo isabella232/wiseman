@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.4 2006-02-01 21:50:39 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.5 2006-02-06 21:43:45 akhilarora Exp $
  */
 
 package management;
@@ -193,14 +193,21 @@ public class EventingTest extends TestBase {
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/eventing");
         
+        evt.prettyPrint(logfile);
         final Addressing addr = HttpClient.sendRequest(mgmt);
         if (addr.getBody().hasFault()) {
             addr.prettyPrint(System.err);
             fail(addr.getBody().getFault().getFaultString());
         }
+        addr.prettyPrint(logfile);
         
         final Eventing response = new Eventing(addr);
         final SubscribeResponse subr = response.getSubscribeResponse();
         final EndpointReferenceType mgr = subr.getSubscriptionManager();
+        assertEquals(DESTINATION, mgr.getAddress().getValue());
+        final Object identifier = mgr.getReferenceParameters().getAny().get(0);
+        assertNotNull(identifier);
+        final String expires2 = subr.getExpires();
+        assertNotNull(expires2);
     }
 }
