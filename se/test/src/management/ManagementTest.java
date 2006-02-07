@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.11 2006-02-01 21:50:40 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.12 2006-02-07 20:20:24 akhilarora Exp $
  */
 
 package management;
@@ -38,10 +38,10 @@ import javax.xml.soap.SOAPHeaderElement;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2005._06.management.LocaleType;
 import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
-import org.xmlsoap.schemas.ws._2005._06.management.ObjectFactory;
 
 /**
  * Unit test for WS-Management
@@ -179,6 +179,33 @@ public class ManagementTest extends TestBase {
         assertEquals(verboseOptionValue, options2.values().iterator().next());
         
         assertEquals(renameAddress, m2.getRename().getAddress().getValue());
+    }
+    
+    public void testActionNotSupported() throws Exception {
+        
+        final Transfer xf = new Transfer();
+        final String UNSUPPORTED_ACTION = "some/random/action";
+        xf.setAction(UNSUPPORTED_ACTION);
+        xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        final Management mgmt = new Management(xf);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(RESOURCE);
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (!response.getBody().hasFault()) {
+            fail("Unsupported action accepted");
+        }
+
+        final Fault fault = new SOAP(response).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(Addressing.ACTION_NOT_SUPPORTED, fault.getCode().getSubcode().getValue());
+        assertEquals(Addressing.ACTION_NOT_SUPPORTED_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(UNSUPPORTED_ACTION, 
+                ((JAXBElement<AttributedURI>) fault.getDetail().getAny().get(0)).getValue().getValue());
     }
     
     public void testGet() throws Exception {
