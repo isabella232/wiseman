@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.5 2006-02-01 21:50:37 akhilarora Exp $
+ * $Id: SOAP.java,v 1.6 2006-02-07 20:32:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -169,11 +169,8 @@ public class SOAP extends Message {
         if (wrapper != null) {
             if (values != null) {
                 for (final Object value : values) {
-                    final Element valueElement = createElement(doc, Management.FAULT_DETAIL);
-                    valueElement.setTextContent(value.toString());
-                    
                     final Element wrapperElement = createElement(doc, wrapper);
-                    wrapperElement.appendChild(valueElement);
+                    wrapperElement.setTextContent(value.toString());
                     nodeList.add(wrapperElement);
                 }
             }
