@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.2 2006-02-06 21:41:08 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.3 2006-02-10 01:08:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
+import com.sun.ws.management.eventing.EventSourceUnableToProcessFault;
 import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.eventing.FilteringNotSupportedFault;
+import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidExpirationTimeFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
@@ -29,6 +30,7 @@ import com.sun.ws.management.transport.HttpClient;
 import java.io.IOException;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -41,8 +43,14 @@ import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
@@ -62,11 +70,17 @@ public final class EventingSupport {
     private final Map<UUID, Context> contextMap = new HashMap();
     private static final Timer cleanupTimer = new Timer(true);
     
+    private static final XPath XPATH = XPathFactory.newInstance().newXPath();
+    private static final String[] SUPPORTED_FILTER_DIALECTS = {
+        com.sun.ws.management.xml.XPath.NS_URI
+    };
+    
     private static DatatypeFactory datatypeFactory;
     
     private static final class Context {
-        private XMLGregorianCalendar expiration;
-        private EndpointReferenceType notifyTo;
+        private XMLGregorianCalendar expiration = null;
+        private EndpointReferenceType notifyTo = null;
+        private XPathExpression filter = null;
     }
     
     public EventingSupport() {}
@@ -80,9 +94,24 @@ public final class EventingSupport {
         
         final Subscribe subscribe = request.getSubscribe();
         final FilterType filterType = subscribe.getFilter();
+        String filterExpression = null;
         if (filterType != null) {
-            // TODO: add support for filtering
-            throw new FilteringNotSupportedFault();
+            if (!com.sun.ws.management.xml.XPath.NS_URI.equals(filterType.getDialect())) {
+                throw new FilteringRequestedUnavailableFault(null, SUPPORTED_FILTER_DIALECTS);
+            }
+            final List<Object> expressions = filterType.getContent();
+            if (expressions == null) {
+                throw new InvalidMessageFault("Missing a filter expression");
+            }
+            final Object expr = expressions.get(0);
+            if (expr == null) {
+                throw new InvalidMessageFault("Missing filter expression");
+            }
+            if (expr instanceof String) {
+                filterExpression = (String) expr;
+            } else {
+                throw new InvalidMessageFault("Invalid filter expression type: " + expr);
+            }
         }
         
         final EndpointReferenceType endTo = subscribe.getEndTo();
@@ -149,6 +178,14 @@ public final class EventingSupport {
         final Context ctx = new Context();
         ctx.expiration = expiration;
         ctx.notifyTo = notifyTo;
+        if (filterExpression != null) {
+            try {
+                ctx.filter= XPATH.compile(filterExpression);
+            } catch (XPathExpressionException xpx) {
+                throw new EventSourceUnableToProcessFault("Unable to compile XPath expression: " + 
+                        "\"" + filterExpression + "\" detail: " + xpx.getMessage());
+            }
+        }
         contextMap.put(context, ctx);
         
         final TimerTask ttask = new TimerTask() {
@@ -189,15 +226,24 @@ public final class EventingSupport {
     
     // TODO: avoid blocking the sender - use a thread pool to send notifications
     public void sendEvent(final Addressing msg)
-    throws SOAPException, JAXBException, IOException {
-        
-        msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+    throws SOAPException, JAXBException, IOException, XPathExpressionException {
+        // TODO: verify if subscription has expired -
+        // depending on the cleanup timer to GC expired subscriptions leaves a window
+        // where events will still be delivered, OTOH checking here will have a perf impact
         for (final Context ctx : contextMap.values()) {
+            if (ctx.filter != null) {
+                final Node content = msg.getBody().getFirstChild();
+                final Boolean pass = (Boolean) ctx.filter.evaluate(content, XPathConstants.BOOLEAN);
+                if (!pass.booleanValue()) {
+                    return;
+                }
+            }
             final ReferenceParametersType refp = ctx.notifyTo.getReferenceParameters();
             if (refp != null) {
                 msg.addHeaders(refp);
             }
             msg.setTo(ctx.notifyTo.getAddress().getValue());
+            msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
             HttpClient.sendResponse(msg);
         }
     }
