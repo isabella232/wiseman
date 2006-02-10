@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventsReceiverServlet.java,v 1.1 2005-08-10 01:52:43 akhilarora Exp $
+ * $Id: EventsReceiverServlet.java,v 1.2 2006-02-10 01:15:05 akhilarora Exp $
  */
 
 package server;
@@ -21,10 +21,12 @@ package server;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +41,18 @@ public class EventsReceiverServlet extends HttpServlet {
     
     private static final Logger LOG =
             Logger.getLogger(EventsReceiverServlet.class.getName());
+    
+    private final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+    private DocumentBuilder db = null;
+        
+    public void init(ServletConfig config) throws ServletException {
+        docFactory.setNamespaceAware(true);
+        try {
+            db = docFactory.newDocumentBuilder();
+        } catch (ParserConfigurationException px) {
+            throw new ServletException(px);
+        }
+    }
     
     public void doGet(final HttpServletRequest req,
             final HttpServletResponse resp) throws ServletException, IOException {
@@ -62,16 +76,15 @@ public class EventsReceiverServlet extends HttpServlet {
     throws IOException, SAXException, ParserConfigurationException {
         
         final InputStream is = new BufferedInputStream(req.getInputStream());
-
-        final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-        docFactory.setNamespaceAware(true);
-        final DocumentBuilder db = docFactory.newDocumentBuilder();
         final Document doc = db.parse(is);
         final OutputFormat format = new OutputFormat(doc);
         format.setLineWidth(72);
         format.setIndenting(true);
         format.setIndent(2);
-        final XMLSerializer serializer = new XMLSerializer(System.out, format);
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
+        final XMLSerializer serializer = new XMLSerializer(os, format);
         serializer.serialize(doc);
+        final String event = new String(os.toString("utf-8"));
+        LOG.info("Got an event: " + event);
     }
 }
