@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.2 2006-02-06 21:42:27 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.3 2006-02-10 01:10:03 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -24,10 +24,13 @@ import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.server.EventingSupport;
+import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class eventing_Handler implements Handler {
     
@@ -36,6 +39,16 @@ public class eventing_Handler implements Handler {
     
     private EventingSupport eventingSupport = new EventingSupport();
     private Timer eventTimer = new Timer(true);
+    private final Calendar NOW = Calendar.getInstance();
+    private final String NS_URI = "http://wiseman.dev.java.net/ws/" + 
+            NOW.get(Calendar.YEAR) + "/" + NOW.get(Calendar.MONTH) + "/eventing";
+    private static final String[][] EVENTS = {
+        { "event1", "critical" }, 
+        { "event2", "warning" },
+        { "event3", "info" },
+        { "event4", "debug" },
+        { "event5", "critical" }
+    };
     
     public void handle(final String action, final String resource,
             final Management request, final Management response) throws Exception {
@@ -53,6 +66,14 @@ public class eventing_Handler implements Handler {
                 public void run() {
                     try {
                         final Addressing msg = new Addressing();
+                        msg.setAction(Management.EVENT_URI);
+
+                        final Document doc = msg.newDocument();
+                        final Element root = doc.createElementNS(NS_URI, "ev:" + EVENTS[eventCount][1]);
+                        root.setTextContent(EVENTS[eventCount][0]);
+                        doc.appendChild(root);
+                        msg.getBody().addDocument(doc);
+                        
                         eventingSupport.sendEvent(msg);
                         if (LOG.isLoggable(Level.FINE)) {
                             LOG.fine("Sent event " + msg.getMessageId());
@@ -60,7 +81,7 @@ public class eventing_Handler implements Handler {
                     } catch (Throwable th) {
                         LOG.log(Level.SEVERE, "Failed to deliver event", th);
                     }
-                    if (++eventCount > 4) {
+                    if (++eventCount >= EVENTS.length) {
                         eventTimer.cancel();
                     }
                 }
