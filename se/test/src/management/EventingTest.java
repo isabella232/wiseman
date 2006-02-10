@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.5 2006-02-06 21:43:45 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.6 2006-02-10 01:13:40 akhilarora Exp $
  */
 
 package management;
@@ -21,16 +21,20 @@ package management;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
+import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
+import org.w3._2003._05.soap_envelope.Fault;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.GetStatusResponse;
-import org.xmlsoap.schemas.ws._2004._08.eventing.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Renew;
 import org.xmlsoap.schemas.ws._2004._08.eventing.RenewResponse;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
@@ -41,16 +45,16 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.SubscriptionEnd;
  * Unit test for WS-Eventing
  */
 public class EventingTest extends TestBase {
-
+    
     public EventingTest(final String testName) {
         super(testName);
     }
-
+    
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite(EventingTest.class);
         return suite;
     }
-
+    
     public void testSubscribeVisual() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
@@ -65,7 +69,7 @@ public class EventingTest extends TestBase {
         filter.setDialect("http://mydomain/my.filter.dialect");
         filter.getContent().add("my/filter/expression");
         evt.setSubscribe(mgr, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, filter);
-
+        
         evt.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
@@ -78,7 +82,7 @@ public class EventingTest extends TestBase {
         assertEquals(filter.getContent().get(0), sub2.getFilter().getContent().get(0));
         assertEquals(filter.getDialect(), sub2.getFilter().getDialect());
     }
-
+    
     public void testSubscribeResponseVisual() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
@@ -86,7 +90,7 @@ public class EventingTest extends TestBase {
         final EndpointReferenceType mgr = evt.createEndpointReference(mgrAddress, null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         evt.setSubscribeResponse(mgr, expires);
-
+        
         evt.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
@@ -96,13 +100,13 @@ public class EventingTest extends TestBase {
         assertEquals(mgrAddress, sr2.getSubscriptionManager().getAddress().getValue());
         assertEquals(expires, sr2.getExpires());
     }
-
+    
     public void testRenewVisual() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.RENEW_ACTION_URI);
         final String expires = DatatypeFactory.newInstance().newDuration(600000).toString();
         evt.setRenew(expires);
-
+        
         evt.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
@@ -117,7 +121,7 @@ public class EventingTest extends TestBase {
         evt.setAction(Eventing.RENEW_RESPONSE_URI);
         final String expires = DatatypeFactory.newInstance().newDuration(600000).toString();
         evt.setRenewResponse(expires);
-
+        
         evt.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
@@ -131,7 +135,7 @@ public class EventingTest extends TestBase {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.GET_STATUS_ACTION_URI);
         evt.setGetStatus();
-
+        
         evt.prettyPrint(logfile);
     }
     
@@ -140,7 +144,7 @@ public class EventingTest extends TestBase {
         evt.setAction(Eventing.GET_STATUS_RESPONSE_URI);
         final String expires = DatatypeFactory.newInstance().newDuration(600000).toString();
         evt.setGetStatusResponse(expires);
-
+        
         evt.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
@@ -154,10 +158,10 @@ public class EventingTest extends TestBase {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.UNSUBSCRIBE_ACTION_URI);
         evt.setUnsubscribe();
-
+        
         evt.prettyPrint(logfile);
     }
-
+    
     public void testSubscriptionEndVisual() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.SUBSCRIPTION_END_ACTION_URI);
@@ -165,7 +169,7 @@ public class EventingTest extends TestBase {
         final EndpointReferenceType mgr = evt.createEndpointReference(mgrAddress, null, null, null, null);
         final String reason = "getting tired";
         evt.setSubscriptionEnd(mgr, Eventing.SOURCE_SHUTTING_DOWN_STATUS, reason);
-
+        
         evt.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
@@ -188,7 +192,110 @@ public class EventingTest extends TestBase {
         final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, null);
+        
+        final Management mgmt = new Management(evt);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/eventing");
+        
+        evt.prettyPrint(logfile);
+        final Addressing addr = HttpClient.sendRequest(mgmt);
+        if (addr.getBody().hasFault()) {
+            addr.prettyPrint(System.err);
+            fail(addr.getBody().getFault().getFaultString());
+        }
+        addr.prettyPrint(logfile);
+        
+        final Eventing response = new Eventing(addr);
+        final SubscribeResponse subr = response.getSubscribeResponse();
+        final EndpointReferenceType mgr = subr.getSubscriptionManager();
+        assertEquals(DESTINATION, mgr.getAddress().getValue());
+        final Object identifier = mgr.getReferenceParameters().getAny().get(0);
+        assertNotNull(identifier);
+        final String expires2 = subr.getExpires();
+        assertNotNull(expires2);
+    }
+    
+    public void testBogusFilter() throws Exception {
+        final Eventing evt = new Eventing();
+        evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+        evt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
+        delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
+        final String recvrAddress = "http://localhost:8080/events";
+        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
+        final FilterType filter = Eventing.FACTORY.createFilterType();
+        filter.setDialect("a/bogus/filter/dialect");
+        evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, filter);
+        
+        final Management mgmt = new Management(evt);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/eventing");
+        
+        evt.prettyPrint(logfile);
+        final Addressing addr = HttpClient.sendRequest(mgmt);
+        addr.prettyPrint(logfile);
+        if (!addr.getBody().hasFault()) {
+            fail("bogus filter accepted");
+        }
+        
+        final Fault fault = new SOAP(addr).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(Eventing.FILTERING_REQUESTED_UNAVAILABLE, fault.getCode().getSubcode().getValue());
+        assertEquals(Eventing.FILTERING_REQUESTED_UNAVAILABLE_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(XPath.NS_URI, ((JAXBElement<String>) fault.getDetail().getAny().get(0)).getValue());
+    }
+    
+    public void testInvalidFilterExpression() throws Exception {
+        final Eventing evt = new Eventing();
+        evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+        evt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
+        delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
+        final String recvrAddress = "http://localhost:8080/events";
+        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
+        final FilterType filter = Eventing.FACTORY.createFilterType();
+        filter.setDialect(XPath.NS_URI);
+        filter.getContent().add("a bad xpath expression");
+        evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, filter);
+        
+        final Management mgmt = new Management(evt);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/eventing");
+        
+        evt.prettyPrint(logfile);
+        final Addressing addr = HttpClient.sendRequest(mgmt);
+        addr.prettyPrint(logfile);
+        if (!addr.getBody().hasFault()) {
+            fail("invalid filter expression accepted");
+        }
+        
+        final Fault fault = new SOAP(addr).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(Eventing.EVENT_SOURCE_UNABLE_TO_PROCESS, fault.getCode().getSubcode().getValue());
+        assertEquals(Eventing.EVENT_SOURCE_UNABLE_TO_PROCESS_REASON, fault.getReason().getText().get(0).getValue());
+        final String detail = ((Element) fault.getDetail().getAny().get(0)).getTextContent();
+        assertNotNull(detail);
+    }
 
+    public void testEventFiltering() throws Exception {
+        final Eventing evt = new Eventing();
+        evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+        evt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
+        delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
+        final String recvrAddress = "http://localhost:8080/events";
+        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
+        final FilterType filter = Eventing.FACTORY.createFilterType();
+        filter.setDialect(XPath.NS_URI);
+        filter.getContent().add("/critical");
+        evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, filter);
+        
         final Management mgmt = new Management(evt);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/eventing");
