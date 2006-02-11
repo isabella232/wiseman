@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.6 2006-02-10 01:13:40 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.7 2006-02-11 00:40:02 akhilarora Exp $
  */
 
 package management;
@@ -293,7 +293,8 @@ public class EventingTest extends TestBase {
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         final FilterType filter = Eventing.FACTORY.createFilterType();
         filter.setDialect(XPath.NS_URI);
-        filter.getContent().add("/critical");
+        // filter critical events - the prefix and localName must be exactly the same as in eventing_Handler
+        filter.getContent().add("//ev:critical");
         evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, filter);
         
         final Management mgmt = new Management(evt);
