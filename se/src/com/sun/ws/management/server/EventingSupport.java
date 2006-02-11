@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.3 2006-02-10 01:08:32 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.4 2006-02-11 00:36:44 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -30,8 +30,11 @@ import com.sun.ws.management.transport.HttpClient;
 import java.io.IOException;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -41,6 +44,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPath;
@@ -70,7 +74,7 @@ public final class EventingSupport {
     private final Map<UUID, Context> contextMap = new HashMap();
     private static final Timer cleanupTimer = new Timer(true);
     
-    private static final XPath XPATH = XPathFactory.newInstance().newXPath();
+    private static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
     private static final String[] SUPPORTED_FILTER_DIALECTS = {
         com.sun.ws.management.xml.XPath.NS_URI
     };
@@ -80,12 +84,56 @@ public final class EventingSupport {
     private static final class Context {
         private XMLGregorianCalendar expiration = null;
         private EndpointReferenceType notifyTo = null;
+        private XPath xpath = null;
         private XPathExpression filter = null;
+    }
+    
+    private static final class Namespaces implements NamespaceContext {
+        
+        private final Map<String, String> namespaces;
+        
+        public Namespaces(final Map<String, String> ns) {
+            namespaces = ns;
+        }
+
+        public Iterator getPrefixes(final String namespaceURI) {
+            final Set<String> prefixes = new HashSet<String>();
+            final Iterator<String> pi = namespaces.keySet().iterator();
+            while (pi.hasNext()) {
+                final String prefix = pi.next();
+                final String uri = namespaces.get(prefix);
+                if (uri != null) {
+                    if (uri.equals(namespaceURI)) {
+                        prefixes.add(prefix);
+                    }
+                }
+            }
+            return prefixes.iterator();
+        }
+
+        public String getPrefix(final String namespaceURI) {
+            final Iterator<String> pi = namespaces.keySet().iterator();
+            while (pi.hasNext()) {
+                final String prefix = pi.next();
+                final String uri = namespaces.get(prefix);
+                if (uri != null) {
+                    if (uri.equals(namespaceURI)) {
+                        return prefix;
+                    }
+                }
+            }
+            return null;
+        }
+
+        public String getNamespaceURI(final String prefix) {
+            return namespaces.get(prefix);
+        }
     }
     
     public EventingSupport() {}
     
-    public void subscribe(final Eventing request, final Eventing response)
+    public Object subscribe(final Eventing request, final Eventing response,
+            final Map<String, String> namespaces)
     throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         if (datatypeFactory == null) {
@@ -176,14 +224,16 @@ public final class EventingSupport {
         
         final UUID context = UUID.randomUUID();
         final Context ctx = new Context();
+        ctx.xpath = XPATH_FACTORY.newXPath();
+        ctx.xpath.setNamespaceContext(new Namespaces(namespaces));
         ctx.expiration = expiration;
         ctx.notifyTo = notifyTo;
         if (filterExpression != null) {
             try {
-                ctx.filter= XPATH.compile(filterExpression);
+                ctx.filter = ctx.xpath.compile(filterExpression);
             } catch (XPathExpressionException xpx) {
-                throw new EventSourceUnableToProcessFault("Unable to compile XPath expression: " + 
-                        "\"" + filterExpression + "\" detail: " + xpx.getMessage());
+                throw new EventSourceUnableToProcessFault("Unable to compile XPath expression: " +
+                        "\"" + filterExpression + "\"");
             }
         }
         contextMap.put(context, ctx);
@@ -222,29 +272,39 @@ public final class EventingSupport {
                 response.createEndpointReference(request.getTo(),
                 null, refParams, null, null);
         response.setSubscribeResponse(subMgrEPR, expiration.toXMLFormat());
+        
+        return context;
     }
     
     // TODO: avoid blocking the sender - use a thread pool to send notifications
-    public void sendEvent(final Addressing msg)
+    public boolean sendEvent(final Object context, final Addressing msg)
     throws SOAPException, JAXBException, IOException, XPathExpressionException {
         // TODO: verify if subscription has expired -
         // depending on the cleanup timer to GC expired subscriptions leaves a window
         // where events will still be delivered, OTOH checking here will have a perf impact
-        for (final Context ctx : contextMap.values()) {
-            if (ctx.filter != null) {
-                final Node content = msg.getBody().getFirstChild();
-                final Boolean pass = (Boolean) ctx.filter.evaluate(content, XPathConstants.BOOLEAN);
-                if (!pass.booleanValue()) {
-                    return;
-                }
-            }
-            final ReferenceParametersType refp = ctx.notifyTo.getReferenceParameters();
-            if (refp != null) {
-                msg.addHeaders(refp);
-            }
-            msg.setTo(ctx.notifyTo.getAddress().getValue());
-            msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-            HttpClient.sendResponse(msg);
+        final Context ctx = contextMap.get(context);
+        if (ctx == null) {
+            // context not found: maybe the subscription has expired?
+            return false;
         }
+        
+        if (ctx.filter != null) {
+            // the filter is only applied to the first child in soap body 
+            final Node content = msg.getBody().getFirstChild();
+            final Boolean pass = (Boolean) ctx.filter.evaluate(content, XPathConstants.BOOLEAN);
+            if (!pass) {
+                return false;
+            }
+        }
+        
+        final ReferenceParametersType refp = ctx.notifyTo.getReferenceParameters();
+        if (refp != null) {
+            msg.addHeaders(refp);
+        }
+        
+        msg.setTo(ctx.notifyTo.getAddress().getValue());
+        msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        HttpClient.sendResponse(msg);
+        return true;
     }
 }
