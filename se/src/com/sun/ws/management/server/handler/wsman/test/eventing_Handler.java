@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.3 2006-02-10 01:10:03 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.4 2006-02-11 00:39:04 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -24,7 +24,8 @@ import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.server.EventingSupport;
-import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -34,21 +35,21 @@ import org.w3c.dom.Element;
 
 public class eventing_Handler implements Handler {
     
-    private static final Logger LOG = 
-            Logger.getLogger(eventing_Handler.class.getName());
+    private static final String NS_PREFIX = "ev";
+    private static final String NS_URI = "http://wiseman.dev.java.net/ws/eventing/test";
     
-    private EventingSupport eventingSupport = new EventingSupport();
-    private Timer eventTimer = new Timer(true);
-    private final Calendar NOW = Calendar.getInstance();
-    private final String NS_URI = "http://wiseman.dev.java.net/ws/" + 
-            NOW.get(Calendar.YEAR) + "/" + NOW.get(Calendar.MONTH) + "/eventing";
+    private static final Logger LOG =
+            Logger.getLogger(eventing_Handler.class.getName());
     private static final String[][] EVENTS = {
-        { "event1", "critical" }, 
+        { "event1", "critical" },
         { "event2", "warning" },
         { "event3", "info" },
         { "event4", "debug" },
         { "event5", "critical" }
     };
+    
+    private EventingSupport eventingSupport = new EventingSupport();
+    private Timer eventTimer = new Timer(true);
     
     public void handle(final String action, final String resource,
             final Management request, final Management response) throws Exception {
@@ -58,7 +59,9 @@ public class eventing_Handler implements Handler {
         
         if (Eventing.SUBSCRIBE_ACTION_URI.equals(action)) {
             evtResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-            eventingSupport.subscribe(evtRequest, evtResponse);
+            final Map<String, String> namespaces = new HashMap<String, String>();
+            namespaces.put(NS_PREFIX, NS_URI);
+            final Object context = eventingSupport.subscribe(evtRequest, evtResponse, namespaces);
             
             // setup a timer to send some test events
             final TimerTask sendEventTask = new TimerTask() {
@@ -67,16 +70,18 @@ public class eventing_Handler implements Handler {
                     try {
                         final Addressing msg = new Addressing();
                         msg.setAction(Management.EVENT_URI);
-
+                        
                         final Document doc = msg.newDocument();
-                        final Element root = doc.createElementNS(NS_URI, "ev:" + EVENTS[eventCount][1]);
+                        final Element root = doc.createElementNS(NS_URI, NS_PREFIX + ":" + EVENTS[eventCount][1]);
                         root.setTextContent(EVENTS[eventCount][0]);
                         doc.appendChild(root);
                         msg.getBody().addDocument(doc);
                         
-                        eventingSupport.sendEvent(msg);
-                        if (LOG.isLoggable(Level.FINE)) {
-                            LOG.fine("Sent event " + msg.getMessageId());
+                        final String info = root.getNodeName() + " " + root.getTextContent();
+                        if (eventingSupport.sendEvent(context, msg)) {
+                            LOG.info("Sent event " + info);
+                        } else {
+                            LOG.info("Event not deliverable (filtered/expired) " + info);
                         }
                     } catch (Throwable th) {
                         LOG.log(Level.SEVERE, "Failed to deliver event", th);
