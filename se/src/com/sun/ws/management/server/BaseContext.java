@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseContext.java,v 1.1 2006-02-16 20:12:38 akhilarora Exp $
+ * $Id: BaseContext.java,v 1.2 2006-02-16 21:20:14 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -48,7 +48,6 @@ abstract class BaseContext {
         } else {
             this.xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
             this.xpath.setNamespaceContext(new NamespaceMap(namespaces));
-            System.out.println("+++ " + namespaces);
             this.expression = expression;
             this.filter = this.xpath.compile(this.expression);
         }
@@ -71,7 +70,6 @@ abstract class BaseContext {
         boolean pass = true;
         if (filter != null) {
             pass = (Boolean) filter.evaluate(content, XPathConstants.BOOLEAN);
-            System.out.println("+++ evaluated filter against /" + content.getNodeName() + "[text() = " + content.getTextContent() + "] got " + pass);
         }
         return pass;
     }
