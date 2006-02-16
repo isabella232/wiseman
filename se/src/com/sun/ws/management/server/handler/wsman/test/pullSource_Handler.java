@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pullSource_Handler.java,v 1.1 2005-12-21 23:48:07 akhilarora Exp $
+ * $Id: pullSource_Handler.java,v 1.2 2006-02-16 20:12:43 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -28,14 +28,18 @@ import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 
 public class pullSource_Handler implements Handler, EnumerationIterator {
+    
+    private static final String NS_URI = "https://wiseman.dev.java.net/test/events/pull";
+    private static final String NS_PREFIX = "log";
     
     // TODO: replace with real events - perhaps from the JVM?
     private static final String[][] EVENT_LOG = {
@@ -59,7 +63,9 @@ public class pullSource_Handler implements Handler, EnumerationIterator {
             final DeliveryType deliveryType = subscribe.getDelivery();
             if (EventingExtensions.PULL_DELIVERY_MODE.equals(deliveryType.getMode())) {
                 enuResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-                EnumerationSupport.enumerate(enuRequest, enuResponse, this, EVENT_LOG);
+                final Map<String, String> namespaces = new HashMap<String, String>();
+                namespaces.put(NS_PREFIX, NS_URI);
+                EnumerationSupport.enumerate(enuRequest, enuResponse, this, EVENT_LOG, namespaces);
             } else {
                 throw new DeliveryModeRequestedUnavailableFault();
             }
@@ -83,8 +89,7 @@ public class pullSource_Handler implements Handler, EnumerationIterator {
         for (int i = 0; i < returnCount && !cancelled; i++) {
             final String key = events[start + i][0];
             final String value = events[start + i][1];
-            final Element item = doc.createElementNS("http://java.sun.com/j2se", 
-                    "log:" + key);
+            final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
             item.setTextContent(value);
             items.add(item);
         }

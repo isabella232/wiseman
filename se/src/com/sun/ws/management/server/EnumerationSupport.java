@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.7 2006-01-26 00:43:18 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.8 2006-02-16 20:12:40 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
+import com.sun.ws.management.Management;
+import com.sun.ws.management.UnsupportedFeatureFault;
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.FilteringNotSupportedFault;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
-import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
 import com.sun.ws.management.enumeration.TimedOutFault;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
 import java.math.BigInteger;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -37,12 +37,15 @@ import java.util.TimerTask;
 import java.util.UUID;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.soap.SOAPException;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathExpressionException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -56,25 +59,12 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
  *
  * @see EnumerationIterator
  */
-public final class EnumerationSupport {
+public final class EnumerationSupport extends BaseSupport {
     
-    private static final int CLEANUP_INTERVAL = 60000;
+    private static final int DEFAULT_ITEM_COUNT = 1;
     private static final int DEFAULT_EXPIRATION_MILLIS = 60000;
-    
-    private static final Map<UUID, Context> contextMap = new HashMap();
-    private static final Timer cleanupTimer = new Timer(true);
-    
-    private static DatatypeFactory datatypeFactory;
+    private static final long DEFAULT_MAX_TIMEOUT_MILLIS = 300000;
     private static Duration defaultExpiration;
-    
-    private static final class Context {
-        private int cursor;
-        private int count;
-        private Object clientContext;
-        private XMLGregorianCalendar expiration;
-        private List<Element> items;
-        private EnumerationIterator iterator;
-    }
     
     private EnumerationSupport() {}
     
@@ -97,23 +87,30 @@ public final class EnumerationSupport {
      * returned to the data source with each request for more elements to
      * help the data source retain context between subsequent operations.
      *
+     * @param namespaces A map of namespace prefixes to namespace URIs used in
+     * items to be enumerated. The prefix is the key and the URI is the value in the Map.
+     * The namespaces map is used during filter evaluation.
+     *
      * @throws FilteringNotSupportedFault if filtering is not supported.
      *
      * @throws InvalidExpirationTimeFault if the expiration time specified in
      * the request is syntactically-invalid or is in the past.
      */
     public static void enumerate(final Enumeration request, final Enumeration response,
-            final EnumerationIterator enumIterator, final Object clientContext)
+            final EnumerationIterator enumIterator, final Object clientContext,
+            final Map<String, String> namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
-        if (datatypeFactory == null || defaultExpiration == null) {
-            datatypeFactory = DatatypeFactory.newInstance();
+        init();
+        if (defaultExpiration == null) {
             defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
         }
         
         String filterDialect = null;
         String filter = null;
         String expires = null;
+        String filterExpression = null;
+        EndpointReferenceType endTo = null;
         
         final Enumerate enumerate = request.getEnumerate();
         if (enumerate == null) {
@@ -125,77 +122,48 @@ public final class EnumerationSupport {
             }
             final org.xmlsoap.schemas.ws._2004._08.eventing.FilterType filterType = subscribe.getFilter();
             if (filterType != null) {
-                // TODO: add support for filtering
-                throw new FilteringNotSupportedFault();
+                filterExpression = initFilter(filterType.getDialect(), filterType.getContent());
             }
             expires = subscribe.getExpires();
+            
+            if (subscribe.getEndTo() != null) {
+                throw new UnsupportedFeatureFault(Management.ADDRESSING_MODE_DETAIL);
+            }
         } else {
             final FilterType filterType = enumerate.getFilter();
             if (filterType != null) {
-                // TODO: add support for filtering
-                throw new FilteringNotSupportedFault();
+                filterExpression = initFilter(filterType.getDialect(), filterType.getContent());
             }
             expires = enumerate.getExpires();
+            
+            if (enumerate.getEndTo() != null) {
+                throw new UnsupportedFeatureFault(Management.ADDRESSING_MODE_DETAIL);
+            }
         }
         
-        final GregorianCalendar now = new GregorianCalendar();
-        final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
-        XMLGregorianCalendar expiration;
-        if (expires == null) {
+        XMLGregorianCalendar expiration = initExpiration(expires);
+        if (expiration == null) {
+            final GregorianCalendar now = new GregorianCalendar();
             expiration = datatypeFactory.newXMLGregorianCalendar(now);
             expiration.add(defaultExpiration);
-        } else {
-            try {
-                // first try if it's a Duration
-                final Duration duration = datatypeFactory.newDuration(expires);
-                expiration = datatypeFactory.newXMLGregorianCalendar(now);
-                expiration.add(duration);
-            } catch (IllegalArgumentException arg1) {
-                try {
-                    // now try if it's a calendar time
-                    expiration = datatypeFactory.newXMLGregorianCalendar(expires);
-                } catch (IllegalArgumentException arg2) {
-                    throw new InvalidExpirationTimeFault();
-                }
-            }
-        }
-        if (nowXml.compare(expiration) > 0) {
-            throw new InvalidExpirationTimeFault();
         }
         
-        final UUID context = UUID.randomUUID();
+        EnumerationContext ctx = null;
+        try {
+            ctx = new EnumerationContext(expiration,
+                    filterExpression, namespaces, clientContext, enumIterator);
+        } catch (XPathExpressionException xpx) {
+            throw new CannotProcessFilterFault("Unable to compile XPath: " +
+                    "\"" + filterExpression + "\"");
+        }
         
-        final Context ctx = new Context();
-        ctx.cursor = Integer.valueOf(0);
-        ctx.clientContext = clientContext;
-        ctx.iterator = enumIterator;
-        ctx.expiration = expiration;
-        contextMap.put(context, ctx);
-        
-        final TimerTask ttask = new TimerTask() {
-            public void run() {
-                final GregorianCalendar now = new GregorianCalendar();
-                final XMLGregorianCalendar nowXml =
-                        datatypeFactory.newXMLGregorianCalendar(now);
-                final UUID[] keys = contextMap.keySet().toArray(new UUID[contextMap.size()]);
-                for (int i = 0; i < keys.length; i++) {
-                    final UUID key = keys[i];
-                    final Context value = contextMap.get(key);
-                    if (nowXml.compare(value.expiration) > 0) {
-                        // context expired, GC
-                        contextMap.remove(key);
-                    }
-                }
-            }
-        };
-        cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
-        
+        final UUID context = initContext(ctx);
         if (enumerate == null) {
             // this is a pull event mode subscribe request
             final EventingExtensions evtx = new EventingExtensions(response);
-            evtx.setSubscribeResponse(null, expiration.toXMLFormat(), context.toString());
+            evtx.setSubscribeResponse(null, ctx.getExpiration(), context.toString());
         } else {
-            response.setEnumerateResponse(context.toString(), expiration.toXMLFormat());
+            response.setEnumerateResponse(context.toString(), ctx.getExpiration());
         }
     }
     
@@ -223,69 +191,90 @@ public final class EnumerationSupport {
     throws SOAPException, JAXBException, FaultException {
         
         final Pull pull = request.getPull();
-        final EnumerationContextType contextType = pull.getEnumerationContext();
-        final UUID context = extractContext(contextType);
-        final Context ctx = contextMap.get(context);
-        if (ctx == null) {
-            throw new InvalidEnumerationContextFault();
-        }
-        final GregorianCalendar now = new GregorianCalendar();
-        final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
-        if (nowXml.compare(ctx.expiration) > 0) {
-            // context expired
-            throw new InvalidEnumerationContextFault();
-        }
         
         final BigInteger maxChars = pull.getMaxCharacters();
         if (maxChars != null) {
             // NOTE: downcasting from BigInteger to int
             final int chars = maxChars.intValue();
             // TODO: add support for maxChars
+            throw new UnsupportedFeatureFault("MaxChars is not yet implemented");
         }
         
-        // implied value
-        ctx.count = 1;
+        final EnumerationContextType contextType = pull.getEnumerationContext();
+        final UUID context = extractContext(contextType);
+        final BaseContext bctx = getContext(context);
+        if (bctx == null) {
+            throw new InvalidEnumerationContextFault();
+        }
+        
+        final GregorianCalendar now = new GregorianCalendar();
+        final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
+        if (bctx.isExpired(nowXml)) {
+            removeContext(context);
+            throw new InvalidEnumerationContextFault();
+        }
+        
+        if (!(bctx instanceof EnumerationContext)) {
+            throw new InvalidEnumerationContextFault();
+        }
+        final EnumerationContext ctx = (EnumerationContext) bctx;
+        final Object clientContext = ctx.getClientContext();
+        final EnumerationIterator iterator = ctx.getIterator();
+        
         final BigInteger maxElements = pull.getMaxElements();
-        if (maxElements != null) {
+        if (maxElements == null) {
+            ctx.setCount(DEFAULT_ITEM_COUNT);
+        } else {
             // NOTE: downcasting from BigInteger to int
-            ctx.count = maxElements.intValue();
+            ctx.setCount(maxElements.intValue());
         }
         
-        final Document doc = response.getBody().getOwnerDocument();
-        final Duration maxTime = pull.getMaxTime();
+        Duration maxTime = pull.getMaxTime();
         if (maxTime == null) {
-            // no timeout - take as long as it takes
-            ctx.items = ctx.iterator.next(doc, ctx.clientContext, ctx.cursor, ctx.count);
-        } else {
+            // no timeout - set to a default max timeout
+            maxTime = datatypeFactory.newDuration(System.currentTimeMillis() + DEFAULT_MAX_TIMEOUT_MILLIS);
+        }
+        
+        final Document doc = response.getBody().getOwnerDocument();        
+        final List<Element> passed = new ArrayList<Element>(ctx.getCount());
+        while (passed.size() < ctx.getCount() && iterator.hasNext(clientContext, ctx.getCursor())) {
             final TimerTask ttask = new TimerTask() {
                 public void run() {
-                    ctx.iterator.cancel(ctx.clientContext);
+                    iterator.cancel(clientContext);
                 }
             };
             final long timeout = maxTime.getTimeInMillis(now);
             final Timer timeoutTimer = new Timer(true);
-            timeoutTimer.schedule(ttask, new Date(timeout));
-            ctx.items = ctx.iterator.next(doc, ctx.clientContext, ctx.cursor, ctx.count);
-            if (ctx.items == null) {
+            timeoutTimer.schedule(ttask, timeout);
+            
+            final List<Element> items = iterator.next(doc, clientContext, ctx.getCursor(), 
+                    ctx.getCount() - passed.size());
+            if (items == null) {
                 throw new TimedOutFault();
+            }
+            ctx.setCursor(ctx.getCursor() + items.size());
+            
+            // apply filter, if any
+            for (final Element item : items) {
+                try {
+                    if (ctx.evaluate(item)) {
+                        passed.add(item);
+                    }
+                } catch (XPathException xpx) {
+                    throw new CannotProcessFilterFault("Error evaluating XPath");
+                }
             }
         }
         
-        final boolean haveMore = ctx.iterator.hasNext(ctx.clientContext, ctx.cursor);
-        ctx.cursor = Integer.valueOf(ctx.cursor + ctx.items.size());
-        if (haveMore) {
-            // update value but not the key -
-            // otherwise Release may fail to find a context
-            contextMap.put(context, ctx);
-            response.setPullResponse(ctx.items, context.toString(), true);
+        if (iterator.hasNext(clientContext, ctx.getCursor())) {
+            // update
+            putContext(context, ctx);
+            response.setPullResponse(passed, context.toString(), true);
         } else {
             // remove the context - a subsequent release will fault with an invalid context
-            contextMap.remove(context);
-            response.setPullResponse(ctx.items, null, false);
+            removeContext(context);
+            response.setPullResponse(passed, null, false);
         }
-        
-        // no need to have this (potentially large object) hanging around
-        ctx.items = null;
     }
     
     /**
@@ -309,7 +298,7 @@ public final class EnumerationSupport {
         final Release release = request.getRelease();
         final EnumerationContextType contextType = release.getEnumerationContext();
         final UUID context = extractContext(contextType);
-        final Context ctx = contextMap.remove(context);
+        final BaseContext ctx = removeContext(context);
         if (ctx == null) {
             throw new InvalidEnumerationContextFault();
         }

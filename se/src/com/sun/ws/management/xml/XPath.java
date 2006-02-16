@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPath.java,v 1.1 2006-02-10 01:16:33 akhilarora Exp $
+ * $Id: XPath.java,v 1.2 2006-02-16 20:12:45 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
+
+import javax.xml.xpath.XPathFactory;
 
 public interface XPath {
     
     public static final String NS_PREFIX = "xpath";
     public static final String NS_URI = "http://www.w3.org/TR/1999/REC-xpath-19991116";
+
+    public static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
+    public static final String[] SUPPORTED_FILTER_DIALECTS = {
+        NS_URI
+    };
+    
 }

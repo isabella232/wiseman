@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.4 2006-02-11 00:39:04 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.5 2006-02-16 20:12:43 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -48,7 +48,6 @@ public class eventing_Handler implements Handler {
         { "event5", "critical" }
     };
     
-    private EventingSupport eventingSupport = new EventingSupport();
     private Timer eventTimer = new Timer(true);
     
     public void handle(final String action, final String resource,
@@ -61,7 +60,7 @@ public class eventing_Handler implements Handler {
             evtResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
             final Map<String, String> namespaces = new HashMap<String, String>();
             namespaces.put(NS_PREFIX, NS_URI);
-            final Object context = eventingSupport.subscribe(evtRequest, evtResponse, namespaces);
+            final Object context = EventingSupport.subscribe(evtRequest, evtResponse, namespaces);
             
             // setup a timer to send some test events
             final TimerTask sendEventTask = new TimerTask() {
@@ -78,10 +77,10 @@ public class eventing_Handler implements Handler {
                         msg.getBody().addDocument(doc);
                         
                         final String info = root.getNodeName() + " " + root.getTextContent();
-                        if (eventingSupport.sendEvent(context, msg)) {
+                        if (EventingSupport.sendEvent(context, msg)) {
                             LOG.info("Sent event " + info);
                         } else {
-                            LOG.info("Event not deliverable (filtered/expired) " + info);
+                            LOG.info("Event filtered " + info);
                         }
                     } catch (Throwable th) {
                         LOG.log(Level.SEVERE, "Failed to deliver event", th);

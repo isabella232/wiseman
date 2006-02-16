@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.1 2005-08-03 23:15:19 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.2 2006-02-16 20:12:44 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -25,12 +25,17 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class properties_Handler implements Handler, EnumerationIterator {
+    
+    private static final String NS_URI = "https://wiseman.dev.java.net/java";
+    private static final String NS_PREFIX = "java";
     
     private boolean cancelled;
     
@@ -42,8 +47,10 @@ public class properties_Handler implements Handler, EnumerationIterator {
         
         if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
-            EnumerationSupport.enumerate(enuRequest, enuResponse, this, 
-                    System.getProperties());
+            final Map<String, String> namespaces = new HashMap<String, String>();
+            namespaces.put(NS_PREFIX, NS_URI);
+            EnumerationSupport.enumerate(enuRequest, enuResponse, this,
+                    System.getProperties(), namespaces);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
             EnumerationSupport.pull(enuRequest, enuResponse);
@@ -56,7 +63,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
     }
     
     public List<Element> next(final Document doc, final Object context,
-            final int start, final int count) {        
+            final int start, final int count) {
         cancelled = false;
         final Properties props = (Properties) context;
         final int returnCount = Math.min(count, props.size() - start);
@@ -65,9 +72,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
         for (int i = 0; i < returnCount && !cancelled; i++) {
             final Object key = keys[start + i];
             final Object value = props.get(key);
-            final Element item =
-                    doc.createElementNS("http://java.sun.com/j2se", 
-                    "system:" + key);
+            final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
             item.setTextContent(value.toString());
             items.add(item);
         }
@@ -78,7 +83,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
         final Properties props = (Properties) context;
         return start < props.size();
     }
-
+    
     public void cancel(final Object context) {
         cancelled = true;
     }
