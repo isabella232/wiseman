@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.7 2006-02-01 21:50:39 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.8 2006-02-17 22:20:47 akhilarora Exp $
  */
 
 package management;
@@ -35,7 +35,6 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
@@ -179,7 +178,9 @@ public class EnumerationTest extends TestBase {
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
         
+        mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
             fail(response.getBody().getFault().getFaultString());
@@ -201,7 +202,9 @@ public class EnumerationTest extends TestBase {
             mp.setTo(DESTINATION);
             mp.setResourceURI(RESOURCE);
             
+            mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);
+            praddr.prettyPrint(logfile);
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);
                 fail(praddr.getBody().getFault().getFaultString());
