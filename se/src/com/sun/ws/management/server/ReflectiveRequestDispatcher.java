@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.5 2005-11-01 22:44:11 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.6 2006-02-17 20:02:51 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -21,11 +21,11 @@ package com.sun.ws.management.server;
 import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
-import com.sun.ws.management.soap.FaultException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 
@@ -36,8 +36,9 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     private static final Class[] HANDLER_PARAMS = { String.class, String.class, Management.class, Management.class };
     private static final String HANDLER_PREFIX = ReflectiveRequestDispatcher.class.getPackage().getName() + ".handler";
     
-    public ReflectiveRequestDispatcher(final Management req) throws JAXBException, SOAPException {
-        super(req);
+    public ReflectiveRequestDispatcher(final Management req, final HttpServletRequest httpReq) 
+    throws JAXBException, SOAPException {
+        super(req, httpReq);
     }
     
     public Management call() throws Exception {        

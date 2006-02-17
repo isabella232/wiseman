@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.7 2006-02-01 21:50:36 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.8 2006-02-17 20:02:54 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -144,7 +144,7 @@ public class WSManServlet extends HttpServlet {
     
     protected RequestDispatcher createDispatcher(final Management request,
             final HttpServletRequest req) throws SOAPException, JAXBException, IOException {
-        return new ReflectiveRequestDispatcher(request);
+        return new ReflectiveRequestDispatcher(request, req);
     }
     
     protected void handle(final InputStream is, final OutputStream os,
@@ -176,6 +176,7 @@ public class WSManServlet extends HttpServlet {
         }
         
         try {
+            dispatcher.authenticate();
             dispatcher.validateRequest();
             dispatch(dispatcher, timeout);
             dispatcher.sendResponse(os, resp, null, maxEnvelopeSize);

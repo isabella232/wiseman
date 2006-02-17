@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.4 2005-11-08 22:40:19 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.5 2006-02-17 20:02:52 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -28,10 +28,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.security.Principal;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
@@ -43,14 +45,17 @@ public abstract class RequestDispatcher implements Callable {
     private static final Logger LOG = Logger.getLogger(RequestDispatcher.class.getName());
     private static final String UUID_SCHEME = "uuid:";
     
+    protected final HttpServletRequest httpRequest;
     protected final Management request;
     protected final Management response;
     
     private boolean responseTooBig = false;
     
-    public RequestDispatcher(final Management req) throws JAXBException, SOAPException {
+    public RequestDispatcher(final Management req, final HttpServletRequest httpReq) 
+    throws JAXBException, SOAPException {
         
         request = req;
+        httpRequest = httpReq;
         response = new Management();
         
         response.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -152,6 +157,12 @@ public abstract class RequestDispatcher implements Callable {
         request.validate();
     }
     
+    public void authenticate() throws SecurityException, JAXBException, SOAPException {
+        final Principal user = httpRequest.getUserPrincipal();
+        final String resource = request.getResourceURI();
+        // TODO: perform access control, throw SecurityException to deny access
+    }
+        
     private static void log(final byte[] bits) {
         if (LOG.isLoggable(Level.FINE)) {
             LOG.fine(new String(bits));
