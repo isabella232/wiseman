@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.8 2006-02-16 20:12:40 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.9 2006-02-21 22:18:52 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -39,12 +39,12 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
@@ -235,6 +235,7 @@ public final class EnumerationSupport extends BaseSupport {
             maxTime = datatypeFactory.newDuration(System.currentTimeMillis() + DEFAULT_MAX_TIMEOUT_MILLIS);
         }
         
+        final SOAPEnvelope env = response.getEnvelope();
         final Document doc = response.getBody().getOwnerDocument();        
         final List<Element> passed = new ArrayList<Element>(ctx.getCount());
         while (passed.size() < ctx.getCount() && iterator.hasNext(clientContext, ctx.getCursor())) {
@@ -259,6 +260,7 @@ public final class EnumerationSupport extends BaseSupport {
                 try {
                     if (ctx.evaluate(item)) {
                         passed.add(item);
+                        env.addNamespaceDeclaration(item.getPrefix(), item.getNamespaceURI());
                     }
                 } catch (XPathException xpx) {
                     throw new CannotProcessFilterFault("Error evaluating XPath");

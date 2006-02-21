@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.5 2006-02-16 20:12:43 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.6 2006-02-21 22:18:52 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -68,6 +68,7 @@ public class eventing_Handler implements Handler {
                 public void run() {
                     try {
                         final Addressing msg = new Addressing();
+                        msg.getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
                         msg.setAction(Management.EVENT_URI);
                         
                         final Document doc = msg.newDocument();

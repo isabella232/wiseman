@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.2 2005-07-22 21:57:56 akhilarora Exp $
+ * $Id: EnumerationIterator.java,v 1.3 2006-02-21 22:18:52 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -64,6 +64,7 @@ public interface EnumerationIterator {
      */
     List<Element> next(final Document doc, final Object context,
             final int startPos, final int count);
+    
     /**
      * Indicates if there are more elements remaining in the iteration.
      *
