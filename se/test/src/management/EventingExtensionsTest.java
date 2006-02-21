@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.3 2006-02-01 21:50:39 akhilarora Exp $
+ * $Id: EventingExtensionsTest.java,v 1.4 2006-02-21 21:45:57 akhilarora Exp $
  */
 
 package management;
@@ -24,6 +24,7 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
@@ -33,6 +34,7 @@ import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
@@ -110,12 +112,21 @@ public class EventingExtensionsTest extends TestBase {
     }
     
     public void testPullMode() throws Exception {
+        pullModeTest(null);
+        pullModeTest("//log:event3");
+    }
+    
+    private void pullModeTest(final String filter) throws Exception {
         final EventingExtensions evtx = new EventingExtensions();
         evtx.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         evtx.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         evtx.setTo(DESTINATION);
         evtx.setAction(Eventing.SUBSCRIBE_ACTION_URI);
-        evtx.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null, null);
+        final FilterType filterType = Eventing.FACTORY.createFilterType();
+        filterType.setDialect(XPath.NS_URI);
+        filterType.getContent().add(filter);
+        evtx.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null, 
+                filter == null ? null : filterType);
         
         final Management mgmt = new Management(evtx);
         mgmt.setResourceURI("wsman:test/pullSource");

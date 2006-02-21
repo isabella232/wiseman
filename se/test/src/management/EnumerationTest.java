@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.8 2006-02-17 22:20:47 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.9 2006-02-21 21:45:57 akhilarora Exp $
  */
 
 package management;
@@ -22,6 +22,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -165,6 +166,11 @@ public class EnumerationTest extends TestBase {
     }
 
     public void testEnumerate() throws Exception {
+        enumerateTest(null);
+        enumerateTest("//java:java.specification.version");
+    }
+    
+    private void enumerateTest(final String filter) throws Exception {
         
         final String RESOURCE = "wsman:test/java/system/properties";
         final Enumeration enu = new Enumeration();
@@ -172,7 +178,11 @@ public class EnumerationTest extends TestBase {
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         final DatatypeFactory factory = DatatypeFactory.newInstance();
-        enu.setEnumerate(null, factory.newDuration(60000).toString(), null);
+        final FilterType filterType = Enumeration.FACTORY.createFilterType();
+        filterType.setDialect(XPath.NS_URI);
+        filterType.getContent().add(filter);
+        enu.setEnumerate(null, factory.newDuration(60000).toString(), 
+                filter == null ? null : filterType);
         
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);
