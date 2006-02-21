@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.9 2006-02-21 22:18:52 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.10 2006-02-21 22:51:07 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -268,7 +268,7 @@ public final class EnumerationSupport extends BaseSupport {
             }
         }
         
-        if (iterator.hasNext(clientContext, ctx.getCursor())) {
+        if (iterator.hasNext(clientContext, ctx.getCursor() + 1)) {
             // update
             putContext(context, ctx);
             response.setPullResponse(passed, context.toString(), true);
