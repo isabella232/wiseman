@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.3 2006-02-21 22:18:52 akhilarora Exp $
+ * $Id: EnumerationIterator.java,v 1.4 2006-02-27 21:02:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.util.List;
-import org.w3c.dom.Document;
+import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Element;
 
 /**
- * The inteface to be presented by a data source that would like to be 
- * enumerated by taking advantage of the functionality present in 
+ * The inteface to be presented by a data source that would like to be
+ * enumerated by taking advantage of the functionality present in
  * {@link EnumerationSupport EnumerationSupport}.
  *
  * @see EnumerationSupport
@@ -33,36 +33,39 @@ public interface EnumerationIterator {
     
     /**
      * Supply the next few elements of the iteration. This is invoked to
-     * satisfy a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} 
-     * request. The operation must return within the 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout} 
-     * specified in the 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request, 
+     * satisfy a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+     * request. The operation must return within the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}
+     * specified in the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request,
      * otherwise {@link #cancel cancel} will
-     * be invoked and the current thread interrupted. When cancelled, 
-     * the implementation can return the results currently 
-     * accumulated (in which case no 
-     * {@link com.sun.ws.management.soap.Fault Fault} is generated) or it can 
+     * be invoked and the current thread interrupted. When cancelled,
+     * the implementation can return the results currently
+     * accumulated (in which case no
+     * {@link com.sun.ws.management.soap.Fault Fault} is generated) or it can
      * return {@code null} in which case a
      * {@link com.sun.ws.management.enumeration.TimedOutFault TimedOutFault}
      * is returned.
      *
-     * @param doc The document into which the returned items will be placed.
+     * @param db A document builder that can be used to create documents into 
+     * which the returned items will be placed. Note that each item must be
+     * placed as the root element of a new Document for XPath filtering to work
+     * properly.
      *
      * @param context The client context that was specified to
      * {@link EnumerationSupport#enumerate enumerate} is returned.
      *
-     * @param startPos The starting position (cursor) for this 
+     * @param startPos The starting position (cursor) for this
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
      *
-     * @param count The number of items desired in this 
+     * @param count The number of items desired in this
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
      *
-     * @return a List of {@link org.w3c.dom.Element Elements} that will be 
-     * returned in the 
+     * @return a List of {@link org.w3c.dom.Element Elements} that will be
+     * returned in the
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
-    List<Element> next(final Document doc, final Object context,
+    List<Element> next(final DocumentBuilder db, final Object context,
             final int startPos, final int count);
     
     /**
@@ -71,7 +74,7 @@ public interface EnumerationIterator {
      * @param context The client context that was specified to
      * {@link EnumerationSupport#enumerate enumerate} is returned.
      *
-     * @param startPos The starting position (cursor) for this 
+     * @param startPos The starting position (cursor) for this
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
      *
      * @return {@code true} if there are more elements in the iteration,
@@ -80,12 +83,12 @@ public interface EnumerationIterator {
     boolean hasNext(final Object context, final int startPos);
     
     /**
-     * Invoked when a {@link #next next} call exceeds the 
+     * Invoked when a {@link #next next} call exceeds the
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}
-     * specified in the 
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} 
-     * request. An implementation is expected to set a flag that 
-     * causes the currently-executing {@link #next next} operation to return 
+     * specified in the
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+     * request. An implementation is expected to set a flag that
+     * causes the currently-executing {@link #next next} operation to return
      * gracefully.
      *
      * @param context The client context that was specified to

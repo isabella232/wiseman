@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.9 2006-02-21 21:45:57 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.10 2006-02-27 21:02:32 akhilarora Exp $
  */
 
 package management;
@@ -167,7 +167,7 @@ public class EnumerationTest extends TestBase {
 
     public void testEnumerate() throws Exception {
         enumerateTest(null);
-        enumerateTest("//java:java.specification.version");
+        enumerateTest("/java:java.specification.version");
     }
     
     private void enumerateTest(final String filter) throws Exception {

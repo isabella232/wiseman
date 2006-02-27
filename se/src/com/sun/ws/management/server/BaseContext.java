@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseContext.java,v 1.3 2006-02-25 00:57:45 akhilarora Exp $
+ * $Id: BaseContext.java,v 1.4 2006-02-27 21:02:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -35,21 +35,21 @@ abstract class BaseContext {
     private final String expression;
     private final XPath xpath;
     
-    BaseContext(final XMLGregorianCalendar expiration,
-            final String expression,
+    BaseContext(final XMLGregorianCalendar expiry,
+            final String expr,
             final Map<String, String> namespaces) throws XPathExpressionException {
         
-        this.expiration = expiration;
+        expiration = expiry;
         
-        if (expression == null) {
-            this.filter = null;
-            this.xpath = null;
-            this.expression = null;
+        if (expr == null) {
+            filter = null;
+            xpath = null;
+            expression = null;
         } else {
-            this.xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
-            this.xpath.setNamespaceContext(new NamespaceMap(namespaces));
-            this.expression = expression;
-            this.filter = this.xpath.compile(this.expression);
+            xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
+            xpath.setNamespaceContext(new NamespaceMap(namespaces));
+            expression = expr;
+            filter = xpath.compile(expression);
         }
     }
     

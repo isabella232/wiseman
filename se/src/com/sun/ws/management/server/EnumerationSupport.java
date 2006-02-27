@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.10 2006-02-21 22:51:07 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.11 2006-02-27 21:02:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -39,6 +39,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
@@ -236,8 +237,9 @@ public final class EnumerationSupport extends BaseSupport {
         }
         
         final SOAPEnvelope env = response.getEnvelope();
-        final Document doc = response.getBody().getOwnerDocument();        
+        final DocumentBuilder db = response.getDocumentBuilder();
         final List<Element> passed = new ArrayList<Element>(ctx.getCount());
+        
         while (passed.size() < ctx.getCount() && iterator.hasNext(clientContext, ctx.getCursor())) {
             final TimerTask ttask = new TimerTask() {
                 public void run() {
@@ -248,15 +250,22 @@ public final class EnumerationSupport extends BaseSupport {
             final Timer timeoutTimer = new Timer(true);
             timeoutTimer.schedule(ttask, timeout);
             
-            final List<Element> items = iterator.next(doc, clientContext, ctx.getCursor(), 
+            final List<Element> items = iterator.next(db, clientContext, ctx.getCursor(), 
                     ctx.getCount() - passed.size());
             if (items == null) {
                 throw new TimedOutFault();
             }
+            timeoutTimer.cancel();
             ctx.setCursor(ctx.getCursor() + items.size());
             
             // apply filter, if any
             for (final Element item : items) {
+                // append the Element to the owner document if it has not been done
+                // this is critical for XPath filtering to work
+                final Document owner = item.getOwnerDocument();
+                if (owner.getDocumentElement() == null) {
+                    owner.appendChild(item);
+                }
                 try {
                     if (ctx.evaluate(item)) {
                         passed.add(item);

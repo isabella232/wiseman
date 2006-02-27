@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pullSource_Handler.java,v 1.2 2006-02-16 20:12:43 akhilarora Exp $
+ * $Id: pullSource_Handler.java,v 1.3 2006-02-27 21:02:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
@@ -80,7 +81,7 @@ public class pullSource_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<Element> next(final Document doc, final Object context,
+    public List<Element> next(final DocumentBuilder db, final Object context,
             final int start, final int count) {        
         cancelled = false;
         final String[][] events = (String[][]) context;
@@ -89,6 +90,7 @@ public class pullSource_Handler implements Handler, EnumerationIterator {
         for (int i = 0; i < returnCount && !cancelled; i++) {
             final String key = events[start + i][0];
             final String value = events[start + i][1];
+            final Document doc = db.newDocument();
             final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
             item.setTextContent(value);
             items.add(item);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.4 2006-02-21 21:45:57 akhilarora Exp $
+ * $Id: EventingExtensionsTest.java,v 1.5 2006-02-27 21:02:32 akhilarora Exp $
  */
 
 package management;
@@ -113,7 +113,7 @@ public class EventingExtensionsTest extends TestBase {
     
     public void testPullMode() throws Exception {
         pullModeTest(null);
-        pullModeTest("//log:event3");
+        pullModeTest("/log:event3");
     }
     
     private void pullModeTest(final String filter) throws Exception {

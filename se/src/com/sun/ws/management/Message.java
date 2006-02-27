@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.2 2006-02-01 21:50:31 akhilarora Exp $
+ * $Id: Message.java,v 1.3 2006-02-27 21:02:31 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -88,6 +88,10 @@ public abstract class Message {
     
     public static synchronized Document newDocument() {
         return db.newDocument();
+    }
+    
+    public static synchronized DocumentBuilder getDocumentBuilder() {
+        return db;
     }
     
     public static Element createElement(final Document doc, final QName qname) {
