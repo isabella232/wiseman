@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.11 2005-12-13 21:13:54 akhilarora Exp $
+ $Id: build.xml,v 1.12 2006-03-01 00:37:00 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -128,6 +128,9 @@
         <include name="LICENSE" />
         <include name="NOTICE" />
       </metainf>
+      <metainf dir="etc">
+        <include name="context.xml" />
+      </metainf>
     </war>
   </target>
   
@@ -161,7 +164,27 @@
         <include name="LICENSE" />
         <include name="NOTICE" />
       </metainf>
+      <metainf dir="etc">
+        <include name="context.xml" />
+      </metainf>
     </war>
+  </target>
+  
+  <!-- set catalina.home in "${user.home}/.ant.properties" -->
+  <path id="deployer.classpath">
+    <pathelement path="${catalina.home}/server/lib/catalina-ant.jar" />
+  </path>
+
+  <taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" classpathref="deployer.classpath" />
+  <target name="deploy" depends="war">
+    <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
+            path="${war.context.path}" war="${basedir}/${war.file}" update="true" />
+  </target>
+
+  <taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask" classpathref="deployer.classpath" />
+  <target name="reload" depends="war">
+    <reload url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}" 
+            path="${war.context.path}" />
   </target>
   
   <target name="javadoc-init" depends="init">

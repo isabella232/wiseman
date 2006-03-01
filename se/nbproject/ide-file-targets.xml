@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." name="wiseman-debug">
+    <!-- (more info: http://www.netbeans.org/kb/41/freeform-config.html#debugj2se) -->
+    <property file="project.properties" />
+    <property file="nbproject/debug.properties" />
+    <target name="debug-nb">
+        <nbjpdaconnect address="${jpda.address}" host="${jpda.host}" 
+                       name="${jpda.session.name}" transport="${jpda.transport}">
+            <sourcepath>
+                <path path="${src.dir}" />
+                <path path="${gen.src.dir}" />
+            </sourcepath>
+        </nbjpdaconnect>
+    </target>
+</project>
