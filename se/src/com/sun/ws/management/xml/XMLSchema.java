@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XMLSchema.java,v 1.1 2005-06-29 19:18:27 akhilarora Exp $
+ * $Id: XMLSchema.java,v 1.2 2006-03-03 20:51:15 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
 
 // namespace declarations for XML Schema
-public interface XMLSchema {
+public final class XMLSchema {
     
-    String NS_PREFIX = "xs";
-    String NS_URI = "http://www.w3.org/2001/XMLSchema";
+    public static final String NS_PREFIX = "xs";
+    public static final String NS_URI = "http://www.w3.org/2001/XMLSchema";
 
 }

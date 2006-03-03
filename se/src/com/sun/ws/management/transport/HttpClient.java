@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.9 2005-11-08 22:45:50 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.10 2006-03-03 20:51:14 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -44,6 +44,8 @@ import javax.xml.soap.SOAPException;
 public final class HttpClient {
     
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
+    
+    private HttpClient() {}
     
     public static void setAuthenticator(final Authenticator auth) {
         Authenticator.setDefault(auth);
@@ -89,9 +91,9 @@ public final class HttpClient {
         OutputStream os = null;
         try {
             os = conn.getOutputStream();
-            if (data instanceof Message)
+            if (data instanceof Message) {
                 ((Message) data).writeTo(os);
-            else if (data instanceof byte[]) {
+            } else if (data instanceof byte[]) {
                 os.write((byte[]) data);
             } else {
                 throw new IllegalArgumentException("Type of data not handled: " +
@@ -131,7 +133,7 @@ public final class HttpClient {
             // dump the first 4k bytes of the response for help in debugging
             if (LOG.isLoggable(Level.INFO)) {
                 final byte[] buffer = new byte[4096];
-                int nread = is.read(buffer);
+                final int nread = is.read(buffer);
                 if (nread > 0) {
                     final ByteArrayOutputStream bos = new ByteArrayOutputStream(buffer.length);
                     bos.write(buffer, 0, nread);
@@ -155,14 +157,14 @@ public final class HttpClient {
     
     public static int sendResponse(final String to, final byte[] bits) throws IOException, SOAPException, JAXBException {
         log(bits);
-        HttpURLConnection http = initConnection(to);
+        final HttpURLConnection http = initConnection(to);
         transfer(http, bits);
         return http.getResponseCode();
     }
     
     public static int sendResponse(final Addressing msg) throws IOException, SOAPException, JAXBException {
         log(msg);
-        HttpURLConnection http = initConnection(msg.getTo());
+        final HttpURLConnection http = initConnection(msg.getTo());
         transfer(http, msg);
         return http.getResponseCode();
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: NamespaceMap.java,v 1.1 2006-02-16 20:12:42 akhilarora Exp $
+ * $Id: NamespaceMap.java,v 1.2 2006-03-03 20:51:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -32,7 +32,7 @@ public final class NamespaceMap implements NamespaceContext {
     // key:prefix value:URI
     public NamespaceMap(final Map<String, String> ns) {
         if (ns == null) {
-            throw new NullPointerException("Namespace prefix/URI map cannot be null");
+            throw new IllegalArgumentException("Namespace prefix/URI map cannot be null");
         }
         if (ns.isEmpty()) {
             throw new IllegalArgumentException("Namespace prefix/URI map cannot be empty");

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XML.java,v 1.1 2005-06-29 19:18:27 akhilarora Exp $
+ * $Id: XML.java,v 1.2 2006-03-03 20:51:14 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -21,7 +21,7 @@ package com.sun.ws.management.xml;
 import java.util.Locale;
 import javax.xml.namespace.QName;
 
-public interface XML {
+public final class XML {
     
     public static final String NS_PREFIX = "xml";
     public static final String NS_URI = "http://www.w3.org/XML/1998/namespace";

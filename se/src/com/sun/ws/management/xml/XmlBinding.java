@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.2 2005-08-10 21:52:56 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.3 2006-03-03 20:51:15 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -38,7 +38,6 @@ public final class XmlBinding implements ValidationEventHandler {
             "org.xmlsoap.schemas.ws._2005._06.management:" +
             "org.xmlsoap.schemas.ws._2005._06.wsmancat";
     
-    private final JAXBContext context;
     private final Marshaller marshaller;
     private final Unmarshaller unmarshaller;
     
@@ -50,7 +49,7 @@ public final class XmlBinding implements ValidationEventHandler {
             packageNames.append(":");
             packageNames.append(p);
         }
-        context = JAXBContext.newInstance(packageNames.toString());
+        final JAXBContext context = JAXBContext.newInstance(packageNames.toString());
         marshaller = context.createMarshaller();
         unmarshaller = context.createUnmarshaller();
         unmarshaller.setEventHandler(this);
@@ -62,7 +61,7 @@ public final class XmlBinding implements ValidationEventHandler {
     
     public synchronized Object unmarshal(final Node node) throws JAXBException {
         validationException = null;
-        Object obj = unmarshaller.unmarshal(node);
+        final Object obj = unmarshaller.unmarshal(node);
         if (validationException != null) {
             throw validationException;
         }

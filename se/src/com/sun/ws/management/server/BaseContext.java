@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseContext.java,v 1.4 2006-02-27 21:02:31 akhilarora Exp $
+ * $Id: BaseContext.java,v 1.5 2006-03-03 20:51:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -26,14 +26,10 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import org.w3c.dom.Node;
 
-abstract class BaseContext {
+class BaseContext {
     
     private final XMLGregorianCalendar expiration;
     private final XPathExpression filter;
-    // the raw filter expression is not used, but can be useful for debugging
-    // TODO: delete to save a little amount of memory
-    private final String expression;
-    private final XPath xpath;
     
     BaseContext(final XMLGregorianCalendar expiry,
             final String expr,
@@ -43,13 +39,10 @@ abstract class BaseContext {
         
         if (expr == null) {
             filter = null;
-            xpath = null;
-            expression = null;
         } else {
-            xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
+            final XPath xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
             xpath.setNamespaceContext(new NamespaceMap(namespaces));
-            expression = expr;
-            filter = xpath.compile(expression);
+            filter = xpath.compile(expr);
         }
     }
     

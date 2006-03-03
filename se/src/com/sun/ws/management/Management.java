@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.4 2006-02-01 21:50:30 akhilarora Exp $
+ * $Id: Management.java,v 1.5 2006-03-03 20:51:10 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -279,17 +279,17 @@ public class Management extends Addressing {
     // getters
     
     public String getResourceURI() throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), RESOURCE_URI);
+        final Object value = unbind(getHeader(), RESOURCE_URI);
         return value == null ? null : ((JAXBElement<ResourceURIType>) value).getValue().getValue();
     }
     
     public Duration getTimeout() throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), OPERATION_TIMEOUT);
+        final Object value = unbind(getHeader(), OPERATION_TIMEOUT);
         return value == null ? null : ((JAXBElement<Duration>) value).getValue();
     }
     
     public Map<String, Object> getSelectors() throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), SELECTOR_SET);
+        final Object value = unbind(getHeader(), SELECTOR_SET);
         if (value == null) {
             return null;
         }
@@ -304,7 +304,7 @@ public class Management extends Addressing {
     }
     
     public Map<String, String> getOptions() throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), OPTION_SET);
+        final Object value = unbind(getHeader(), OPTION_SET);
         if (value == null) {
             return null;
         }
@@ -319,17 +319,17 @@ public class Management extends Addressing {
     }
     
     public MaxEnvelopeSizeType getMaxEnvelopeSize() throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), MAX_ENVELOPE_SIZE);
+        final Object value = unbind(getHeader(), MAX_ENVELOPE_SIZE);
         return value == null ? null : ((JAXBElement<MaxEnvelopeSizeType>) value).getValue();
     }
     
     public LocaleType getLocale() throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), LOCALE);
+        final Object value = unbind(getHeader(), LOCALE);
         return value == null ? null : ((JAXBElement<LocaleType>) value).getValue();
     }
     
     public EndpointReferenceType getRename() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), RENAME);
+        final Object value = unbind(getBody(), RENAME);
         return value == null ? null : ((JAXBElement<EndpointReferenceType>) ((JAXBElement<RenameType>) value).getValue().getAny().get(0)).getValue();
     }
 }

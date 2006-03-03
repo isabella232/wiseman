@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: accessDenied_Handler.java,v 1.1 2005-10-06 19:09:49 akhilarora Exp $
+ * $Id: accessDenied_Handler.java,v 1.2 2006-03-03 20:51:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
 
-import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
 

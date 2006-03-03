@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: JavaException.java,v 1.1 2005-06-29 19:18:23 akhilarora Exp $
+ * $Id: JavaException.java,v 1.2 2006-03-03 20:51:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.java;
@@ -21,10 +21,10 @@ package com.sun.ws.management.java;
 import javax.xml.namespace.QName;
 
 // namespace declarations for a Java Exception to be returned in Faults
-public interface JavaException {
+public final class JavaException {
     
-    String NS_PREFIX = "ex";
-    String NS_URI = "http://schemas.sun.com/ws/java/exception";
+    public static final String NS_PREFIX = "ex";
+    public static final String NS_URI = "http://schemas.sun.com/ws/java/exception";
 
     public static final QName EXCEPTION = new QName(NS_URI, "Exception", NS_PREFIX);
     public static final QName CAUSE = new QName(NS_URI, "Cause", NS_PREFIX);

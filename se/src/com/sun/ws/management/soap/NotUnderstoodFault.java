@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: NotUnderstoodFault.java,v 1.1 2006-01-28 01:11:33 akhilarora Exp $
+ * $Id: NotUnderstoodFault.java,v 1.2 2006-03-03 20:51:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -34,7 +34,7 @@ public class NotUnderstoodFault extends FaultException {
         super(SOAP.MUST_UNDERSTAND, null, SOAP.NOT_UNDERSTOOD_REASON, (Node[]) null);
 
         if (headerNotUnderstood == null) {
-            throw new NullPointerException("Must specify which header is not understood");
+            throw new IllegalArgumentException("Must specify which header is not understood");
         }
         this.headerNotUnderstood = headerNotUnderstood;
     }

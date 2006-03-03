@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.11 2006-02-27 21:02:31 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.12 2006-03-03 20:51:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -46,7 +46,6 @@ import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -101,17 +100,11 @@ public final class EnumerationSupport extends BaseSupport {
             final EnumerationIterator enumIterator, final Object clientContext,
             final Map<String, String> namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
+
+        initialize();
         
-        init();
-        if (defaultExpiration == null) {
-            defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
-        }
-        
-        String filterDialect = null;
-        String filter = null;
         String expires = null;
         String filterExpression = null;
-        EndpointReferenceType endTo = null;
         
         final Enumerate enumerate = request.getEnumerate();
         if (enumerate == null) {
@@ -167,6 +160,13 @@ public final class EnumerationSupport extends BaseSupport {
             response.setEnumerateResponse(context.toString(), ctx.getExpiration());
         }
     }
+
+    private static synchronized void initialize() throws DatatypeConfigurationException {
+        init();
+        if (defaultExpiration == null) {
+            defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
+        }
+    }
     
     /**
      * Handle a
@@ -195,8 +195,6 @@ public final class EnumerationSupport extends BaseSupport {
         
         final BigInteger maxChars = pull.getMaxCharacters();
         if (maxChars != null) {
-            // NOTE: downcasting from BigInteger to int
-            final int chars = maxChars.intValue();
             // TODO: add support for maxChars
             throw new UnsupportedFeatureFault("MaxChars is not yet implemented");
         }

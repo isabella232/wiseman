@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.1 2006-02-16 20:12:39 akhilarora Exp $
+ * $Id: BaseSupport.java,v 1.2 2006-03-03 20:51:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -34,7 +34,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-abstract class BaseSupport {
+class BaseSupport {
     
     protected static final String UUID_SCHEME = "urn:uuid:";
     protected static DatatypeFactory datatypeFactory;
@@ -64,7 +64,9 @@ abstract class BaseSupport {
         cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
     }
     
-    protected static void init() throws DatatypeConfigurationException {
+    protected BaseSupport() {}
+    
+    protected static synchronized void init() throws DatatypeConfigurationException {
         if (datatypeFactory == null) {
             datatypeFactory = DatatypeFactory.newInstance();
         }

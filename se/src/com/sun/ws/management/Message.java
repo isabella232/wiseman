@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.3 2006-02-27 21:02:31 akhilarora Exp $
+ * $Id: Message.java,v 1.4 2006-03-03 20:51:10 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -62,7 +62,6 @@ public abstract class Message {
     private static DocumentBuilder db = null;
 
     private final SOAPMessage msg;
-    private SOAPPart soap = null;
     private SOAPEnvelope env = null;
     private SOAPHeader hdr = null;
     private SOAPBody body = null;
@@ -158,7 +157,7 @@ public abstract class Message {
     }
     
     private void init() throws SOAPException {
-        soap = msg.getSOAPPart();
+        final SOAPPart soap = msg.getSOAPPart();
         hdr = msg.getSOAPHeader();
         env = soap.getEnvelope();
         body = msg.getSOAPBody();

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Http.java,v 1.1 2005-06-29 19:18:26 akhilarora Exp $
+ * $Id: Http.java,v 1.2 2006-03-03 20:51:14 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -26,6 +26,8 @@ public final class Http {
 
     public static final String SOAP_MIME_TYPE_WITH_CHARSET = 
         SOAP_MIME_TYPE + ";" + CHARSET + "=" + DEFAULT_CHARSET;
+    
+    private Http() {}
     
     public static boolean isContentTypeAcceptable(final String contentType) {
         if (contentType == null) {

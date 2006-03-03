@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.5 2006-02-06 21:37:30 akhilarora Exp $
+ * $Id: Addressing.java,v 1.6 2006-03-03 20:51:10 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -197,7 +197,7 @@ public class Addressing extends SOAP {
         final AttributedURI actionURI = FACTORY.createAttributedURI();
         actionURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
         actionURI.setValue(action.trim());
-        JAXBElement<AttributedURI> actionElement = FACTORY.createAction(actionURI);
+        final JAXBElement<AttributedURI> actionElement = FACTORY.createAction(actionURI);
         getXmlBinding().marshal(actionElement, getHeader());
     }
     
@@ -310,12 +310,12 @@ public class Addressing extends SOAP {
     // get helpers
     
     private String getAttributedURI(final QName qname) throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), qname);
+        final Object value = unbind(getHeader(), qname);
         return value == null ? null : ((JAXBElement<AttributedURI>) value).getValue().getValue().trim();
     }
     
     private EndpointReferenceType getEndpointReference(final QName qname) throws JAXBException, SOAPException {
-        Object value = unbind(getHeader(), qname);
+        final Object value = unbind(getHeader(), qname);
         return value == null ? null : ((JAXBElement<EndpointReferenceType>) value).getValue();
     }
 }

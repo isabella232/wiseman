@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.7 2006-02-01 21:50:33 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.8 2006-03-03 20:51:11 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -184,7 +184,7 @@ public class Enumeration extends Addressing {
         removeChildren(getBody(), PULL_RESPONSE);
         final PullResponse response = FACTORY.createPullResponse();
         
-        ItemListType itemList = FACTORY.createItemListType();
+        final ItemListType itemList = FACTORY.createItemListType();
         itemList.getAny().addAll(items);
         response.setItems(itemList);
         
@@ -211,32 +211,32 @@ public class Enumeration extends Addressing {
     }
     
     public Enumerate getEnumerate() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), ENUMERATE);
+        final Object value = unbind(getBody(), ENUMERATE);
         return value == null ? null : (Enumerate) value;
     }
     
     public EnumerateResponse getEnumerateResponse() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), ENUMERATE_RESPONSE);
+        final Object value = unbind(getBody(), ENUMERATE_RESPONSE);
         return value == null ? null : (EnumerateResponse) value;
     }
     
     public Pull getPull() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), PULL);
+        final Object value = unbind(getBody(), PULL);
         return value == null ? null : (Pull) value;
     }
     
     public PullResponse getPullResponse() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), PULL_RESPONSE);
+        final Object value = unbind(getBody(), PULL_RESPONSE);
         return value == null ? null : (PullResponse) value;
     }
     
     public Release getRelease() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), RELEASE);
+        final Object value = unbind(getBody(), RELEASE);
         return value == null ? null : (Release) value;
     }
     
     public EnumerationEnd getEnumerationEnd() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), ENUMERATION_END);
+        final Object value = unbind(getBody(), ENUMERATION_END);
         return value == null ? null : (EnumerationEnd) value;
     }
 }

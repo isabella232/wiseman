@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.8 2006-02-17 20:02:54 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.9 2006-03-03 20:51:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -191,7 +191,7 @@ public class WSManServlet extends HttpServlet {
     }
     
     private void dispatch(final RequestDispatcher dispatcher, final long timeout) throws Throwable {
-        FutureTask<?> task = new FutureTask<Object>(dispatcher);
+        final FutureTask<?> task = new FutureTask<Object>(dispatcher);
         // the Future returned by pool.submit does not propagate
         // ExecutionException, perform the get on FutureTask itself
         pool.submit(task);

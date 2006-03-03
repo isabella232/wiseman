@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.5 2006-02-16 20:12:42 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.6 2006-03-03 20:51:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -144,7 +144,7 @@ public final class EventingSupport extends BaseSupport {
         if (!(bctx instanceof EventingContext)) {
             throw new RuntimeException("Context not found");
         }
-        EventingContext ctx = (EventingContext) bctx;
+        final EventingContext ctx = (EventingContext) bctx;
         
         final GregorianCalendar now = new GregorianCalendar();
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);

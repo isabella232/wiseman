@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: UnsupportedExpirationTypeFault.java,v 1.1 2005-06-29 19:18:20 akhilarora Exp $
+ * $Id: UnsupportedExpirationTypeFault.java,v 1.2 2006-03-03 20:51:11 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
-import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
 import org.w3c.dom.Node;
 

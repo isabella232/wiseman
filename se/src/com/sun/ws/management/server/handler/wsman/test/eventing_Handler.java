@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.6 2006-02-21 22:18:52 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.7 2006-03-03 20:51:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -48,7 +48,7 @@ public class eventing_Handler implements Handler {
         { "event5", "critical" }
     };
     
-    private Timer eventTimer = new Timer(true);
+    private final Timer eventTimer = new Timer(true);
     
     public void handle(final String action, final String resource,
             final Management request, final Management response) throws Exception {
@@ -83,8 +83,8 @@ public class eventing_Handler implements Handler {
                         } else {
                             LOG.info("Event filtered " + info);
                         }
-                    } catch (Throwable th) {
-                        LOG.log(Level.SEVERE, "Failed to deliver event", th);
+                    } catch (Exception ex) {
+                        LOG.log(Level.SEVERE, "Failed to deliver event", ex);
                     }
                     if (++eventCount >= EVENTS.length) {
                         eventTimer.cancel();

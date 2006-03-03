@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.6 2006-02-07 20:32:13 akhilarora Exp $
+ * $Id: SOAP.java,v 1.7 2006-03-03 20:51:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -84,7 +84,7 @@ public class SOAP extends Message {
     public XmlBinding getXmlBinding() {
         return binding;
     }
-    
+
     public void validate() throws SOAPException, JAXBException, FaultException {
     }
     
@@ -133,14 +133,14 @@ public class SOAP extends Message {
     }
     
     protected void removeChildren(final SOAPElement parent) throws SOAPException {
-        SOAPElement[] elements = getChildren(parent);
+        final SOAPElement[] elements = getChildren(parent);
         for (final SOAPElement se : elements) {
             se.detachNode();
         }
     }
     
     protected void removeChildren(final SOAPElement parent, final QName qname) throws SOAPException {
-        SOAPElement[] elements = getChildren(parent, qname);
+        final SOAPElement[] elements = getChildren(parent, qname);
         for (final SOAPElement se : elements) {
             se.detachNode();
         }
@@ -247,7 +247,7 @@ public class SOAP extends Message {
     }
     
     public Fault getFault() throws JAXBException, SOAPException {
-        Object value = unbind(getBody(), FAULT);
+        final Object value = unbind(getBody(), FAULT);
         return value == null ? null : ((JAXBElement<Fault>) value).getValue();
     }
 }
