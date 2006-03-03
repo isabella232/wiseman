@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.7 2006-03-03 21:38:14 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.8 2006-03-03 22:52:26 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -140,33 +140,19 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         return response;
     }
     
-    // TODO: replace with com.sun.tools.xjc.reader.Util.getPackageNameFromNamespaceURI
     private String createHandlerClassName(final String resource) {
-        // map URI schemes to "."
-        String className = resource.replaceAll(":/*", ".");
         
-        className = className.replaceAll("/", ".");
-        
-        // map special characters to underscores
-        className = className.replaceAll("[,;\\$&+=?#\\[\\]]", "_");
-        
-        // prefix illegal package names (those that start with a number,
-        // for example) and reserved words with an underscore
-        final String[] component = className.split("\\.");
+        final String pkg = 
+                com.sun.tools.xjc.reader.Util.getPackageNameFromNamespaceURI(resource);
+
         final StringBuilder sb = new StringBuilder();
-        for (int i=0; i < component.length; i++) {
-            if (component[i].matches("^\\d*") ||
-                    // TODO: handle other reserved words
-                    component[i].equals("this")) {
-                sb.append("_");
-            }
-            sb.append(component[i]);
-            if (i < component.length - 1) {
-                sb.append(".");
-            }
+        if (HANDLER_PREFIX != null) {
+            sb.append(HANDLER_PREFIX);
+            sb.append(".");
         }
-        
+        sb.append(pkg);
         sb.append("_Handler");
-        return HANDLER_PREFIX == null ? sb.toString() : HANDLER_PREFIX + "." + sb.toString();
+        
+        return sb.toString();
     }
 }

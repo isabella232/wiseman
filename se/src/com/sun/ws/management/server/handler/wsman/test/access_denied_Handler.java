@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: nonHandler_Handler.java,v 1.1 2005-10-26 19:32:21 akhilarora Exp $
+ * $Id: access_denied_Handler.java,v 1.1 2006-03-03 22:52:26 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
 
+import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
 
-public class nonHandler_Handler /* does not implement Handler */ {
+public class access_denied_Handler implements Handler {
     
     public void handle(final String action, final String resource,
             final Management request, final Management response) throws Exception {
-        throw new RuntimeException("Assertion failure");
+        throw new SecurityException("fake");
     }
 }

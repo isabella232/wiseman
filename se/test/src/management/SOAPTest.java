@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAPTest.java,v 1.2 2006-01-28 01:19:27 akhilarora Exp $
+ * $Id: SOAPTest.java,v 1.3 2006-03-03 22:52:29 akhilarora Exp $
  */
 
 package management;
@@ -53,7 +53,7 @@ public class SOAPTest extends TestBase {
         addr.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
         final Management mgmt = new Management(addr);
-        mgmt.setResourceURI("wsman:test/notUnderstood");
+        mgmt.setResourceURI("wsman:test/not_understood");
         
         addr.prettyPrint(logfile);
         Addressing response = HttpClient.sendRequest(addr);

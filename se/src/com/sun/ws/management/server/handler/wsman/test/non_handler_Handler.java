@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.
+ * Copyright 2005 Sun Microsystems, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: notUnderstood_Handler.java,v 1.1 2006-01-28 01:11:31 akhilarora Exp $
+ * $Id: non_handler_Handler.java,v 1.1 2006-03-03 22:52:27 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.server.Handler;
-import com.sun.ws.management.soap.NotUnderstoodFault;
-import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPHeaderElement;
 
-public class notUnderstood_Handler implements Handler {
+public class non_handler_Handler /* does not implement Handler */ {
     
     public void handle(final String action, final String resource,
             final Management request, final Management response) throws Exception {
-        
-        for (final SOAPHeaderElement mu : request.getAllMustUnderstand()) {
-            final QName qn = mu.getElementQName();
-            if (Addressing.MESSAGE_ID.equals(qn)) {
-                // pretend we do not understand the wsa:MessageID header
-                throw new NotUnderstoodFault(qn);
-            }
-        }
+        throw new RuntimeException("Assertion failure");
     }
 }

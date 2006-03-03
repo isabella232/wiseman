@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: hugeEnvelopeCreator_Handler.java,v 1.1 2005-11-08 22:40:20 akhilarora Exp $
+ * $Id: huge_envelope_creator_Handler.java,v 1.1 2006-03-03 22:52:27 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -27,7 +27,7 @@ import java.util.UUID;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-public class hugeEnvelopeCreator_Handler implements Handler {
+public class huge_envelope_creator_Handler implements Handler {
     
     public void handle(final String action, final String resource,
       final Management request, final Management response) throws Exception {

@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.12 2006-03-01 00:37:00 akhilarora Exp $
+ $Id: build.xml,v 1.13 2006-03-03 22:52:26 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -108,6 +108,7 @@
         <include name="jaxb-api.jar" />
         <include name="jaxb-impl.jar" />
         <include name="jsr173_1.0_api.jar" />
+        <include name="jaxb-xjc.jar" />
       </lib>
       <lib dir="${jaxrpc.lib.dir}">
         <include name="saaj-api.jar" />
@@ -144,6 +145,7 @@
         <include name="jaxb-api.jar" />
         <include name="jaxb-impl.jar" />
         <include name="jsr173_1.0_api.jar" />
+        <include name="jaxb-xjc.jar" />
       </lib>
       <lib dir="${jaxrpc.lib.dir}">
         <include name="saaj-api.jar" />

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.12 2006-02-07 20:20:24 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.13 2006-03-03 22:52:29 akhilarora Exp $
  */
 
 package management;
@@ -321,7 +321,7 @@ public class ManagementTest extends TestBase {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/accessDenied");
+        mgmt.setResourceURI("wsman:test/access_denied");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
@@ -341,7 +341,7 @@ public class ManagementTest extends TestBase {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/nonHandler");
+        mgmt.setResourceURI("wsman:test/non_handler");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
@@ -361,7 +361,7 @@ public class ManagementTest extends TestBase {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/timeoutHandler");
+        mgmt.setResourceURI("wsman:test/timeout");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         final DatatypeFactory durationFactory = DatatypeFactory.newInstance();
@@ -385,7 +385,7 @@ public class ManagementTest extends TestBase {
         mgmt.setTo(DESTINATION);
         // the particular handler used does not matter in this case -
         // a fault should be returned before a handler is invoked
-        mgmt.setResourceURI("wsman:test/timeoutHandler");
+        mgmt.setResourceURI("wsman:test/timeout");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
@@ -418,7 +418,7 @@ public class ManagementTest extends TestBase {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/hugeEnvelopeCreator");
+        mgmt.setResourceURI("wsman:test/huge_envelope_creator");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         

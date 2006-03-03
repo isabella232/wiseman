@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pullSource_Handler.java,v 1.3 2006-02-27 21:02:31 akhilarora Exp $
+ * $Id: pull_source_Handler.java,v 1.1 2006-03-03 22:52:28 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -37,7 +37,7 @@ import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 
-public class pullSource_Handler implements Handler, EnumerationIterator {
+public class pull_source_Handler implements Handler, EnumerationIterator {
     
     private static final String NS_URI = "https://wiseman.dev.java.net/test/events/pull";
     private static final String NS_PREFIX = "log";

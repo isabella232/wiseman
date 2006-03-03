@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.5 2006-02-27 21:02:32 akhilarora Exp $
+ * $Id: EventingExtensionsTest.java,v 1.6 2006-03-03 22:52:29 akhilarora Exp $
  */
 
 package management;
@@ -129,7 +129,7 @@ public class EventingExtensionsTest extends TestBase {
                 filter == null ? null : filterType);
         
         final Management mgmt = new Management(evtx);
-        mgmt.setResourceURI("wsman:test/pullSource");
+        mgmt.setResourceURI("wsman:test/pull_source");
         
         mgmt.prettyPrint(logfile);
         Addressing response = HttpClient.sendRequest(mgmt);
@@ -164,7 +164,7 @@ public class EventingExtensionsTest extends TestBase {
             en.setPull(context, -1, 2, pullDuration);
             
             final Management mgmt2 = new Management(en);
-            mgmt2.setResourceURI("wsman:test/pullSource");
+            mgmt2.setResourceURI("wsman:test/pull_source");
             
             mgmt2.prettyPrint(logfile);
             Addressing response2 = HttpClient.sendRequest(mgmt2);
