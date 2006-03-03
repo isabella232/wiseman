@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.6 2006-02-17 20:02:51 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.7 2006-03-03 21:38:14 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -23,6 +23,8 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
@@ -36,13 +38,33 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     private static final Class[] HANDLER_PARAMS = { String.class, String.class, Management.class, Management.class };
     private static final String HANDLER_PREFIX = ReflectiveRequestDispatcher.class.getPackage().getName() + ".handler";
     
-    public ReflectiveRequestDispatcher(final Management req, final HttpServletRequest httpReq) 
+    static final class HandlerEntry {
+        
+        private final Object instance;
+        private final Method method;
+        
+        HandlerEntry(final Object instance, final Method method) {
+            this.instance = instance;
+            this.method = method;
+        }
+        
+        Object getInstance() {
+            return instance;
+        }
+        
+        Method getMethod() {
+            return method;
+        }
+    }
+    
+    private static final Map<String, HandlerEntry> cache = new WeakHashMap<String, HandlerEntry>();
+    
+    public ReflectiveRequestDispatcher(final Management req, final HttpServletRequest httpReq)
     throws JAXBException, SOAPException {
         super(req, httpReq);
     }
     
-    public Management call() throws Exception {        
-        final String action = request.getAction();
+    public Management call() throws Exception {
         final String resource = request.getResourceURI();
         if (resource == null) {
             throw new DestinationUnreachableFault(
@@ -50,53 +72,61 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
                     Management.INVALID_RESOURCE_URI_DETAIL);
         }
         
-        final String handlerClassName = createHandlerClassName(resource);
-        if (LOG.isLoggable(Level.FINE)) {
-            LOG.log(Level.FINE, resource + " . " + action + " -> " + handlerClassName);
+        HandlerEntry he = cache.get(resource);
+        if (he == null) {
+            
+            final String handlerClassName = createHandlerClassName(resource);
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, resource + " -> " + handlerClassName);
+            }
+            
+            final Class handlerClass;
+            try {
+                handlerClass = Class.forName(handlerClassName);
+            } catch (ClassNotFoundException cnfex) {
+                throw new DestinationUnreachableFault(
+                        "Handler not found for resource " + resource,
+                        Management.INVALID_RESOURCE_URI_DETAIL);
+            }
+            
+            // verify that handlerClass implements the Handler interface
+            if (!HANDLER_INTERFACE.isAssignableFrom(handlerClass)) {
+                throw new DestinationUnreachableFault(
+                        "Handler " +
+                        handlerClassName +
+                        " does not implement the Handler interface for resource " + resource,
+                        Management.INVALID_RESOURCE_URI_DETAIL);
+            }
+            
+            final Method method;
+            try {
+                method = handlerClass.getDeclaredMethod("handle", HANDLER_PARAMS);
+            } catch (NoSuchMethodException nsmex) {
+                throw new DestinationUnreachableFault(
+                        "handle method not found in Handler " +
+                        handlerClassName + " for resource " + resource,
+                        Management.INVALID_RESOURCE_URI_DETAIL);
+            }
+            
+            final Object handler;
+            try {
+                handler = handlerClass.newInstance();
+            } catch (InstantiationException iex) {
+                throw new DestinationUnreachableFault(
+                        "Could not instantiate handler " +
+                        handlerClassName + " for resource " + resource,
+                        Management.INVALID_RESOURCE_URI_DETAIL);
+            } catch (IllegalAccessException iaex) {
+                throw new AccessDeniedFault();
+            }
+            
+            he = new HandlerEntry(handler, method);
+            cache.put(resource, he);
         }
         
-        final Class handlerClass;
+        final String action = request.getAction();
         try {
-            handlerClass = Class.forName(handlerClassName);
-        } catch (ClassNotFoundException cnfex) {
-            throw new DestinationUnreachableFault(
-                    "Handler not found for resource " + resource,
-                    Management.INVALID_RESOURCE_URI_DETAIL);
-        }
-        
-        // verify that handlerClass implements the Handler interface
-        if (!HANDLER_INTERFACE.isAssignableFrom(handlerClass)) {
-            throw new DestinationUnreachableFault(
-                    "Handler " +
-                    handlerClassName +
-                    " does not implement the Handler interface for resource " + resource,
-                    Management.INVALID_RESOURCE_URI_DETAIL);
-        }
-        
-        final Method method;
-        try {
-            method = handlerClass.getDeclaredMethod("handle", HANDLER_PARAMS);
-        } catch (NoSuchMethodException nsmex) {
-            throw new DestinationUnreachableFault(
-                    "handle method not found in Handler " +
-                    handlerClassName + " for resource " + resource,
-                    Management.INVALID_RESOURCE_URI_DETAIL);
-        }
-        
-        final Object handler;
-        try {
-            handler = handlerClass.newInstance();
-        } catch (InstantiationException iex) {
-            throw new DestinationUnreachableFault(
-                    "Could not instantiate handler " +
-                    handlerClassName + " for resource " + resource,
-                    Management.INVALID_RESOURCE_URI_DETAIL);
-        } catch (IllegalAccessException iaex) {
-            throw new AccessDeniedFault();
-        }
-        
-        try {
-            method.invoke(handler, action, resource, request, response);
+            he.getMethod().invoke(he.getInstance(), action, resource, request, response);
         } catch (InvocationTargetException itex) {
             // the cause might be FaultException if a Fault is being indicated by the handler
             final Throwable cause = itex.getCause();
@@ -110,6 +140,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         return response;
     }
     
+    // TODO: replace with com.sun.tools.xjc.reader.Util.getPackageNameFromNamespaceURI
     private String createHandlerClassName(final String resource) {
         // map URI schemes to "."
         String className = resource.replaceAll(":/*", ".");
