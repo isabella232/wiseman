@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Http.java,v 1.2 2006-03-03 20:51:14 akhilarora Exp $
+ * $Id: Http.java,v 1.3 2006-03-20 20:03:24 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -23,9 +23,10 @@ public final class Http {
     private static final String SOAP_MIME_TYPE = "application/soap+xml";
     private static final String CHARSET = "charset";
     private static final String DEFAULT_CHARSET= "utf-8";
-
-    public static final String SOAP_MIME_TYPE_WITH_CHARSET = 
-        SOAP_MIME_TYPE + ";" + CHARSET + "=" + DEFAULT_CHARSET;
+    private static final String UTF16_CHARSET= "utf-16";
+    
+    public static final String SOAP_MIME_TYPE_WITH_CHARSET =
+            SOAP_MIME_TYPE + ";" + CHARSET + "=" + DEFAULT_CHARSET;
     
     private Http() {}
     
@@ -43,12 +44,14 @@ public final class Http {
             } else {
                 final String[] charset = trimType.split("=");
                 for (int i = 0; i < charset.length; i ++) {
-                    if (i + 1 < charset.length &&
-                        CHARSET.equals(charset[i].trim()) &&
-			// TODO: also allow UTF-16
-                        DEFAULT_CHARSET.equalsIgnoreCase(unquote(charset[i + 1].trim()))) {
-                        foundCharSet = true;
-                        break;
+                    if (i + 1 < charset.length && 
+                        CHARSET.equals(charset[i].trim())) {
+                        final String encoding = unquote(charset[i + 1].trim());
+                        if (DEFAULT_CHARSET.equalsIgnoreCase(encoding) ||
+                            UTF16_CHARSET.equalsIgnoreCase(encoding)) {
+                            foundCharSet = true;
+                            break;
+                        }
                     }
                 }
             }
