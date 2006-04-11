@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.9 2006-03-03 20:51:13 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.10 2006-04-11 21:16:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -34,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.AccessControlException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -81,6 +82,9 @@ public class WSManServlet extends HttpServlet {
         if (isl != null) {
             try {
                 LogManager.getLogManager().readConfiguration(isl);
+            } catch (AccessControlException aex) {
+                // we get this when running in the sun app server, not fatal
+                getServletContext().log("Warning: unable to read log configuration: " + aex.getMessage());
             } catch (IOException iex) {
                 LOG.log(Level.WARNING, "Error reading log configuration", iex);
             }

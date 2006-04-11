@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.13 2006-03-03 22:52:26 akhilarora Exp $
+ $Id: build.xml,v 1.14 2006-04-11 21:16:37 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -132,6 +132,9 @@
       <metainf dir="etc">
         <include name="context.xml" />
       </metainf>
+      <webinf dir="etc">
+        <include name="sun-web.xml" />
+      </webinf>
     </war>
   </target>
   
@@ -169,6 +172,9 @@
       <metainf dir="etc">
         <include name="context.xml" />
       </metainf>
+      <webinf dir="etc">
+        <include name="sun-web.xml" />
+      </webinf>
     </war>
   </target>
   
