@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.3 2006-02-27 21:02:32 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.4 2006-04-11 22:25:58 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -50,6 +50,11 @@ public class properties_Handler implements Handler, EnumerationIterator {
             enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
             final Map<String, String> namespaces = new HashMap<String, String>();
             namespaces.put(NS_PREFIX, NS_URI);
+            // this generates an AccessDenied exception which is returned 
+            // to the client as an AccessDenied fault if the server is 
+            // running in the sun app server with a security manager in 
+            // place (the default), which disallows enumeration of 
+            // system properties
             EnumerationSupport.enumerate(enuRequest, enuResponse, this,
                     System.getProperties(), namespaces);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {

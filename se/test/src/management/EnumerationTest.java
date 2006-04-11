@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.10 2006-02-27 21:02:32 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.11 2006-04-11 22:25:59 akhilarora Exp $
  */
 
 package management;
@@ -193,6 +193,10 @@ public class EnumerationTest extends TestBase {
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
+            // this test fails with an AccessDenied fault if the server is 
+            // running in the sun app server with a security manager in 
+            // place (the default), which disallows enumeration of 
+            // system properties
             fail(response.getBody().getFault().getFaultString());
         }
         

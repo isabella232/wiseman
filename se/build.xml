@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.15 2006-04-11 21:47:40 akhilarora Exp $
+ $Id: build.xml,v 1.16 2006-04-11 22:25:58 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -338,6 +338,9 @@
           dir="${test.run.dir}"
           fork="true">
       <arg value="enumerate" />
+      <!-- NOTE: this fails with an AccessDenied fault if the server is running 
+           in the sun app server with a security manager in place (the default), 
+           which disallows enumeration of system properties -->
       <arg value="wsman:test/java/system/properties" />
       <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
       <jvmarg value="-Dwsman.user=wsman" />
