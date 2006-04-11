@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.10 2006-04-11 21:16:37 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.11 2006-04-11 21:20:41 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -66,8 +66,8 @@ public class WSManServlet extends HttpServlet {
     
     private static final String THIS =
             "<This xmlns=\"http://schemas.xmlsoap.org/ws/2005/02/management\"> \n" +
-            "<Vendor> Sun Microsystems, Inc. http://www.sun.com </Vendor> \n" +
-            "<Version> 0.2 </Version> \n" +
+            "<Vendor>The Wiseman Project. https://wiseman.dev.java.net</Vendor> \n" +
+            "<Version>0.3</Version> \n" +
             "</This> ";
     
     private static final Properties wsmanProperties = new Properties();

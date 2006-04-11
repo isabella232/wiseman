@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: _this_Handler.java,v 1.1 2005-06-29 19:18:24 akhilarora Exp $
+ * $Id: _this_Handler.java,v 1.2 2006-04-11 21:20:41 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.system._2005._02;
@@ -27,8 +27,8 @@ import org.w3c.dom.Element;
 
 public final class _this_Handler implements Handler {
     
-    private static final String VENDOR = "Sun Microsystems, Inc. http://www.sun.com";
-    private static final String VERSION = "0.2";
+    private static final String VENDOR = "The Wiseman Project. https://wiseman.dev.java.net";
+    private static final String VERSION = "0.3";
     
     private static final String THIS_NS_URI = Management.NS_URI + "/this";
     private static final String THIS_NS_PREFIX = "t";
