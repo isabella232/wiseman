@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.11 2006-04-11 21:20:41 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.12 2006-04-13 20:24:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -128,11 +128,13 @@ public class WSManServlet extends HttpServlet {
         
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setContentType(Http.SOAP_MIME_TYPE_WITH_CHARSET);
-        final OutputStream os = new BufferedOutputStream(resp.getOutputStream());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final InputStream is = new BufferedInputStream(req.getInputStream());
-        
+
+        InputStream is = null;
+        OutputStream os = null;
         try {
+            is = new BufferedInputStream(req.getInputStream());
+            os = new BufferedOutputStream(resp.getOutputStream());
             handle(is, bos, req, resp);
             final byte[] content = bos.toByteArray();
             resp.setContentLength(content.length);
@@ -141,8 +143,12 @@ public class WSManServlet extends HttpServlet {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, th.getMessage());
             LOG.log(Level.WARNING, th.getMessage(), th);
         } finally {
-            os.flush();
-            os.close();
+            if (is != null) {
+                is.close();
+            }
+            if (os != null) {
+                os.close();
+            }
         }
     }
     
