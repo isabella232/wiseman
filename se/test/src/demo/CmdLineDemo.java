@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.3 2005-12-13 21:13:04 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.4 2006-04-14 21:52:54 akhilarora Exp $
  */
 
 package demo;
@@ -26,11 +26,12 @@ import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.xml.XmlBinding;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.LogManager;
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.soap.Detail;
 import javax.xml.soap.DetailEntry;
 import javax.xml.soap.SOAPFault;
@@ -49,29 +50,36 @@ public final class CmdLineDemo {
     private static String dest = null;
     private static String verb = GET;
     private static String resource = null;
+    private static Map<String, Object> selectors = new HashMap<String, Object>();
     
     private static String enumContext = null;
     
     public static void main(java.lang.String[] args) throws Exception {
         if (args.length < 2) {
-            System.err.println("USAGE: verb resource");
+            System.err.println("USAGE: verb resource selectors");
             System.err.println("  where verb is get or enumerate");
+            System.err.println("  and selectors are one or more key-value pairs");
             return;
         }
         verb = args[0];
         resource = args[1];
+        for (int i = 2; i + 1 < args.length; i += 2) {
+            selectors.put(args[i], args[i+1]);
+        }
+        
+        dest = System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
         
         // echo cmdline
+        System.out.print(dest + " ");
         System.out.print(verb + " ");
         System.out.print(resource + " ");
+        System.out.println(selectors);
         System.out.println();
         
         InputStream is = CmdLineDemo.class.getResourceAsStream("/log.properties");
         if (is != null) {
             LogManager.getLogManager().readConfiguration(is);
         }
-        
-        dest = System.getProperty("wsman.dest", "http://localhost:8080/wsman");
         
         final String basicAuth = System.getProperty("wsman.basicauthentication");
         if ("true".equalsIgnoreCase(basicAuth)) {
@@ -103,6 +111,7 @@ public final class CmdLineDemo {
         mgmt.setAction(action);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId("uuid:" + UUID.randomUUID().toString());
+        mgmt.setSelectors(selectors);
         
         if (verb.equals(ENUMERATE)) {
             Enumeration enu = new Enumeration(mgmt);
