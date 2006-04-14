@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.4 2006-04-14 21:52:54 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.5 2006-04-14 22:15:12 akhilarora Exp $
  */
 
 package demo;
@@ -58,7 +58,7 @@ public final class CmdLineDemo {
         if (args.length < 2) {
             System.err.println("USAGE: verb resource selectors");
             System.err.println("  where verb is get or enumerate");
-            System.err.println("  and selectors are one or more key-value pairs");
+            System.err.println("  and selectors are zero or more key-value pairs");
             return;
         }
         verb = args[0];
