@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.16 2006-04-11 22:25:58 akhilarora Exp $
+ $Id: build.xml,v 1.17 2006-04-17 20:51:29 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -59,6 +59,7 @@
 
   <target name="compile" depends="init">
     <javac destdir="${build.classes.dir}"
+           target="1.5"
            debug="${debug}">
       <classpath refid="compile.classpath" />
       <src path="${gen.src.dir}" />
