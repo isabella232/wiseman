@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.17 2006-04-17 20:51:29 akhilarora Exp $
+ $Id: build.xml,v 1.18 2006-04-24 21:06:13 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -97,68 +97,11 @@
     </jar>
   </target>
   
-  <target name="dist-war" depends="compile">
-    <war destfile="${war.file}"
-         webxml="etc/web.xml"
-         index="true">
-      <classes dir="${build.classes.dir}">
-        <exclude name="com/sun/ws/management/server/handler/wsman/test/**" />
-      </classes>
-      <!-- not needed if running under Java 6 or higher - already bundled -->
-      <lib dir="${jaxb.lib.dir}">
-        <include name="activation.jar" />
-        <include name="jaxb-api.jar" />
-        <include name="jaxb-impl.jar" />
-        <include name="jsr173_1.0_api.jar" />
-        <include name="jaxb-xjc.jar" />
-      </lib>
-      <!-- not needed if running under Java 6 or higher - already bundled -->
-      <lib dir="${jaxrpc.lib.dir}">
-        <include name="saaj-api.jar" />
-        <include name="saaj-impl.jar" />
-      </lib>
-      <manifest>
-        <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Built-At" value="${DSTAMP}" />
-        <attribute name="Specification-Title" value="WS-Management" />
-        <attribute name="Specification-Version" value="06/2005" />
-        <attribute name="Implementation-Title" value="Wiseman SE Server" />
-        <attribute name="Implementation-Version" value="0.3" />
-        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
-        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
-        <attribute name="Sealed" value="true" />
-      </manifest>
-      <metainf dir=".">
-        <include name="LICENSE" />
-        <include name="NOTICE" />
-      </metainf>
-      <metainf dir="etc">
-        <include name="context.xml" />
-      </metainf>
-      <webinf dir="etc">
-        <include name="sun-web.xml" />
-      </webinf>
-    </war>
-  </target>
-  
   <target name="war" depends="compile">
     <war destfile="${war.file}"
          webxml="etc/web.xml"
          index="true">
       <classes dir="${build.classes.dir}" />
-      <!-- not needed if running under Java 6 or higher - already bundled -->
-      <lib dir="${jaxb.lib.dir}">
-        <include name="activation.jar" />
-        <include name="jaxb-api.jar" />
-        <include name="jaxb-impl.jar" />
-        <include name="jsr173_1.0_api.jar" />
-        <include name="jaxb-xjc.jar" />
-      </lib>
-      <!-- not needed if running under Java 6 or higher - already bundled -->
-      <lib dir="${jaxrpc.lib.dir}">
-        <include name="saaj-api.jar" />
-        <include name="saaj-impl.jar" />
-      </lib>
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Built-At" value="${DSTAMP}" />
@@ -190,6 +133,19 @@
 
   <taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" classpathref="deployer.classpath" />
   <target name="deploy" depends="war">
+    <copy todir="${catalina.home}/shared/lib">
+      <fileset dir="${jaxb.lib.dir}">
+        <include name="activation.jar" />
+        <include name="jaxb-api.jar" />
+        <include name="jaxb-impl.jar" />
+        <include name="jaxb-xjc.jar" />
+        <include name="jsr173_1.0_api.jar" />
+      </fileset>
+      <fileset dir="${jaxrpc.lib.dir}">
+        <include name="saaj-api.jar" />
+        <include name="saaj-impl.jar" />
+      </fileset>
+    </copy>
     <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
             path="${war.context.path}" war="${basedir}/${war.file}" update="true" />
   </target>
