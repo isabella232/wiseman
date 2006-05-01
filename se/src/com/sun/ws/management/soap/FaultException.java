@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: FaultException.java,v 1.3 2006-03-03 20:51:13 akhilarora Exp $
+ * $Id: FaultException.java,v 1.4 2006-05-01 23:32:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -26,18 +26,25 @@ import org.w3c.dom.NodeList;
 
 public class FaultException extends RuntimeException {
     
+    private final String action;
     private final QName code;
     private final QName subcode;
     private final String reason;
     private final Node[] details;
     
-    public FaultException(final QName code, final QName subcode,
+    public FaultException(final String action,
+            final QName code, final QName subcode,
             final String reason, final Node... details) {
         super(reason);
+        this.action = action;
         this.code = code;
         this.subcode = subcode;
         this.reason = reason;
         this.details = details;
+    }
+    
+    public String getAction() {
+        return action;
     }
     
     public QName getCode() {
@@ -63,6 +70,7 @@ public class FaultException extends RuntimeException {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("Fault: \n");
+        sb.append(" Action: " + action + "\n");
         sb.append(" Code: " + code + "\n");
         sb.append(" Subcode: " + (subcode == null ? "null" : subcode) + "\n");
         sb.append(" Reason: " + reason + "\n");

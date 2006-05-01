@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: FilteringNotSupportedFault.java,v 1.1 2005-06-29 19:18:20 akhilarora Exp $
+ * $Id: FilteringNotSupportedFault.java,v 1.2 2006-05-01 23:32:21 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class FilteringNotSupportedFault extends SenderFault {
     
+    public static final QName FILTERING_NOT_SUPPORTED = 
+            new QName(Enumeration.NS_URI, "FilteringNotSupported", Enumeration.NS_PREFIX);
+    public static final String FILTERING_NOT_SUPPORTED_REASON = 
+        "Filtered enumeration is not supported.";
+    
     public FilteringNotSupportedFault(final Node... details) {
-        super(Enumeration.FILTERING_NOT_SUPPORTED,
-                Enumeration.FILTERING_NOT_SUPPORTED_REASON, details);
+        super(Enumeration.FAULT_ACTION_URI, FILTERING_NOT_SUPPORTED,
+                FILTERING_NOT_SUPPORTED_REASON, details);
     }
 }

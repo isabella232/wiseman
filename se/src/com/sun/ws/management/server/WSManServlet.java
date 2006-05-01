@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.12 2006-04-13 20:24:13 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.13 2006-05-01 23:32:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -55,8 +55,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
-import org.w3c.dom.Node;
-import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 
 public class WSManServlet extends HttpServlet {
     
@@ -175,13 +174,14 @@ public class WSManServlet extends HttpServlet {
         long maxEnvelopeSize = Long.MAX_VALUE;
         final MaxEnvelopeSizeType maxSize = request.getMaxEnvelopeSize();
         if (maxSize != null) {
-            maxEnvelopeSize = maxSize.getValue();
+            // NOTE: potential loss of precision: conversion from BigInteger to long
+            maxEnvelopeSize = maxSize.getValue().longValue();
         }
         if (maxEnvelopeSize < MIN_ENVELOPE_SIZE) {
-            final Node[] details =
-                    SOAP.createFaultDetail("MaxEnvelopeSize is set too small to encode faults " +
-                    "(needs to be atleast " + MIN_ENVELOPE_SIZE + ")", Management.MIN_ENVELOPE_LIMIT_DETAIL, null, null);
-            dispatcher.sendResponse(os, resp, new EncodingLimitFault(details), Long.MAX_VALUE);
+            dispatcher.sendResponse(os, resp, 
+                    new EncodingLimitFault("MaxEnvelopeSize is set too small to encode faults " +
+                    "(needs to be atleast " + MIN_ENVELOPE_SIZE + ")",
+                    EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE), Long.MAX_VALUE);
             return;
         }
         

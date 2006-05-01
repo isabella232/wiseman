@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.5 2006-02-17 20:02:52 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.6 2006-05-01 23:32:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -37,7 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
-import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 public abstract class RequestDispatcher implements Callable {
@@ -99,13 +98,11 @@ public abstract class RequestDispatcher implements Callable {
       throws SOAPException, JAXBException, IOException {
         
         if (fex != null) {
-            new SOAP(response).setFault(fex);
+            response.setFault(fex);
         }
         
         resp.setStatus(HttpServletResponse.SC_OK);
         if (response.getBody().hasFault()) {
-            new Addressing(response).setAction(Addressing.FAULT_ACTION_URI);
-            
             // sender faults need to set error code to BAD_REQUEST for client errors
             if (SOAP.SENDER.equals(response.getBody().getFault().getFaultCodeAsQName())) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -131,8 +128,9 @@ public abstract class RequestDispatcher implements Callable {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             } else {
                 responseTooBig = true;
-                final Node[] details = SOAP.createFaultDetail(null, Management.MAX_ENVELOPE_SIZE_DETAIL, null, null);
-                sendResponse(os, resp, new EncodingLimitFault(details), maxEnvelopeSize);
+                sendResponse(os, resp, 
+                        new EncodingLimitFault(Integer.toString(content.length), 
+                        EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED), maxEnvelopeSize);
             }
             return;
         }

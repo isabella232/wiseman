@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReceiverFault.java,v 1.3 2006-03-03 20:51:13 akhilarora Exp $
+ * $Id: ReceiverFault.java,v 1.4 2006-05-01 23:32:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -23,8 +23,8 @@ import org.w3c.dom.Node;
 
 public class ReceiverFault extends FaultException {
     
-    public ReceiverFault(final QName subcode,
+    public ReceiverFault(final String action, final QName subcode,
             final String reason, final Node... details) {
-        super(SOAP.RECEIVER, subcode, reason, details);
+        super(action, SOAP.RECEIVER, subcode, reason, details);
     }
 }

@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TimedOutFault.java,v 1.1 2005-06-29 19:18:16 akhilarora Exp $
+ * $Id: TimedOutFault.java,v 1.2 2006-05-01 23:32:20 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.soap.ReceiverFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class TimedOutFault extends ReceiverFault {
     
+    public static final QName TIMED_OUT = 
+            new QName(Management.NS_URI, "TimedOut", Management.NS_PREFIX);
+    public static final String TIMED_OUT_REASON =
+            "The operation has timed out.";
+    
     public TimedOutFault(final Node... details) {
-        super(Management.TIMED_OUT, Management.TIMED_OUT_REASON, details);
+        super(Management.FAULT_ACTION_URI, TIMED_OUT, TIMED_OUT_REASON, details);
     }
 }

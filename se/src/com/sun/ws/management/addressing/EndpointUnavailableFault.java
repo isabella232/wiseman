@@ -13,22 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EndpointUnavailableFault.java,v 1.1 2005-06-29 19:18:17 akhilarora Exp $
+ * $Id: EndpointUnavailableFault.java,v 1.2 2006-05-01 23:32:20 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
 
 import com.sun.ws.management.soap.ReceiverFault;
 import com.sun.ws.management.soap.SOAP;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class EndpointUnavailableFault extends ReceiverFault {
     
-    public EndpointUnavailableFault(final String faultDetail, final String duration) {
-        this(SOAP.createFaultDetail(null, faultDetail, null, Addressing.RETRY_AFTER, duration));
+    public static final QName ENDPOINT_UNAVAILABLE = 
+            new QName(Addressing.NS_URI, "EndpointUnavailable", Addressing.NS_PREFIX);
+    public static final String ENDPOINT_UNAVAILABLE_REASON =
+            "The specified endpoint is currently unavailable.";
+    
+    public static enum Detail {
+        INVALID_RESOURCE_URI("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/InvalidResourceURI"),
+        INVALID_VALUES("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/InvalidValues");
+
+        private final String uri;
+        Detail(final String uri) { this.uri = uri; }
+        public String toString() { return uri; }
+    }
+    
+    public EndpointUnavailableFault(final Detail... detail) {
+        this(SOAP.createFaultDetail(null, 
+                detail == null ? null : (detail.length == 0 ? null : detail[0].toString()), 
+                null, null));
+    }
+    
+    public EndpointUnavailableFault(final String duration, final Detail... detail) {
+        this(SOAP.createFaultDetail(null, 
+                detail == null ? null : (detail.length == 0 ? null : detail[0].toString()), 
+                null, Addressing.RETRY_AFTER, duration));
     }
     
     public EndpointUnavailableFault(final Node... details) {
-        super(Addressing.ENDPOINT_UNAVAILABLE, Addressing.ENDPOINT_UNAVAILABLE_REASON, details);
+        super(Addressing.FAULT_ACTION_URI, ENDPOINT_UNAVAILABLE, ENDPOINT_UNAVAILABLE_REASON, details);
     }
 }

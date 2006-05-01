@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.8 2006-03-03 22:52:26 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.9 2006-05-01 23:32:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -69,7 +69,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         if (resource == null) {
             throw new DestinationUnreachableFault(
                     "Missing the " + Management.RESOURCE_URI.getLocalPart(),
-                    Management.INVALID_RESOURCE_URI_DETAIL);
+                    DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI);
         }
         
         HandlerEntry he = cache.get(resource);
@@ -86,7 +86,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
             } catch (ClassNotFoundException cnfex) {
                 throw new DestinationUnreachableFault(
                         "Handler not found for resource " + resource,
-                        Management.INVALID_RESOURCE_URI_DETAIL);
+                        DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI);
             }
             
             // verify that handlerClass implements the Handler interface
@@ -95,7 +95,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
                         "Handler " +
                         handlerClassName +
                         " does not implement the Handler interface for resource " + resource,
-                        Management.INVALID_RESOURCE_URI_DETAIL);
+                        DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI);
             }
             
             final Method method;
@@ -105,7 +105,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
                 throw new DestinationUnreachableFault(
                         "handle method not found in Handler " +
                         handlerClassName + " for resource " + resource,
-                        Management.INVALID_RESOURCE_URI_DETAIL);
+                        DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI);
             }
             
             final Object handler;
@@ -115,7 +115,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
                 throw new DestinationUnreachableFault(
                         "Could not instantiate handler " +
                         handlerClassName + " for resource " + resource,
-                        Management.INVALID_RESOURCE_URI_DETAIL);
+                        DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI);
             } catch (IllegalAccessException iaex) {
                 throw new AccessDeniedFault();
             }

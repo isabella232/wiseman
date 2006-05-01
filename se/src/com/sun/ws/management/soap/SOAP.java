@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.7 2006-03-03 20:51:13 akhilarora Exp $
+ * $Id: SOAP.java,v 1.8 2006-05-01 23:32:24 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.Message;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.java.JavaException;
 import com.sun.ws.management.xml.XML;
 import com.sun.ws.management.xml.XmlBinding;
@@ -45,7 +46,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-public class SOAP extends Message {
+public abstract class SOAP extends Message {
     
     public static final String NS_PREFIX = "env";
     public static final String NS_URI = "http://www.w3.org/2003/05/soap-envelope";
@@ -56,9 +57,7 @@ public class SOAP extends Message {
     public static final QName BODY = new QName(NS_URI, "Body", NS_PREFIX);
     public static final QName SENDER = new QName(NS_URI, "Sender", NS_PREFIX);
     public static final QName RECEIVER = new QName(NS_URI, "Receiver", NS_PREFIX);
-    public static final QName NOT_UNDERSTOOD = new QName(NS_URI, "NotUnderstood", NS_PREFIX);
-    
-    public static final String NOT_UNDERSTOOD_REASON = "Header not understood";
+
     public static final String TRUE = "true";
     
     private static XmlBinding binding = null;
@@ -204,13 +203,22 @@ public class SOAP extends Message {
     }
     
     public void setFault(final FaultException ex) throws JAXBException, SOAPException {
-        setFault(ex.getCode(), ex.getSubcode(), ex.getReason(), ex.getDetails());
+        setFault(ex.getAction(), ex.getCode(), ex.getSubcode(), ex.getReason(), ex.getDetails());
         // allow subclasses an opportunity to encode additional information
         ex.encode(getEnvelope());
     }
     
-    private void setFault(final QName code, final QName subcode, final String reason,
+    private void setFault(final String action, final QName code, 
+            final QName subcode, final String reason,
             final Node... details) throws JAXBException, SOAPException {
+
+        if (action != null) {
+            if (this instanceof Addressing) {
+                // violates layering - action is an addressing concept 
+                // but soap layers under addressing
+                ((Addressing) this).setAction(action);
+            }
+        }
         
         removeChildren(getBody());
         

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.8 2006-03-03 20:51:11 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.9 2006-05-01 23:32:21 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -66,33 +66,7 @@ public class Enumeration extends Addressing {
     public static final String SOURCE_SHUTTING_DOWN_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/SourceShuttingDown";
     public static final String SOURCE_CANCELING_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/SourceCanceling";
     
-    public static final QName FILTER_DIALECT_REQUESTED_UNAVAILABLE = new QName(NS_URI, "FilterDialectRequestedUnavailable", NS_PREFIX);
-    public static final String FILTER_DIALECT_REQUESTED_UNAVAILABLE_REASON = 
-            "The requested filtering dialect is not supported.";
-
-    public static final QName FILTERING_NOT_SUPPORTED = new QName(NS_URI, "FilteringNotSupported", NS_PREFIX);
-    public static final String FILTERING_NOT_SUPPORTED_REASON = 
-        "Filtered enumeration is not supported.";
-    
-    public static final QName CANNOT_PROCESS_FILTER = new QName(NS_URI, "CannotProcessFilter", NS_PREFIX);
-    public static final String CANNOT_PROCESS_FILTER_REASON = 
-            "The requested filter could not be processed.";
-
-    public static final QName INVALID_ENUM_CONTEXT = new QName(NS_URI, "InvalidEnumerationContext", NS_PREFIX);
-    public static final String INVALID_ENUM_CONTEXT_REASON =
-        "The supplied enumeration context is invalid.";
-    
-    public static final QName INVALID_EXPIRATION_TIME = new QName(NS_URI, "InvalidExpirationTime", NS_PREFIX);
-    public static final String INVALID_EXPIRATION_TIME_REASON = 
-        "The expiration time was not valid.";
-    
-    public static final QName TIMED_OUT = new QName(NS_URI, "TimedOut", NS_PREFIX);
-    public static final String TIMED_OUT_REASON = 
-        "The enumerator has timed out and is no longer valid.";
-    
-    public static final QName UNSUPPORTED_EXPIRATION_TYPE = new QName(NS_URI, "UnsupportedExpirationType", NS_PREFIX);
-    public static final String UNSUPPORTED_EXPIRATION_TYPE_REASON = 
-        "The specified expiration type is not supported.";
+    public static final String FAULT_ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/fault";
     
     public static final QName ENUMERATE = new QName(NS_URI, "Enumerate", NS_PREFIX);
     public static final QName ENUMERATE_RESPONSE = new QName(NS_URI, "EnumerateResponse", NS_PREFIX);

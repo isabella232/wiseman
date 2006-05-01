@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InvalidEnumerationContextFault.java,v 1.1 2005-06-29 19:18:20 akhilarora Exp $
+ * $Id: InvalidEnumerationContextFault.java,v 1.2 2006-05-01 23:32:21 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
 import com.sun.ws.management.soap.ReceiverFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class InvalidEnumerationContextFault extends ReceiverFault {
     
+    public static final QName INVALID_ENUM_CONTEXT = 
+            new QName(Enumeration.NS_URI, "InvalidEnumerationContext", Enumeration.NS_PREFIX);
+    public static final String INVALID_ENUM_CONTEXT_REASON =
+        "The supplied enumeration context is invalid.";
+    
     public InvalidEnumerationContextFault(final Node... details) {
-        super(Enumeration.INVALID_ENUM_CONTEXT, Enumeration.INVALID_ENUM_CONTEXT_REASON, details);
+        super(Enumeration.FAULT_ACTION_URI, INVALID_ENUM_CONTEXT, INVALID_ENUM_CONTEXT_REASON, details);
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SenderFault.java,v 1.2 2006-03-03 20:51:14 akhilarora Exp $
+ * $Id: SenderFault.java,v 1.3 2006-05-01 23:32:24 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -23,8 +23,8 @@ import org.w3c.dom.Node;
 
 public class SenderFault extends FaultException {
     
-    public SenderFault(final QName subcode,
+    public SenderFault(final String action, final QName subcode,
             final String reason, final Node... details) {
-        super(SOAP.SENDER, subcode, reason, details);
+        super(action, SOAP.SENDER, subcode, reason, details);
     }
 }

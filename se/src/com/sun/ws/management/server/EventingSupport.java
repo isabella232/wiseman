@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.6 2006-03-03 20:51:12 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.7 2006-05-01 23:32:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Management;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
@@ -71,7 +70,7 @@ public final class EventingSupport extends BaseSupport {
         
         final EndpointReferenceType endTo = subscribe.getEndTo();
         if (endTo != null) {
-            throw new UnsupportedFeatureFault(Management.ADDRESSING_MODE_DETAIL);
+            throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
         }
         
         final DeliveryType delivery = subscribe.getDelivery();

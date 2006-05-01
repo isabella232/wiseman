@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InternalErrorFault.java,v 1.1 2005-06-29 19:18:14 akhilarora Exp $
+ * $Id: InternalErrorFault.java,v 1.2 2006-05-01 23:32:18 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.soap.ReceiverFault;
 import com.sun.ws.management.soap.SOAP;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class InternalErrorFault extends ReceiverFault {
+    
+    public static final QName INTERNAL_ERROR = 
+            new QName(Management.NS_URI, "InternalError", Management.NS_PREFIX);
+    public static final String INTERNAL_ERROR_REASON =
+            "The service cannot comply with the request due to internal processing errors.";
     
     public InternalErrorFault(final String explanation) {
         this(SOAP.createFaultDetail(explanation, null, null, null));
@@ -33,6 +39,6 @@ public class InternalErrorFault extends ReceiverFault {
     }
     
     public InternalErrorFault(final Node... details) {
-        super(Management.NO_ACK, Management.NO_ACK_REASON, details);
+        super(Management.FAULT_ACTION_URI, INTERNAL_ERROR, INTERNAL_ERROR_REASON, details);
     }
 }

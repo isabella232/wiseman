@@ -13,24 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: DeliveryModeRequestedUnavailableFault.java,v 1.1 2005-06-29 19:18:21 akhilarora Exp $
+ * $Id: DeliveryModeRequestedUnavailableFault.java,v 1.2 2006-05-01 23:32:21 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
 
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class DeliveryModeRequestedUnavailableFault extends SenderFault {
     
-    public DeliveryModeRequestedUnavailableFault(final String[] supportedDeliveryModes) {
+    public static final QName DELIVERY_MODE_REQUESTED_UNAVAILABLE = 
+            new QName(Eventing.NS_URI, "DeliveryModeRequestedUnavailable", Eventing.NS_PREFIX);
+    public static final String DELIVERY_MODE_REQUESTED_UNAVAILABLE_REASON =
+            "The requested delivery mode is not supported.";
+
+    public static final QName SUPPORTED_DELIVERY_MODE = 
+            new QName(Eventing.NS_URI, "SupportedDeliveryMode", Eventing.NS_PREFIX);
+    
+     public DeliveryModeRequestedUnavailableFault(final String[] supportedDeliveryModes) {
         this(SOAP.createFaultDetail(null, null, null,
-                Eventing.SUPPORTED_DELIVERY_MODE, (Object[]) supportedDeliveryModes));
+                SUPPORTED_DELIVERY_MODE, (Object[]) supportedDeliveryModes));
     }
     
     public DeliveryModeRequestedUnavailableFault(final Node... details) {
-        super(Eventing.DELIVERY_MODE_REQUESTED_UNAVAILABLE,
-                Eventing.DELIVERY_MODE_REQUESTED_UNAVAILABLE_REASON, details);
+        super(Eventing.FAULT_ACTION_URI, DELIVERY_MODE_REQUESTED_UNAVAILABLE,
+                DELIVERY_MODE_REQUESTED_UNAVAILABLE_REASON, details);
     }
 }

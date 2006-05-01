@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: DeliveryRefusedFault.java,v 1.1 2005-06-29 19:18:13 akhilarora Exp $
+ * $Id: DeliveryRefusedFault.java,v 1.2 2006-05-01 23:32:18 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.soap.ReceiverFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class DeliveryRefusedFault extends ReceiverFault {
     
+    public static final QName DELIVERY_REFUSED = 
+            new QName(Management.NS_URI, "DeliveryRefused", Management.NS_PREFIX);
+    public static final String DELIVERY_REFUSED_REASON =
+            "The receiver refuses to accept delivery of events and requests that the subscription be canceled.";
+    
     public DeliveryRefusedFault(final Node... details) {
-        super(Management.DELIVERY_REFUSED, Management.DELIVERY_REFUSED_REASON, details);
+        super(Management.FAULT_ACTION_URI, DELIVERY_REFUSED, DELIVERY_REFUSED_REASON, details);
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.7 2006-02-06 21:38:35 akhilarora Exp $
+ * $Id: Eventing.java,v 1.8 2006-05-01 23:32:22 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -63,39 +63,11 @@ public class Eventing extends Addressing {
     public static final String SOURCE_SHUTTING_DOWN_STATUS = "http://schemas.xmlsoap.org/ws/2004/08/eventing/SourceShuttingDown";
     public static final String SOURCE_CANCELING_STATUS = "http://schemas.xmlsoap.org/ws/2004/08/eventing/SourceCanceling";
     
-    public static final QName DELIVERY_MODE_REQUESTED_UNAVAILABLE = new QName(NS_URI, "DeliveryModeRequestedUnavailable", NS_PREFIX);
-    public static final String DELIVERY_MODE_REQUESTED_UNAVAILABLE_REASON =
-            "The requested delivery mode is not supported.";
-    public static final QName SUPPORTED_DELIVERY_MODE = new QName(NS_URI, "SupportedDeliveryMode", NS_PREFIX);
-    
-    public static final QName EVENT_SOURCE_UNABLE_TO_PROCESS = new QName(NS_URI, "EventSourceUnableToProcess", NS_PREFIX);
-    public static final String EVENT_SOURCE_UNABLE_TO_PROCESS_REASON =
-            "The event source cannot process the subscription.";
-    
-    public static final QName FILTERING_NOT_SUPPORTED = new QName(NS_URI, "FilteringNotSupported", NS_PREFIX);
-    public static final String FILTERING_NOT_SUPPORTED_REASON =
-            "Filtering over the event source is not supported.";
-    
-    public static final QName FILTERING_REQUESTED_UNAVAILABLE = new QName(NS_URI, "FilteringRequestedUnavailable", NS_PREFIX);
-    public static final String FILTERING_REQUESTED_UNAVAILABLE_REASON =
-            "The requested filter dialect is not supported.";
-    public static final QName SUPPORTED_DIALECT = new QName(NS_URI, "SupportedDialect", NS_PREFIX);
-    
-    public static final QName INVALID_EXPIRATION_TIME = new QName(NS_URI, "InvalidExpirationTime", NS_PREFIX);
-    public static final String INVALID_EXPIRATION_TIME_REASON =
-            "Invalid expiration time.";
+    public static final String FAULT_ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/08/eventing/fault";
     
     public static final QName INVALID_MESSAGE = new QName(NS_URI, "InvalidMessage", NS_PREFIX);
     public static final String INVALID_MESSAGE_REASON =
             "The request message had unknown or invalid content and could not be processed.";
-    
-    public static final QName UNABLE_TO_RENEW = new QName(NS_URI, "UnableToRenew", NS_PREFIX);
-    public static final String UNABLE_TO_RENEW_REASON =
-            "The subscription could not be renewed.";
-    
-    public static final QName UNSUPPORTED_EXPIRATION_TYPE = new QName(NS_URI, "UnsupportedExpirationType", NS_PREFIX);
-    public static final String UNSUPPORTED_EXPIRATION_TYPE_REASON =
-            "The specified expiration type is not supported.";
     
     public static final QName SUBSCRIBE = new QName(NS_URI, "Subscribe", NS_PREFIX);
     public static final QName SUBSCRIBE_RESPONSE = new QName(NS_URI, "SubscribeResponse", NS_PREFIX);

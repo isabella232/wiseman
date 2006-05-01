@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: FilterDialectRequestedUnavailableFault.java,v 1.1 2005-06-29 19:18:19 akhilarora Exp $
+ * $Id: FilterDialectRequestedUnavailableFault.java,v 1.2 2006-05-01 23:32:21 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class FilterDialectRequestedUnavailableFault extends SenderFault {
+    
+    public static final QName FILTER_DIALECT_REQUESTED_UNAVAILABLE =
+            new QName(Enumeration.NS_URI, "FilterDialectRequestedUnavailable", Enumeration.NS_PREFIX);
+    public static final String FILTER_DIALECT_REQUESTED_UNAVAILABLE_REASON =
+            "The requested filtering dialect is not supported.";
     
     public FilterDialectRequestedUnavailableFault(final String[] supportedDialects) {
         this(SOAP.createFaultDetail(null, null, null,
@@ -30,7 +36,7 @@ public class FilterDialectRequestedUnavailableFault extends SenderFault {
     }
     
     public FilterDialectRequestedUnavailableFault(final Node... details) {
-        super(Enumeration.FILTER_DIALECT_REQUESTED_UNAVAILABLE,
-                Enumeration.FILTER_DIALECT_REQUESTED_UNAVAILABLE_REASON, details);
+        super(Enumeration.FAULT_ACTION_URI, FILTER_DIALECT_REQUESTED_UNAVAILABLE,
+                FILTER_DIALECT_REQUESTED_UNAVAILABLE_REASON, details);
     }
 }

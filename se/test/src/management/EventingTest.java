@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.7 2006-02-11 00:40:02 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.8 2006-05-01 23:32:25 akhilarora Exp $
  */
 
 package management;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.eventing.EventSourceUnableToProcessFault;
 import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
@@ -240,10 +242,10 @@ public class EventingTest extends TestBase {
             fail("bogus filter accepted");
         }
         
-        final Fault fault = new SOAP(addr).getFault();
+        final Fault fault = new Addressing(addr).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Eventing.FILTERING_REQUESTED_UNAVAILABLE, fault.getCode().getSubcode().getValue());
-        assertEquals(Eventing.FILTERING_REQUESTED_UNAVAILABLE_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(FilteringRequestedUnavailableFault.FILTERING_REQUESTED_UNAVAILABLE, fault.getCode().getSubcode().getValue());
+        assertEquals(FilteringRequestedUnavailableFault.FILTERING_REQUESTED_UNAVAILABLE_REASON, fault.getReason().getText().get(0).getValue());
         assertEquals(XPath.NS_URI, ((JAXBElement<String>) fault.getDetail().getAny().get(0)).getValue());
     }
     
@@ -273,10 +275,10 @@ public class EventingTest extends TestBase {
             fail("invalid filter expression accepted");
         }
         
-        final Fault fault = new SOAP(addr).getFault();
+        final Fault fault = new Addressing(addr).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Eventing.EVENT_SOURCE_UNABLE_TO_PROCESS, fault.getCode().getSubcode().getValue());
-        assertEquals(Eventing.EVENT_SOURCE_UNABLE_TO_PROCESS_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(EventSourceUnableToProcessFault.EVENT_SOURCE_UNABLE_TO_PROCESS, fault.getCode().getSubcode().getValue());
+        assertEquals(EventSourceUnableToProcessFault.EVENT_SOURCE_UNABLE_TO_PROCESS_REASON, fault.getReason().getText().get(0).getValue());
         final String detail = ((Element) fault.getDetail().getAny().get(0)).getTextContent();
         assertNotNull(detail);
     }

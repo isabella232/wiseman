@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.6 2006-03-03 22:52:29 akhilarora Exp $
+ * $Id: EventingExtensionsTest.java,v 1.7 2006-05-01 23:32:25 akhilarora Exp $
  */
 
 package management;
@@ -27,20 +27,25 @@ import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableAny;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
+import org.dmtf.schemas.wbem.wsman._1.wsman.ConnectionRetryType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.PolicyType;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
-import org.xmlsoap.schemas.ws._2005._06.management.BookmarkType;
-import org.xmlsoap.schemas.ws._2005._06.management.ConnectionRetryType;
-import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
 
 /**
  * Unit test for WS-Eventing extensions in WS-Management
@@ -62,7 +67,7 @@ public class EventingExtensionsTest extends TestBase {
         
         final ConnectionRetryType retry = new ConnectionRetryType();
         final int retryCount = 3;
-        retry.setTotal(retryCount);
+        retry.setTotal(new BigInteger(Integer.toString(retryCount)));
         final Duration retryInterval = DatatypeFactory.newInstance().newDuration(5000);
         retry.setValue(retryInterval);
         
@@ -70,12 +75,17 @@ public class EventingExtensionsTest extends TestBase {
         
         final Boolean sendBookmarks = Boolean.TRUE;
         
-        final BookmarkType bookmark = new BookmarkType();
-        bookmark.getContent().add("this is a bookmark");
+        final AttributableAny bookmark = new AttributableAny();
+        final Document bookmarkDoc = evtx.newDocument();
+        final Element bookmarkElement = bookmarkDoc.createElement("bookmark-element");
+        bookmarkElement.setTextContent("1234");
+        bookmark.getAny().add(bookmarkElement);
         
         final MaxEnvelopeSizeType maxEnvelopeSize = new MaxEnvelopeSizeType();
-        maxEnvelopeSize.setValue(1024);
-        maxEnvelopeSize.setPolicy(EventingExtensions.SKIP_POLICY);
+        final int maxEnvSize = 1024;
+        maxEnvelopeSize.setValue(new BigInteger(Integer.toString(maxEnvSize)));
+        final PolicyType policy = PolicyType.fromValue(EventingExtensions.SKIP_POLICY);
+        maxEnvelopeSize.setPolicy(policy);
         
         final Long maxElements = new Long(7);
         
@@ -97,18 +107,20 @@ public class EventingExtensionsTest extends TestBase {
         assertEquals(retryCount, retry2.getTotal().intValue());
         assertEquals(retryInterval, retry2.getValue());
         
-        assertEquals(heartbeatsInterval, ((JAXBElement<Duration>) delivery2.getContent().get(1)).getValue());
+        assertEquals(heartbeatsInterval, ((JAXBElement<AttributableDuration>) delivery2.getContent().get(1)).getValue().getValue());
         assertEquals(EventingExtensions.SEND_BOOKMARKS, ((JAXBElement<QName>) delivery2.getContent().get(2)).getName());
         
-        final BookmarkType bookmark2 = ((JAXBElement<BookmarkType>) delivery2.getContent().get(3)).getValue();
-        assertEquals(bookmark.getContent().get(0), bookmark2.getContent().get(0));
+        final AttributableAny bookmark2 = ((JAXBElement<AttributableAny>) delivery2.getContent().get(3)).getValue();
+        assertEquals(bookmark.getAny().size(), bookmark2.getAny().size());
+        assertEquals(bookmarkElement.getNodeName(), ((Element) bookmark2.getAny().get(0)).getNodeName());
+        assertEquals(bookmarkElement.getTextContent(), ((Element) bookmark2.getAny().get(0)).getTextContent());
         
         final MaxEnvelopeSizeType maxEnvelopeSize2 = ((JAXBElement<MaxEnvelopeSizeType>) delivery2.getContent().get(4)).getValue();
         assertEquals(maxEnvelopeSize.getValue(), maxEnvelopeSize2.getValue());
         assertEquals(maxEnvelopeSize.getPolicy(), maxEnvelopeSize2.getPolicy());
         
-        assertEquals(maxElements, ((JAXBElement<Long>) delivery2.getContent().get(5)).getValue());
-        assertEquals(maxTime, ((JAXBElement<Duration>) delivery2.getContent().get(6)).getValue());
+        assertEquals(maxElements.longValue(), ((JAXBElement<AttributablePositiveInteger>) delivery2.getContent().get(5)).getValue().getValue().longValue());
+        assertEquals(maxTime, ((JAXBElement<AttributableDuration>) delivery2.getContent().get(6)).getValue().getValue());
     }
     
     public void testPullMode() throws Exception {
@@ -125,7 +137,7 @@ public class EventingExtensionsTest extends TestBase {
         final FilterType filterType = Eventing.FACTORY.createFilterType();
         filterType.setDialect(XPath.NS_URI);
         filterType.getContent().add(filter);
-        evtx.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null, 
+        evtx.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null,
                 filter == null ? null : filterType);
         
         final Management mgmt = new Management(evtx);

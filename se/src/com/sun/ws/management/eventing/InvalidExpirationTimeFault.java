@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InvalidExpirationTimeFault.java,v 1.1 2005-06-29 19:18:22 akhilarora Exp $
+ * $Id: InvalidExpirationTimeFault.java,v 1.2 2006-05-01 23:32:22 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
 
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class InvalidExpirationTimeFault extends SenderFault {
     
+    public static final QName INVALID_EXPIRATION_TIME = 
+            new QName(Eventing.NS_URI, "InvalidExpirationTime", Eventing.NS_PREFIX);
+    public static final String INVALID_EXPIRATION_TIME_REASON = 
+        "The expiration time was not valid.";
+    
     public InvalidExpirationTimeFault(final Node... details) {
-        super(Eventing.INVALID_EXPIRATION_TIME, Eventing.INVALID_EXPIRATION_TIME_REASON, details);
+        super(Eventing.FAULT_ACTION_URI, INVALID_EXPIRATION_TIME, INVALID_EXPIRATION_TIME_REASON, details);
     }
 }

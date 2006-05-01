@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.5 2006-04-14 22:15:12 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.6 2006-05-01 23:32:25 akhilarora Exp $
  */
 
 package demo;
@@ -26,15 +26,16 @@ import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.xml.XmlBinding;
 import java.io.InputStream;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.LogManager;
 import javax.xml.soap.Detail;
 import javax.xml.soap.DetailEntry;
 import javax.xml.soap.SOAPFault;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -50,7 +51,7 @@ public final class CmdLineDemo {
     private static String dest = null;
     private static String verb = GET;
     private static String resource = null;
-    private static Map<String, Object> selectors = new HashMap<String, Object>();
+    private static Set<SelectorType> selectors = new HashSet<SelectorType>();
     
     private static String enumContext = null;
     
@@ -64,7 +65,10 @@ public final class CmdLineDemo {
         verb = args[0];
         resource = args[1];
         for (int i = 2; i + 1 < args.length; i += 2) {
-            selectors.put(args[i], args[i+1]);
+            final SelectorType selector = new SelectorType();
+            selector.setName(args[i]);
+            selector.getContent().add(args[i+1]);
+            selectors.add(selector);
         }
         
         dest = System.getProperty("wsman.dest", "http://localhost:8080/wsman/");

@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAPTest.java,v 1.3 2006-03-03 22:52:29 akhilarora Exp $
+ * $Id: SOAPTest.java,v 1.4 2006-05-01 23:32:25 akhilarora Exp $
  */
 
 package management;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.soap.NotUnderstoodFault;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
@@ -62,15 +63,15 @@ public class SOAPTest extends TestBase {
             fail("fault not returned");
         }
         
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(Addressing.FAULT_ACTION_URI, response.getAction());
         assertEquals(SOAP.MUST_UNDERSTAND, fault.getCode().getValue());
         assertNull(fault.getCode().getSubcode());
-        assertEquals(SOAP.NOT_UNDERSTOOD_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(NotUnderstoodFault.NOT_UNDERSTOOD_REASON, fault.getReason().getText().get(0).getValue());
         
         boolean found = false;
         for (final SOAPElement hdr : response.getHeaders()) {
-            if (SOAP.NOT_UNDERSTOOD.equals(hdr.getElementQName())) {
+            if (NotUnderstoodFault.NOT_UNDERSTOOD.equals(hdr.getElementQName())) {
                 found = true;
                 final NamedNodeMap attrs = hdr.getAttributes();
                 for (int i = attrs.getLength() - 1; i >= 0; i--) {

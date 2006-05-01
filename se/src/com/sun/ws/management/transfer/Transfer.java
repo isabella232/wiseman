@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Transfer.java,v 1.2 2006-02-01 21:50:38 akhilarora Exp $
+ * $Id: Transfer.java,v 1.3 2006-05-01 23:32:24 akhilarora Exp $
  */
 
 package com.sun.ws.management.transfer;
@@ -21,7 +21,6 @@ package com.sun.ws.management.transfer;
 import com.sun.ws.management.addressing.Addressing;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 public class Transfer extends Addressing {
@@ -41,10 +40,8 @@ public class Transfer extends Addressing {
     public static final String CREATE_ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/transfer/Create";
     public static final String CREATE_RESPONSE_URI = "http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse";
 
-    public static final QName INVALID_REPRESENTATION = new QName(NS_URI, "InvalidRepresentation", NS_PREFIX);
-    public static final String INVALID_REPRESENTATION_REASON = 
-        "The XML content was invalid.";
-
+    public static final String FAULT_ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/transfer/fault";
+    
     public Transfer() throws SOAPException {
         super();
     }

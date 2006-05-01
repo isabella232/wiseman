@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.6 2006-03-03 20:51:10 akhilarora Exp $
+ * $Id: Addressing.java,v 1.7 2006-05-01 23:32:20 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -50,26 +50,6 @@ public class Addressing extends SOAP {
     public static final String UNSPECIFIED_MESSAGE_ID = "http://schemas.xmlsoap.org/ws/2004/08/addressing/id/unspecified";
     public static final String ANONYMOUS_ENDPOINT_URI = "http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous";
     public static final String FAULT_ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/08/addressing/fault";
-    
-    public static final QName ACTION_NOT_SUPPORTED = new QName(NS_URI, "ActionNotSupported", NS_PREFIX);
-    public static final String ACTION_NOT_SUPPORTED_REASON =
-            "The action is not supported by the service.";
-    
-    public static final QName DESTINATION_UNREACHABLE = new QName(NS_URI, "DestinationUnreachable", NS_PREFIX);
-    public static final String DESTINATION_UNREACHABLE_REASON =
-            "No route can be determined to reach the destination role defined by the WS-Addressing To.";
-    
-    public static final QName ENDPOINT_UNAVAILABLE = new QName(NS_URI, "EndpointUnavailable", NS_PREFIX);
-    public static final String ENDPOINT_UNAVAILABLE_REASON =
-            "The specified endpoint is currently unavailable.";
-    
-    public static final QName INVALID_MESSAGE_INFORMATION_HEADER = new QName(NS_URI, "InvalidMessageInformationHeader", NS_PREFIX);
-    public static final String INVALID_MESSAGE_INFORMATION_HEADER_REASON =
-            "A message information header is not valid and the message cannot be processed.";
-    
-    public static final QName MESSAGE_INFORMATION_HEADER_REQUIRED = new QName(NS_URI, "MessageInformationHeaderRequired", NS_PREFIX);
-    public static final String MESSAGE_INFORMATION_HEADER_REQUIRED_REASON =
-            "A required header was missing.";
     
     public static final QName ACTION = new QName(NS_URI, "Action", NS_PREFIX);
     public static final QName TO = new QName(NS_URI, "To", NS_PREFIX);
@@ -112,8 +92,7 @@ public class Addressing extends SOAP {
     
     protected void validateElementPresent(final Object element, final QName elementName) throws FaultException {
         if (element == null) {
-            throw new MessageInformationHeaderRequiredFault(
-                    elementName.getPrefix() + COLON + elementName.getLocalPart());
+            throw new MessageInformationHeaderRequiredFault(elementName);
         }
     }
     

@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: AlreadyExistsFault.java,v 1.1 2005-06-29 19:18:13 akhilarora Exp $
+ * $Id: AlreadyExistsFault.java,v 1.2 2006-05-01 23:32:17 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class AlreadyExistsFault extends SenderFault {
     
+    public static final QName ALREADY_EXISTS = 
+            new QName(Management.NS_URI, "AlreadyExists", Management.NS_PREFIX);
+    public static final String ALREADY_EXISTS_REASON =
+            "The sender attempted to create a resource which already exists.";
+    
     public AlreadyExistsFault(final Node... details) {
-        super(Management.ALREADY_EXISTS, Management.ALREADY_EXISTS_REASON, details);
+        super(Management.FAULT_ACTION_URI, ALREADY_EXISTS, ALREADY_EXISTS_REASON, details);
     }
 }

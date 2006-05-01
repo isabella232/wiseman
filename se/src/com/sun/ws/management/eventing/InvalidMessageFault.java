@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InvalidMessageFault.java,v 1.1 2005-06-29 19:18:22 akhilarora Exp $
+ * $Id: InvalidMessageFault.java,v 1.2 2006-05-01 23:32:22 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -29,6 +29,6 @@ public class InvalidMessageFault extends SenderFault {
     }
     
     public InvalidMessageFault(final Node... details) {
-        super(Eventing.INVALID_MESSAGE, Eventing.INVALID_MESSAGE_REASON, details);
+        super(Eventing.FAULT_ACTION_URI, Eventing.INVALID_MESSAGE, Eventing.INVALID_MESSAGE_REASON, details);
     }
 }

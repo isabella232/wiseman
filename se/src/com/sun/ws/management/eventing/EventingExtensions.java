@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensions.java,v 1.3 2006-02-01 21:50:35 akhilarora Exp $
+ * $Id: EventingExtensions.java,v 1.4 2006-05-01 23:32:22 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -23,33 +23,37 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableAny;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
-import org.xmlsoap.schemas.ws._2005._06.management.BookmarkType;
-import org.xmlsoap.schemas.ws._2005._06.management.ConnectionRetryType;
-import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
-import org.xmlsoap.schemas.ws._2005._06.management.ObjectFactory;
+import org.dmtf.schemas.wbem.wsman._1.wsman.ConnectionRetryType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory;
 
 public class EventingExtensions extends Eventing {
     
-    public static final String EVENT_ACTION_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Event";
-    public static final String HEARTBEAT_ACTION_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Heartbeat";
-    public static final String ACK_ACTION_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/Ack";
-    public static final String DROPPED_EVENTS_ACTION_URI = "http://schemas.xmlsoap.org/ws/2005/06/management/DroppedEvents";
+    public static final String EVENT_ACTION_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Event";
+    public static final String HEARTBEAT_ACTION_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Heartbeat";
+    public static final String ACK_ACTION_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Ack";
+    public static final String DROPPED_EVENTS_ACTION_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/DroppedEvents";
     
-    public static final String PUSH_WITH_ACK_DELIVERY_MODE = "http://schemas.xmlsoap.org/ws/2005/06/management/PushWithAck";
-    public static final String EVENTS_DELIVERY_MODE = "http://schemas.xmlsoap.org/ws/2005/06/management/Events";
-    public static final String PULL_DELIVERY_MODE = "http://schemas.xmlsoap.org/ws/2005/06/management/Pull";
+    public static final String PUSH_WITH_ACK_DELIVERY_MODE = "http://schemas.dmtf.org/wbem/wsman/1/wsman/PushWithAck";
+    public static final String EVENTS_DELIVERY_MODE = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Events";
+    public static final String PULL_DELIVERY_MODE = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Pull";
     
-    public static final String EARLIEST_BOOKMARK = "http://schemas.xmlsoap.org/ws/2005/06/management/bookmark/earliest";
+    public static final String EARLIEST_BOOKMARK = "http://schemas.dmtf.org/wbem/wsman/1/wsman/bookmark/earliest";
     
     public static final String CANCEL_SUBSCRIPTION_POLICY = "CancelSubscription";
     public static final String SKIP_POLICY = "Skip";
@@ -84,7 +88,7 @@ public class EventingExtensions extends Eventing {
     public void setSubscribe(final EndpointReferenceType endTo, final String deliveryMode,
             final EndpointReferenceType notifyTo, final String expires, final FilterType filter,
             final ConnectionRetryType retryType, final Duration heartbeats, final Boolean sendBookmarks,
-            final BookmarkType bookmark,
+            final AttributableAny bookmark,
             final MaxEnvelopeSizeType maxEnvelopeSize, final Long maxElements, final Duration maxTime)
             throws SOAPException, JAXBException {
         
@@ -98,17 +102,16 @@ public class EventingExtensions extends Eventing {
         Element heartbeatsElement = null;
         if (heartbeats != null) {
             final Document heartbeatsDoc = newDocument();
-            getXmlBinding().marshal(FACTORY.createHeartbeats(heartbeats), heartbeatsDoc);
+            final AttributableDuration heartbeatDuration = FACTORY.createAttributableDuration();
+            heartbeatDuration.setValue(heartbeats);
+            getXmlBinding().marshal(FACTORY.createHeartbeats(heartbeatDuration), heartbeatsDoc);
             heartbeatsElement = heartbeatsDoc.getDocumentElement();
         }
         
         Element sendBookmarksElement = null;
         if (sendBookmarks != null && sendBookmarks.booleanValue()) {
             final Document sendBookmarksDoc = newDocument();
-            // TODO: any parameter generates extra xsi attributes as below -
-            // a null is the least annoying. How to eliminate?
-            // xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"
-            getXmlBinding().marshal(FACTORY.createSendBookmarks(null), sendBookmarksDoc);
+            getXmlBinding().marshal(FACTORY.createSendBookmarks(new AttributableEmpty()), sendBookmarksDoc);
             sendBookmarksElement = sendBookmarksDoc.getDocumentElement();
         }
         
@@ -129,14 +132,18 @@ public class EventingExtensions extends Eventing {
         Element maxElementsElement = null;
         if (maxElements != null) {
             final Document maxElementsDoc = newDocument();
-            getXmlBinding().marshal(FACTORY.createMaxElements(maxElements), maxElementsDoc);
+            final AttributablePositiveInteger maxInteger = FACTORY.createAttributablePositiveInteger();
+            maxInteger.setValue(new BigInteger(Long.toString(maxElements)));
+            getXmlBinding().marshal(FACTORY.createMaxElements(maxInteger), maxElementsDoc);
             maxElementsElement = maxElementsDoc.getDocumentElement();
         }
         
         Element maxTimeElement = null;
         if (maxTime != null) {
             final Document maxTimeDoc = newDocument();
-            getXmlBinding().marshal(FACTORY.createMaxTime(maxTime), maxTimeDoc);
+            final AttributableDuration maxDuration = FACTORY.createAttributableDuration();
+            maxDuration.setValue(maxTime);
+            getXmlBinding().marshal(FACTORY.createMaxTime(maxDuration), maxTimeDoc);
             maxTimeElement = maxTimeDoc.getDocumentElement();
         }
         

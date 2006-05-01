@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ConcurrencyFault.java,v 1.1 2005-06-29 19:18:13 akhilarora Exp $
+ * $Id: ConcurrencyFault.java,v 1.2 2006-05-01 23:32:18 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class ConcurrencyFault extends SenderFault {
     
+    public static final QName CONCURRENCY = 
+            new QName(Management.NS_URI, "Concurrency", Management.NS_PREFIX);
+    public static final String CONCURRENCY_REASON =
+            "The action could not be completed due to concurrency or locking problems.";
+    
     public ConcurrencyFault(final Node... details) {
-        super(Management.CONCURRENCY, Management.CONCURRENCY_REASON, details);
+        super(Management.FAULT_ACTION_URI, CONCURRENCY, CONCURRENCY_REASON, details);
     }
 }

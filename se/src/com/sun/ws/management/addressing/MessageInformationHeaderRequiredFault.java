@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MessageInformationHeaderRequiredFault.java,v 1.1 2005-06-29 19:18:18 akhilarora Exp $
+ * $Id: MessageInformationHeaderRequiredFault.java,v 1.2 2006-05-01 23:32:20 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
 
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class MessageInformationHeaderRequiredFault extends SenderFault {
     
-    public MessageInformationHeaderRequiredFault(final String faultDetail) {
-        this(SOAP.createFaultDetail(null, faultDetail, null, null));
+    public static final QName MESSAGE_INFORMATION_HEADER_REQUIRED = 
+            new QName(Addressing.NS_URI, "MessageInformationHeaderRequired", Addressing.NS_PREFIX);
+    public static final String MESSAGE_INFORMATION_HEADER_REQUIRED_REASON =
+            "A required header was missing.";
+    
+    public MessageInformationHeaderRequiredFault(final QName missingHeaderName) {
+        this(SOAP.createFaultDetail(null, null, null, null, 
+                missingHeaderName.getPrefix() + SOAP.COLON + missingHeaderName.getLocalPart()));
     }
     
     public MessageInformationHeaderRequiredFault(final Node... details) {
-        super(Addressing.MESSAGE_INFORMATION_HEADER_REQUIRED,
-                Addressing.MESSAGE_INFORMATION_HEADER_REQUIRED_REASON, details);
+        super(Addressing.FAULT_ACTION_URI, MESSAGE_INFORMATION_HEADER_REQUIRED,
+                MESSAGE_INFORMATION_HEADER_REQUIRED_REASON, details);
     }
 }

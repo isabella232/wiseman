@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.12 2006-03-03 20:51:12 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.13 2006-05-01 23:32:22 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Management;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
@@ -121,7 +120,7 @@ public final class EnumerationSupport extends BaseSupport {
             expires = subscribe.getExpires();
             
             if (subscribe.getEndTo() != null) {
-                throw new UnsupportedFeatureFault(Management.ADDRESSING_MODE_DETAIL);
+                throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
         } else {
             final FilterType filterType = enumerate.getFilter();
@@ -131,7 +130,7 @@ public final class EnumerationSupport extends BaseSupport {
             expires = enumerate.getExpires();
             
             if (enumerate.getEndTo() != null) {
-                throw new UnsupportedFeatureFault(Management.ADDRESSING_MODE_DETAIL);
+                throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
         }
         
@@ -196,7 +195,7 @@ public final class EnumerationSupport extends BaseSupport {
         final BigInteger maxChars = pull.getMaxCharacters();
         if (maxChars != null) {
             // TODO: add support for maxChars
-            throw new UnsupportedFeatureFault("MaxChars is not yet implemented");
+            throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.MAX_ENVELOPE_SIZE);
         }
         
         final EnumerationContextType contextType = pull.getEnumerationContext();

@@ -13,22 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InvalidParameterFault.java,v 1.1 2005-06-29 19:18:14 akhilarora Exp $
+ * $Id: InvalidParameterFault.java,v 1.2 2006-05-01 23:32:18 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class InvalidParameterFault extends SenderFault {
     
-    public InvalidParameterFault(final String faultDetail) {
-        this(SOAP.createFaultDetail(null, faultDetail, null, null));
+    public static final QName INVALID_PARAMETER = 
+            new QName(Management.NS_URI, "InvalidParameter", Management.NS_PREFIX);
+    public static final String INVALID_PARAMETER_REASON =
+            "An operation parameter was not valid.";
+    
+    public static enum Detail {
+        TYPE_MISMATCH("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/TypeMismatch"),
+        INVALID_NAME("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/InvalidName");
+
+        private final String uri;
+        Detail(final String uri) { this.uri = uri; }
+        public String toString() { return uri; }
+    }
+    
+    public InvalidParameterFault(final Detail... detail) {
+        this(SOAP.createFaultDetail(null, 
+                detail == null ? null : (detail.length == 0 ? null : detail[0].toString()), 
+                null, null));
     }
     
     public InvalidParameterFault(final Node... details) {
-        super(Management.INVALID_PARAMETER, Management.INVALID_PARAMETER_REASON, details);
+        super(Management.FAULT_ACTION_URI, INVALID_PARAMETER, INVALID_PARAMETER_REASON, details);
     }
 }

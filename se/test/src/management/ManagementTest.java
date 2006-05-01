@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.13 2006-03-03 22:52:29 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.14 2006-05-01 23:32:25 akhilarora Exp $
  */
 
 package management;
 
+import com.sun.ws.management.AccessDeniedFault;
+import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.TimedOutFault;
+import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import com.sun.ws.management.addressing.DestinationUnreachableFault;
+import com.sun.ws.management.addressing.MessageInformationHeaderRequiredFault;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
@@ -26,22 +32,27 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.xml.XMLSchema;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.Map;
-import java.util.TreeMap;
+import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPHeaderElement;
+import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.PolicyType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2005._06.management.LocaleType;
-import org.xmlsoap.schemas.ws._2005._06.management.MaxEnvelopeSizeType;
 
 /**
  * Unit test for WS-Management
@@ -51,7 +62,7 @@ public class ManagementTest extends TestBase {
     private static final String RESOURCE = "wsman:system/2005/02/this";
     private static final int TIMEOUT = 30000;
     
-    private final Map<String, Object> selectors = new TreeMap();
+    private final Set<SelectorType> selectors = new HashSet<SelectorType>();
     
     public ManagementTest(final String testName) {
         super(testName);
@@ -59,7 +70,10 @@ public class ManagementTest extends TestBase {
     
     protected void setUp() throws java.lang.Exception {
         super.setUp();
-        selectors.put("Name", "WSMAN");
+        final SelectorType selector = new SelectorType();
+        selector.setName("Name");
+        selector.getContent().add("WSMAN");
+        selectors.add(selector);
     }
     
     protected void tearDown() throws java.lang.Exception {
@@ -101,16 +115,16 @@ public class ManagementTest extends TestBase {
         response.prettyPrint(logfile);
         
         assertTrue("Missing ResourceURI accepted", response.getBody().hasFault());
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Management.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
-        assertEquals(Management.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
+        assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
         for (final Object detail : fault.getDetail().getAny()) {
             if (detail instanceof Node) {
                 final Node de = (Node) detail;
             } else {
                 final String str = ((JAXBElement<String>) detail).getValue();
-                assertEquals(Management.INVALID_RESOURCE_URI_DETAIL, str);
+                assertEquals(DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI.toString(), str);
             }
         }
     }
@@ -132,25 +146,27 @@ public class ManagementTest extends TestBase {
         
         final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
         final long envSize = 4096;
-        maxEnvSize.setValue(envSize);
+        maxEnvSize.setValue(new BigInteger(Long.toString(envSize)));
         final String envPolicy = "Skip";
-        maxEnvSize.setPolicy(envPolicy);
+        final PolicyType policyType = PolicyType.fromValue(envPolicy);
+        maxEnvSize.setPolicy(policyType);
         mgmt.setMaxEnvelopeSize(maxEnvSize);
         
-        final LocaleType locale = Management.FACTORY.createLocaleType();
+        final Locale locale = Management.FACTORY.createLocale();
         final String localeString = "en-US";
-        locale.setValue(localeString);
+        locale.setLang(localeString);
         mgmt.setLocale(locale);
         
-        final Map<String, String> options = new TreeMap();
+        final Set<OptionType> options = new HashSet<OptionType>();
         final String verboseOptionName = "--output-file";
         final String verboseOptionValue = "/dev/null";
-        options.put(verboseOptionName, verboseOptionValue);
+        final QName verboseOptionType = new QName(XMLSchema.NS_URI, "string", XMLSchema.NS_PREFIX);
+        final OptionType verboseOption = new OptionType();
+        verboseOption.setName(verboseOptionName);
+        verboseOption.setValue(verboseOptionValue);
+        verboseOption.setType(verboseOptionType);
+        options.add(verboseOption);
         mgmt.setOptions(options);
-        
-        final String renameAddress = "http://host.com/renamed/to/address";
-        final EndpointReferenceType eprRename = mgmt.createEndpointReference(renameAddress, null, null, null, null);
-        mgmt.setRename(eprRename);
         
         mgmt.prettyPrint(logfile);
         
@@ -161,24 +177,24 @@ public class ManagementTest extends TestBase {
         assertEquals(RESOURCE, m2.getResourceURI());
         assertEquals(timeout, m2.getTimeout());
         
-        final Map<String, Object> selectors2 = mgmt.getSelectors();
+        final Set<SelectorType> selectors2 = mgmt.getSelectors();
         assertEquals(selectors.size(), selectors2.size());
-        assertEquals(selectors.keySet().iterator().next(), selectors2.keySet().iterator().next());
-        assertEquals(selectors.values().iterator().next(), selectors2.values().iterator().next());
+        final SelectorType selector = selectors.iterator().next();
+        final SelectorType selector2 = selectors2.iterator().next();
+        assertEquals(selector.getName(), selector2.getName());
+        assertEquals(selector.getContent().get(0), selector2.getContent().get(0));
         
         final MaxEnvelopeSizeType maxEnvSize2 = m2.getMaxEnvelopeSize();
-        assertEquals(envSize, maxEnvSize2.getValue());
-        assertEquals(envPolicy, maxEnvSize2.getPolicy());
+        assertEquals(envSize, maxEnvSize2.getValue().longValue());
+        assertEquals(envPolicy, maxEnvSize2.getPolicy().value());
         
-        assertEquals(localeString, m2.getLocale().getValue());
+        assertEquals(localeString, m2.getLocale().getLang());
         
-        final Map<String, String> options2 = m2.getOptions();
-        assertTrue(options2.containsKey(verboseOptionName));
-        assertTrue(options2.containsValue(verboseOptionValue));
-        assertEquals(verboseOptionName, options2.keySet().iterator().next());
-        assertEquals(verboseOptionValue, options2.values().iterator().next());
-        
-        assertEquals(renameAddress, m2.getRename().getAddress().getValue());
+        final Set<OptionType> options2 = m2.getOptions();
+        final OptionType option2 = options2.iterator().next();
+        assertEquals(verboseOptionName, option2.getName());
+        assertEquals(verboseOptionValue, option2.getValue());
+        assertEquals(verboseOptionType, option2.getType());
     }
     
     public void testActionNotSupported() throws Exception {
@@ -200,10 +216,10 @@ public class ManagementTest extends TestBase {
             fail("Unsupported action accepted");
         }
 
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Addressing.ACTION_NOT_SUPPORTED, fault.getCode().getSubcode().getValue());
-        assertEquals(Addressing.ACTION_NOT_SUPPORTED_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(ActionNotSupportedFault.ACTION_NOT_SUPPORTED, fault.getCode().getSubcode().getValue());
+        assertEquals(ActionNotSupportedFault.ACTION_NOT_SUPPORTED_REASON, fault.getReason().getText().get(0).getValue());
         assertEquals(UNSUPPORTED_ACTION, 
                 ((JAXBElement<AttributedURI>) fault.getDetail().getAny().get(0)).getValue().getValue());
     }
@@ -221,9 +237,11 @@ public class ManagementTest extends TestBase {
         final Duration timeout = DatatypeFactory.newInstance().newDuration(TIMEOUT);
         mgmt.setTimeout(timeout);
         
-        final Map<String, Object> selectorMap = new TreeMap();
-        selectorMap.put("SystemName", "sun-v20z-1");
-        mgmt.setSelectors(selectorMap);
+        final Set<SelectorType> selectorSet = new HashSet<SelectorType>();
+        final SelectorType selector = new SelectorType();
+        selector.setName("SystemName");
+        selector.getContent().add("sun-v20z-1");
+        mgmt.setSelectors(selectorSet);
         
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
@@ -310,10 +328,10 @@ public class ManagementTest extends TestBase {
         if (mgmt.getTo() != null) {
             final Addressing response = HttpClient.sendRequest(mgmt);
             assertTrue(response.getBody().hasFault());
-            final Fault fault = new SOAP(response).getFault();
+            final Fault fault = new Addressing(response).getFault();
             assertEquals(SOAP.SENDER, fault.getCode().getValue());
-            assertEquals(Addressing.MESSAGE_INFORMATION_HEADER_REQUIRED, fault.getCode().getSubcode().getValue());
-            assertEquals(Addressing.MESSAGE_INFORMATION_HEADER_REQUIRED_REASON, fault.getReason().getText().get(0).getValue());
+            assertEquals(MessageInformationHeaderRequiredFault.MESSAGE_INFORMATION_HEADER_REQUIRED, fault.getCode().getSubcode().getValue());
+            assertEquals(MessageInformationHeaderRequiredFault.MESSAGE_INFORMATION_HEADER_REQUIRED_REASON, fault.getReason().getText().get(0).getValue());
         }
     }
     
@@ -331,10 +349,10 @@ public class ManagementTest extends TestBase {
         if (!response.getBody().hasFault()) {
             fail("fault not returned");
         }
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Management.ACCESS_DENIED, fault.getCode().getSubcode().getValue());
-        assertEquals(Management.ACCESS_DENIED_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(AccessDeniedFault.ACCESS_DENIED, fault.getCode().getSubcode().getValue());
+        assertEquals(AccessDeniedFault.ACCESS_DENIED_REASON, fault.getReason().getText().get(0).getValue());
     }
     
     public void testNonHandler() throws Exception {
@@ -351,10 +369,10 @@ public class ManagementTest extends TestBase {
         if (!response.getBody().hasFault()) {
             fail("fault not returned");
         }
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Management.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
-        assertEquals(Management.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
+        assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
     }
     
     public void testTimeout() throws Exception {
@@ -373,10 +391,10 @@ public class ManagementTest extends TestBase {
         if (!response.getBody().hasFault()) {
             fail("fault not returned");
         }
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
-        assertEquals(Management.TIMED_OUT, fault.getCode().getSubcode().getValue());
-        assertEquals(Management.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(TimedOutFault.TIMED_OUT, fault.getCode().getSubcode().getValue());
+        assertEquals(TimedOutFault.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
     }
     
     public void testMaxEnvelopeSizeTooSmall() throws Exception {
@@ -390,7 +408,7 @@ public class ManagementTest extends TestBase {
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
         final MaxEnvelopeSizeType maxEnvSize = new MaxEnvelopeSizeType();
-        maxEnvSize.setValue(4);
+        maxEnvSize.setValue(new BigInteger(Integer.toString(4)));
         mgmt.setMaxEnvelopeSize(maxEnvSize);
         
         mgmt.prettyPrint(logfile);
@@ -400,16 +418,16 @@ public class ManagementTest extends TestBase {
             fail("fault not returned");
         }
         
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Management.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
-        assertEquals(Management.ENCODING_LIMIT_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(EncodingLimitFault.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
+        assertEquals(EncodingLimitFault.ENCODING_LIMIT_REASON, fault.getReason().getText().get(0).getValue());
         for (final Object detail : fault.getDetail().getAny()) {
             if (detail instanceof Node) {
                 final Node de = (Node) detail;
             } else {
                 final String str = ((JAXBElement<String>) detail).getValue();
-                assertEquals(Management.MIN_ENVELOPE_LIMIT_DETAIL, str);
+                assertEquals(EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE.toString(), str);
             }
         }
     }
@@ -423,7 +441,7 @@ public class ManagementTest extends TestBase {
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
         final MaxEnvelopeSizeType maxEnvSize = new MaxEnvelopeSizeType();
-        maxEnvSize.setValue(8192 + 1);
+        maxEnvSize.setValue(new BigInteger(Integer.toString(8192 + 1)));
         mgmt.setMaxEnvelopeSize(maxEnvSize);
         
         mgmt.prettyPrint(logfile);
@@ -433,16 +451,16 @@ public class ManagementTest extends TestBase {
             fail("fault not returned");
         }
         
-        final Fault fault = new SOAP(response).getFault();
+        final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
-        assertEquals(Management.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
-        assertEquals(Management.ENCODING_LIMIT_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(EncodingLimitFault.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
+        assertEquals(EncodingLimitFault.ENCODING_LIMIT_REASON, fault.getReason().getText().get(0).getValue());
         for (final Object detail : fault.getDetail().getAny()) {
             if (detail instanceof Node) {
                 final Node de = (Node) detail;
             } else {
                 final String str = ((JAXBElement<String>) detail).getValue();
-                assertEquals(Management.MAX_ENVELOPE_SIZE_DETAIL, str);
+                assertEquals(EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED.toString(), str);
             }
         }
     }

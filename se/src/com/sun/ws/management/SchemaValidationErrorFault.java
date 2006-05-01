@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SchemaValidationErrorFault.java,v 1.1 2005-06-29 19:18:16 akhilarora Exp $
+ * $Id: SchemaValidationErrorFault.java,v 1.2 2006-05-01 23:32:20 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class SchemaValidationErrorFault extends SenderFault {
+    
+    public static final QName SCHEMA_VALIDATION_ERROR = 
+            new QName(Management.NS_URI, "SchemaValidationError", Management.NS_PREFIX);
+    public static final String SCHEMA_VALIDATION_ERROR_REASON =
+            "The supplied SOAP violates the corresponding XML Schema definition.";
     
     public SchemaValidationErrorFault(final String explanation) {
         this(SOAP.createFaultDetail(explanation, null, null, null));
     }
     
     public SchemaValidationErrorFault(final Node... details) {
-        super(Management.SCHEMA_VALIDATION_ERROR, Management.SCHEMA_VALIDATION_ERROR_REASON, details);
+        super(Management.FAULT_ACTION_URI, SCHEMA_VALIDATION_ERROR, SCHEMA_VALIDATION_ERROR_REASON, details);
     }
 }

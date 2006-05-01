@@ -13,25 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: FilteringRequestedUnavailableFault.java,v 1.1 2005-06-29 19:18:22 akhilarora Exp $
+ * $Id: FilteringRequestedUnavailableFault.java,v 1.2 2006-05-01 23:32:22 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
 
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
+import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class FilteringRequestedUnavailableFault extends SenderFault {
     
-    public FilteringRequestedUnavailableFault(final String faultDetail,
+    public static final QName FILTERING_REQUESTED_UNAVAILABLE = 
+            new QName(Eventing.NS_URI, "FilteringRequestedUnavailable", Eventing.NS_PREFIX);
+    public static final String FILTERING_REQUESTED_UNAVAILABLE_REASON =
+            "The requested filter dialect is not supported.";
+    
+    public static final QName SUPPORTED_DIALECT = 
+            new QName(Eventing.NS_URI, "SupportedDialect", Eventing.NS_PREFIX);
+    
+    public static enum Detail {
+        FILTERING_REQUIRED("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/FilteringRequired");
+
+        private final String uri;
+        Detail(final String uri) { this.uri = uri; }
+        public String toString() { return uri; }
+    }
+    
+    public FilteringRequestedUnavailableFault(final Detail detail,
             final String[] supportedDialects) {
-        this(SOAP.createFaultDetail(null, faultDetail, null,
-                Eventing.SUPPORTED_DIALECT, (Object[]) supportedDialects));
+        this(SOAP.createFaultDetail(null, 
+                detail == null ? null : detail.toString(), null,
+                SUPPORTED_DIALECT, (Object[]) supportedDialects));
     }
     
     public FilteringRequestedUnavailableFault(final Node... details) {
-        super(Eventing.FILTERING_REQUESTED_UNAVAILABLE,
-                Eventing.FILTERING_REQUESTED_UNAVAILABLE_REASON, details);
+        super(Eventing.FAULT_ACTION_URI, FILTERING_REQUESTED_UNAVAILABLE,
+                FILTERING_REQUESTED_UNAVAILABLE_REASON, details);
     }
 }
