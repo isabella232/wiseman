@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.9 2006-05-01 23:32:21 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.10 2006-05-02 20:37:10 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -91,10 +91,11 @@ public class Enumeration extends Addressing {
         super(is);
     }
     
-    public void setEnumerate(final EndpointReferenceType endTo, 
-            final String expires, final FilterType filter) 
+    public void setEnumerate(final EndpointReferenceType endTo,
+            final String expires, final FilterType filter,
+            final Object... anys)
             throws JAXBException, SOAPException {
-
+        
         removeChildren(getBody(), ENUMERATE);
         final Enumerate enu = FACTORY.createEnumerate();
         if (endTo != null) {
@@ -106,12 +107,17 @@ public class Enumeration extends Addressing {
         if (filter != null) {
             enu.setFilter(filter);
         }
+        if (anys != null) {
+            for (final Object any : anys) {
+                enu.getAny().add(any);
+            }
+        }
         getXmlBinding().marshal(enu, getBody());
     }
     
-    public void setEnumerateResponse(final Object context, final String expires) 
+    public void setEnumerateResponse(final Object context, final String expires)
     throws JAXBException, SOAPException {
-
+        
         removeChildren(getBody(), ENUMERATE_RESPONSE);
         final EnumerateResponse response = FACTORY.createEnumerateResponse();
         
@@ -129,8 +135,8 @@ public class Enumeration extends Addressing {
     // context must not be null, the others can be null
     // context must be either java.lang.String or org.w3c.dom.Element
     public void setPull(final Object context, final int maxChars,
-        final int maxElements, final Duration maxDuration)
-        throws JAXBException, SOAPException, DatatypeConfigurationException {
+            final int maxElements, final Duration maxDuration)
+            throws JAXBException, SOAPException, DatatypeConfigurationException {
         
         removeChildren(getBody(), PULL);
         final Pull pull = FACTORY.createPull();
@@ -152,9 +158,9 @@ public class Enumeration extends Addressing {
         getXmlBinding().marshal(pull, getBody());
     }
     
-    public void setPullResponse(final List<Element> items, final Object context, final boolean haveMore) 
+    public void setPullResponse(final List<Element> items, final Object context, final boolean haveMore)
     throws JAXBException, SOAPException {
-
+        
         removeChildren(getBody(), PULL_RESPONSE);
         final PullResponse response = FACTORY.createPullResponse();
         
