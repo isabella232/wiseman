@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.9 2006-05-01 23:32:23 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.10 2006-05-02 17:19:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -100,7 +100,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
             
             final Method method;
             try {
-                method = handlerClass.getDeclaredMethod("handle", HANDLER_PARAMS);
+                method = handlerClass.getMethod("handle", HANDLER_PARAMS);
             } catch (NoSuchMethodException nsmex) {
                 throw new DestinationUnreachableFault(
                         "handle method not found in Handler " +

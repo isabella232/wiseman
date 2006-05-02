@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.14 2006-05-01 23:32:25 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.15 2006-05-02 17:19:03 akhilarora Exp $
  */
 
 package management;
@@ -43,6 +43,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPHeaderElement;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
@@ -463,5 +464,46 @@ public class ManagementTest extends TestBase {
                 assertEquals(EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED.toString(), str);
             }
         }
+    }
+
+    public void testBaseHandler() throws Exception {
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.GET_ACTION_URI);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/base");
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (!response.getBody().hasFault()) {
+            fail("fault not returned");
+        }
+        final Fault fault = new Addressing(response).getFault();
+        assertEquals(SOAP.SENDER, fault.getCode().getValue());
+        assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
+        assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
+        assertEquals(DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI.toString(), 
+                ((JAXBElement<String>) fault.getDetail().getAny().get(1)).getValue());
+    }
+
+    public void testConcreteHandler() throws Exception {
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.GET_ACTION_URI);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/concrete");
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        final SOAPBody body = response.getBody();
+        if (body.hasFault()) {
+            fail("invocation of concrete handler failed: " + 
+                    body.getFault().getFaultString());
+        }
+        assertNotNull(body.getFirstChild());
     }
 }
