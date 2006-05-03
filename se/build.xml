@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.18 2006-04-24 21:06:13 akhilarora Exp $
+ $Id: build.xml,v 1.19 2006-05-03 19:35:44 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -246,35 +246,28 @@
     </fileset>
   </path>
 
-  <target name="test" depends="client,test-compile,test-ui" />
+  <target name="test" depends="client,test-compile">
+    <copy todir="${ant.home}/lib" 
+          file="${test.lib.dir}/junit.jar" />
+    <taskdef name="junit"
+             classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" />
+    <junit showoutput="true"
+           fork="true">
+      <batchtest todir="${test.run.dir}">
+        <fileset dir="${test.src.dir}">
+          <include name="management/*Test.java" />
+        </fileset>
+      </batchtest>
+      <classpath refid="test.run.classpath" />
+      <formatter usefile="false" type="brief"/>
+      <formatter type="xml"/>
+      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+      <jvmarg value="-Dwsman.user=wsman" />
+      <jvmarg value="-Dwsman.password=secret" />
+      <jvmarg value="-Dwsman.basicauthentication=true" />
+    </junit>
+  </target>
   
-  <target name="test-txt" depends="client,test-compile">
-    <java classname="junit.textui.TestRunner"
-          classpathref="test.run.classpath"
-          dir="${test.run.dir}"
-          fork="true">
-      <arg value="TestSuite" />
-      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
-      <jvmarg value="-Dwsman.user=wsman" />
-      <jvmarg value="-Dwsman.password=secret" />
-      <jvmarg value="-Dwsman.basicauthentication=true" />
-    </java>
-  </target>
-
-  <target name="test-ui" depends="client,test-compile">
-    <java classname="junit.swingui.TestRunner"
-          classpathref="test.run.classpath"
-          dir="${test.run.dir}"
-          fork="true">
-      <arg value="-noloading" />
-      <arg value="TestSuite" />
-      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
-      <jvmarg value="-Dwsman.user=wsman" />
-      <jvmarg value="-Dwsman.password=secret" />
-      <jvmarg value="-Dwsman.basicauthentication=true" />
-    </java>
-  </target>
-
   <target name="demo-get" depends="client,test-compile">
     <java classname="demo.CmdLineDemo"
           classpathref="test.run.classpath"

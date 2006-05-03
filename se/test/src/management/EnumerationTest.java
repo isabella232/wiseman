@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.11 2006-04-11 22:25:59 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.12 2006-05-03 19:35:46 akhilarora Exp $
  */
 
 package management;
@@ -232,7 +232,8 @@ public class EnumerationTest extends TestBase {
             }
             for (Object obj : pr.getItems().getAny()) {
                 final Element el = (Element) obj;
-                System.out.println(el.getNodeName() + " = " + el.getTextContent());
+                // commented to reduce clutter: uncomment to see the output
+                // System.out.println(el.getNodeName() + " = " + el.getTextContent());
             }
             if (pr.getEndOfSequence() != null) {
                 done = true;

@@ -108,7 +108,7 @@
             <compilation-unit>
                 <package-root>test/src</package-root>
                 <unit-tests/>
-                <classpath mode="compile">test/lib/junit.jar:build/classes:lib/jaxb/jaxb-api.jar:lib/jaxrpc/saaj-api.jar</classpath>
+                <classpath mode="compile">build/classes:lib/jaxb/jaxb-api.jar:lib/jaxrpc/saaj-api.jar:test/lib/junit.jar</classpath>
                 <built-to>test/build/classes</built-to>
                 <source-level>1.5</source-level>
             </compilation-unit>

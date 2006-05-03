@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.7 2006-03-03 20:51:13 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.8 2006-05-03 19:35:45 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -87,7 +87,11 @@ public class eventing_Handler implements Handler {
                         LOG.log(Level.SEVERE, "Failed to deliver event", ex);
                     }
                     if (++eventCount >= EVENTS.length) {
-                        eventTimer.cancel();
+                        try {
+                            eventTimer.cancel();
+                        } catch (IllegalStateException ise) {
+                            // ignore - sometimes we get a Timer already cancelled
+                        }
                     }
                 }
             };

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.15 2006-05-02 17:19:03 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.16 2006-05-03 19:35:46 akhilarora Exp $
  */
 
 package management;
@@ -250,7 +250,9 @@ public class ManagementTest extends TestBase {
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
-        
+       
+        // commented to reduce clutter: uncomment to see the output
+        /*
         final Document doc = response.getBody().extractContentAsDocument();
         final OutputFormat format = new OutputFormat(doc);
         format.setLineWidth(72);
@@ -260,6 +262,7 @@ public class ManagementTest extends TestBase {
         System.out.println();
         serializer.serialize(doc);
         System.out.println();
+        */
     }
     
     public void testValidate() throws Exception {
