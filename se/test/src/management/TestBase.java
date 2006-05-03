@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.4 2006-03-03 20:55:47 akhilarora Exp $
+ * $Id: TestBase.java,v 1.5 2006-05-03 19:46:52 akhilarora Exp $
  */
 
 package management;
@@ -43,7 +43,7 @@ public abstract class TestBase extends TestCase {
     }
     
     protected void setUp() throws java.lang.Exception {
-        logfile = new FileOutputStream(getClass().getCanonicalName() + "." + 
+        logfile = new FileOutputStream(getClass().getCanonicalName() + "." +
                 getName() + ".Output.xml");
         SOAP.setXmlBinding(new XmlBinding());
         final String basicAuth = System.getProperty("wsman.basicauthentication");
@@ -54,13 +54,5 @@ public abstract class TestBase extends TestCase {
     
     protected void tearDown() throws java.lang.Exception {
         logfile.close();
-    }
-    
-    public static void main(final java.lang.String[] args) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    public static junit.framework.Test suite() {
-        return ManagementSuite.suite();
     }
 }
