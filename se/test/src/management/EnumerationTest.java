@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.12 2006-05-03 19:35:46 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.13 2006-05-05 18:37:05 akhilarora Exp $
  */
 
 package management;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -164,7 +167,7 @@ public class EnumerationTest extends TestBase {
         final Release r2 = e2.getRelease();
         assertEquals(context, r2.getEnumerationContext().getContent().get(0));
     }
-
+    
     public void testEnumerate() throws Exception {
         enumerateTest(null);
         enumerateTest("/java:java.specification.version");
@@ -181,7 +184,7 @@ public class EnumerationTest extends TestBase {
         final FilterType filterType = Enumeration.FACTORY.createFilterType();
         filterType.setDialect(XPath.NS_URI);
         filterType.getContent().add(filter);
-        enu.setEnumerate(null, factory.newDuration(60000).toString(), 
+        enu.setEnumerate(null, factory.newDuration(60000).toString(),
                 filter == null ? null : filterType);
         
         final Management mgmt = new Management(enu);
@@ -193,9 +196,9 @@ public class EnumerationTest extends TestBase {
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
-            // this test fails with an AccessDenied fault if the server is 
-            // running in the sun app server with a security manager in 
-            // place (the default), which disallows enumeration of 
+            // this test fails with an AccessDenied fault if the server is
+            // running in the sun app server with a security manager in
+            // place (the default), which disallows enumeration of
             // system properties
             fail(response.getBody().getFault().getFaultString());
         }
@@ -239,5 +242,71 @@ public class EnumerationTest extends TestBase {
                 done = true;
             }
         } while (!done);
+    }
+    
+    public void testRelease() throws Exception {
+        
+        final String RESOURCE = "wsman:test/java/system/properties";
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        enu.setEnumerate(null, null, null);
+        
+        final Management mgmt = new Management(enu);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(RESOURCE);
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault()) {
+            response.prettyPrint(System.err);
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration enuResponse = new Enumeration(response);
+        final EnumerateResponse enr = enuResponse.getEnumerateResponse();
+        String context = (String) enr.getEnumerationContext().getContent().get(0);
+        
+        final Enumeration releaseRequest = new Enumeration();
+        releaseRequest.setAction(Enumeration.RELEASE_ACTION_URI);
+        releaseRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        releaseRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        releaseRequest.setRelease(context);
+        
+        final Management mr = new Management(releaseRequest);
+        mr.setTo(DESTINATION);
+        mr.setResourceURI(RESOURCE);
+        
+        mr.prettyPrint(logfile);
+        final Addressing rraddr = HttpClient.sendRequest(mr);
+        rraddr.prettyPrint(logfile);
+        if (rraddr.getBody().hasFault()) {
+            rraddr.prettyPrint(System.err);
+            fail(rraddr.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration pullRequest = new Enumeration();
+        pullRequest.setAction(Enumeration.PULL_ACTION_URI);
+        pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        pullRequest.setPull(context, 0, 3, null);
+        
+        final Management mp = new Management(pullRequest);
+        mp.setTo(DESTINATION);
+        mp.setResourceURI(RESOURCE);
+        
+        mp.prettyPrint(logfile);
+        final Addressing praddr = HttpClient.sendRequest(mp);
+        praddr.prettyPrint(logfile);
+        if (!praddr.getBody().hasFault()) {
+            fail("pull after release succeeded");
+        }
+        
+        final Fault fault = new Addressing(praddr).getFault();
+        assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
+        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT, fault.getCode().getSubcode().getValue());
+        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT_REASON, fault.getReason().getText().get(0).getValue());
     }
 }
