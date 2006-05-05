@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.4 2006-04-11 22:25:58 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.5 2006-05-05 18:43:25 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -38,7 +38,10 @@ public class properties_Handler implements Handler, EnumerationIterator {
     private static final String NS_URI = "https://wiseman.dev.java.net/java";
     private static final String NS_PREFIX = "java";
     
-    private boolean cancelled;
+    private static final class Context {
+        boolean cancelled;
+        Properties properties;
+    }
     
     public void handle(final String action, final String resource,
             final Management request, final Management response) throws Exception {
@@ -48,15 +51,21 @@ public class properties_Handler implements Handler, EnumerationIterator {
         
         if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
+            
             final Map<String, String> namespaces = new HashMap<String, String>();
             namespaces.put(NS_PREFIX, NS_URI);
-            // this generates an AccessDenied exception which is returned 
-            // to the client as an AccessDenied fault if the server is 
-            // running in the sun app server with a security manager in 
-            // place (the default), which disallows enumeration of 
+            
+            final Context context = new Context();
+            // this generates an AccessDenied exception which is returned
+            // to the client as an AccessDenied fault if the server is
+            // running in the sun app server with a security manager in
+            // place (the default), which disallows enumeration of
             // system properties
+            context.properties = System.getProperties();
+            context.cancelled = false;
+            
             EnumerationSupport.enumerate(enuRequest, enuResponse, this,
-                    System.getProperties(), namespaces);
+                    context, namespaces);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
             EnumerationSupport.pull(enuRequest, enuResponse);
@@ -70,12 +79,12 @@ public class properties_Handler implements Handler, EnumerationIterator {
     
     public List<Element> next(final DocumentBuilder db, final Object context,
             final int start, final int count) {
-        cancelled = false;
-        final Properties props = (Properties) context;
+        final Context ctx = (Context) context;
+        final Properties props = ctx.properties;
         final int returnCount = Math.min(count, props.size() - start);
         final List<Element> items = new ArrayList(returnCount);
         final Object[] keys = props.keySet().toArray();
-        for (int i = 0; i < returnCount && !cancelled; i++) {
+        for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
             final Object key = keys[start + i];
             final Object value = props.get(key);
             final Document doc = db.newDocument();
@@ -87,11 +96,13 @@ public class properties_Handler implements Handler, EnumerationIterator {
     }
     
     public boolean hasNext(final Object context, final int start) {
-        final Properties props = (Properties) context;
+        final Context ctx = (Context) context;
+        final Properties props = ctx.properties;
         return start < props.size();
     }
     
     public void cancel(final Object context) {
-        cancelled = true;
+        final Context ctx = (Context) context;
+        ctx.cancelled = true;
     }
 }
