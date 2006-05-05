@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.13 2006-05-01 23:32:22 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.14 2006-05-05 18:36:00 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -191,6 +191,9 @@ public final class EnumerationSupport extends BaseSupport {
     throws SOAPException, JAXBException, FaultException {
         
         final Pull pull = request.getPull();
+        if (pull == null) {
+            throw new InvalidEnumerationContextFault();
+        }
         
         final BigInteger maxChars = pull.getMaxCharacters();
         if (maxChars != null) {
@@ -304,7 +307,13 @@ public final class EnumerationSupport extends BaseSupport {
     public static void release(final Enumeration request, final Enumeration response)
     throws SOAPException, JAXBException, FaultException {
         final Release release = request.getRelease();
+        if (release == null) {
+            throw new InvalidEnumerationContextFault();
+        }
         final EnumerationContextType contextType = release.getEnumerationContext();
+        if (contextType == null) {
+            throw new InvalidEnumerationContextFault();
+        }
         final UUID context = extractContext(contextType);
         final BaseContext ctx = removeContext(context);
         if (ctx == null) {
