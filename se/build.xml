@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.20 2006-05-03 19:46:52 akhilarora Exp $
+ $Id: build.xml,v 1.21 2006-05-09 00:22:21 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -47,6 +47,35 @@
       <include name="**/*.jar" />
     </fileset>
   </path>
+
+  <target name="generate-jaxb" depends="init">
+    <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+      <classpath refid="jaxb.compile.classpath" />
+    </taskdef>
+
+    <xjc target="${gen.src.dir}">
+      <!-- uncomment if HTTP proxies are needed for internet access, 
+           define them in ${user.home}/.ant.properties -->
+      <!--
+      <arg value="-host" />
+      <arg value="${http.proxy.host}" />
+      <arg value="-port" />
+      <arg value="${http.proxy.port}" />
+      -->
+      <schema dir="${basedir}/etc/xsd" 
+              includes="xml.xsd" /> 
+      <schema dir="${basedir}/etc/xsd" 
+              includes="soap.xsd" /> 
+      <schema dir="${basedir}/etc/xsd" 
+              includes="addressing.xsd eventing.xsd" />
+      <schema dir="${basedir}/etc/xsd" 
+              includes="transfer.xsd enumeration.xsd" /> 
+      <schema dir="${basedir}/etc/xsd" 
+              includes="discovery.xsd identity.xsd catalog.xsd management.xsd" />
+      <produces dir="${gen.src.dir}"
+                includes="**/*.java" />
+    </xjc>
+  </target>
 
   <path id="compile.classpath">
     <path refid="jaxb.compile.classpath" />
