@@ -11,20 +11,23 @@ package org.xmlsoap.schemas.ws._2004._09.transfer;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAnyElement;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 
 /**
- * <p>Java class for AnyXmlOptionalType complex type.
+ * <p>Java class for CreateResponseType complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="AnyXmlOptionalType">
+ * &lt;complexType name="CreateResponseType">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
+ *         &lt;element ref="{http://schemas.xmlsoap.org/ws/2004/09/transfer}ResourceCreated"/>
  *         &lt;any/>
  *       &lt;/sequence>
  *     &lt;/restriction>
@@ -35,13 +38,40 @@ import org.w3c.dom.Element;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "AnyXmlOptionalType", propOrder = {
+@XmlType(name = "CreateResponseType", propOrder = {
+    "resourceCreated",
     "any"
 })
-public class AnyXmlOptionalType {
+public class CreateResponseType {
 
+    @XmlElement(name = "ResourceCreated", namespace = "http://schemas.xmlsoap.org/ws/2004/09/transfer", required = true)
+    protected EndpointReferenceType resourceCreated;
     @XmlAnyElement(lax = true)
     protected Object any;
+
+    /**
+     * Gets the value of the resourceCreated property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link EndpointReferenceType }
+     *     
+     */
+    public EndpointReferenceType getResourceCreated() {
+        return resourceCreated;
+    }
+
+    /**
+     * Sets the value of the resourceCreated property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link EndpointReferenceType }
+     *     
+     */
+    public void setResourceCreated(EndpointReferenceType value) {
+        this.resourceCreated = value;
+    }
 
     /**
      * Gets the value of the any property.

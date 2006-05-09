@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.10 2006-05-02 17:19:02 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.11 2006-05-09 23:54:47 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -143,7 +143,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     private String createHandlerClassName(final String resource) {
         
         final String pkg = 
-                com.sun.tools.xjc.reader.Util.getPackageNameFromNamespaceURI(resource);
+                com.sun.xml.bind.api.impl.NameConverter.standard.toPackageName(resource);
 
         final StringBuilder sb = new StringBuilder();
         if (HANDLER_PREFIX != null) {
