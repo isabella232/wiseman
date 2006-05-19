@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.4 2006-05-01 23:32:24 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.5 2006-05-19 19:34:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
+
 import com.sun.ws.management.SchemaValidationErrorFault;
 import com.sun.ws.management.soap.FaultException;
 import javax.xml.bind.JAXBContext;
@@ -55,7 +56,7 @@ public final class XmlBinding implements ValidationEventHandler {
         unmarshaller.setEventHandler(this);
     }
     
-    public void marshal(final Object obj, final Node node) throws JAXBException {
+    public synchronized void marshal(final Object obj, final Node node) throws JAXBException {
         marshaller.marshal(obj, node);
     }
     
