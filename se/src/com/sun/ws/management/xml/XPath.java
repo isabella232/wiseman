@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPath.java,v 1.4 2006-05-24 00:31:26 akhilarora Exp $
+ * $Id: XPath.java,v 1.5 2006-05-24 05:39:41 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
 
+import com.sun.ws.management.server.NamespaceMap;
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public final class XPath {
     
     public static final String NS_PREFIX = "xpath";
     public static final String NS_URI = "http://www.w3.org/TR/1999/REC-xpath-19991116";
-
+    
     public static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
     public static final String[] SUPPORTED_FILTER_DIALECTS = {
         NS_URI
@@ -51,5 +59,26 @@ public final class XPath {
         }
         return isSupportedDialect;
     }
+    
+    public static List<Node> filter(final Node content, 
+            final String expression, final String dialect, 
+            final NamespaceMap namespaces)
+    throws XPathExpressionException {
+        
+        final javax.xml.xpath.XPath xpath = XPATH_FACTORY.newXPath();
+        if (namespaces != null) {
+            xpath.setNamespaceContext(namespaces);
+        }
+        
+        // TODO: throw wsman:CannotProcessFilter on compilation failure
+        final XPathExpression filter = xpath.compile(expression);
+        final NodeList result = (NodeList) filter.evaluate(content, XPathConstants.NODESET);
 
+        final int size = result.getLength();
+        final List<Node> ret = new ArrayList<Node>(size);
+        for (int i = 0; i < size; i++) {
+            ret.add(result.item(i));
+        }
+        return ret;
+    }
 }

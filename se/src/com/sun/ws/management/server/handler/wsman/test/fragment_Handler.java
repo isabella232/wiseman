@@ -21,8 +21,10 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
+import com.sun.ws.management.xml.XPath;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.soap.SOAPHeaderElement;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -57,12 +59,16 @@ public class fragment_Handler extends base_Handler {
 
             final Document doc = response.newDocument();
             buildContentDocument(doc);
-            List<Node> content = new ArrayList<Node>();
-            content.add(doc.getDocumentElement());
 
             final TransferExtensions transExtRequest = new TransferExtensions(request);
             final TransferExtensions transExtResponse = new TransferExtensions(response);
-            transExtResponse.setFragmentResponse(transExtRequest.getFragmentHeader(), content);
+
+            final SOAPHeaderElement fragmentHeader = transExtRequest.getFragmentHeader();
+            final String expression = fragmentHeader.getTextContent();
+            final String dialect = fragmentHeader.getAttributeValue(TransferExtensions.DIALECT);
+            
+            transExtResponse.setFragmentResponse(fragmentHeader, 
+                    XPath.filter(doc.getDocumentElement(), expression, dialect, null));
         } else {
             throw new ActionNotSupportedFault(action);
         }
