@@ -64,7 +64,8 @@ public class TransferExtensionsTest extends TestBase {
         //try to get the fragmenttransfer header
         final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
         assertNotNull(fragmentTransferHeader);
-        assertEquals(query, fragmentTransferHeader.getFirstChild().getNodeValue());
+        assertEquals(query, fragmentTransferHeader.getTextContent());
+        assertEquals(XPath.NS_URI, fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
     }
 
     public void testFragmentGetResponseVisual() throws Exception {
@@ -95,7 +96,8 @@ public class TransferExtensionsTest extends TestBase {
         //try to get the fragmenttransfer header
         final SOAPHeaderElement fragmentTransferHeader2 = trans.getFragmentHeader();
         assertNotNull(fragmentTransferHeader2);
-        assertEquals(query, fragmentTransferHeader2.getFirstChild().getNodeValue());
+        assertEquals(query, fragmentTransferHeader2.getTextContent());
+        assertNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
     }
 
     public void testFragmentGet() throws Exception {
@@ -124,6 +126,7 @@ public class TransferExtensionsTest extends TestBase {
         //try to get the fragmenttransfer header
         final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
         assertNotNull(fragmentTransferHeader);
-        assertEquals(query, fragmentTransferHeader.getFirstChild().getNodeValue());
+        assertEquals(query, fragmentTransferHeader.getTextContent());
+        assertNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
     }
 }
