@@ -49,31 +49,36 @@ import org.w3c.dom.Node;
  * </pre>
  */
 public class fragment_Handler extends base_Handler {
-
+    
     public static final String NS_PREFIX = "f";
     public static final String NS_URI = "https://wiseman.dev.java.net/1/fragment";
-
-    public void handle (final String action, final String resource, final Management request, final Management response) throws Exception {
+    
+    public void handle(final String action, final String resource, final Management request, final Management response) throws Exception {
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.setAction(Transfer.GET_RESPONSE_URI);
-
+            
             final Document doc = response.newDocument();
             buildContentDocument(doc);
-
+            
             final TransferExtensions transExtRequest = new TransferExtensions(request);
             final TransferExtensions transExtResponse = new TransferExtensions(response);
-
-            final SOAPHeaderElement fragmentHeader = transExtRequest.getFragmentHeader();
-            final String expression = fragmentHeader.getTextContent();
-            final String dialect = fragmentHeader.getAttributeValue(TransferExtensions.DIALECT);
             
-            transExtResponse.setFragmentResponse(fragmentHeader, 
-                    XPath.filter(doc.getDocumentElement(), expression, dialect, null));
+            final SOAPHeaderElement fragmentHeader = transExtRequest.getFragmentHeader();
+            if (fragmentHeader == null) {
+                // this is a regular transfer: not a fragment transfer, return the entire doc
+                response.getBody().addDocument(doc);
+            } else {
+                final String expression = fragmentHeader.getTextContent();
+                final String dialect = fragmentHeader.getAttributeValue(TransferExtensions.DIALECT);
+                
+                transExtResponse.setFragmentResponse(fragmentHeader,
+                        XPath.filter(doc.getDocumentElement(), expression, dialect, null));
+            }
         } else {
             throw new ActionNotSupportedFault(action);
         }
     }
-
+    
     /**
      * Method to construct the document to be traversed with the fragment
      * request.

@@ -33,9 +33,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-/**
- * @author Sal Campana
- */
 public class TransferExtensionsTest extends TestBase {
     
     public TransferExtensionsTest(String testName) {
@@ -98,6 +95,35 @@ public class TransferExtensionsTest extends TestBase {
         assertNotNull(fragmentTransferHeader2);
         assertEquals(query, fragmentTransferHeader2.getTextContent());
         assertNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
+    }
+
+    // a fragment transfer becomes a regular transfer if the fragment header is omitted
+    public void testNonFragmentGet() throws Exception {
+        final TransferExtensions transfer = new TransferExtensions();
+        transfer.setAction(Transfer.GET_ACTION_URI);
+        transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        final Management mgmt = new Management(transfer);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/fragment");
+
+        //print contents of Transfer
+        mgmt.prettyPrint(logfile);
+
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        final TransferExtensions trans = new TransferExtensions(response);
+
+        //try to get the fragmenttransfer header
+        final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
+        assertNull(fragmentTransferHeader);
+        
+        // this should be the entire response document
+        assertNotNull(response.getBody().getFirstChild());
     }
 
     public void testFragmentGet() throws Exception {

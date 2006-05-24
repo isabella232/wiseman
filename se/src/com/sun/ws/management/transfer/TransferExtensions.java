@@ -35,13 +35,11 @@ import java.io.InputStream;
 import java.util.List;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 
-/**
- * @author Sal Campana
- */
 public class TransferExtensions extends Transfer {
     
     public static final QName FRAGMENT_TRANSFER =
             new QName(Management.NS_URI, "FragmentTransfer", Management.NS_PREFIX);
+
     public static final QName DIALECT = 
             new QName("Dialect");
     
