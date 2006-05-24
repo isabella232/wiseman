@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.5 2006-04-14 22:15:12 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.5.2.1 2006-05-24 02:49:07 akhilarora Exp $
  */
 
 package demo;
@@ -102,7 +102,8 @@ public final class CmdLineDemo {
                 action = Enumeration.PULL_ACTION_URI;
             }
         } else {
-            throw new IllegalArgumentException("Unsupported Action: " + verb);
+            // invoke custom method
+            action = verb;
         }
         
         Management mgmt = new Management();
@@ -111,7 +112,9 @@ public final class CmdLineDemo {
         mgmt.setAction(action);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId("uuid:" + UUID.randomUUID().toString());
-        mgmt.setSelectors(selectors);
+        if (!selectors.isEmpty()) {
+            mgmt.setSelectors(selectors);
+        }
         
         if (verb.equals(ENUMERATE)) {
             Enumeration enu = new Enumeration(mgmt);
@@ -143,8 +146,6 @@ public final class CmdLineDemo {
             handleEnumerateResponse(addr);
         } else if (Enumeration.PULL_RESPONSE_URI.equals(action)) {
             handlePullResponse(addr);
-        } else {
-            System.err.println("ERROR: Unrecognized action in response: " + action);
         }
     }
     
@@ -213,6 +214,9 @@ public final class CmdLineDemo {
     
     private static void handleFault(SOAPFault fault) throws Exception {
         Detail detail = fault.getDetail();
+        if (detail == null) {
+            return;
+        }
         Iterator di = detail.getDetailEntries();
         while (di.hasNext()) {
             DetailEntry de = null;
