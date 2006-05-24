@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.11 2006-05-09 23:54:47 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.12 2006-05-24 20:15:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -82,7 +82,8 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
             
             final Class handlerClass;
             try {
-                handlerClass = Class.forName(handlerClassName);
+                handlerClass = Class.forName(handlerClassName, true,
+                        Thread.currentThread().getContextClassLoader());
             } catch (ClassNotFoundException cnfex) {
                 throw new DestinationUnreachableFault(
                         "Handler not found for resource " + resource,
@@ -142,9 +143,9 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
     private String createHandlerClassName(final String resource) {
         
-        final String pkg = 
+        final String pkg =
                 com.sun.xml.bind.api.impl.NameConverter.standard.toPackageName(resource);
-
+        
         final StringBuilder sb = new StringBuilder();
         if (HANDLER_PREFIX != null) {
             sb.append(HANDLER_PREFIX);
