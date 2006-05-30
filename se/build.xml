@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.21 2006-05-09 00:22:21 akhilarora Exp $
+ $Id: build.xml,v 1.22 2006-05-30 22:31:09 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -94,6 +94,11 @@
       <src path="${gen.src.dir}" />
       <src path="${src.dir}" />
     </javac>
+    <propertyfile file="${src.dir}/wsman.properties">
+      <entry key="build.version" value="${DSTAMP}${TSTAMP}" />
+      <entry key="spec.version" value="${spec.version}" />
+      <entry key="impl.version" value="${impl.version}" />
+    </propertyfile>
     <copy todir="${build.classes.dir}">
       <fileset dir="${src.dir}">
         <include name="**/*.properties" />
@@ -102,7 +107,7 @@
   </target>
 
   <target name="client" depends="compile">
-    <jar destfile="${client.jar.file}"
+    <jar destfile="${client.filename}"
          index="true">
       <fileset dir="${build.classes.dir}">
         <exclude name="**/*.properties" />
@@ -110,11 +115,11 @@
       </fileset>
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Built-At" value="${DSTAMP}" />
+        <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
         <attribute name="Specification-Title" value="WS-Management" />
-        <attribute name="Specification-Version" value="06/2005" />
+        <attribute name="Specification-Version" value="${spec.version}" />
         <attribute name="Implementation-Title" value="Wiseman SE Client" />
-        <attribute name="Implementation-Version" value="0.3" />
+        <attribute name="Implementation-Version" value="${impl.version}" />
         <attribute name="Implementation-Vendor" value="The Wiseman Project" />
         <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
         <attribute name="Sealed" value="true" />
@@ -127,17 +132,17 @@
   </target>
   
   <target name="war" depends="compile">
-    <war destfile="${war.file}"
+    <war destfile="${war.filename}"
          webxml="etc/web.xml"
          index="true">
       <classes dir="${build.classes.dir}" />
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Built-At" value="${DSTAMP}" />
+        <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
         <attribute name="Specification-Title" value="WS-Management" />
-        <attribute name="Specification-Version" value="06/2005" />
+        <attribute name="Specification-Version" value="${spec.version}" />
         <attribute name="Implementation-Title" value="Wiseman SE Server Tests" />
-        <attribute name="Implementation-Version" value="0.3" />
+        <attribute name="Implementation-Version" value="${impl.version}" />
         <attribute name="Implementation-Vendor" value="The Wiseman Project" />
         <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
         <attribute name="Sealed" value="true" />
@@ -155,6 +160,31 @@
     </war>
   </target>
   
+  <target name="events" depends="test-compile">
+    <war destfile="${events.filename}"
+         webxml="etc/events-web.xml"
+         index="true">
+      <classes dir="${test.build.classes.dir}">
+        <include name="server/EventsReceiverServlet.class" />
+      </classes>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
+        <attribute name="Specification-Title" value="WS-Management" />
+        <attribute name="Specification-Version" value="${spec.version}" />
+        <attribute name="Implementation-Title" value="Wiseman SE Events Receiver Test" />
+        <attribute name="Implementation-Version" value="${impl.version}" />
+        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
+        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
+        <attribute name="Sealed" value="true" />
+      </manifest>
+      <metainf dir=".">
+        <include name="LICENSE" />
+        <include name="NOTICE" />
+      </metainf>
+    </war>
+  </target>
+
   <!-- set catalina.home in "${user.home}/.ant.properties" -->
   <path id="deployer.classpath">
     <pathelement path="${catalina.home}/server/lib/catalina-ant.jar" />
@@ -176,7 +206,7 @@
       </fileset>
     </copy>
     <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
-            path="${war.context.path}" war="${basedir}/${war.file}" update="true" />
+            path="${war.context.path}" war="${basedir}/${war.filename}" update="true" />
   </target>
 
   <taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask" classpathref="deployer.classpath" />
@@ -238,35 +268,10 @@
     </javac>
   </target>
   
-  <target name="events-war" depends="test-compile">
-    <war destfile="${events.war.file}"
-         webxml="etc/events-web.xml"
-         index="true">
-      <classes dir="${test.build.classes.dir}">
-        <include name="server/EventsReceiverServlet.class" />
-      </classes>
-      <manifest>
-        <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Built-At" value="${DSTAMP}" />
-        <attribute name="Specification-Title" value="WS-Management" />
-        <attribute name="Specification-Version" value="06/2005" />
-        <attribute name="Implementation-Title" value="Wiseman SE Events Receiver" />
-        <attribute name="Implementation-Version" value="0.3" />
-        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
-        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
-        <attribute name="Sealed" value="true" />
-      </manifest>
-      <metainf dir=".">
-        <include name="LICENSE" />
-        <include name="NOTICE" />
-      </metainf>
-    </war>
-  </target>
-
   <path id="test.run.classpath">
     <path path="${test.build.classes.dir}" />
     <fileset dir=".">
-      <include name="${client.jar.file}"/>
+      <include name="${client.filename}"/>
     </fileset>
     <path refid="jaxb.compile.classpath" />
     <path refid="jaxrpc.compile.classpath" />
@@ -275,7 +280,12 @@
     </fileset>
   </path>
 
-  <target name="test" depends="client,test-compile">
+  <target name="test-deploy" depends="events">
+    <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
+            path="/events" war="${basedir}/${events.filename}" update="true" />
+  </target>
+  
+  <target name="test" depends="client,test-compile,test-deploy">
     <copy todir="${ant.home}/lib" 
           file="${test.lib.dir}/junit.jar" />
     <taskdef name="junit"

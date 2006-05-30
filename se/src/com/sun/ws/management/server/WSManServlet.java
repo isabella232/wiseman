@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.13 2006-05-01 23:32:23 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.14 2006-05-30 22:31:10 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -63,12 +63,6 @@ public class WSManServlet extends HttpServlet {
     private static final long DEFAULT_TIMEOUT = 30000;
     private static final long MIN_ENVELOPE_SIZE = 8192;
     
-    private static final String THIS =
-            "<This xmlns=\"http://schemas.xmlsoap.org/ws/2005/02/management\"> \n" +
-            "<Vendor>The Wiseman Project. https://wiseman.dev.java.net</Vendor> \n" +
-            "<Version>0.3</Version> \n" +
-            "</This> ";
-    
     private static final Properties wsmanProperties = new Properties();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
     
@@ -105,10 +99,6 @@ public class WSManServlet extends HttpServlet {
             LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
             throw new ServletException(jex);
         }
-    }
-    
-    public String getServletInfo() {
-        return THIS;
     }
     
     public void doGet(final HttpServletRequest req,
