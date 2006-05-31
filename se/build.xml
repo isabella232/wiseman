@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.22 2006-05-30 22:31:09 akhilarora Exp $
+ $Id: build.xml,v 1.23 2006-05-31 20:50:40 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -106,11 +106,10 @@
     </copy>
   </target>
 
-  <target name="client" depends="compile">
-    <jar destfile="${client.filename}"
+  <target name="lib" depends="compile">
+    <jar destfile="${dist.dir}/${lib.filename}"
          index="true">
       <fileset dir="${build.classes.dir}">
-        <exclude name="**/*.properties" />
         <exclude name="com/sun/ws/management/server/**" />
       </fileset>
       <manifest>
@@ -118,7 +117,7 @@
         <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
         <attribute name="Specification-Title" value="WS-Management" />
         <attribute name="Specification-Version" value="${spec.version}" />
-        <attribute name="Implementation-Title" value="Wiseman SE Client" />
+        <attribute name="Implementation-Title" value="Wiseman SE Library" />
         <attribute name="Implementation-Version" value="${impl.version}" />
         <attribute name="Implementation-Vendor" value="The Wiseman Project" />
         <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
@@ -132,10 +131,12 @@
   </target>
   
   <target name="war" depends="compile">
-    <war destfile="${war.filename}"
+    <war destfile="${dist.dir}/${war.filename}"
          webxml="etc/web.xml"
          index="true">
-      <classes dir="${build.classes.dir}" />
+      <classes dir="${build.classes.dir}">
+        <include name="com/sun/ws/management/server/**" />
+      </classes>
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
@@ -161,7 +162,7 @@
   </target>
   
   <target name="events" depends="test-compile">
-    <war destfile="${events.filename}"
+    <war destfile="${dist.dir}/${events.filename}"
          webxml="etc/events-web.xml"
          index="true">
       <classes dir="${test.build.classes.dir}">
@@ -191,7 +192,7 @@
   </path>
 
   <taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" classpathref="deployer.classpath" />
-  <target name="deploy" depends="war">
+  <target name="deploy" depends="lib,war">
     <copy todir="${catalina.home}/shared/lib">
       <fileset dir="${jaxb.lib.dir}">
         <include name="activation.jar" />
@@ -204,9 +205,12 @@
         <include name="saaj-api.jar" />
         <include name="saaj-impl.jar" />
       </fileset>
+      <fileset dir="${dist.dir}">
+        <include name="${lib.filename}" />
+      </fileset>
     </copy>
     <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
-            path="${war.context.path}" war="${basedir}/${war.filename}" update="true" />
+            path="${war.context.path}" war="${dist.dir}/${war.filename}" update="true" />
   </target>
 
   <taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask" classpathref="deployer.classpath" />
@@ -271,7 +275,7 @@
   <path id="test.run.classpath">
     <path path="${test.build.classes.dir}" />
     <fileset dir=".">
-      <include name="${client.filename}"/>
+      <include name="${dist.dir}/${lib.filename}"/>
     </fileset>
     <path refid="jaxb.compile.classpath" />
     <path refid="jaxrpc.compile.classpath" />
@@ -282,10 +286,10 @@
 
   <target name="test-deploy" depends="events">
     <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
-            path="/events" war="${basedir}/${events.filename}" update="true" />
+            path="/events" war="${dist.dir}/${events.filename}" update="true" />
   </target>
   
-  <target name="test" depends="client,test-compile,test-deploy">
+  <target name="test" depends="lib,test-compile,test-deploy">
     <copy todir="${ant.home}/lib" 
           file="${test.lib.dir}/junit.jar" />
     <taskdef name="junit"
@@ -308,7 +312,7 @@
     </junit>
   </target>
   
-  <target name="demo-get" depends="client,test-compile">
+  <target name="demo-get" depends="lib,test-compile">
     <java classname="demo.CmdLineDemo"
           classpathref="test.run.classpath"
           dir="${test.run.dir}"
@@ -322,7 +326,7 @@
     </java>
   </target>
 
-  <target name="demo-enum" depends="client,test-compile">
+  <target name="demo-enum" depends="lib,test-compile">
     <java classname="demo.CmdLineDemo"
           classpathref="test.run.classpath"
           dir="${test.run.dir}"
