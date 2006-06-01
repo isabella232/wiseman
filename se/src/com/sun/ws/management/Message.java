@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.4 2006-03-03 20:51:10 akhilarora Exp $
+ * $Id: Message.java,v 1.5 2006-06-01 18:47:48 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -56,11 +56,12 @@ public abstract class Message {
     public static final String COLON = ":";
     
     private static final MimeHeaders MIME_HEADER_XML = new MimeHeaders();
+    private static final String UNITIALIZED = "uninitialized";
     
     private static MessageFactory msgFactory = null;
     private static DocumentBuilderFactory docFactory = null;
     private static DocumentBuilder db = null;
-
+    
     private final SOAPMessage msg;
     private SOAPEnvelope env = null;
     private SOAPHeader hdr = null;
@@ -70,26 +71,22 @@ public abstract class Message {
         MIME_HEADER_XML.setHeader("Content-Type", "application/soap+xml");
     }
     
-    private static synchronized void preInit() throws SOAPException {
-        if (msgFactory == null) {
-            msgFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
-        }
-        if (docFactory == null) {
-            docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setNamespaceAware(true);
-            try {
-                db = docFactory.newDocumentBuilder();
-            } catch (ParserConfigurationException pex) {
-                throw new SOAPException(pex);
-            }
+    public static void initialize() throws SOAPException {
+        msgFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
+        docFactory = DocumentBuilderFactory.newInstance();
+        docFactory.setNamespaceAware(true);
+        try {
+            db = docFactory.newDocumentBuilder();
+        } catch (ParserConfigurationException pex) {
+            throw new SOAPException(pex);
         }
     }
     
-    public static synchronized Document newDocument() {
+    public static Document newDocument() {
         return db.newDocument();
     }
     
-    public static synchronized DocumentBuilder getDocumentBuilder() {
+    public static DocumentBuilder getDocumentBuilder() {
         return db;
     }
     
@@ -105,19 +102,19 @@ public abstract class Message {
     }
     
     public Message() throws SOAPException {
-        preInit();
+        assert msgFactory != null : UNITIALIZED;
         msg = msgFactory.createMessage();
         init();
     }
     
     public Message(final Message message) throws SOAPException {
-        preInit();
+        assert msgFactory != null : UNITIALIZED;
         msg = message.msg;
         init();
     }
     
     public Message(final InputStream is) throws SOAPException, IOException {
-        preInit();
+        assert msgFactory != null : UNITIALIZED;
         msg = msgFactory.createMessage(MIME_HEADER_XML, is);
         init();
     }
@@ -128,9 +125,9 @@ public abstract class Message {
         msg.writeTo(os);
     }
     
-    public void prettyPrint(final OutputStream os) 
-        throws SOAPException, ParserConfigurationException, SAXException, IOException {
-        
+    public void prettyPrint(final OutputStream os)
+    throws SOAPException, ParserConfigurationException, SAXException, IOException {
+        assert db != null : UNITIALIZED;
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         msg.writeTo(bos);
         final byte[] content = bos.toByteArray();
@@ -142,7 +139,6 @@ public abstract class Message {
         format.setIndent(2);
         final XMLSerializer serializer = new XMLSerializer(os, format);
         serializer.serialize(doc);
-        
         os.write("\n".getBytes());
     }
     
@@ -157,12 +153,13 @@ public abstract class Message {
     }
     
     private void init() throws SOAPException {
+        assert msg != null : UNITIALIZED;
         final SOAPPart soap = msg.getSOAPPart();
         hdr = msg.getSOAPHeader();
         env = soap.getEnvelope();
         body = msg.getSOAPBody();
         
-        // having all the namespace declarations in the envelope keeps 
+        // having all the namespace declarations in the envelope keeps
         // JAXB from putting these on every element
         env.addNamespaceDeclaration(XMLSchema.NS_PREFIX, XMLSchema.NS_URI);
         env.addNamespaceDeclaration(SOAP.NS_PREFIX, SOAP.NS_URI);
@@ -173,7 +170,7 @@ public abstract class Message {
         env.addNamespaceDeclaration(Management.NS_PREFIX, Management.NS_URI);
         env.addNamespaceDeclaration(Catalog.NS_PREFIX, Catalog.NS_URI);
     }
-
+    
     public SOAPEnvelope getEnvelope() {
         return env;
     }

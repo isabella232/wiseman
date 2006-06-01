@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.14 2006-05-05 18:36:00 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.15 2006-06-01 18:47:49 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -63,7 +63,7 @@ public final class EnumerationSupport extends BaseSupport {
     private static final int DEFAULT_ITEM_COUNT = 1;
     private static final int DEFAULT_EXPIRATION_MILLIS = 60000;
     private static final long DEFAULT_MAX_TIMEOUT_MILLIS = 300000;
-    private static Duration defaultExpiration;
+    private static Duration defaultExpiration = null;
     
     private EnumerationSupport() {}
     
@@ -99,8 +99,9 @@ public final class EnumerationSupport extends BaseSupport {
             final EnumerationIterator enumIterator, final Object clientContext,
             final Map<String, String> namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
-
-        initialize();
+        
+        assert datatypeFactory != null : UNITIALIZED;
+        assert defaultExpiration != null : UNITIALIZED;
         
         String expires = null;
         String filterExpression = null;
@@ -159,12 +160,9 @@ public final class EnumerationSupport extends BaseSupport {
             response.setEnumerateResponse(context.toString(), ctx.getExpiration());
         }
     }
-
-    private static synchronized void initialize() throws DatatypeConfigurationException {
-        init();
-        if (defaultExpiration == null) {
-            defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
-        }
+    
+    public static void initialize() throws DatatypeConfigurationException {
+        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
     }
     
     /**
@@ -189,6 +187,8 @@ public final class EnumerationSupport extends BaseSupport {
      */
     public static void pull(final Enumeration request, final Enumeration response)
     throws SOAPException, JAXBException, FaultException {
+        
+        assert datatypeFactory != null : UNITIALIZED;
         
         final Pull pull = request.getPull();
         if (pull == null) {
@@ -250,7 +250,7 @@ public final class EnumerationSupport extends BaseSupport {
             final Timer timeoutTimer = new Timer(true);
             timeoutTimer.schedule(ttask, timeout);
             
-            final List<Element> items = iterator.next(db, clientContext, ctx.getCursor(), 
+            final List<Element> items = iterator.next(db, clientContext, ctx.getCursor(),
                     ctx.getCount() - passed.size());
             if (items == null) {
                 throw new TimedOutFault();
@@ -306,6 +306,7 @@ public final class EnumerationSupport extends BaseSupport {
      */
     public static void release(final Enumeration request, final Enumeration response)
     throws SOAPException, JAXBException, FaultException {
+
         final Release release = request.getRelease();
         if (release == null) {
             throw new InvalidEnumerationContextFault();

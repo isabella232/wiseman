@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.14 2006-05-30 22:31:10 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.15 2006-06-01 18:47:49 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -53,6 +53,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
@@ -94,10 +95,25 @@ public class WSManServlet extends HttpServlet {
         }
         
         try {
+            SOAP.initialize();
+        } catch (SOAPException ex) {
+            LOG.log(Level.SEVERE, "Error initializing SOAP Message", ex);
+            throw new ServletException(ex);
+        }
+        
+        try {
             SOAP.setXmlBinding(new XmlBinding());
         } catch (JAXBException jex) {
             LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
             throw new ServletException(jex);
+        }
+        
+        try {
+            BaseSupport.initialize();
+            EnumerationSupport.initialize();
+        } catch (DatatypeConfigurationException dex) {
+            LOG.log(Level.SEVERE, "Error initializing Support", dex);
+            throw new ServletException(dex);
         }
     }
     

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.7 2006-05-01 23:32:23 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.8 2006-06-01 18:47:49 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -58,8 +58,6 @@ public final class EventingSupport extends BaseSupport {
     public static Object subscribe(final Eventing request, final Eventing response,
             final Map<String, String> namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
-        
-        init();
         
         final Subscribe subscribe = request.getSubscribe();
         final FilterType filterType = subscribe.getFilter();
@@ -135,6 +133,8 @@ public final class EventingSupport extends BaseSupport {
     // TODO: avoid blocking the sender - use a thread pool to send notifications
     public static boolean sendEvent(final Object context, final Addressing msg)
     throws SOAPException, JAXBException, IOException, XPathExpressionException {
+        
+        assert datatypeFactory != null : UNITIALIZED;
         
         final BaseContext bctx = getContext(context);
         if (bctx == null) {

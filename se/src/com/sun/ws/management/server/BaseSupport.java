@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.2 2006-03-03 20:51:12 akhilarora Exp $
+ * $Id: BaseSupport.java,v 1.3 2006-06-01 18:47:49 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -37,7 +37,8 @@ import javax.xml.datatype.XMLGregorianCalendar;
 class BaseSupport {
     
     protected static final String UUID_SCHEME = "urn:uuid:";
-    protected static DatatypeFactory datatypeFactory;
+    protected static final String UNITIALIZED = "uninitialized";
+    protected static DatatypeFactory datatypeFactory = null;
     
     private static final Map<UUID, BaseContext> contextMap = new HashMap();
     
@@ -60,16 +61,11 @@ class BaseSupport {
     private static final int CLEANUP_INTERVAL = 60000;
     private static final Timer cleanupTimer = new Timer(true);
     
-    static {
-        cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
-    }
-    
     protected BaseSupport() {}
     
-    protected static synchronized void init() throws DatatypeConfigurationException {
-        if (datatypeFactory == null) {
-            datatypeFactory = DatatypeFactory.newInstance();
-        }
+    public static void initialize() throws DatatypeConfigurationException {
+        datatypeFactory = DatatypeFactory.newInstance();
+        cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
     }
     
     protected static String initFilter(final String filterDialect, final List<Object> filterExpressions)
@@ -95,6 +91,8 @@ class BaseSupport {
     
     protected static XMLGregorianCalendar initExpiration(final String expires)
     throws InvalidExpirationTimeFault {
+        
+        assert datatypeFactory != null : UNITIALIZED;
         
         if (expires == null) {
             return null;

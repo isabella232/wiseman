@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.23 2006-05-31 20:50:40 akhilarora Exp $
+ $Id: build.xml,v 1.24 2006-06-01 18:47:48 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -297,6 +297,9 @@
     <junit dir="${test.run.dir}"
            showoutput="true"
            fork="true">
+      <assertions>
+        <enable/>
+      </assertions>
       <batchtest todir="${test.run.dir}">
         <fileset dir="${test.src.dir}">
           <include name="management/*Test.java" />
@@ -317,6 +320,9 @@
           classpathref="test.run.classpath"
           dir="${test.run.dir}"
           fork="true">
+      <assertions>
+        <enable/>
+      </assertions>
       <arg value="get" />
       <arg value="wsman:system/2005/02/this" />
       <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
@@ -331,6 +337,9 @@
           classpathref="test.run.classpath"
           dir="${test.run.dir}"
           fork="true">
+      <assertions>
+        <enable/>
+      </assertions>
       <arg value="enumerate" />
       <!-- NOTE: this fails with an AccessDenied fault if the server is running 
            in the sun app server with a security manager in place (the default), 
