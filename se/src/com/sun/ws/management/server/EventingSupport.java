@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.8 2006-06-01 18:47:49 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.9 2006-06-01 18:52:53 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -134,7 +134,7 @@ public final class EventingSupport extends BaseSupport {
     public static boolean sendEvent(final Object context, final Addressing msg)
     throws SOAPException, JAXBException, IOException, XPathExpressionException {
         
-        assert datatypeFactory != null : UNITIALIZED;
+        assert datatypeFactory != null : UNINITIALIZED;
         
         final BaseContext bctx = getContext(context);
         if (bctx == null) {

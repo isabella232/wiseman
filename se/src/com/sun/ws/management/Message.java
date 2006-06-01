@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.5 2006-06-01 18:47:48 akhilarora Exp $
+ * $Id: Message.java,v 1.6 2006-06-01 18:52:53 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -56,7 +56,7 @@ public abstract class Message {
     public static final String COLON = ":";
     
     private static final MimeHeaders MIME_HEADER_XML = new MimeHeaders();
-    private static final String UNITIALIZED = "uninitialized";
+    private static final String UNINITIALIZED = "uninitialized";
     
     private static MessageFactory msgFactory = null;
     private static DocumentBuilderFactory docFactory = null;
@@ -102,19 +102,19 @@ public abstract class Message {
     }
     
     public Message() throws SOAPException {
-        assert msgFactory != null : UNITIALIZED;
+        assert msgFactory != null : UNINITIALIZED;
         msg = msgFactory.createMessage();
         init();
     }
     
     public Message(final Message message) throws SOAPException {
-        assert msgFactory != null : UNITIALIZED;
+        assert msgFactory != null : UNINITIALIZED;
         msg = message.msg;
         init();
     }
     
     public Message(final InputStream is) throws SOAPException, IOException {
-        assert msgFactory != null : UNITIALIZED;
+        assert msgFactory != null : UNINITIALIZED;
         msg = msgFactory.createMessage(MIME_HEADER_XML, is);
         init();
     }
@@ -127,7 +127,7 @@ public abstract class Message {
     
     public void prettyPrint(final OutputStream os)
     throws SOAPException, ParserConfigurationException, SAXException, IOException {
-        assert db != null : UNITIALIZED;
+        assert db != null : UNINITIALIZED;
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         msg.writeTo(bos);
         final byte[] content = bos.toByteArray();
@@ -153,7 +153,7 @@ public abstract class Message {
     }
     
     private void init() throws SOAPException {
-        assert msg != null : UNITIALIZED;
+        assert msg != null : UNINITIALIZED;
         final SOAPPart soap = msg.getSOAPPart();
         hdr = msg.getSOAPHeader();
         env = soap.getEnvelope();

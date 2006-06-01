@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.15 2006-06-01 18:47:49 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.16 2006-06-01 18:52:53 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -100,8 +100,8 @@ public final class EnumerationSupport extends BaseSupport {
             final Map<String, String> namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
-        assert datatypeFactory != null : UNITIALIZED;
-        assert defaultExpiration != null : UNITIALIZED;
+        assert datatypeFactory != null : UNINITIALIZED;
+        assert defaultExpiration != null : UNINITIALIZED;
         
         String expires = null;
         String filterExpression = null;
@@ -188,7 +188,7 @@ public final class EnumerationSupport extends BaseSupport {
     public static void pull(final Enumeration request, final Enumeration response)
     throws SOAPException, JAXBException, FaultException {
         
-        assert datatypeFactory != null : UNITIALIZED;
+        assert datatypeFactory != null : UNINITIALIZED;
         
         final Pull pull = request.getPull();
         if (pull == null) {

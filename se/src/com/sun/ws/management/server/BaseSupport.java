@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.3 2006-06-01 18:47:49 akhilarora Exp $
+ * $Id: BaseSupport.java,v 1.4 2006-06-01 18:52:53 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -37,7 +37,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 class BaseSupport {
     
     protected static final String UUID_SCHEME = "urn:uuid:";
-    protected static final String UNITIALIZED = "uninitialized";
+    protected static final String UNINITIALIZED = "uninitialized";
     protected static DatatypeFactory datatypeFactory = null;
     
     private static final Map<UUID, BaseContext> contextMap = new HashMap();
@@ -92,7 +92,7 @@ class BaseSupport {
     protected static XMLGregorianCalendar initExpiration(final String expires)
     throws InvalidExpirationTimeFault {
         
-        assert datatypeFactory != null : UNITIALIZED;
+        assert datatypeFactory != null : UNINITIALIZED;
         
         if (expires == null) {
             return null;
