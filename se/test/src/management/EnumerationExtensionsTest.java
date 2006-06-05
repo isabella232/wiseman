@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.1 2006-05-02 20:37:11 akhilarora Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.2 2006-06-05 22:56:48 akhilarora Exp $
  */
 
 package management;
@@ -22,8 +22,10 @@ import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.Enumeration;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
@@ -69,5 +71,50 @@ public class EnumerationExtensionsTest extends TestBase {
         assertEquals(filter.getContent().get(0), enu2.getFilter().getContent().get(0));
         final EnumerationExtensions.Mode mode2 = EnumerationExtensions.Mode.fromBinding((JAXBElement<EnumerationModeType>) enu2.getAny().get(0));
         assertEquals(mode, mode2);
+    }
+
+    public void testEnumerateItemCountEstimateVisual() throws Exception {
+        
+        final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        
+        enu.setEnumerate(null, null, null);
+
+        enu.setRequestTotalItemsCountEstimate();
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
+        
+        assertNotNull(e2.getRequestTotalItemsCountEstimate());
+    }
+
+    public void testEnumerateTotalItemCountEstimateVisual() throws Exception {
+        totalItemCountEstimateVisual(BigInteger.TEN);
+        totalItemCountEstimateVisual(BigInteger.ONE);
+        totalItemCountEstimateVisual(BigInteger.ZERO);
+        // TODO: does not work yet
+        // totalItemCountEstimateVisual(null);
+    }
+    
+    public void totalItemCountEstimateVisual(final BigInteger itemCount) throws Exception {
+        
+        final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
+        
+        enu.setEnumerateResponse(null, null);
+        enu.setTotalItemsCountEstimate(itemCount);
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
+        
+        final AttributableNonNegativeInteger count = e2.getTotalItemsCountEstimate();
+        assertNotNull(count);
+        assertEquals(itemCount, count.getValue());
     }
 }

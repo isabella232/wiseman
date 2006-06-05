@@ -13,25 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.1 2006-05-02 20:37:10 akhilarora Exp $
+ * $Id: EnumerationExtensions.java,v 1.2 2006-06-05 22:56:48 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.xml.XSI;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 
 public class EnumerationExtensions extends Enumeration {
     
+    public static final QName REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE =
+            new QName(Management.NS_URI, "RequestTotalItemsCountEstimate", Management.NS_PREFIX);
+
+    public static final QName TOTAL_ITEMS_COUNT_ESTIMATE =
+            new QName(Management.NS_URI, "TotalItemsCountEstimate", Management.NS_PREFIX);
+
     public static final QName ENUMERATION_MODE = new QName(NS_URI, "EnumerationMode", NS_PREFIX);
     
     public enum Mode { 
@@ -65,5 +75,35 @@ public class EnumerationExtensions extends Enumeration {
             final String expires, final FilterType filter, final Mode mode) 
             throws JAXBException, SOAPException {
         super.setEnumerate(endTo, expires, filter, mode.toBinding());
+    }
+    
+    public void setRequestTotalItemsCountEstimate() throws JAXBException {
+        final AttributableEmpty empty = new AttributableEmpty();
+        final JAXBElement<AttributableEmpty> emptyElement = 
+                Management.FACTORY.createRequestTotalItemsCountEstimate(empty);
+        getXmlBinding().marshal(emptyElement, getHeader());
+    }
+
+    public AttributableEmpty getRequestTotalItemsCountEstimate() throws JAXBException, SOAPException {
+        final Object value = unbind(getHeader(), REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE);
+        return value == null ? null : ((JAXBElement<AttributableEmpty>) value).getValue();
+    }
+
+    public void setTotalItemsCountEstimate(final BigInteger itemCount) throws JAXBException {
+        final AttributableNonNegativeInteger count = new AttributableNonNegativeInteger();
+        final JAXBElement<AttributableNonNegativeInteger> countElement = 
+                Management.FACTORY.createTotalItemsCountEstimate(count);
+        if (itemCount == null) {
+            // TODO: does not work yet
+            countElement.setNil(true);
+        } else {
+            count.setValue(itemCount);
+        }
+        getXmlBinding().marshal(countElement, getHeader());
+    }
+
+    public AttributableNonNegativeInteger getTotalItemsCountEstimate() throws JAXBException, SOAPException {
+        final Object value = unbind(getHeader(), TOTAL_ITEMS_COUNT_ESTIMATE);
+        return value == null ? null : ((JAXBElement<AttributableNonNegativeInteger>) value).getValue();
     }
 }
