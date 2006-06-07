@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.1 2006-03-03 22:52:28 akhilarora Exp $
+ * $Id: pull_source_Handler.java,v 1.2 2006-06-07 17:56:51 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -98,12 +98,17 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
         return items;
     }
     
-    public boolean hasNext(final Object context, final int start) {
+    public boolean hasNext(final Object context, final int startPos) {
         final String[][] events = (String[][]) context;
-        return start < events.length;
+        return startPos < events.length;
     }
 
     public void cancel(final Object context) {
         cancelled = true;
+    }
+
+    public int estimateTotalItems(final Object context) {
+        // choose not to provide an estimate
+        return -1;
     }
 }

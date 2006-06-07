@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: exec_Handler.java,v 1.2 2006-05-01 23:32:23 akhilarora Exp $
+ * $Id: exec_Handler.java,v 1.3 2006-06-07 17:56:51 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -98,7 +98,7 @@ public class exec_Handler implements Handler, EnumerationIterator {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final byte[] buffer = new byte[4096];
         
-        final Process process = Runtime.getRuntime().exec(cmd.toString());
+        final Process process = Runtime.getRuntime().exec(cmd);
         int status = process.waitFor();
         final InputStream is = status == 0 ? process.getInputStream() : process.getErrorStream();
         int nread = 0;
@@ -154,5 +154,10 @@ public class exec_Handler implements Handler, EnumerationIterator {
     
     public void cancel(final Object context) {
         cancelled = true;
+    }
+
+    public int estimateTotalItems(final Object context) {
+        // choose not to provide an estimate
+        return -1;
     }
 }

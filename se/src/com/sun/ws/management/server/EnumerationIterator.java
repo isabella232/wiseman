@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.4 2006-02-27 21:02:31 akhilarora Exp $
+ * $Id: EnumerationIterator.java,v 1.5 2006-06-07 17:56:51 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -30,6 +30,17 @@ import org.w3c.dom.Element;
  * @see EnumerationSupport
  */
 public interface EnumerationIterator {
+    
+    /**
+     * Estimate the number of elements available. 
+     *
+     * @param context The client context that was specified to
+     * {@link EnumerationSupport#enumerate enumerate} is returned.
+     *
+     * @return an estimate of the number of elements available in the enumeration. 
+     * Return a negative number if an estimate is not available.
+     */
+    int estimateTotalItems(final Object context);
     
     /**
      * Supply the next few elements of the iteration. This is invoked to

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.5 2006-05-05 18:43:25 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.6 2006-06-07 17:56:52 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -104,5 +104,11 @@ public class properties_Handler implements Handler, EnumerationIterator {
     public void cancel(final Object context) {
         final Context ctx = (Context) context;
         ctx.cancelled = true;
+    }
+
+    public int estimateTotalItems(final Object context) {
+        final Context ctx = (Context) context;
+        final Properties props = ctx.properties;
+        return props.size();
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.16 2006-06-01 18:52:53 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.17 2006-06-07 17:56:51 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -21,6 +21,7 @@ package com.sun.ws.management.server;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.enumeration.TimedOutFault;
 import com.sun.ws.management.eventing.EventingExtensions;
@@ -158,6 +159,9 @@ public final class EnumerationSupport extends BaseSupport {
             evtx.setSubscribeResponse(null, ctx.getExpiration(), context.toString());
         } else {
             response.setEnumerateResponse(context.toString(), ctx.getExpiration());
+            
+            // place an item count estimate if one was requested
+            insertTotalItemCountEstimate(request, response, enumIterator, clientContext);
         }
     }
     
@@ -286,6 +290,9 @@ public final class EnumerationSupport extends BaseSupport {
             removeContext(context);
             response.setPullResponse(passed, null, false);
         }
+        
+        // place an item count estimate if one was requested
+        insertTotalItemCountEstimate(request, response, iterator, clientContext);
     }
     
     /**
@@ -306,7 +313,7 @@ public final class EnumerationSupport extends BaseSupport {
      */
     public static void release(final Enumeration request, final Enumeration response)
     throws SOAPException, JAXBException, FaultException {
-
+        
         final Release release = request.getRelease();
         if (release == null) {
             throw new InvalidEnumerationContextFault();
@@ -338,5 +345,23 @@ public final class EnumerationSupport extends BaseSupport {
         }
         
         return context;
+    }
+    
+    private static void insertTotalItemCountEstimate(final Enumeration request,
+            final Enumeration response, final EnumerationIterator iterator, 
+            final Object clientContext)
+            throws SOAPException, JAXBException {
+        // place an item count estimate if one was requested
+        final EnumerationExtensions enx = new EnumerationExtensions(request);
+        if (enx.getRequestTotalItemsCountEstimate() != null) {
+            final EnumerationExtensions rx = new EnumerationExtensions(response);
+            final int estimate = iterator.estimateTotalItems(clientContext);
+            if (estimate < 0) {
+                // estimate not available
+                rx.setTotalItemsCountEstimate(null);
+            } else {
+                rx.setTotalItemsCountEstimate(new BigInteger(Integer.toString(estimate)));
+            }
+        }
     }
 }
