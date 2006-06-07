@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.2 2006-06-05 22:56:48 akhilarora Exp $
+ * $Id: EnumerationExtensions.java,v 1.3 2006-06-07 17:08:18 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.xml.XSI;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
