@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.5 2006-05-19 19:34:37 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.6 2006-06-07 21:38:51 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -28,7 +28,7 @@ import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.ValidationEventHandler;
 import org.w3c.dom.Node;
 
-public final class XmlBinding implements ValidationEventHandler {
+public final class XmlBinding {
     
     private static final String DEFAULT_PACKAGES =
             "org.w3._2003._05.soap_envelope:" +
@@ -39,10 +39,22 @@ public final class XmlBinding implements ValidationEventHandler {
             "org.xmlsoap.schemas.ws._2005._06.wsmancat:" +
             "org.dmtf.schemas.wbem.wsman._1.wsman";
     
-    private final Marshaller marshaller;
-    private final Unmarshaller unmarshaller;
+    final JAXBContext context;
     
-    private FaultException validationException;
+    private static final class ValidationHandler implements ValidationEventHandler {
+
+        private FaultException validationException = null;
+        
+        public boolean handleEvent(final ValidationEvent event) {
+            validationException = new SchemaValidationErrorFault(event.getMessage());
+            // stop at the first validation error
+            return false;
+        }
+        
+        public FaultException getFault() {
+            return validationException;
+        }
+    }
     
     public XmlBinding(final String... customPackages) throws JAXBException {
         StringBuilder packageNames = new StringBuilder(DEFAULT_PACKAGES);
@@ -50,27 +62,24 @@ public final class XmlBinding implements ValidationEventHandler {
             packageNames.append(":");
             packageNames.append(p);
         }
-        final JAXBContext context = JAXBContext.newInstance(packageNames.toString());
-        marshaller = context.createMarshaller();
-        unmarshaller = context.createUnmarshaller();
-        unmarshaller.setEventHandler(this);
+        context = JAXBContext.newInstance(packageNames.toString(), 
+                Thread.currentThread().getContextClassLoader());
     }
     
-    public synchronized void marshal(final Object obj, final Node node) throws JAXBException {
+    public void marshal(final Object obj, final Node node) throws JAXBException {
+        final Marshaller marshaller = context.createMarshaller();
         marshaller.marshal(obj, node);
     }
     
-    public synchronized Object unmarshal(final Node node) throws JAXBException {
-        validationException = null;
+    public Object unmarshal(final Node node) throws JAXBException {
+        final Unmarshaller unmarshaller = context.createUnmarshaller();
+        final ValidationHandler handler = new ValidationHandler();
+        unmarshaller.setEventHandler(handler);
         final Object obj = unmarshaller.unmarshal(node);
-        if (validationException != null) {
-            throw validationException;
+        final FaultException fault = handler.getFault();
+        if (fault != null) {
+            throw fault;
         }
         return obj;
-    }
-    
-    public boolean handleEvent(final ValidationEvent event) {
-        validationException = new SchemaValidationErrorFault(event.getMessage());
-        return false;
     }
 }
