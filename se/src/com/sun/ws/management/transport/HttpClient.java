@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.10 2006-03-03 20:51:14 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.11 2006-06-09 18:26:08 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -40,6 +40,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 
 public final class HttpClient {
     
@@ -67,7 +68,7 @@ public final class HttpClient {
     private static HttpURLConnection initConnection(final String to) throws IOException {
         if (to == null) {
             throw new IllegalArgumentException("Required Element is missing: " +
-              Addressing.TO);
+                    Addressing.TO);
         }
         
         final URL dest = new URL(to);
@@ -93,15 +94,27 @@ public final class HttpClient {
             os = conn.getOutputStream();
             if (data instanceof Message) {
                 ((Message) data).writeTo(os);
+            } else if (data instanceof SOAPMessage) {
+                ((SOAPMessage) data).writeTo(os);
             } else if (data instanceof byte[]) {
                 os.write((byte[]) data);
             } else {
                 throw new IllegalArgumentException("Type of data not handled: " +
-                  data.getClass().getName());
+                        data.getClass().getName());
             }
         } finally {
             if (os != null) { os.close(); }
         }
+    }
+    
+    public static SOAPMessage sendRequest(final SOAPMessage msg, final String destination)
+    throws IOException, SOAPException, JAXBException {
+        
+        log(msg);
+        
+        final HttpURLConnection http = initRequest(destination);
+        transfer(http, msg);
+        return readResponse(http).getMessage();
     }
     
     public static Addressing sendRequest(final Addressing msg)
@@ -109,18 +122,29 @@ public final class HttpClient {
         
         log(msg);
         
-        final HttpURLConnection http = initConnection(msg.getTo());
+        final HttpURLConnection http = initRequest(msg.getTo());
+        transfer(http, msg);
+        return readResponse(http);
+    }
+    
+    private static HttpURLConnection initRequest(final String destination)
+    throws IOException {
+        
+        final HttpURLConnection http = initConnection(destination);
         http.setRequestProperty("Accept", Http.SOAP_MIME_TYPE_WITH_CHARSET);
         http.setInstanceFollowRedirects(false);
-        
-        transfer(http, msg);
+        return http;
+    }
+    
+    private static Addressing readResponse(final HttpURLConnection http)
+    throws IOException, SOAPException {
         
         final InputStream is;
         final int response = http.getResponseCode();
         if (response == HttpURLConnection.HTTP_OK) {
             is = http.getInputStream();
         } else if (response == HttpURLConnection.HTTP_BAD_REQUEST ||
-          response == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+                response == HttpURLConnection.HTTP_INTERNAL_ERROR) {
             // read the fault from the error stream
             is = http.getErrorStream();
         } else {
@@ -142,7 +166,7 @@ public final class HttpClient {
             }
             throw new IOException("Content-Type of response is not acceptable: " + responseType);
         }
-        
+
         final Addressing addr;
         try {
             addr = new Addressing(is);
@@ -170,6 +194,16 @@ public final class HttpClient {
     }
     
     private static void log(final Message msg) throws IOException, SOAPException {
+        // expensive serialization ahead, so check first
+        if (LOG.isLoggable(Level.FINE)) {
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            msg.writeTo(baos);
+            final byte[] content = baos.toByteArray();
+            LOG.fine(new String(content));
+        }
+    }
+    
+    private static void log(final SOAPMessage msg) throws IOException, SOAPException {
         // expensive serialization ahead, so check first
         if (LOG.isLoggable(Level.FINE)) {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
