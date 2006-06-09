@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.15 2006-06-01 18:47:49 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.16 2006-06-09 18:49:16 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -24,6 +24,7 @@ import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
+import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.Http;
@@ -52,11 +53,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
+import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.IdentifyType;
+import org.w3c.dom.Node;
 
 public class WSManServlet extends HttpServlet {
     
@@ -70,6 +76,8 @@ public class WSManServlet extends HttpServlet {
     public static Map<Object, Object> getProperties() {
         return Collections.unmodifiableMap(wsmanProperties);
     }
+    
+    private XmlBinding xmlBinding = null;
     
     public void init() throws ServletException {
         final InputStream isl = WSManServlet.class.getResourceAsStream("/log.properties");
@@ -102,7 +110,7 @@ public class WSManServlet extends HttpServlet {
         }
         
         try {
-            SOAP.setXmlBinding(new XmlBinding());
+            SOAP.setXmlBinding(xmlBinding = new XmlBinding());
         } catch (JAXBException jex) {
             LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
             throw new ServletException(jex);
@@ -134,7 +142,7 @@ public class WSManServlet extends HttpServlet {
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setContentType(Http.SOAP_MIME_TYPE_WITH_CHARSET);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
+        
         InputStream is = null;
         OutputStream os = null;
         try {
@@ -169,6 +177,10 @@ public class WSManServlet extends HttpServlet {
         final Management request = new Management(is);
         log(request);
         
+        if (handleIfIdentify(request.getMessage(), os)) {
+            return;
+        }
+        
         long timeout = DEFAULT_TIMEOUT;
         final Duration timeoutDuration = request.getTimeout();
         if (timeoutDuration != null) {
@@ -184,7 +196,7 @@ public class WSManServlet extends HttpServlet {
             maxEnvelopeSize = maxSize.getValue().longValue();
         }
         if (maxEnvelopeSize < MIN_ENVELOPE_SIZE) {
-            dispatcher.sendResponse(os, resp, 
+            dispatcher.sendResponse(os, resp,
                     new EncodingLimitFault("MaxEnvelopeSize is set too small to encode faults " +
                     "(needs to be atleast " + MIN_ENVELOPE_SIZE + ")",
                     EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE), Long.MAX_VALUE);
@@ -222,6 +234,42 @@ public class WSManServlet extends HttpServlet {
         } finally {
             task.cancel(true);
         }
+    }
+    
+    private boolean handleIfIdentify(final SOAPMessage msg, final OutputStream os)
+    throws SOAPException, JAXBException, IOException {
+        final SOAPBody body = msg.getSOAPBody();
+        if (body == null) {
+            return false;
+        }
+        final Node idNode = body.getFirstChild();
+        if (idNode == null) {
+            return false;
+        }
+        final Object obj = xmlBinding.unmarshal(idNode);
+        if (obj == null) {
+            return false;
+        }
+        if (! (obj instanceof JAXBElement)) {
+            return false;
+        }
+        if (! (Identify.IDENTIFY.equals(((JAXBElement) obj).getName()))) {
+            return false;
+        }
+        final IdentifyType id = ((JAXBElement<IdentifyType>) obj).getValue();
+        if (id == null) {
+            return false;
+        }
+        final Identify identify = new Identify();
+        identify.setIdentifyResponse(
+                wsmanProperties.getProperty("impl.vendor") +
+                " - " +
+                wsmanProperties.getProperty("impl.url"),
+                wsmanProperties.getProperty("impl.version"),
+                wsmanProperties.getProperty("spec.version"),
+                null);
+        identify.writeTo(os);
+        return true;
     }
     
     private static void log(final Message msg) throws IOException, SOAPException {
