@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.6 2006-06-01 18:52:53 akhilarora Exp $
+ * $Id: Message.java,v 1.7 2006-06-09 18:23:17 akhilarora Exp $
  */
 
 package com.sun.ws.management;
 
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.catalog.Catalog;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XMLSchema;
@@ -105,6 +105,7 @@ public abstract class Message {
         assert msgFactory != null : UNINITIALIZED;
         msg = msgFactory.createMessage();
         init();
+        addNamespaceDeclarations();
     }
     
     public Message(final Message message) throws SOAPException {
@@ -158,7 +159,9 @@ public abstract class Message {
         hdr = msg.getSOAPHeader();
         env = soap.getEnvelope();
         body = msg.getSOAPBody();
+    }
         
+    private void addNamespaceDeclarations() throws SOAPException {
         // having all the namespace declarations in the envelope keeps
         // JAXB from putting these on every element
         env.addNamespaceDeclaration(XMLSchema.NS_PREFIX, XMLSchema.NS_URI);
@@ -168,7 +171,11 @@ public abstract class Message {
         env.addNamespaceDeclaration(Enumeration.NS_PREFIX, Enumeration.NS_URI);
         env.addNamespaceDeclaration(Transfer.NS_PREFIX, Transfer.NS_URI);
         env.addNamespaceDeclaration(Management.NS_PREFIX, Management.NS_URI);
-        env.addNamespaceDeclaration(Catalog.NS_PREFIX, Catalog.NS_URI);
+        env.addNamespaceDeclaration(Identify.NS_PREFIX, Identify.NS_URI);
+    }
+    
+    public SOAPMessage getMessage() {
+        return msg;
     }
     
     public SOAPEnvelope getEnvelope() {
