@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.6 2006-06-07 21:38:51 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.7 2006-06-09 18:24:52 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -36,7 +36,7 @@ public final class XmlBinding {
             "org.xmlsoap.schemas.ws._2004._08.eventing:" +
             "org.xmlsoap.schemas.ws._2004._09.enumeration:" +
             "org.xmlsoap.schemas.ws._2004._09.transfer:" +
-            "org.xmlsoap.schemas.ws._2005._06.wsmancat:" +
+            "org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity:" +
             "org.dmtf.schemas.wbem.wsman._1.wsman";
     
     final JAXBContext context;
