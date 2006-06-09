@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.24 2006-06-01 18:47:48 akhilarora Exp $
+ $Id: build.xml,v 1.25 2006-06-09 18:45:01 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -98,6 +98,8 @@
       <entry key="build.version" value="${DSTAMP}${TSTAMP}" />
       <entry key="spec.version" value="${spec.version}" />
       <entry key="impl.version" value="${impl.version}" />
+      <entry key="impl.vendor" value="${impl.vendor}" />
+      <entry key="impl.url" value="${impl.url}" />
     </propertyfile>
     <copy todir="${build.classes.dir}">
       <fileset dir="${src.dir}">
@@ -119,8 +121,8 @@
         <attribute name="Specification-Version" value="${spec.version}" />
         <attribute name="Implementation-Title" value="Wiseman SE Library" />
         <attribute name="Implementation-Version" value="${impl.version}" />
-        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
-        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
+        <attribute name="Implementation-Vendor" value="${impl.vendor}" />
+        <attribute name="Implementation-URL" value="${impl.url}" />
         <attribute name="Sealed" value="true" />
       </manifest>
       <metainf dir=".">
@@ -144,8 +146,8 @@
         <attribute name="Specification-Version" value="${spec.version}" />
         <attribute name="Implementation-Title" value="Wiseman SE Server Tests" />
         <attribute name="Implementation-Version" value="${impl.version}" />
-        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
-        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
+        <attribute name="Implementation-Vendor" value="${impl.vendor}" />
+        <attribute name="Implementation-URL" value="${impl.url}" />
         <attribute name="Sealed" value="true" />
       </manifest>
       <metainf dir=".">
@@ -175,8 +177,8 @@
         <attribute name="Specification-Version" value="${spec.version}" />
         <attribute name="Implementation-Title" value="Wiseman SE Events Receiver Test" />
         <attribute name="Implementation-Version" value="${impl.version}" />
-        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
-        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
+        <attribute name="Implementation-Vendor" value="${impl.vendor}" />
+        <attribute name="Implementation-URL" value="${impl.url}" />
         <attribute name="Sealed" value="true" />
       </manifest>
       <metainf dir=".">
