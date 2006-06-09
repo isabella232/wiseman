@@ -1,7 +1,7 @@
 Nothing needs to be done here if running under Java 6 and above 
 since these libraries are already included.
 
-Download the EA3 build from https://jax-rpc.dev.java.net/ and copy 
+Download the 2.0 FCS build from https://jax-ws.dev.java.net/ and copy 
 here the following jars from the lib directory -
 
 saaj-api.jar
