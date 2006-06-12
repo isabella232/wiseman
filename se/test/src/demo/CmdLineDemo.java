@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.5.2.1 2006-05-24 02:49:07 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.5.2.2 2006-06-12 18:11:36 akhilarora Exp $
  */
 
 package demo;
@@ -64,7 +64,7 @@ public final class CmdLineDemo {
         verb = args[0];
         resource = args[1];
         for (int i = 2; i + 1 < args.length; i += 2) {
-            selectors.put(args[i], args[i+1]);
+            selectors.put(args[i], unquote(args[i+1]));
         }
         
         dest = System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
@@ -226,5 +226,13 @@ public final class CmdLineDemo {
                 System.err.println("fault detail: " + de.getTextContent());
             }
         }
+    }
+    
+    private static String unquote(final String str) {
+        if ((str.startsWith("\"") && str.endsWith("\"")) ||
+                str.startsWith("'") && str.endsWith("'")) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 }
