@@ -1,0 +1,30 @@
+XSDs
+
+If validation is desired, copy here the various XSDs for XML, SOAP, 
+WS-Addressing, WS-Eventing, WS-Transfer, WS-Enumeration, WS-Management 
+and WS-Management Identity.
+
+The XSDs are loaded in alphabetic order, so in order to ensure that
+dependencies are loaded first, the XSD filenames could be named, for
+example, as follows -
+
+1-xml.xsd
+2-soap.xsd
+3-addressing.xsd
+3-identity.xsd
+4-eventing.xsd
+4-transfer.xsd
+4-enumeration.xsd
+5-management.xsd
+
+************************************************************************
+Sun Microsystems will not be liable or responsible in any way for
+materials or code which you download or copy from another web site or
+another source. You are solely responsible for ensuring that you obtain,
+understand and comply with any applicable licenses for, or restrictions
+on, your use of any materials or code from other web sites or any other
+source (including other Sun materials or code which may be governed by
+different licenses and restrictions) and that you only use such
+materials or code when and as expressly permitted by the owner of such
+materials or code.
+************************************************************************

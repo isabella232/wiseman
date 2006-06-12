@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.7 2006-06-09 18:24:52 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.8 2006-06-12 23:53:57 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -26,6 +26,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.ValidationEventHandler;
+import javax.xml.validation.Schema;
 import org.w3c.dom.Node;
 
 public final class XmlBinding {
@@ -40,6 +41,7 @@ public final class XmlBinding {
             "org.dmtf.schemas.wbem.wsman._1.wsman";
     
     final JAXBContext context;
+    Schema schema = null;
     
     private static final class ValidationHandler implements ValidationEventHandler {
 
@@ -56,14 +58,17 @@ public final class XmlBinding {
         }
     }
     
-    public XmlBinding(final String... customPackages) throws JAXBException {
+    public XmlBinding(final Schema schema, final String... customPackages) throws JAXBException {
         StringBuilder packageNames = new StringBuilder(DEFAULT_PACKAGES);
         for (final String p : customPackages) {
             packageNames.append(":");
             packageNames.append(p);
         }
-        context = JAXBContext.newInstance(packageNames.toString(), 
+        context = JAXBContext.newInstance(packageNames.toString(),
                 Thread.currentThread().getContextClassLoader());
+        if (schema != null) {
+            this.schema = schema;
+        }
     }
     
     public void marshal(final Object obj, final Node node) throws JAXBException {
@@ -73,6 +78,9 @@ public final class XmlBinding {
     
     public Object unmarshal(final Node node) throws JAXBException {
         final Unmarshaller unmarshaller = context.createUnmarshaller();
+        if (schema != null) {
+            unmarshaller.setSchema(schema);
+        }
         final ValidationHandler handler = new ValidationHandler();
         unmarshaller.setEventHandler(handler);
         final Object obj = unmarshaller.unmarshal(node);

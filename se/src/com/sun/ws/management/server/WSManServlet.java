@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.16 2006-06-09 18:49:16 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.17 2006-06-12 23:53:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -36,10 +36,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.AccessControlException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,10 +53,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -60,9 +66,14 @@ import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.IdentifyType;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 public class WSManServlet extends HttpServlet {
     
@@ -102,6 +113,30 @@ public class WSManServlet extends HttpServlet {
             }
         }
         
+        final SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        final ServletContext context = getServletContext();
+        final Set<String> xsdLocSet = context.getResourcePaths("/xsd");
+        // sort the list of XSD documents so that dependencies come first
+        // it is assumed that the files are named in the desired loading order
+        // for example, 1-xml.xsd, 2-soap.xsd, 3-addressing.xsd...
+        List<String> xsdLocList = new ArrayList<String>(xsdLocSet);
+        Collections.sort(xsdLocList);
+        final Source[] schemas = new Source[xsdLocList.size()];
+        final Iterator<String> xsdLocIterator = xsdLocList.iterator();
+        for (int i = 0; xsdLocIterator.hasNext(); i++) {
+            final String xsdLoc = xsdLocIterator.next();
+            final InputStream xsd = context.getResourceAsStream(xsdLoc);
+            schemas[i] = new StreamSource(xsd);
+        }
+        
+        Schema schema = null;
+        try {
+            schema = schemaFactory.newSchema(schemas);
+        } catch (SAXException ex) {
+            LOG.log(Level.SEVERE, "Error setting schemas", ex);
+            throw new ServletException(ex);
+        }
+        
         try {
             SOAP.initialize();
         } catch (SOAPException ex) {
@@ -110,7 +145,7 @@ public class WSManServlet extends HttpServlet {
         }
         
         try {
-            SOAP.setXmlBinding(xmlBinding = new XmlBinding());
+            SOAP.setXmlBinding(xmlBinding = new XmlBinding(schema));
         } catch (JAXBException jex) {
             LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
             throw new ServletException(jex);

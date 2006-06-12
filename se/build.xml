@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.25 2006-06-09 18:45:01 akhilarora Exp $
+ $Id: build.xml,v 1.26 2006-06-12 23:53:54 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -160,6 +160,9 @@
       <webinf dir="etc">
         <include name="sun-web.xml" />
       </webinf>
+      <zipfileset dir="etc/xsd"
+                  prefix="xsd"
+                  includes="*.xsd" />
     </war>
   </target>
   

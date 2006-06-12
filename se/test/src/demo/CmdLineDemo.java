@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.9 2006-06-12 20:25:34 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.10 2006-06-12 23:53:57 akhilarora Exp $
  */
 
 package demo;
@@ -91,7 +91,7 @@ public final class CmdLineDemo {
         }
         
         SOAP.initialize();
-        SOAP.setXmlBinding(new XmlBinding());
+        SOAP.setXmlBinding(new XmlBinding(null));
         
         sendRequest();
     }
