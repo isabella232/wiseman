@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.8 2006-06-01 18:47:49 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.9 2006-06-12 20:25:34 akhilarora Exp $
  */
 
 package demo;
@@ -67,7 +67,7 @@ public final class CmdLineDemo {
         for (int i = 2; i + 1 < args.length; i += 2) {
             final SelectorType selector = new SelectorType();
             selector.setName(args[i]);
-            selector.getContent().add(args[i+1]);
+            selector.getContent().add(unquote(args[i+1]));
             selectors.add(selector);
         }
         
@@ -118,7 +118,7 @@ public final class CmdLineDemo {
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId("uuid:" + UUID.randomUUID().toString());
         if (!selectors.isEmpty()) {
-        mgmt.setSelectors(selectors);
+            mgmt.setSelectors(selectors);
         }
         
         if (verb.equals(ENUMERATE)) {
@@ -154,27 +154,7 @@ public final class CmdLineDemo {
         }
     }
     
-    private static void sendRelease() throws Exception {
-        Management mgmt = new Management();
-        mgmt.setTo(dest);
-        mgmt.setResourceURI(resource);
-        mgmt.setAction(Enumeration.RELEASE_ACTION_URI);
-        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        mgmt.setMessageId("uuid:" + UUID.randomUUID().toString());
-        Enumeration enu = new Enumeration(mgmt);
-        enu.setRelease(enumContext);
-        
-        System.out.println("\n  ---- release request ----  \n");
-        mgmt.prettyPrint(System.out);
-        
-        Addressing addr = HttpClient.sendRequest(mgmt);
-        
-        System.out.println("\n  ---- release response ----  \n");
-        addr.prettyPrint(System.out);
-    }
-    
     private static void handleGetResponse(Addressing addr) throws Exception {
-        Transfer xf = new Transfer(addr);
     }
     
     private static void handleEnumerateResponse(Addressing addr) throws Exception {
@@ -231,5 +211,13 @@ public final class CmdLineDemo {
                 System.err.println("fault detail: " + de.getTextContent());
             }
         }
+    }
+    
+    private static String unquote(final String str) {
+        if ((str.startsWith("\"") && str.endsWith("\"")) ||
+                str.startsWith("'") && str.endsWith("'")) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 }
