@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.17 2006-04-17 20:51:29 akhilarora Exp $
+ $Id: build.xml,v 1.17.2.1 2006-06-12 17:53:26 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -79,6 +79,16 @@
         <exclude name="**/*.properties" />
         <exclude name="com/sun/ws/management/server/**" />
       </fileset>
+      <fileset dir="${test.build.classes.dir}">
+        <include name="demo/**" />
+        <include name="transport/**" />
+      </fileset>
+      <zipfileset src="${jaxb.lib.dir}/activation.jar" />
+      <zipfileset src="${jaxb.lib.dir}/jaxb-api.jar" />
+      <zipfileset src="${jaxb.lib.dir}/jaxb-impl.jar" />
+      <zipfileset src="${jaxb.lib.dir}/jsr173_1.0_api.jar" />
+      <zipfileset src="${jaxrpc.lib.dir}/saaj-api.jar" />
+      <zipfileset src="${jaxrpc.lib.dir}/saaj-impl.jar" />
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Built-At" value="${DSTAMP}" />
