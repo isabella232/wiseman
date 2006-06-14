@@ -2,8 +2,24 @@ XSDs
 
 If validation is desired, copy here the various XSDs for XML, SOAP, 
 WS-Addressing, WS-Eventing, WS-Transfer, WS-Enumeration, WS-Management 
-and WS-Management Identity. Custom and Model XSDs should also be 
-placed here if validation is desired.
+and WS-Management Identity. 
+
+As of June 2006, the WS-Management and WS-Management Identity XSDs are
+not yet available publically, so current drafts need to be downloaded 
+from the Committee Drafts folder of the DMTF WS-Management WG -
+
+http://www.dmtf.org/apps/org/workgroup/wsman/documents.php
+
+These schemas need to be edited slightly to make them work with JAXB - 
+delete the schemaLocation attribute and its value in all import 
+statements. For example -
+
+-  <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" 
+-	schemaLocation="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
++  <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+
+Custom and Model XSDs should also be placed here if validation is 
+desired.
 
 The XSDs are loaded in alphabetic order, so in order to ensure that
 dependencies are loaded first, the XSD filenames could be named, for
