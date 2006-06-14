@@ -2,7 +2,8 @@ XSDs
 
 If validation is desired, copy here the various XSDs for XML, SOAP, 
 WS-Addressing, WS-Eventing, WS-Transfer, WS-Enumeration, WS-Management 
-and WS-Management Identity.
+and WS-Management Identity. Custom and Model XSDs should also be 
+placed here if validation is desired.
 
 The XSDs are loaded in alphabetic order, so in order to ensure that
 dependencies are loaded first, the XSD filenames could be named, for
@@ -16,6 +17,13 @@ example, as follows -
 4-transfer.xsd
 4-enumeration.xsd
 5-management.xsd
+
+(and for example)...
+
+6-model-core.xsd
+7-models.xsd
+8-vendor-extensions.xsd
+...
 
 ************************************************************************
 Sun Microsystems will not be liable or responsible in any way for
