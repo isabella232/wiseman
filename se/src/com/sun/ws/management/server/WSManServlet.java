@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.17 2006-06-12 23:53:56 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.18 2006-06-14 17:28:07 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -113,30 +113,6 @@ public class WSManServlet extends HttpServlet {
             }
         }
         
-        final SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        final ServletContext context = getServletContext();
-        final Set<String> xsdLocSet = context.getResourcePaths("/xsd");
-        // sort the list of XSD documents so that dependencies come first
-        // it is assumed that the files are named in the desired loading order
-        // for example, 1-xml.xsd, 2-soap.xsd, 3-addressing.xsd...
-        List<String> xsdLocList = new ArrayList<String>(xsdLocSet);
-        Collections.sort(xsdLocList);
-        final Source[] schemas = new Source[xsdLocList.size()];
-        final Iterator<String> xsdLocIterator = xsdLocList.iterator();
-        for (int i = 0; xsdLocIterator.hasNext(); i++) {
-            final String xsdLoc = xsdLocIterator.next();
-            final InputStream xsd = context.getResourceAsStream(xsdLoc);
-            schemas[i] = new StreamSource(xsd);
-        }
-        
-        Schema schema = null;
-        try {
-            schema = schemaFactory.newSchema(schemas);
-        } catch (SAXException ex) {
-            LOG.log(Level.SEVERE, "Error setting schemas", ex);
-            throw new ServletException(ex);
-        }
-        
         try {
             SOAP.initialize();
         } catch (SOAPException ex) {
@@ -144,7 +120,34 @@ public class WSManServlet extends HttpServlet {
             throw new ServletException(ex);
         }
         
+        Schema schema = null;
+        final SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        final ServletContext context = getServletContext();
+        final Set<String> xsdLocSet = context.getResourcePaths("/xsd");
+        if (xsdLocSet != null) {
+            // sort the list of XSD documents so that dependencies come first
+            // it is assumed that the files are named in the desired loading order
+            // for example, 1-xml.xsd, 2-soap.xsd, 3-addressing.xsd...
+            List<String> xsdLocList = new ArrayList<String>(xsdLocSet);
+            Collections.sort(xsdLocList);
+            final Source[] schemas = new Source[xsdLocList.size()];
+            final Iterator<String> xsdLocIterator = xsdLocList.iterator();
+            for (int i = 0; xsdLocIterator.hasNext(); i++) {
+                final String xsdLoc = xsdLocIterator.next();
+                final InputStream xsd = context.getResourceAsStream(xsdLoc);
+                schemas[i] = new StreamSource(xsd);
+            }
+            
+            try {
+                schema = schemaFactory.newSchema(schemas);
+            } catch (SAXException ex) {
+                LOG.log(Level.SEVERE, "Error setting schemas", ex);
+                throw new ServletException(ex);
+            }
+        }
+        
         try {
+            // schema might be null if no XSDs were found in the war
             SOAP.setXmlBinding(xmlBinding = new XmlBinding(schema));
         } catch (JAXBException jex) {
             LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
