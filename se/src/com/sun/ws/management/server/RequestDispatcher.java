@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.6 2006-05-01 23:32:23 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.7 2006-06-15 22:54:35 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -23,10 +23,12 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.security.Principal;
 import java.util.UUID;
@@ -50,12 +52,16 @@ public abstract class RequestDispatcher implements Callable {
     
     private boolean responseTooBig = false;
     
-    public RequestDispatcher(final Management req, final HttpServletRequest httpReq) 
+    public RequestDispatcher(final Management req, final HttpServletRequest httpReq)
     throws JAXBException, SOAPException {
         
         request = req;
         httpRequest = httpReq;
         response = new Management();
+        
+        // set the character encoding of the response to be the same as that of the request
+        final ContentType contentType = ContentType.createFromHttpContentType(httpReq.getContentType());
+        response.setContentType(contentType);
         
         response.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
@@ -94,8 +100,8 @@ public abstract class RequestDispatcher implements Callable {
     }
     
     public void sendResponse(final OutputStream os,
-      final HttpServletResponse resp, final FaultException fex, final long maxEnvelopeSize)
-      throws SOAPException, JAXBException, IOException {
+            final HttpServletResponse resp, final FaultException fex, final long maxEnvelopeSize)
+            throws SOAPException, JAXBException, IOException {
         
         if (fex != null) {
             response.setFault(fex);
@@ -128,8 +134,8 @@ public abstract class RequestDispatcher implements Callable {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             } else {
                 responseTooBig = true;
-                sendResponse(os, resp, 
-                        new EncodingLimitFault(Integer.toString(content.length), 
+                sendResponse(os, resp,
+                        new EncodingLimitFault(Integer.toString(content.length),
                         EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED), maxEnvelopeSize);
             }
             return;
@@ -139,15 +145,16 @@ public abstract class RequestDispatcher implements Callable {
         if (Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
             os.write(content);
         } else {
-            final int status = sendAsyncReply(response.getTo(), content);
+            final int status = sendAsyncReply(response.getTo(), content, response.getContentType());
             if (status != HttpURLConnection.HTTP_OK) {
                 throw new IOException("Response to " + dest + " returned " + status);
             }
         }
     }
     
-    protected int sendAsyncReply(final String to, final byte[] bits) throws IOException, SOAPException, JAXBException {
-        return HttpClient.sendResponse(to, bits);
+    protected int sendAsyncReply(final String to, final byte[] bits, final ContentType contentType)
+    throws IOException, SOAPException, JAXBException {
+        return HttpClient.sendResponse(to, bits, contentType);
     }
     
     public void validateRequest()
@@ -160,10 +167,10 @@ public abstract class RequestDispatcher implements Callable {
         final String resource = request.getResourceURI();
         // TODO: perform access control, throw SecurityException to deny access
     }
-        
-    private static void log(final byte[] bits) {
+    
+    private void log(final byte[] bits) throws UnsupportedEncodingException {
         if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine(new String(bits));
+            LOG.fine(new String(bits, httpRequest.getCharacterEncoding()));
         }
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.18 2006-06-14 17:28:07 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.19 2006-06-15 22:54:35 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,7 +27,7 @@ import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transport.Http;
+import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.xml.XmlBinding;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -172,13 +172,14 @@ public class WSManServlet extends HttpServlet {
     public void doPost(final HttpServletRequest req,
             final HttpServletResponse resp) throws ServletException, IOException {
         
-        if (!Http.isContentTypeAcceptable(req.getContentType())) {
+        final ContentType contentType = ContentType.createFromHttpContentType(req.getContentType());
+        if (!contentType.isAcceptable()) {
             resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
             return;
         }
         
         resp.setStatus(HttpServletResponse.SC_OK);
-        resp.setContentType(Http.SOAP_MIME_TYPE_WITH_CHARSET);
+        resp.setContentType(contentType.toString());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
         InputStream is = null;
@@ -186,7 +187,7 @@ public class WSManServlet extends HttpServlet {
         try {
             is = new BufferedInputStream(req.getInputStream());
             os = new BufferedOutputStream(resp.getOutputStream());
-            handle(is, bos, req, resp);
+            handle(is, contentType, bos, req, resp);
             final byte[] content = bos.toByteArray();
             resp.setContentLength(content.length);
             os.write(content);
@@ -208,11 +209,12 @@ public class WSManServlet extends HttpServlet {
         return new ReflectiveRequestDispatcher(request, req);
     }
     
-    protected void handle(final InputStream is, final OutputStream os,
-            final HttpServletRequest req, final HttpServletResponse resp)
+    protected void handle(final InputStream is, final ContentType contentType, 
+            final OutputStream os, final HttpServletRequest req, final HttpServletResponse resp)
             throws SOAPException, JAXBException, IOException {
         
         final Management request = new Management(is);
+        request.setContentType(contentType);
         log(request);
         
         if (handleIfIdentify(request.getMessage(), os)) {

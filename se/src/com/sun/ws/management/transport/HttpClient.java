@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.12 2006-06-09 18:49:16 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.13 2006-06-15 22:54:38 akhilarora Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -65,7 +65,7 @@ public final class HttpClient {
         HttpsURLConnection.setDefaultHostnameVerifier(hv);
     }
     
-    private static HttpURLConnection initConnection(final String to) throws IOException {
+    private static HttpURLConnection initConnection(final String to, final ContentType ct) throws IOException {
         if (to == null) {
             throw new IllegalArgumentException("Required Element is missing: " +
                     Addressing.TO);
@@ -77,8 +77,10 @@ public final class HttpClient {
         conn.setAllowUserInteraction(false);
         conn.setDoInput(true);
         conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type", Http.SOAP_MIME_TYPE_WITH_CHARSET);
-        conn.setRequestProperty("User-Agent", "Sun WS-Management Java System");
+        conn.setRequestProperty("Content-Type",
+                ct == null ? ContentType.DEFAULT_CONTENT_TYPE.toString() : ct.toString());
+        // TODO: get this from the properties
+        conn.setRequestProperty("User-Agent", "https://wiseman.dev.java.net");
         
         final HttpURLConnection http = (HttpURLConnection) conn;
         http.setRequestMethod("POST");
@@ -112,7 +114,8 @@ public final class HttpClient {
         
         log(msg);
         
-        final HttpURLConnection http = initRequest(destination);
+        final HttpURLConnection http = initRequest(destination,
+                ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
         transfer(http, msg);
         return readResponse(http);
     }
@@ -122,16 +125,16 @@ public final class HttpClient {
         
         log(msg);
         
-        final HttpURLConnection http = initRequest(msg.getTo());
+        final HttpURLConnection http = initRequest(msg.getTo(), msg.getContentType());
         transfer(http, msg);
         return readResponse(http);
     }
     
-    private static HttpURLConnection initRequest(final String destination)
+    private static HttpURLConnection initRequest(final String destination, final ContentType contentType)
     throws IOException {
         
-        final HttpURLConnection http = initConnection(destination);
-        http.setRequestProperty("Accept", Http.SOAP_MIME_TYPE_WITH_CHARSET);
+        final HttpURLConnection http = initConnection(destination, contentType);
+        http.setRequestProperty("Accept", ContentType.ACCEPTABLE_CONTENT_TYPES);
         http.setInstanceFollowRedirects(false);
         return http;
     }
@@ -153,7 +156,8 @@ public final class HttpClient {
         }
         
         final String responseType = http.getContentType();
-        if (!Http.isContentTypeAcceptable(responseType)) {
+        final ContentType contentType = ContentType.createFromHttpContentType(responseType);
+        if (!contentType.isAcceptable()) {
             // dump the first 4k bytes of the response for help in debugging
             if (LOG.isLoggable(Level.INFO)) {
                 final byte[] buffer = new byte[4096];
@@ -166,7 +170,7 @@ public final class HttpClient {
             }
             throw new IOException("Content-Type of response is not acceptable: " + responseType);
         }
-
+        
         final Addressing addr;
         try {
             addr = new Addressing(is);
@@ -174,32 +178,35 @@ public final class HttpClient {
             if (is != null) { is.close(); }
         }
         
+        addr.setContentType(contentType);
         log(addr);
         
         return addr;
     }
     
-    public static int sendResponse(final String to, final byte[] bits) throws IOException, SOAPException, JAXBException {
+    public static int sendResponse(final String to, final byte[] bits, final ContentType contentType)
+    throws IOException, SOAPException, JAXBException {
         log(bits);
-        final HttpURLConnection http = initConnection(to);
+        final HttpURLConnection http = initConnection(to, contentType);
         transfer(http, bits);
         return http.getResponseCode();
     }
     
     public static int sendResponse(final Addressing msg) throws IOException, SOAPException, JAXBException {
         log(msg);
-        final HttpURLConnection http = initConnection(msg.getTo());
+        final HttpURLConnection http = initConnection(msg.getTo(), msg.getContentType());
         transfer(http, msg);
         return http.getResponseCode();
     }
     
-    private static void log(final Message msg) throws IOException, SOAPException {
+    private static void log(final Addressing msg) throws IOException, SOAPException {
         // expensive serialization ahead, so check first
         if (LOG.isLoggable(Level.FINE)) {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
             msg.writeTo(baos);
             final byte[] content = baos.toByteArray();
-            LOG.fine(new String(content));
+            final ContentType type = msg.getContentType();
+            LOG.fine(type == null ? new String(content) : new String(content, type.getEncoding()));
         }
     }
     
@@ -209,7 +216,8 @@ public final class HttpClient {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
             msg.writeTo(baos);
             final byte[] content = baos.toByteArray();
-            LOG.fine(new String(content));
+            final String encoding = (String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING);
+            LOG.fine(encoding == null ? new String(content) : new String(content, encoding));
         }
     }
     

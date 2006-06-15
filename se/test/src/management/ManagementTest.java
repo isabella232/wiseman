@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.16 2006-05-03 19:35:46 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.17 2006-06-15 22:54:40 akhilarora Exp $
  */
 
 package management;
@@ -26,12 +26,11 @@ import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
 import com.sun.ws.management.addressing.MessageInformationHeaderRequiredFault;
 import com.sun.ws.management.transport.HttpClient;
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.xml.XMLSchema;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -51,7 +50,6 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.PolicyType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3._2003._05.soap_envelope.Fault;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 
@@ -244,12 +242,19 @@ public class ManagementTest extends TestBase {
         selector.getContent().add("sun-v20z-1");
         mgmt.setSelectors(selectorSet);
         
-        mgmt.prettyPrint(logfile);
+        // send this message encoded in UTF-16
+        mgmt.setContentType(ContentType.UTF16_CONTENT_TYPE);
+        
+        // prettyPrint does not preserve encoding
+        mgmt.writeTo(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
-        response.prettyPrint(logfile);
+        response.writeTo(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
+        
+        // verify that the response is received encoded in UTF-16
+        assertEquals(ContentType.UTF16_CONTENT_TYPE, response.getContentType());
        
         // commented to reduce clutter: uncomment to see the output
         /*

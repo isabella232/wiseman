@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.7 2006-06-09 18:23:17 akhilarora Exp $
+ * $Id: Message.java,v 1.8 2006-06-15 22:54:34 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -27,6 +27,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.xml.XMLSchema;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -55,12 +56,14 @@ public abstract class Message {
     
     public static final String COLON = ":";
     
-    private static final MimeHeaders MIME_HEADER_XML = new MimeHeaders();
+    private static final MimeHeaders DEFAULT_SOAP_MIME_HEADER = new MimeHeaders();
     private static final String UNINITIALIZED = "uninitialized";
     
     private static MessageFactory msgFactory = null;
     private static DocumentBuilderFactory docFactory = null;
     private static DocumentBuilder db = null;
+    
+    private ContentType contentType = null;
     
     private final SOAPMessage msg;
     private SOAPEnvelope env = null;
@@ -68,7 +71,7 @@ public abstract class Message {
     private SOAPBody body = null;
     
     static {
-        MIME_HEADER_XML.setHeader("Content-Type", "application/soap+xml");
+        DEFAULT_SOAP_MIME_HEADER.setHeader("Content-Type", "application/soap+xml");
     }
     
     public static void initialize() throws SOAPException {
@@ -103,6 +106,7 @@ public abstract class Message {
     
     public Message() throws SOAPException {
         assert msgFactory != null : UNINITIALIZED;
+        contentType = ContentType.DEFAULT_CONTENT_TYPE;
         msg = msgFactory.createMessage();
         init();
         addNamespaceDeclarations();
@@ -110,14 +114,25 @@ public abstract class Message {
     
     public Message(final Message message) throws SOAPException {
         assert msgFactory != null : UNINITIALIZED;
+        contentType = message.contentType;
         msg = message.msg;
         init();
     }
     
     public Message(final InputStream is) throws SOAPException, IOException {
         assert msgFactory != null : UNINITIALIZED;
-        msg = msgFactory.createMessage(MIME_HEADER_XML, is);
+        contentType = ContentType.DEFAULT_CONTENT_TYPE;
+        msg = msgFactory.createMessage(DEFAULT_SOAP_MIME_HEADER, is);
         init();
+    }
+    
+    public ContentType getContentType() {
+        return contentType;
+    }
+    
+    public void setContentType(final ContentType ct) throws SOAPException {
+        contentType = ct;
+        msg.setProperty(SOAPMessage.CHARACTER_SET_ENCODING, contentType.getEncoding());
     }
     
     public abstract void validate() throws SOAPException, JAXBException, FaultException;
@@ -160,7 +175,7 @@ public abstract class Message {
         env = soap.getEnvelope();
         body = msg.getSOAPBody();
     }
-        
+    
     private void addNamespaceDeclarations() throws SOAPException {
         // having all the namespace declarations in the envelope keeps
         // JAXB from putting these on every element
