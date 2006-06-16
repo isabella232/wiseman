@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.26 2006-06-12 23:53:54 akhilarora Exp $
+ $Id: build.xml,v 1.27 2006-06-16 00:35:12 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -114,6 +114,9 @@
       <fileset dir="${build.classes.dir}">
         <exclude name="com/sun/ws/management/server/**" />
       </fileset>
+      <fileset dir="${build.classes.dir}">
+        <include name="wsman.properties" />
+      </fileset>
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
@@ -163,6 +166,8 @@
       <zipfileset dir="etc/xsd"
                   prefix="xsd"
                   includes="*.xsd" />
+      <zipfileset dir="${build.classes.dir}"
+                  includes="*.properties" />
     </war>
   </target>
   

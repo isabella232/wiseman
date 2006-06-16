@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.8 2006-06-12 23:53:57 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.9 2006-06-16 00:35:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
 
 import com.sun.ws.management.SchemaValidationErrorFault;
 import com.sun.ws.management.soap.FaultException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -40,11 +43,16 @@ public final class XmlBinding {
             "org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity:" +
             "org.dmtf.schemas.wbem.wsman._1.wsman";
     
+    private static final Properties BINDING_PROPERTIES = new Properties();
+    private static final String BINDING_PROPERTIES_FILE = "/binding.properties";
+    private static final String CUSTOM_PACKAGE_NAMES = 
+            XmlBinding.class.getPackage().getName() + ".custom.packagenames";
+    
     final JAXBContext context;
     Schema schema = null;
     
     private static final class ValidationHandler implements ValidationEventHandler {
-
+        
         private FaultException validationException = null;
         
         public boolean handleEvent(final ValidationEvent event) {
@@ -59,13 +67,34 @@ public final class XmlBinding {
     }
     
     public XmlBinding(final Schema schema, final String... customPackages) throws JAXBException {
+        
+        final InputStream ism = XmlBinding.class.getResourceAsStream(BINDING_PROPERTIES_FILE);
+        if (ism != null) {
+            try {
+                BINDING_PROPERTIES.load(ism);
+            } catch (IOException ex) {
+                throw new JAXBException(ex);
+            }
+        }
+        
         StringBuilder packageNames = new StringBuilder(DEFAULT_PACKAGES);
+        
+        final String customPackageNames = (String) BINDING_PROPERTIES.get(CUSTOM_PACKAGE_NAMES);
+        if (customPackageNames != null && !customPackageNames.equals("")) {
+            for (final String packageName : customPackageNames.split(",")) {
+                packageNames.append(":");
+                packageNames.append(packageName.trim());
+            }
+        }
+        
         for (final String p : customPackages) {
             packageNames.append(":");
             packageNames.append(p);
         }
+        
         context = JAXBContext.newInstance(packageNames.toString(),
                 Thread.currentThread().getContextClassLoader());
+        
         if (schema != null) {
             this.schema = schema;
         }
