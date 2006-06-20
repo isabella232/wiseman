@@ -36,7 +36,9 @@ import javax.xml.soap.SOAPHeaderElement;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
@@ -44,6 +46,14 @@ public class TransferExtensionsTest extends TestBase {
 
     private static final String JAXB_PACKAGE_FOO_TEST = "foo.test";
     
+    private static final String CUSTOM_JAXB_PREFIX = "jb";
+    private static final String CUSTOM_JAXB_NS = "http://test.foo";
+    private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
+
+    static {
+        NAMESPACES.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
+    }
+
     public TransferExtensionsTest(String testName) {
         super(testName);
     }
@@ -64,6 +74,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentGetVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.GET_ACTION_URI);
         
         //xpath expression
@@ -95,6 +106,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentGetResponseVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.GET_RESPONSE_URI);
         
         //xpath expression
@@ -135,6 +147,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testNonFragmentGet() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.GET_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -170,6 +183,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentGet() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.GET_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -212,6 +226,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentDeleteVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.DELETE_RESPONSE_URI);
         
         //xpath expression
@@ -256,6 +271,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentDelete() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.DELETE_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -293,6 +309,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentDeleteFail() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.DELETE_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -329,6 +346,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentPutResponseVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.PUT_RESPONSE_URI);
         
         //xpath expression
@@ -380,6 +398,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentPut() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.PUT_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -429,6 +448,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentPutFail() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.PUT_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -478,6 +498,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentCreateResponseVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.CREATE_RESPONSE_URI);
         transfer.setTo(DESTINATION);
         
@@ -529,6 +550,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentCreate() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.CREATE_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -578,6 +600,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentCreateFail() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.CREATE_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());

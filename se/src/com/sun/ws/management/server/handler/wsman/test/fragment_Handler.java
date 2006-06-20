@@ -32,6 +32,7 @@ import javax.xml.soap.SOAPHeaderElement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 /**
@@ -60,7 +61,12 @@ public class fragment_Handler extends base_Handler {
     
     private static final String CUSTOM_JAXB_PREFIX = "jb";
     private static final String CUSTOM_JAXB_NS = "http://test.foo";
-    
+    private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
+
+    static {
+        NAMESPACES.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
+    }
+
     public void handle(final String action, final String resource, final Management request, final Management response) throws Exception {
         
         final Document doc = response.newDocument();
@@ -73,11 +79,10 @@ public class fragment_Handler extends base_Handler {
         final String expression = fragmentHeader == null ? null : fragmentHeader.getTextContent();
         final String dialect = fragmentHeader == null ? null : fragmentHeader.getAttributeValue(TransferExtensions.DIALECT);
         
-        final HashMap<String, String> hashMap = new HashMap<String, String>();
-        hashMap.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
-        final NamespaceMap map = new NamespaceMap(hashMap);
+        final NamespaceMap map = new NamespaceMap(NAMESPACES);
         
         if (Transfer.GET_ACTION_URI.equals(action)) {
+            response.addNamespaceDeclarations(NAMESPACES);
             response.setAction(Transfer.GET_RESPONSE_URI);
             
             if (fragmentHeader == null) {
@@ -91,6 +96,7 @@ public class fragment_Handler extends base_Handler {
         }
         
         if (Transfer.PUT_ACTION_URI.equals(action)) {
+            response.addNamespaceDeclarations(NAMESPACES);
             response.setAction(Transfer.PUT_RESPONSE_URI);
             
             if (fragmentHeader == null) {
@@ -110,6 +116,7 @@ public class fragment_Handler extends base_Handler {
         }
         
         if (Transfer.DELETE_ACTION_URI.equals(action)) {
+            response.addNamespaceDeclarations(NAMESPACES);
             response.setAction(Transfer.DELETE_RESPONSE_URI);
             
             if (fragmentHeader == null) {
@@ -123,6 +130,7 @@ public class fragment_Handler extends base_Handler {
         }
         
         if (Transfer.CREATE_ACTION_URI.equals(action)) {
+            response.addNamespaceDeclarations(NAMESPACES);
             response.setAction(Transfer.CREATE_RESPONSE_URI);
             
             if (fragmentHeader == null) {

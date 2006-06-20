@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.8 2006-06-15 22:54:34 akhilarora Exp $
+ * $Id: Message.java,v 1.9 2006-06-20 22:24:50 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -34,6 +34,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -187,6 +190,14 @@ public abstract class Message {
         env.addNamespaceDeclaration(Transfer.NS_PREFIX, Transfer.NS_URI);
         env.addNamespaceDeclaration(Management.NS_PREFIX, Management.NS_URI);
         env.addNamespaceDeclaration(Identify.NS_PREFIX, Identify.NS_URI);
+    }
+    
+    public void addNamespaceDeclarations(final Map<String, String> ns) throws SOAPException {
+        final Iterator<Entry<String, String> > ni = ns.entrySet().iterator();
+        while (ni.hasNext()) {
+            final Entry<String, String> entry = ni.next();
+            env.addNamespaceDeclaration(entry.getKey(), entry.getValue());
+        }
     }
     
     public SOAPMessage getMessage() {
