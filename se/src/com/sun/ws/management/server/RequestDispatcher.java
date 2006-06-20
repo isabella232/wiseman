@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.7 2006-06-15 22:54:35 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.8 2006-06-20 22:27:08 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -62,6 +62,9 @@ public abstract class RequestDispatcher implements Callable {
         // set the character encoding of the response to be the same as that of the request
         final ContentType contentType = ContentType.createFromHttpContentType(httpReq.getContentType());
         response.setContentType(contentType);
+    }
+    
+    public void fillReturnAddress() throws JAXBException, SOAPException {
         
         response.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
@@ -70,9 +73,7 @@ public abstract class RequestDispatcher implements Callable {
         if (msgId != null) {
             response.addRelatesTo(msgId);
         }
-    }
-    
-    public void fillReturnAddress() throws JAXBException, SOAPException {
+        
         if (response.getBody().hasFault()) {
             final EndpointReferenceType faultTo = request.getFaultTo();
             if (faultTo != null) {
