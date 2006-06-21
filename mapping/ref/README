@@ -1,0 +1,25 @@
+Download the desired version of the CIM Schema in MOF format from
+http://www.dmtf.org/standards/cim and unzip it in a suitable dir.
+For example, the CIM version 2.11 MOFs from dmtf could go in
+the mof/dmtf/2.11 subdirectory. 
+
+Edit the ref.mof.dir property in <basedir>/project.properties to
+point to the directory where the source MOFs can be found.
+
+If working on Windows, move (for example for cim version 2.11), 
+cimv211.mof to cim-v2.11-windows.mof. The format for the name of the
+destination file is cim-v<cim-version>-<platform>.mof. If working on
+Solaris or Linux, substitute <platform> with "unix" and edit the file
+to replace all backslashes ("\") with forward slashes ("/").
+
+************************************************************************
+Sun Microsystems will not be liable or responsible in any way for
+materials or code which you download or copy from another web site or
+another source. You are solely responsible for ensuring that you obtain,
+understand and comply with any applicable licenses for, or restrictions
+on, your use of any materials or code from other web sites or any other
+source (including other Sun materials or code which may be governed by
+different licenses and restrictions) and that you only use such
+materials or code when and as expressly permitted by the owner of such
+materials or code.
+************************************************************************

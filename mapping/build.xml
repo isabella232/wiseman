@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ Copyright 2006 Sun Microsystems, Inc.
+ 
+ Licensed under the Apache License, Version 2.0 (the "License"); 
+ you may not use this file except in compliance with the License. 
+ You may obtain a copy of the License at 
+ 
+         http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software 
+ distributed under the License is distributed on an "AS IS" BASIS, 
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ See the License for the specific language governing permissions and 
+ limitations under the License.
+ 
+ $Id: build.xml,v 1.1 2006-06-21 00:32:32 akhilarora Exp $
+-->
+
+<project name="wiseman-cim-mapping" default="jar" basedir=".">
+
+  <property file="project.properties"/>
+  <property file="${user.home}/.ant.properties"/>
+
+  <target name="init">
+    <tstamp />
+    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${build.dir}" />
+    <mkdir dir="${build.classes.dir}" />
+    <mkdir dir="${gen.src.dir}" />
+  </target>
+
+  <target name="clean" depends="javadoc-clean">
+    <delete dir="${dist.dir}" />
+    <delete dir="${build.dir}" />
+    <delete dir="${build.classes.dir}" />
+    <delete dir="${gen.src.dir}" />
+  </target>
+
+  <path id="wbemservices.path">
+    <pathelement path="${lib.dir}/mofcomp.jar" />
+    <pathelement path="${lib.dir}/wbem.jar" />
+    <pathelement path="${lib.dir}/cimom.jar" />
+    <pathelement path="${lib.dir}/cimrepository.jar" />
+  </path>
+  
+  <condition property="family"
+             value="unix"
+             else="windows">
+    <os family="unix"/>
+  </condition>
+  
+  <!-- no family-variant is needed for CIM v2.9 -->
+  <condition property="master.mof"
+            value="${ref.mof.dir}/cim-v${cim.version}.mof"
+            else="${ref.mof.dir}/cim-v${cim.version}-${family}.mof">
+    <equals arg1="${cim.version}" arg2="2.9" />
+  </condition>
+
+  <target name="cim-xml" depends="init" unless="cim-xml-generated">
+    <java classname="org.wbemservices.wbem.compiler.mofc.CIM_Mofc" 
+          fork="yes"
+          dir="${gen.src.dir}"
+          failonerror="true">
+      <classpath refid="wbemservices.path" />
+      <arg line="-v -x -b -o" />
+      <arg path="${gen.src.dir}" />
+      <arg path="${master.mof}" />
+      <assertions>
+        <enable/>
+      </assertions>
+    </java>
+    <propertyfile file="${gen.src.dir}/gen.properties"
+                  comment="generated properties">
+      <entry key="cim.version" value="${cim.version}" />
+    </propertyfile>
+  </target>
+
+  <uptodate property="cim-xml-generated" 
+            targetfile="${gen.src.dir}/bigmof.xml"
+            srcfile="${master.mof}" />
+
+  <path id="compile.classpath">
+    <path path="${build.classes.dir}" />
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+  
+  <target name="compile" depends="cim-xml">
+    <javac destdir="${build.classes.dir}"
+           debug="${debug}">
+      <compilerarg value="-Xlint:unchecked" />
+      <classpath refid="compile.classpath" />
+      <src path="${src.dir}" />
+    </javac>
+    <copy todir="${build.classes.dir}">
+      <fileset dir="${src.dir}">
+        <include name="**/*.properties" />
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="beautify" depends="compile" unless="cim-xml-generated">
+    <java classname="com.sun.ws.cim.mapping.PrettyPrint"
+          fork="true">
+      <classpath path="${build.classes.dir}" />
+      <arg value="${gen.src.dir}" />
+    </java>
+  </target>
+  
+  <target name="jar" depends="compile,beautify">
+    <propertyfile file="${gen.src.dir}/gen.properties"
+                  comment="generated properties">
+      <entry key="build.tstamp" value="${DSTAMP}${TSTAMP}" />
+    </propertyfile>
+    <jar destfile="${jar.file}"
+         compress="true"
+         index="true">
+      <fileset dir="${build.classes.dir}">
+        <include name="**/*.class" />
+        <include name="**/*.properties" />
+      </fileset>
+      <fileset dir="${gen.src.dir}">
+        <include name="**/*.xml" />
+        <include name="**/*.properties" />
+      </fileset>
+      <fileset dir="${ref.dir}">
+        <include name="**/*.xsd" />
+      </fileset>
+      <zipfileset src="${lib.dir}/wbem.jar" />
+      <manifest>
+        <attribute name="Main-Class" value="com.sun.ws.cim.mapping.Map" />
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Built-At" value="${DSTAMP}" />
+        <attribute name="Implementation-Version" value="0.1" />
+        <attribute name="Implementation-Vendor" value="The Wiseman Project" />
+        <attribute name="Implementation-URL" value="https://wiseman.dev.java.net" />
+      </manifest>
+      <metainf dir=".">
+        <include name="LICENSE" />
+        <include name="NOTICE" />
+      </metainf>
+    </jar>
+  </target>
+  
+  <target name="javadoc-init" depends="init">
+    <mkdir dir="${doc.dist.dir}" />
+  </target>
+
+  <target name="javadoc-clean">
+    <delete dir="${doc.dist.dir}" />
+  </target>
+  
+  <target name="javadoc" depends="compile,javadoc-init">
+    <javadoc destdir="${doc.dist.dir}"
+             access="public"
+             use="true"
+             windowtitle="Wiseman CIM Mapping API"
+             source="1.5"
+             classpathref="compile.classpath">
+      <packageset dir="${src.dir}" 
+                  defaultexcludes="yes">
+        <include name="com/sun/ws/**" />
+      </packageset>
+      <packageset dir="${gen.src.dir}" 
+                  defaultexcludes="yes">
+        <include name="org/**" />
+      </packageset>
+    </javadoc>
+  </target>
+
+  <path id="run.classpath">
+    <path path="${jar.file}" />
+    <fileset dir="${lib.dir}">
+      <include name="wbem.jar"/>
+    </fileset>
+  </path>
+  
+  <target name="run" depends="jar">
+    <java jar="${jar.file}"
+          fork="true">
+      <classpath refid="run.classpath" />
+      <arg line="CIM_UnitaryComputerSystem" />
+      <assertions>
+        <enable/>
+      </assertions>
+    </java>
+  </target>
+  
+</project>
