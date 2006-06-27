@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.17 2006-06-15 22:54:40 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.18 2006-06-27 21:54:37 akhilarora Exp $
  */
 
 package management;
@@ -58,7 +58,7 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
  */
 public class ManagementTest extends TestBase {
     
-    private static final String RESOURCE = "wsman:system/2005/02/this";
+    private static final String RESOURCE = "wsman:test/java/system/properties";
     private static final int TIMEOUT = 30000;
     
     private final Set<SelectorType> selectors = new HashSet<SelectorType>();
@@ -255,19 +255,9 @@ public class ManagementTest extends TestBase {
         
         // verify that the response is received encoded in UTF-16
         assertEquals(ContentType.UTF16_CONTENT_TYPE, response.getContentType());
-       
-        // commented to reduce clutter: uncomment to see the output
-        /*
-        final Document doc = response.getBody().extractContentAsDocument();
-        final OutputFormat format = new OutputFormat(doc);
-        format.setLineWidth(72);
-        format.setIndenting(true);
-        format.setIndent(2);
-        final XMLSerializer serializer = new XMLSerializer(System.out, format);
-        System.out.println();
-        serializer.serialize(doc);
-        System.out.println();
-        */
+
+        logfile.write("\n\n---- pretty-printed, pretty-printer converts encoding to utf-8 ----\n\n".getBytes());
+        response.prettyPrint(logfile);
     }
     
     public void testValidate() throws Exception {

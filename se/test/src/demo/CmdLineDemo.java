@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.10 2006-06-12 23:53:57 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.11 2006-06-27 21:54:37 akhilarora Exp $
  */
 
 package demo;
@@ -22,6 +22,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.xml.XmlBinding;
@@ -34,7 +35,10 @@ import java.util.UUID;
 import java.util.logging.LogManager;
 import javax.xml.soap.Detail;
 import javax.xml.soap.DetailEntry;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.SOAPConstants;
 import javax.xml.soap.SOAPFault;
+import javax.xml.soap.SOAPMessage;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -45,25 +49,29 @@ import transport.BasicAuthenticator;
 
 public final class CmdLineDemo {
     
+    private static final String IDENTIFY = "identify";
     private static final String GET = "get";
     private static final String ENUMERATE = "enumerate";
     
     private static String dest = null;
-    private static String verb = GET;
+    private static String verb = null;
     private static String resource = null;
     private static Set<SelectorType> selectors = new HashSet<SelectorType>();
     
     private static String enumContext = null;
     
     public static void main(java.lang.String[] args) throws Exception {
-        if (args.length < 2) {
+        if (args.length < 1) {
             System.err.println("USAGE: verb resource selectors");
-            System.err.println("  where verb is get or enumerate");
-            System.err.println("  and selectors are zero or more key-value pairs");
+            System.err.println("  where verb is identify, get or enumerate");
+            System.err.println("  and selectors are zero or more key-value pairs (values can be quoted)");
             return;
         }
         verb = args[0];
-        resource = args[1];
+        if (args.length > 1) {
+            // resource not required for identify
+            resource = args[1];
+        }
         for (int i = 2; i + 1 < args.length; i += 2) {
             final SelectorType selector = new SelectorType();
             selector.setName(args[i]);
@@ -93,7 +101,20 @@ public final class CmdLineDemo {
         SOAP.initialize();
         SOAP.setXmlBinding(new XmlBinding(null));
         
-        sendRequest();
+        if (IDENTIFY.equals(verb)) {
+            final MessageFactory sf = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
+            final SOAPMessage msg = sf.createMessage();
+            msg.getSOAPPart().getEnvelope().addNamespaceDeclaration(Identify.NS_PREFIX, Identify.NS_URI);
+            msg.getSOAPBody().addBodyElement(Identify.IDENTIFY);
+            
+            System.out.println("\n  ---- request ----  \n");
+            msg.writeTo(System.out);
+            final Addressing response = HttpClient.sendRequest(msg, dest);
+            System.out.println("\n  ---- response ----  \n");
+            response.prettyPrint(System.out);
+        } else {
+            sendRequest();
+        }
     }
     
     private static void sendRequest() throws Exception {

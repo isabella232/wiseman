@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.28 2006-06-19 23:52:17 akhilarora Exp $
+ $Id: build.xml,v 1.29 2006-06-27 21:54:36 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -333,6 +333,22 @@
     </junit>
   </target>
   
+  <target name="demo-identify" depends="lib,test-compile">
+    <java classname="demo.CmdLineDemo"
+          classpathref="test.run.classpath"
+          dir="${test.run.dir}"
+          fork="true">
+      <assertions>
+        <enable/>
+      </assertions>
+      <arg value="identify" />
+      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+      <jvmarg value="-Dwsman.user=wsman" />
+      <jvmarg value="-Dwsman.password=secret" />
+      <jvmarg value="-Dwsman.basicauthentication=true" />
+    </java>
+  </target>
+  
   <target name="demo-get" depends="lib,test-compile">
     <java classname="demo.CmdLineDemo"
           classpathref="test.run.classpath"
@@ -342,7 +358,9 @@
         <enable/>
       </assertions>
       <arg value="get" />
-      <arg value="wsman:system/2005/02/this" />
+      <!-- NOTE: this fails with an AccessDenied fault if the server is running 
+           with a security manager in place which disallows enumeration of system properties -->
+      <arg value="wsman:test/java/system/properties" />
       <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
       <jvmarg value="-Dwsman.user=wsman" />
       <jvmarg value="-Dwsman.password=secret" />
@@ -360,8 +378,7 @@
       </assertions>
       <arg value="enumerate" />
       <!-- NOTE: this fails with an AccessDenied fault if the server is running 
-           in the sun app server with a security manager in place (the default), 
-           which disallows enumeration of system properties -->
+           with a security manager in place which disallows enumeration of system properties -->
       <arg value="wsman:test/java/system/properties" />
       <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
       <jvmarg value="-Dwsman.user=wsman" />

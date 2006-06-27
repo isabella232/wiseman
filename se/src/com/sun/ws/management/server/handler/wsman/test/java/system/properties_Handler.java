@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.7 2006-06-27 19:53:02 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.8 2006-06-27 21:54:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -24,10 +24,13 @@ import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.transfer.Transfer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
@@ -38,6 +41,11 @@ public class properties_Handler implements Handler, EnumerationIterator {
     
     private static final String NS_URI = "https://wiseman.dev.java.net/java";
     private static final String NS_PREFIX = "java";
+    private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
+
+    static {
+        NAMESPACES.put(NS_PREFIX, NS_URI);
+    }
     
     private static final class Context {
         boolean cancelled;
@@ -53,9 +61,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
         
         if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
-            
-            final Map<String, String> namespaces = new HashMap<String, String>();
-            namespaces.put(NS_PREFIX, NS_URI);
+            enuResponse.addNamespaceDeclarations(NAMESPACES);
             
             final Context context = new Context();
             // this generates an AccessDenied exception which is returned
@@ -66,14 +72,30 @@ public class properties_Handler implements Handler, EnumerationIterator {
             context.properties = System.getProperties();
             context.cancelled = false;
             
-            EnumerationSupport.enumerate(enuRequest, enuResponse, this,
-                    context, namespaces);
+            EnumerationSupport.enumerate(enuRequest, enuResponse, this, context, NAMESPACES);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
+            enuResponse.addNamespaceDeclarations(NAMESPACES);
             EnumerationSupport.pull(enuRequest, enuResponse);
         } else if (Enumeration.RELEASE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.RELEASE_RESPONSE_URI);
+            enuResponse.addNamespaceDeclarations(NAMESPACES);
             EnumerationSupport.release(enuRequest, enuResponse);
+        } else if (Transfer.GET_ACTION_URI.equals(action)) {
+            enuResponse.setAction(Transfer.GET_RESPONSE_URI);
+            enuResponse.addNamespaceDeclarations(NAMESPACES);
+            // return all the properties in a single response
+            final Document doc = enuResponse.newDocument();
+            final Element root = doc.createElementNS(Enumeration.NS_URI, Enumeration.NS_PREFIX + ":Items");
+            doc.appendChild(root);
+            final Iterator<Entry<Object, Object> > pi = System.getProperties().entrySet().iterator();
+            while (pi.hasNext()) {
+                final Entry<Object, Object> p = pi.next();
+                final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + p.getKey());
+                item.setTextContent(p.getValue().toString());
+                root.appendChild(item);
+            }
+            enuResponse.getMessage().getSOAPBody().addDocument(doc);
         } else {
             throw new ActionNotSupportedFault(action);
         }
@@ -107,7 +129,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
         final Context ctx = (Context) context;
         ctx.cancelled = true;
     }
-
+    
     public int estimateTotalItems(final Object context) {
         final Context ctx = (Context) context;
         final Properties props = ctx.properties;
