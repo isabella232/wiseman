@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.8 2006-05-01 23:32:24 akhilarora Exp $
+ * $Id: SOAP.java,v 1.9 2006-06-27 22:07:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -57,7 +57,7 @@ public abstract class SOAP extends Message {
     public static final QName BODY = new QName(NS_URI, "Body", NS_PREFIX);
     public static final QName SENDER = new QName(NS_URI, "Sender", NS_PREFIX);
     public static final QName RECEIVER = new QName(NS_URI, "Receiver", NS_PREFIX);
-
+    
     public static final String TRUE = "true";
     
     private static XmlBinding binding = null;
@@ -83,7 +83,7 @@ public abstract class SOAP extends Message {
     public XmlBinding getXmlBinding() {
         return binding;
     }
-
+    
     public void validate() throws SOAPException, JAXBException, FaultException {
     }
     
@@ -190,11 +190,14 @@ public abstract class SOAP extends Message {
             final Element element = createElement(doc, JavaException.STACK_TRACE);
             exceptionElement.appendChild(element);
             for (final StackTraceElement st : source.getStackTrace()) {
-                final Element ste = createElement(doc, JavaException.STACK_TRACE_ELEMENT);
-                // return a compact stack trace with just the file names
-                // (with the .java suffix removed) and line numbers
-                ste.setTextContent(st.getFileName().replaceAll("\\.java$", COLON) + st.getLineNumber());
-                element.appendChild(ste);
+                final String file = st.getFileName();
+                if (file != null) {
+                    final Element ste = createElement(doc, JavaException.STACK_TRACE_ELEMENT);
+                    // return a compact stack trace with just the file names
+                    // (with the .java suffix removed) and line numbers
+                    ste.setTextContent(file.replaceAll("\\.java$", COLON) + st.getLineNumber());
+                    element.appendChild(ste);
+                }
             }
             nodeList.add(exceptionElement);
         }
@@ -208,13 +211,13 @@ public abstract class SOAP extends Message {
         ex.encode(getEnvelope());
     }
     
-    private void setFault(final String action, final QName code, 
+    private void setFault(final String action, final QName code,
             final QName subcode, final String reason,
             final Node... details) throws JAXBException, SOAPException {
-
+        
         if (action != null) {
             if (this instanceof Addressing) {
-                // violates layering - action is an addressing concept 
+                // violates layering - action is an addressing concept
                 // but soap layers under addressing
                 ((Addressing) this).setAction(action);
             }
