@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: concrete_Handler.java,v 1.1 2006-05-02 17:19:03 akhilarora Exp $
+ * $Id: concrete_Handler.java,v 1.2 2006-06-27 19:53:01 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -21,6 +21,7 @@ package com.sun.ws.management.server.handler.wsman.test;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.transfer.Transfer;
+import javax.servlet.http.HttpServletRequest;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -30,6 +31,7 @@ public class concrete_Handler extends base_Handler {
     public static final String NS_URI = "https://wiseman.dev.java.net/1/concrete";
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception {
 
         if (Transfer.GET_ACTION_URI.equals(action)) {

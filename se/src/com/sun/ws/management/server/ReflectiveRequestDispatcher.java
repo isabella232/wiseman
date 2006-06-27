@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.12 2006-05-24 20:15:56 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.13 2006-06-27 19:53:01 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -35,7 +35,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
     private static final Logger LOG = Logger.getLogger(ReflectiveRequestDispatcher.class.getName());
     private static final Class<Handler> HANDLER_INTERFACE = Handler.class;
-    private static final Class[] HANDLER_PARAMS = { String.class, String.class, Management.class, Management.class };
+    private static final Class[] HANDLER_PARAMS = { String.class, String.class, HttpServletRequest.class, Management.class, Management.class };
     private static final String HANDLER_PREFIX = ReflectiveRequestDispatcher.class.getPackage().getName() + ".handler";
     
     static final class HandlerEntry {
@@ -127,7 +127,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         
         final String action = request.getAction();
         try {
-            he.getMethod().invoke(he.getInstance(), action, resource, request, response);
+            he.getMethod().invoke(he.getInstance(), action, resource, httpRequest, request, response);
         } catch (InvocationTargetException itex) {
             // the cause might be FaultException if a Fault is being indicated by the handler
             final Throwable cause = itex.getCause();

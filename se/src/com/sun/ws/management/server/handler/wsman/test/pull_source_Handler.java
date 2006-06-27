@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.2 2006-06-07 17:56:51 akhilarora Exp $
+ * $Id: pull_source_Handler.java,v 1.3 2006-06-27 19:53:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -53,6 +54,7 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
     private boolean cancelled;
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception {
         
         final Enumeration enuRequest = new Enumeration(request);

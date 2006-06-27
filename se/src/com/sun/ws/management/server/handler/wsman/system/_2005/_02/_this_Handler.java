@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: _this_Handler.java,v 1.3 2006-05-30 22:31:10 akhilarora Exp $
+ * $Id: _this_Handler.java,v 1.4 2006-06-27 19:53:01 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.system._2005._02;
@@ -25,6 +25,7 @@ import com.sun.ws.management.transfer.Transfer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import javax.servlet.http.HttpServletRequest;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -36,6 +37,7 @@ public final class _this_Handler implements Handler {
     private static final String THIS_NS_PREFIX = "t";
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception {
         
         if (Transfer.GET_ACTION_URI.equals(action)) {

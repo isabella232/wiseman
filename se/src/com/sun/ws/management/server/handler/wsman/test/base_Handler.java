@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: base_Handler.java,v 1.1 2006-05-02 17:19:03 akhilarora Exp $
+ * $Id: base_Handler.java,v 1.2 2006-06-27 19:53:01 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -21,11 +21,12 @@ package com.sun.ws.management.server.handler.wsman.test;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
-import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import javax.servlet.http.HttpServletRequest;
 
 public abstract class base_Handler implements Handler {
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception {
         throw new InternalErrorFault("abstract handler invoked");
     }

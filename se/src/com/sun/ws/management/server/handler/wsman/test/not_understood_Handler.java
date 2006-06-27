@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: not_understood_Handler.java,v 1.1 2006-03-03 22:52:28 akhilarora Exp $
+ * $Id: not_understood_Handler.java,v 1.2 2006-06-27 19:53:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -22,12 +22,14 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.soap.NotUnderstoodFault;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPHeaderElement;
 
 public class not_understood_Handler implements Handler {
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception {
         
         for (final SOAPHeaderElement mu : request.getAllMustUnderstand()) {

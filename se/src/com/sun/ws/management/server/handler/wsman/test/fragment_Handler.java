@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 /**
@@ -67,7 +68,9 @@ public class fragment_Handler extends base_Handler {
         NAMESPACES.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
     }
 
-    public void handle(final String action, final String resource, final Management request, final Management response) throws Exception {
+    public void handle(final String action, final String resource, 
+            final HttpServletRequest httpRequest,
+            final Management request, final Management response) throws Exception {
         
         final Document doc = response.newDocument();
         buildContentDocument(doc);

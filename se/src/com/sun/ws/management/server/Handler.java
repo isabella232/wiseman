@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Handler.java,v 1.1 2005-06-29 19:18:23 akhilarora Exp $
+ * $Id: Handler.java,v 1.2 2006-06-27 19:53:00 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
 import com.sun.ws.management.Management;
+import javax.servlet.http.HttpServletRequest;
 
 public interface Handler {
     
     void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception;
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: huge_envelope_creator_Handler.java,v 1.1 2006-03-03 22:52:27 akhilarora Exp $
+ * $Id: huge_envelope_creator_Handler.java,v 1.2 2006-06-27 19:53:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -24,12 +24,14 @@ import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.transfer.Transfer;
 import java.util.Calendar;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class huge_envelope_creator_Handler implements Handler {
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
       final Management request, final Management response) throws Exception {
         
         if (Transfer.GET_ACTION_URI.equals(action)) {

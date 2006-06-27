@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.8 2006-05-03 19:35:45 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.9 2006-06-27 19:53:01 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -30,6 +30,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.http.HttpServletRequest;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -51,6 +52,7 @@ public class eventing_Handler implements Handler {
     private final Timer eventTimer = new Timer(true);
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception {
         
         final Eventing evtRequest = new Eventing(request);

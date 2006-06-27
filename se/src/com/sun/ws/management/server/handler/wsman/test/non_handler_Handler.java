@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: non_handler_Handler.java,v 1.1 2006-03-03 22:52:27 akhilarora Exp $
+ * $Id: non_handler_Handler.java,v 1.2 2006-06-27 19:53:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
 
 import com.sun.ws.management.Management;
+import javax.servlet.http.HttpServletRequest;
 
 public class non_handler_Handler /* does not implement Handler */ {
     
     public void handle(final String action, final String resource,
+            final HttpServletRequest httpRequest,
             final Management request, final Management response) throws Exception {
         throw new RuntimeException("Assertion failure");
     }
