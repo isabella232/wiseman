@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.17 2006-06-07 17:56:51 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.18 2006-06-28 22:32:46 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -146,7 +146,9 @@ public final class EnumerationSupport extends BaseSupport {
         EnumerationContext ctx = null;
         try {
             ctx = new EnumerationContext(expiration,
-                    filterExpression, namespaces, clientContext, enumIterator);
+                    filterExpression, 
+                    new NamespaceMap(request, namespaces),
+                    clientContext, enumIterator);
         } catch (XPathExpressionException xpx) {
             throw new CannotProcessFilterFault("Unable to compile XPath: " +
                     "\"" + filterExpression + "\"");

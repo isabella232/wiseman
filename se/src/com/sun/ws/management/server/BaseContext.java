@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseContext.java,v 1.5 2006-03-03 20:51:12 akhilarora Exp $
+ * $Id: BaseContext.java,v 1.6 2006-06-28 22:32:45 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
-import java.util.Map;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -33,7 +32,7 @@ class BaseContext {
     
     BaseContext(final XMLGregorianCalendar expiry,
             final String expr,
-            final Map<String, String> namespaces) throws XPathExpressionException {
+            final NamespaceMap namespaces) throws XPathExpressionException {
         
         expiration = expiry;
         
@@ -41,7 +40,7 @@ class BaseContext {
             filter = null;
         } else {
             final XPath xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
-            xpath.setNamespaceContext(new NamespaceMap(namespaces));
+            xpath.setNamespaceContext(namespaces);
             filter = xpath.compile(expr);
         }
     }

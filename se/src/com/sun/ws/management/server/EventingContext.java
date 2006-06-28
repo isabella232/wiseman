@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingContext.java,v 1.2 2006-03-03 20:55:47 akhilarora Exp $
+ * $Id: EventingContext.java,v 1.3 2006-06-28 22:32:46 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
-import java.util.Map;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.xpath.XPathExpressionException;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -29,7 +28,7 @@ final class EventingContext extends BaseContext {
     
     EventingContext(final XMLGregorianCalendar expiration, 
             final String filter, 
-            final Map<String, String> namespaces, 
+            final NamespaceMap namespaces, 
             final EndpointReferenceType notifyTo) throws XPathExpressionException {
         super(expiration, filter, namespaces);
         this.notifyTo = notifyTo;

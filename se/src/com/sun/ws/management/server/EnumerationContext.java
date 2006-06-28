@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.2 2006-03-03 20:55:47 akhilarora Exp $
+ * $Id: EnumerationContext.java,v 1.3 2006-06-28 22:32:46 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
-import java.util.Map;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.xpath.XPathExpressionException;
 
@@ -33,7 +32,7 @@ final class EnumerationContext extends BaseContext {
     
     EnumerationContext(final XMLGregorianCalendar expiration,
             final String filter,
-            final Map<String, String> namespaces,
+            final NamespaceMap namespaces,
             final Object clientContext,
             final EnumerationIterator iterator) throws XPathExpressionException {
         super(expiration, filter, namespaces);

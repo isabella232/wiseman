@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.9 2006-06-01 18:52:53 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.10 2006-06-28 22:32:46 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -106,7 +106,7 @@ public final class EventingSupport extends BaseSupport {
         try {
             ctx = new EventingContext(initExpiration(subscribe.getExpires()),
                     filterExpression,
-                    namespaces,
+                    new NamespaceMap(request, namespaces),
                     notifyTo);
         } catch (XPathExpressionException xpx) {
             throw new EventSourceUnableToProcessFault("Unable to compile XPath: " +
