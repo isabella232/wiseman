@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.9 2006-06-16 00:35:13 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.10 2006-06-29 20:05:43 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -49,7 +49,7 @@ public final class XmlBinding {
             XmlBinding.class.getPackage().getName() + ".custom.packagenames";
     
     final JAXBContext context;
-    Schema schema = null;
+    final Schema schema;
     
     private static final class ValidationHandler implements ValidationEventHandler {
         
@@ -95,9 +95,7 @@ public final class XmlBinding {
         context = JAXBContext.newInstance(packageNames.toString(),
                 Thread.currentThread().getContextClassLoader());
         
-        if (schema != null) {
-            this.schema = schema;
-        }
+        this.schema = schema;
     }
     
     public void marshal(final Object obj, final Node node) throws JAXBException {
@@ -118,5 +116,9 @@ public final class XmlBinding {
             throw fault;
         }
         return obj;
+    }
+    
+    public boolean isValidating() {
+        return schema != null;
     }
 }

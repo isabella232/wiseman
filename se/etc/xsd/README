@@ -4,6 +4,23 @@ If validation is desired, copy here the various XSDs for XML, SOAP,
 WS-Addressing, WS-Eventing, WS-Transfer, WS-Enumeration, WS-Management 
 and WS-Management Identity. 
 
+Note that this is an all-or-none thing - either all the XSDs are 
+present in which case they'll be used for validation, or none of them 
+are present in which case validation will be turned off. The presence 
+of a subset of the XSDs will cause errors such as -
+
+WARNING: null
+javax.xml.bind.UnmarshalException
+ - with linked exception:
+[org.xml.sax.SAXParseException: cvc-elt.1: Cannot find the declaration of element 'wsen:Enumerate'.]
+        at javax.xml.bind.helpers.AbstractUnmarshallerImpl.createUnmarshalException(AbstractUnmarshallerImpl.java:315)
+        at com.sun.xml.bind.v2.runtime.unmarshaller.UnmarshallerImpl.createUnmarshalException(UnmarshallerImpl.java:481)
+        at com.sun.xml.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:303)
+        at com.sun.xml.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:276)
+        at com.sun.ws.management.xml.XmlBinding.unmarshal(XmlBinding.java:115)
+        at com.sun.ws.management.server.WSManServlet.handleIfIdentify(WSManServlet.java:289)
+...
+
 As of June 2006, the WS-Management and WS-Management Identity XSDs are
 not yet available publically, so current drafts need to be downloaded 
 from the Committee Drafts folder of the DMTF WS-Management WG -

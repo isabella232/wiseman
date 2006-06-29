@@ -17,12 +17,15 @@
 
 package com.sun.ws.management.server.handler.wsman.test;
 
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XPath;
+import java.io.IOException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -115,6 +118,8 @@ public class fragment_Handler extends base_Handler {
                 transExtResponse.setFragmentPutResponse(fragmentHeader, nodeContent,
                         expression, XPath.filter(doc.getDocumentElement(), expression, dialect, map));
             }
+            // dump the modified doc for debugging
+            prettyPrint(doc);
             return;
         }
         
@@ -129,6 +134,8 @@ public class fragment_Handler extends base_Handler {
                 transExtResponse.setFragmentDeleteResponse(fragmentHeader,
                         XPath.filter(doc.getDocumentElement(), expression, dialect, map));
             }
+            // dump the modified doc for debugging
+            prettyPrint(doc);
             return;
         }
         
@@ -153,6 +160,8 @@ public class fragment_Handler extends base_Handler {
                         expression, XPath.filter(doc.getDocumentElement(), expression, dialect, map),
                         epr);
             }
+            // dump the modified doc for debugging
+            prettyPrint(doc);
             return;
         }
         
@@ -168,7 +177,7 @@ public class fragment_Handler extends base_Handler {
      *
      * @param doc
      */
-    protected void buildContentDocument(final Document doc) {
+    private void buildContentDocument(final Document doc) {
         final Element thisElement = doc.createElementNS(CUSTOM_JAXB_NS, "this");
         final Element isElement = doc.createElementNS(CUSTOM_JAXB_NS, "is");
         final Element aElement = doc.createElementNS(CUSTOM_JAXB_NS, "a");
@@ -180,5 +189,14 @@ public class fragment_Handler extends base_Handler {
         aElement.appendChild(fooElement);
         fooElement.appendChild(barElement);
         doc.appendChild(thisElement);
+    }
+    
+    private void prettyPrint(final Document doc) throws IOException {
+        final OutputFormat format = new OutputFormat(doc);
+        format.setLineWidth(72);
+        format.setIndenting(true);
+        format.setIndent(2);
+        final XMLSerializer serializer = new XMLSerializer(System.out, format);
+        serializer.serialize(doc);
     }
 }
