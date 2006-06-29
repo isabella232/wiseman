@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE>wiseman Project - Quick Start Guide</TITLE>
+	<META NAME="GENERATOR" CONTENT="StarOffice 8  (Solaris Sparc)">
+	<META NAME="CREATED" CONTENT="20060628;12263500">
+	<META NAME="CHANGED" CONTENT="20060628;14254700">
+	<META NAME="DESCRIPTION" CONTENT="A Java implementation of WS-Management">
+	<META NAME="KEYWORDS" CONTENT="sun microsystems, sun, java, solaris, sparc, unix, ws-management, ws-management catalog, ws-addressing, ws-transfer, ws-enumeration, ws-eventing, open-source, open source, web services, web services management, systems management, management using web services, cim, ws-cim, cim mapping, schema, xsd, wsdl, apache license">
+	<STYLE>
+	<!--
+		TD P { font-family: sans-serif }
+		P { font-family: sans-serif }
+		TH P { font-family: sans-serif }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<H3>Quick Start Guide</H3>
+<P>This guide describes the basic steps for getting dependencies
+required by wiseman, downloading wiseman, compiling it, and
+completing your first successful run of wiseman. As wiseman is in a
+development state at the moment, these instructions will include some
+necessary build steps and manual movements of files. Over time, these
+will be simplified and changed.</P>
+<H3>Quick Start Updates</H3>
+<UL>
+	<LI><P>6/28/06 - Creation of file and outline 
+	</P>
+</UL>
+<H3>Quick Start Contents</H3>
+<P>This page contains the following sections 
+</P>
+<UL>
+	<LI><P STYLE="margin-bottom: 0in"><A HREF="#dependencies">Dependencies</A>
+	&ndash; Information on the dependencies for wiseman</P>
+	<LI><P STYLE="margin-bottom: 0in"><A HREF="#download">Download
+	wiseman</A> &ndash; Where to get wiseman and what to do with it once
+	you have it</P>
+	<LI><P STYLE="margin-bottom: 0in"><A HREF="#configure">Configure</A>
+	- A list of changes you have to make to various configuration
+	scripts and property files 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in"><A HREF="#compile">Compile and Run</A> &ndash;
+	How to compile the project and where the results are 
+	</P>
+
+</UL>
+<H3><A NAME="dependencies"></A>Dependencies</H3>
+<P>Downloading and installing the proper versions of dependencies is
+critical for running the wiseman project. Backlevel dependencies, in
+particular, can cause difficult to debug problems. Often, &ldquo;newer&rdquo;
+versions of the dependencies will be fine but we strongly recommend
+that you stay with the recommended software dependencies listed in
+this section.</P>
+<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=2>
+	<TR>
+		<TH>
+			<P>Dependency</P>
+		</TH>
+		<TH>
+			<P>Description</P>
+		</TH>
+	</TR>
+	<TR>
+		<TD>
+			<P><A HREF="http://java.sun.com/j2se/1.5.0/index.jsp">Java SE 5+</A>
+			or above</P>
+		</TD>
+		<TD>
+			<P>This is the Java Standard Edition 1.5 available from Sun
+			Microsystems. Be sure you have the SDK, not just the JRE.
+			Throughout this document, I will refer to Java's Home directory as
+			/usr/java.</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<P><A HREF="https://jaxb.dev.java.net/">JAXB 2.0</A></P>
+		</TD>
+		<TD>
+			<P>Java Architecture for XML Binding (JAXB). 
+			</P>
+			<UL>
+				<LI><P STYLE="margin-bottom: 0in">Go to the downloads link and be
+				sure to download the 2.0 FINAL version, though 2.0.1 may work.
+				Note: I originally downloaded an older version and had all kinds
+				of runtime errors. Also note: there are several options for
+				downloading files, get the JAXB_RI2.0_FCS. 
+				</P>
+				<LI><P STYLE="margin-bottom: 0in">Once its downloaded, go to the
+				directory where you stored it and run &quot;java -jar
+				JAXB2_20060426.jar&quot; (substitute the .jar file name as
+				appropriate). 
+				</P>
+				<LI><P>Remember where it unpacked everything, for me, the &quot;root&quot;
+				directory of JAXB 2.0 is:
+				/home/pm141145/downloads/wiseman_dependencies/jaxb-ri-20060426, I
+				will use this directory throughout the rest of the document 
+				</P>
+			</UL>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<P><A HREF="https://saaj.dev.java.net/">SAAJ 1.3</A></P>
+		</TD>
+		<TD>
+			<P>SOAP with Attachments API for Java (SAAJ). 
+			</P>
+			<UL>
+				<LI><P STYLE="margin-bottom: 0in">Download the 1.3 version of
+				SAAJ from the website, a .zip file should be located in your
+				downloads directory afterwards 
+				</P>
+				<LI><P>Unzip the file, you should be left with an API and an
+				Implementation .jar file, remember where these are, we will use
+				them later. 
+				</P>
+			</UL>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<P><A HREF="http://tomcat.apache.org/">Tomcat 5.5.17</A> or above</P>
+		</TD>
+		<TD>
+			<P>You may already have Tomcat installed, you can use your
+			existing installation in this case. Otherwise, download and
+			install an appropriate distribution of Tomcat for your platform.
+			Record the HOME directory of your Tomcat installation once it is
+			ready, mine is:
+			/home/pm141145/downloads/wiseman_dependencies/apache-tomcat-5.5.17
+						</P>
+			<P>Be sure to test your Tomcat installation by going to
+			http://localhost:8080 and looking at your Tomcat homepage. 
+			</P>
+
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<P><A HREF="http://prdownloads.sourceforge.net/junit/junit3.8.2.zip?download">JUnit 3.8.2</A></P>
+		</TD>
+		<TD>
+			<P>JUnit is required if you are going to compile and run
+			the tests.  JUnit 3.8.2 (NOT the latest) should work well.
+			The build.properties file depends on ant tasks defined
+			in the junit.jar that are not present in JUnit 4.x.</P>
+		</TD>
+	</TR>
+</TABLE>
+<H3><A NAME="download"></A>Download wiseman</H3>
+<P>For now, wiseman is available in <i>source</i> form only.  As a result, check
+out the source from the CVS tree using the 
+<a href="https://wiseman.dev.java.net/servlets/ProjectSource#wincvs">instructions 
+located on the project site</a>.</P>
+<H3><A NAME="configure"></A>Configure</H3>
+<P>
+There are several configuration steps necessary to get everything ready to build
+and deploy into your running Tomcat instance.
+</P>
+<UL>
+<LI>Move JAXB libraries from open source installation to the wiseman/se/lib/jaxb directory
+(for me, this is "cp /home/pm141145/downloads/wiseman_dependencies/jaxb-ri-20060426/lib/*.jar se/lib/jaxb/")
+<LI>Move the SAAJ libraries libraries to the wiseman/se/lib/jaxrpc directory
+(for me, this is "cp /home/pm141145/downloads/wiseman_dependencies/saaj*.jar se/lib/jaxrpc/")
+<LI>Copy the Servlet API jar from your favorite servlet container to the root library
+directory.  For Tomcat, we are using servlet-api.jar from the ./apache-tomcat-5.5.17/common/lib/
+directory.  (for me, the copy command is cp ~/downloads/wiseman_dependencies/apache-tomcat-5.5.17/common/lib/servlet-api.jar se/lib/)
+<LI>Copy the junit.jar file from your JUnit download to the wiseman/se/lib directory.
+Also copy the junit.jar file to the wiseman/se/test/lib directory.
+<LI>Edit the wiseman/se/project.properties file, ensure the properties are set
+for  your configuration, also:
+<UL>
+<LI>If you do not have an environment variable for the location of your app server, add one
+here.  For Tomcat, this is the "catalina.home" variable.  I added an entry:
+catalina.home=/home/pm141145/downloads/wiseman_dependencies/apache-tomcat-5.5.17
+</UL>
+<LI>Edit the tomcat-users.xml file and add the following entries (don't add if they already exist):
+<pre>
+&lt;role rolename="manager"/&gt;
+&lt;role rolename="wsman"/&gt;
+&lt;role rolename="admin"/&gt;
+&lt;user username="wsman" password="secret" roles="wsman"//&gt;
+&lt;user username="admin" password="adminadmin" roles="admin,manager"/&gt;
+</pre>
+
+</UL>
+<H3><A NAME="compile"></A>Compile and Run</H3>
+<P>Run the following ant targets from the wiseman/se directory (make sure your tomcat instance is running):</P>
+<ul>
+<li>ant clean
+<li>ant
+<li>ant deploy
+<li>ant test
+</ul>
+<P>If the test target runs properly, you have successfully completed installation.
+</BODY>
+</HTML>
