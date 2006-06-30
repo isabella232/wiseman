@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.20 2006-06-30 00:10:21 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.21 2006-06-30 00:12:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -314,7 +314,6 @@ public class WSManServlet extends HttpServlet {
                 Management.NS_URI,
                 extraIdInfo);
         identify.writeTo(os);
-        identify.writeTo(System.out);
         return true;
     }
     
