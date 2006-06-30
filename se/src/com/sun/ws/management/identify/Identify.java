@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Identify.java,v 1.1 2006-06-09 18:49:15 akhilarora Exp $
+ * $Id: Identify.java,v 1.2 2006-06-30 00:10:20 akhilarora Exp $
  */
 
 package com.sun.ws.management.identify;
@@ -41,6 +41,10 @@ public class Identify extends SOAP {
     public static final QName IDENTIFY = new QName(NS_URI, "Identify", NS_PREFIX);
     public static final QName IDENTIFY_RESPONSE = new QName(NS_URI, "IdentifyResponse", NS_PREFIX);
 
+    // extra info returned in an IdentifyResponse
+    public static final QName BUILD_ID = new QName(NS_URI, "BuildId", NS_PREFIX);
+    public static final QName SPEC_VERSION = new QName(NS_URI, "SpecVersion", NS_PREFIX);
+    
     public static final ObjectFactory FACTORY = new ObjectFactory();
     
     public Identify() throws SOAPException {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.19 2006-06-15 22:54:35 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.20 2006-06-30 00:10:21 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -39,6 +39,7 @@ import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
@@ -83,6 +85,8 @@ public class WSManServlet extends HttpServlet {
     
     private static final Properties wsmanProperties = new Properties();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
+    
+    private static final Map<QName, String> extraIdInfo = new HashMap<QName, String>();
     
     public static Map<Object, Object> getProperties() {
         return Collections.unmodifiableMap(wsmanProperties);
@@ -112,6 +116,9 @@ public class WSManServlet extends HttpServlet {
                 throw new ServletException(iex);
             }
         }
+
+        extraIdInfo.put(Identify.BUILD_ID, wsmanProperties.getProperty("build.version"));
+        extraIdInfo.put(Identify.SPEC_VERSION, wsmanProperties.getProperty("spec.version"));
         
         try {
             SOAP.initialize();
@@ -302,13 +309,12 @@ public class WSManServlet extends HttpServlet {
         }
         final Identify identify = new Identify();
         identify.setIdentifyResponse(
-                wsmanProperties.getProperty("impl.vendor") +
-                " - " +
-                wsmanProperties.getProperty("impl.url"),
+                wsmanProperties.getProperty("impl.vendor") + " - " + wsmanProperties.getProperty("impl.url"),
                 wsmanProperties.getProperty("impl.version"),
-                wsmanProperties.getProperty("spec.version"),
-                null);
+                Management.NS_URI,
+                extraIdInfo);
         identify.writeTo(os);
+        identify.writeTo(System.out);
         return true;
     }
     
