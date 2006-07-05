@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="se/src"/>
+	<classpathentry kind="src" path="se/test/src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/activation.jar"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/javax.servlet.jar"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jaxb-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jaxb-impl.jar"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jaxb-xjc.jar"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jsr173_1.0_api.jar"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/jaxrpc/saaj-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="se/lib/jaxrpc/saaj-impl.jar"/>
+	<classpathentry kind="src" path="se/gen-src"/>
+	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/org.junit_3.8.1/junit.jar"/>
+	<classpathentry kind="output" path="ebin"/>
+</classpath>
