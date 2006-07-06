@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.13 2006-06-15 22:54:38 akhilarora Exp $
+ * $Id: HttpClient.java,v 1.14 2006-07-06 21:34:16 obiwan314 Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -31,6 +31,8 @@ import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
@@ -120,12 +122,20 @@ public final class HttpClient {
         return readResponse(http);
     }
     
-    public static Addressing sendRequest(final Addressing msg)
+    public static Addressing sendRequest(final Addressing msg, final
+    		Entry<String, String>... headers)
     throws IOException, JAXBException, SOAPException {
         
         log(msg);
         
         final HttpURLConnection http = initRequest(msg.getTo(), msg.getContentType());
+        
+        if (headers != null) {
+            for (Entry<String,String> entry: headers) {
+                http.setRequestProperty(entry.getKey(),entry.getValue());
+            }
+        }
+        
         transfer(http, msg);
         return readResponse(http);
     }
