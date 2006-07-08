@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.8 2006-05-01 23:32:22 akhilarora Exp $
+ * $Id: Eventing.java,v 1.9 2006-07-08 23:48:21 akhilarora Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -22,6 +22,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.xml.XML;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
@@ -225,6 +226,11 @@ public class Eventing extends Addressing {
         getXmlBinding().marshal(end, getBody());
     }
     
+    public void setIdentifier(final String identifier) throws SOAPException, JAXBException {
+        removeChildren(getHeader(), IDENTIFIER);
+        getXmlBinding().marshal(FACTORY.createIdentifier(identifier), getHeader());
+    }
+    
     public Subscribe getSubscribe() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), SUBSCRIBE);
         return value == null ? null : (Subscribe) value;
@@ -263,5 +269,10 @@ public class Eventing extends Addressing {
     public SubscriptionEnd getSubscriptionEnd() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), SUBSCRIPTION_END);
         return value == null ? null : (SubscriptionEnd) value;
+    }
+    
+    public String getIdentifier() throws JAXBException, SOAPException {
+        final Object value = unbind(getHeader(), IDENTIFIER);
+        return value == null ? null : ((JAXBElement<String>) value).getValue();
     }
 }

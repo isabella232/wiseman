@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.10 2006-06-28 22:32:46 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.11 2006-07-08 23:48:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -23,6 +23,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
 import com.sun.ws.management.eventing.EventSourceUnableToProcessFault;
 import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.HttpClient;
@@ -46,6 +47,7 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 
 /**
  * A helper class that encapsulates some of the arcane logic to manage
@@ -53,8 +55,28 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
  */
 public final class EventingSupport extends BaseSupport {
     
+    // TODO: add more delivery modes as they are implemented
+    private static final String[] SUPPORTED_DELIVERY_MODES = {
+        Eventing.PUSH_DELIVERY_MODE,
+        EventingExtensions.PULL_DELIVERY_MODE
+    };
+    
     private EventingSupport() {}
     
+    public static String[] getSupportedDeliveryModes() {
+        return SUPPORTED_DELIVERY_MODES;
+    }
+    
+    public static boolean isDeliveryModeSupported(final String deliveryMode) {
+        for (final String mode : SUPPORTED_DELIVERY_MODES) {
+            if (mode.equals(deliveryMode)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // the EventingExtensions.PULL_DELIVERY_MODE is handled by EnumerationSupport
     public static Object subscribe(final Eventing request, final Eventing response,
             final Map<String, String> namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
@@ -72,12 +94,14 @@ public final class EventingSupport extends BaseSupport {
         }
         
         final DeliveryType delivery = subscribe.getDelivery();
-        // TODO: add more delivery modes
-        if (!Eventing.PUSH_DELIVERY_MODE.equals(delivery.getMode())) {
-            final String[] supportedDeliveryModes = {
-                Eventing.PUSH_DELIVERY_MODE
-            };
-            throw new DeliveryModeRequestedUnavailableFault(supportedDeliveryModes);
+        String deliveryMode = delivery.getMode();
+        if (deliveryMode == null) {
+            // implied value
+            deliveryMode = Eventing.PUSH_DELIVERY_MODE;
+        }
+        
+        if (!isDeliveryModeSupported(deliveryMode)) {
+            throw new DeliveryModeRequestedUnavailableFault(SUPPORTED_DELIVERY_MODES);
         }
         
         EndpointReferenceType notifyTo = null;
@@ -128,6 +152,30 @@ public final class EventingSupport extends BaseSupport {
         response.setSubscribeResponse(subMgrEPR, ctx.getExpiration());
         
         return context;
+    }
+    
+    public static void unsubscribe(final Eventing request, final Eventing response)
+    throws SOAPException, JAXBException, FaultException {
+        
+        final Unsubscribe unsubscribe = request.getUnsubscribe();
+        if (unsubscribe == null) {
+            throw new InvalidMessageFault("Missing Unsubsribe element");
+        }
+        
+        final String identifier = request.getIdentifier();
+        if (identifier == null) {
+            throw new InvalidMessageFault("Missing Identifier header element");
+            
+        }
+        
+        final Object found = removeContext(UUID.fromString(identifier));
+        if (found == null) {
+            // TODO: throw an InvalidContextFault when available
+            throw new InvalidMessageFault("Subscription with Identifier: " + 
+                    identifier + " not found");
+        }
+        
+        response.setIdentifier(identifier);
     }
     
     // TODO: avoid blocking the sender - use a thread pool to send notifications

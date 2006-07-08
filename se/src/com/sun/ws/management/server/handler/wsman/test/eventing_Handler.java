@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.9 2006-06-27 19:53:01 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.10 2006-07-08 23:48:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -100,6 +100,9 @@ public class eventing_Handler implements Handler {
             final long DELAY = 1000;
             final long PERIOD = 500;
             eventTimer.schedule(sendEventTask, DELAY, PERIOD);
+        } else if (Eventing.UNSUBSCRIBE_ACTION_URI.equals(action)) {
+            evtResponse.setAction(Eventing.UNSUBSCRIBE_RESPONSE_URI);
+            EventingSupport.unsubscribe(evtRequest, evtResponse);
         } else {
             throw new ActionNotSupportedFault(action);
         }

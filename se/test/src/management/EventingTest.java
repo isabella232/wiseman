@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.8 2006-05-01 23:32:25 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.9 2006-07-08 23:48:25 akhilarora Exp $
  */
 
 package management;
@@ -201,11 +201,10 @@ public class EventingTest extends TestBase {
         
         evt.prettyPrint(logfile);
         final Addressing addr = HttpClient.sendRequest(mgmt);
+        addr.prettyPrint(logfile);
         if (addr.getBody().hasFault()) {
-            addr.prettyPrint(System.err);
             fail(addr.getBody().getFault().getFaultString());
         }
-        addr.prettyPrint(logfile);
         
         final Eventing response = new Eventing(addr);
         final SubscribeResponse subr = response.getSubscribeResponse();
@@ -215,6 +214,53 @@ public class EventingTest extends TestBase {
         assertNotNull(identifier);
         final String expires2 = subr.getExpires();
         assertNotNull(expires2);
+    }
+    
+    public void testUnsubscribe() throws Exception {
+        final Eventing evt = new Eventing();
+        evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+        evt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final String recvrAddress = "http://localhost:8080/events";
+        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        evt.setSubscribe(null, null, notifyToEPR, null, null);
+        
+        final Management mgmt = new Management(evt);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/eventing");
+        
+        evt.prettyPrint(logfile);
+        final Addressing addr = HttpClient.sendRequest(mgmt);
+        addr.prettyPrint(logfile);
+        if (addr.getBody().hasFault()) {
+            fail(addr.getBody().getFault().getFaultString());
+        }
+        
+        final Eventing response = new Eventing(addr);
+        final SubscribeResponse subr = response.getSubscribeResponse();
+        final EndpointReferenceType mgr = subr.getSubscriptionManager();
+        assertEquals(DESTINATION, mgr.getAddress().getValue());
+        final Object identifierElement = mgr.getReferenceParameters().getAny().get(0);
+        assertNotNull(identifierElement);
+        final String identifier = ((JAXBElement<String>) identifierElement).getValue();
+
+        // now send an unsubscribe request using the identifier
+        evt.setAction(Eventing.UNSUBSCRIBE_ACTION_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        evt.setUnsubscribe();
+        evt.setIdentifier(identifier);
+        
+        evt.prettyPrint(logfile);
+        final Addressing addr2 = HttpClient.sendRequest(mgmt);
+        addr2.prettyPrint(logfile);
+        if (addr2.getBody().hasFault()) {
+            fail(addr2.getBody().getFault().getFaultString());
+        }
+        
+        final Eventing response2 = new Eventing(addr2);
+        final String identifier2 = response2.getIdentifier();
+        assertNotNull(identifier2);
+        assertEquals(identifier, identifier2);
     }
     
     public void testBogusFilter() throws Exception {
@@ -305,11 +351,10 @@ public class EventingTest extends TestBase {
         
         evt.prettyPrint(logfile);
         final Addressing addr = HttpClient.sendRequest(mgmt);
+        addr.prettyPrint(logfile);
         if (addr.getBody().hasFault()) {
-            addr.prettyPrint(System.err);
             fail(addr.getBody().getFault().getFaultString());
         }
-        addr.prettyPrint(logfile);
         
         final Eventing response = new Eventing(addr);
         final SubscribeResponse subr = response.getSubscribeResponse();

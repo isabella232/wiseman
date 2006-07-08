@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.4 2006-06-01 18:52:53 akhilarora Exp $
+ * $Id: BaseSupport.java,v 1.5 2006-07-08 23:48:22 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -30,6 +30,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -95,7 +96,9 @@ class BaseSupport {
         assert datatypeFactory != null : UNINITIALIZED;
         
         if (expires == null) {
-            return null;
+            // a very large value - effectively never expires
+            return datatypeFactory.newXMLGregorianCalendar(Integer.MAX_VALUE,
+                    12, 31, 23, 59, 59, 999, DatatypeConstants.MAX_TIMEZONE_OFFSET);
         }
         
         final GregorianCalendar now = new GregorianCalendar();
