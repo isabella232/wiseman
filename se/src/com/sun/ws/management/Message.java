@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.9 2006-06-20 22:24:50 akhilarora Exp $
+ * $Id: Message.java,v 1.10 2006-07-10 01:41:07 akhilarora Exp $
  */
 
 package com.sun.ws.management;
@@ -189,7 +189,6 @@ public abstract class Message {
         env.addNamespaceDeclaration(Enumeration.NS_PREFIX, Enumeration.NS_URI);
         env.addNamespaceDeclaration(Transfer.NS_PREFIX, Transfer.NS_URI);
         env.addNamespaceDeclaration(Management.NS_PREFIX, Management.NS_URI);
-        env.addNamespaceDeclaration(Identify.NS_PREFIX, Identify.NS_URI);
     }
     
     public void addNamespaceDeclarations(final Map<String, String> ns) throws SOAPException {

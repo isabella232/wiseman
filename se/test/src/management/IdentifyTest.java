@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: IdentifyTest.java,v 1.1 2006-06-09 18:49:14 akhilarora Exp $
+ * $Id: IdentifyTest.java,v 1.2 2006-07-10 01:41:11 akhilarora Exp $
  */
 
 package management;
@@ -21,10 +21,7 @@ package management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.transport.HttpClient;
-import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPConstants;
-import javax.xml.soap.SOAPMessage;
-import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.IdentifyResponseType;
+import javax.xml.soap.SOAPElement;
 
 /**
  * Unit test for the Identify operation
@@ -42,22 +39,24 @@ public class IdentifyTest extends TestBase {
     
     public void testIdentify() throws Exception {
         
-        final MessageFactory sf = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
-        final SOAPMessage msg = sf.createMessage();
-        msg.getSOAPPart().getEnvelope().addNamespaceDeclaration(Identify.NS_PREFIX, Identify.NS_URI);
-        msg.getSOAPBody().addBodyElement(Identify.IDENTIFY);
+        final Identify identify = new Identify();
+        identify.setIdentify();
 
-        msg.writeTo(logfile);
+        identify.prettyPrint(logfile);
         logfile.write("\n\n".getBytes());
-        final Addressing response = HttpClient.sendRequest(msg, DESTINATION);
-        response.writeTo(logfile);
+        final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
+        response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
+        
         final Identify id = new Identify(response);
-        final IdentifyResponseType idr = id.getIdentifyResponse();
-        assertNotNull(idr.getProductVendor());
-        assertNotNull(idr.getProductVersion());
-        assertNotNull(idr.getProtocolVersion().get(0));
+        final SOAPElement idr = id.getIdentifyResponse();
+        assertNotNull(idr);
+        assertNotNull(id.getChildren(idr, Identify.PRODUCT_VENDOR));
+        assertNotNull(id.getChildren(idr, Identify.PRODUCT_VERSION));
+        assertNotNull(id.getChildren(idr, Identify.PROTOCOL_VERSION));
+        assertNotNull(id.getChildren(idr, Identify.BUILD_ID));
+        assertNotNull(id.getChildren(idr, Identify.SPEC_VERSION));
     }
 }

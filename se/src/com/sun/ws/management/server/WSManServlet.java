@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.21 2006-06-30 00:12:32 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.22 2006-07-10 01:41:08 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -60,12 +60,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.Source;
@@ -73,8 +72,6 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
-import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.IdentifyType;
-import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 public class WSManServlet extends HttpServlet {
@@ -116,7 +113,7 @@ public class WSManServlet extends HttpServlet {
                 throw new ServletException(iex);
             }
         }
-
+        
         extraIdInfo.put(Identify.BUILD_ID, wsmanProperties.getProperty("build.version"));
         extraIdInfo.put(Identify.SPEC_VERSION, wsmanProperties.getProperty("spec.version"));
         
@@ -216,7 +213,7 @@ public class WSManServlet extends HttpServlet {
         return new ReflectiveRequestDispatcher(request, req);
     }
     
-    protected void handle(final InputStream is, final ContentType contentType, 
+    protected void handle(final InputStream is, final ContentType contentType,
             final OutputStream os, final HttpServletRequest req, final HttpServletResponse resp)
             throws SOAPException, JAXBException, IOException {
         
@@ -224,7 +221,7 @@ public class WSManServlet extends HttpServlet {
         request.setContentType(contentType);
         log(request);
         
-        if (handleIfIdentify(request.getMessage(), os)) {
+        if (handleIfIdentify(request, os)) {
             return;
         }
         
@@ -283,37 +280,20 @@ public class WSManServlet extends HttpServlet {
         }
     }
     
-    private boolean handleIfIdentify(final SOAPMessage msg, final OutputStream os)
+    private boolean handleIfIdentify(final Management msg, final OutputStream os)
     throws SOAPException, JAXBException, IOException {
-        final SOAPBody body = msg.getSOAPBody();
-        if (body == null) {
-            return false;
-        }
-        final Node idNode = body.getFirstChild();
-        if (idNode == null) {
-            return false;
-        }
-        final Object obj = xmlBinding.unmarshal(idNode);
-        if (obj == null) {
-            return false;
-        }
-        if (! (obj instanceof JAXBElement)) {
-            return false;
-        }
-        if (! (Identify.IDENTIFY.equals(((JAXBElement) obj).getName()))) {
-            return false;
-        }
-        final IdentifyType id = ((JAXBElement<IdentifyType>) obj).getValue();
+        final Identify identify = new Identify(msg);
+        final SOAPElement id = identify.getIdentify();
         if (id == null) {
             return false;
         }
-        final Identify identify = new Identify();
-        identify.setIdentifyResponse(
+        final Identify response = new Identify();
+        response.setIdentifyResponse(
                 wsmanProperties.getProperty("impl.vendor") + " - " + wsmanProperties.getProperty("impl.url"),
                 wsmanProperties.getProperty("impl.version"),
                 Management.NS_URI,
                 extraIdInfo);
-        identify.writeTo(os);
+        response.writeTo(os);
         return true;
     }
     

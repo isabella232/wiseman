@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.11 2006-06-27 21:54:37 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.12 2006-07-10 01:41:10 akhilarora Exp $
  */
 
 package demo;
@@ -102,14 +102,11 @@ public final class CmdLineDemo {
         SOAP.setXmlBinding(new XmlBinding(null));
         
         if (IDENTIFY.equals(verb)) {
-            final MessageFactory sf = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
-            final SOAPMessage msg = sf.createMessage();
-            msg.getSOAPPart().getEnvelope().addNamespaceDeclaration(Identify.NS_PREFIX, Identify.NS_URI);
-            msg.getSOAPBody().addBodyElement(Identify.IDENTIFY);
-            
+            final Identify identify = new Identify();
+            identify.setIdentify();
             System.out.println("\n  ---- request ----  \n");
-            msg.writeTo(System.out);
-            final Addressing response = HttpClient.sendRequest(msg, dest);
+            identify.prettyPrint(System.out);
+            final Addressing response = HttpClient.sendRequest(identify.getMessage(), dest);
             System.out.println("\n  ---- response ----  \n");
             response.prettyPrint(System.out);
         } else {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.9 2006-06-27 22:07:56 akhilarora Exp $
+ * $Id: SOAP.java,v 1.10 2006-07-10 01:41:09 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -102,11 +102,11 @@ public abstract class SOAP extends Message {
         return (SOAPHeaderElement[]) ml.toArray(new SOAPHeaderElement[ml.size()]);
     }
     
-    protected SOAPElement[] getChildren(final SOAPElement parent) throws SOAPException {
+    public SOAPElement[] getChildren(final SOAPElement parent) throws SOAPException {
         return getChildren(parent, null);
     }
     
-    protected SOAPElement[] getChildren(final SOAPElement parent, final QName qname) throws SOAPException {
+    public SOAPElement[] getChildren(final SOAPElement parent, final QName qname) throws SOAPException {
         final List<SOAPElement> al = new ArrayList<SOAPElement>();
         final Iterator<SOAPElement> ei;
         if (qname == null) {

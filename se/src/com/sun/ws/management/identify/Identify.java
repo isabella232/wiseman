@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Identify.java,v 1.2 2006-06-30 00:10:20 akhilarora Exp $
+ * $Id: Identify.java,v 1.3 2006-07-10 01:41:07 akhilarora Exp $
  */
 
 package com.sun.ws.management.identify;
@@ -23,15 +23,14 @@ import com.sun.ws.management.soap.SOAP;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPBodyElement;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
-import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.IdentifyResponseType;
-import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.ObjectFactory;
+import org.w3c.dom.Node;
 
 public class Identify extends SOAP {
     
@@ -40,12 +39,14 @@ public class Identify extends SOAP {
     
     public static final QName IDENTIFY = new QName(NS_URI, "Identify", NS_PREFIX);
     public static final QName IDENTIFY_RESPONSE = new QName(NS_URI, "IdentifyResponse", NS_PREFIX);
-
+    
+    public static final QName PROTOCOL_VERSION = new QName(NS_URI, "ProtocolVersion", NS_PREFIX);
+    public static final QName PRODUCT_VENDOR = new QName(NS_URI, "ProductVendor", NS_PREFIX);
+    public static final QName PRODUCT_VERSION = new QName(NS_URI, "ProductVersion", NS_PREFIX);
+    
     // extra info returned in an IdentifyResponse
     public static final QName BUILD_ID = new QName(NS_URI, "BuildId", NS_PREFIX);
     public static final QName SPEC_VERSION = new QName(NS_URI, "SpecVersion", NS_PREFIX);
-    
-    public static final ObjectFactory FACTORY = new ObjectFactory();
     
     public Identify() throws SOAPException {
         super();
@@ -59,26 +60,43 @@ public class Identify extends SOAP {
         super(is);
     }
     
+    public void setIdentify() throws SOAPException {
+        getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
+        getBody().addBodyElement(IDENTIFY);
+    }
+    
     public void setIdentifyResponse(final String vendor, final String productVersion,
-            final String protocolVersion, final Map<QName, String> more) throws SOAPException, JAXBException {
-        final IdentifyResponseType ir = FACTORY.createIdentifyResponseType();
-        final List<Object> any = ir.getAny();
-        any.add(FACTORY.createProductVendor(vendor));
-        any.add(FACTORY.createProductVersion(productVersion));
-        any.add(FACTORY.createProtocolVersion(protocolVersion));
+            final String protocolVersion, final Map<QName, String> more) throws SOAPException {
+        
+        getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
+        
+        final SOAPBodyElement response = getBody().addBodyElement(IDENTIFY_RESPONSE);
+        response.addChildElement(PRODUCT_VENDOR).setTextContent(vendor);
+        response.addChildElement(PRODUCT_VERSION).setTextContent(productVersion);
+        response.addChildElement(PROTOCOL_VERSION).setTextContent(protocolVersion);
+        
         if (more != null) {
             final Iterator<Entry<QName, String> > mi = more.entrySet().iterator();
             while (mi.hasNext()) {
                 final Entry<QName, String> entry = mi.next();
-                any.add(new JAXBElement<String>(entry.getKey(), String.class, null, entry.getValue()));
+                response.addChildElement(entry.getKey()).setTextContent(entry.getValue());
             }
         }
-        final JAXBElement<IdentifyResponseType> re = FACTORY.createIdentifyResponse(ir);
-        getXmlBinding().marshal(re, getBody());
     }
-
-    public IdentifyResponseType getIdentifyResponse() throws JAXBException, SOAPException {
-        final Object value = unbind(getBody(), IDENTIFY_RESPONSE);
-        return value == null ? null : ((JAXBElement<IdentifyResponseType>) value).getValue();
+    
+    public SOAPElement getIdentify() throws SOAPException {
+        final SOAPElement[] ide = getChildren(getBody(), IDENTIFY);
+        if (ide.length == 0) {
+            return null;
+        }
+        return ide[0];
+    }
+    
+    public SOAPElement getIdentifyResponse() throws SOAPException {
+        final SOAPElement[] idr = getChildren(getBody(), IDENTIFY_RESPONSE);
+        if (idr.length == 0) {
+            return null;
+        }
+        return idr[0];
     }
 }
