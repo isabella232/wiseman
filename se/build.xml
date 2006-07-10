@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.31 2006-07-06 21:27:15 obiwan314 Exp $
+ $Id: build.xml,v 1.32 2006-07-10 00:19:48 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -48,6 +48,7 @@
     </fileset>
   </path>
 
+  <!-- use this target to (re)compile schemas and regenerate the JAXB artifacts -->
   <target name="generate-jaxb" depends="init">
     <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
       <classpath refid="jaxb.compile.classpath" />
@@ -62,8 +63,6 @@
       <arg value="-port" />
       <arg value="${http.proxy.port}" />
       -->
-      <!-- uncomment to (re)compile schemas and regenerate the JAXB artifacts -->
-      <!--
       <schema dir="${basedir}/etc/xsd" includes="1-xml.xsd" /> 
       <schema dir="${basedir}/etc/xsd" includes="2-soap.xsd" /> 
       <produces dir="${gen.src.dir}" includes="org/w3/_2003/_05/soap_envelope/*.java" />
@@ -81,7 +80,6 @@
       <produces dir="${gen.src.dir}" includes="org/dmtf/schemas/wbem/wsman/_1/wsman/*.java" />
       <schema dir="${test.dir}/etc/xsd" includes="6-test-foo.xsd" />
       <produces dir="${gen.src.dir}" includes="foo/test/*.java" />
-      -->
     </xjc>
   </target>
 
