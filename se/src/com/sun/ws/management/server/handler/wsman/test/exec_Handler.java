@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: exec_Handler.java,v 1.4 2006-06-27 19:53:02 akhilarora Exp $
+ * $Id: exec_Handler.java,v 1.5 2006-07-11 21:30:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -25,6 +25,7 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.Handler;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.transfer.Transfer;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -35,7 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
@@ -77,7 +77,7 @@ public class exec_Handler implements Handler, EnumerationIterator {
     private boolean cancelled = false;
     
     public void handle(final String action, final String resource,
-            final HttpServletRequest httpRequest,
+            final HandlerContext context,
             final Management request, final Management response) throws Exception {
         
         final Set<SelectorType> selectors = request.getSelectors();

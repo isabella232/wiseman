@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.13 2006-06-27 19:53:01 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.14 2006-07-11 21:30:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,16 +27,26 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 
 public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
-    private static final Logger LOG = Logger.getLogger(ReflectiveRequestDispatcher.class.getName());
+    private static final Logger LOG = 
+            Logger.getLogger(ReflectiveRequestDispatcher.class.getName());
+
     private static final Class<Handler> HANDLER_INTERFACE = Handler.class;
-    private static final Class[] HANDLER_PARAMS = { String.class, String.class, HttpServletRequest.class, Management.class, Management.class };
-    private static final String HANDLER_PREFIX = ReflectiveRequestDispatcher.class.getPackage().getName() + ".handler";
+
+    private static final Class[] HANDLER_PARAMS = { 
+        String.class, 
+        String.class, 
+        HandlerContext.class, 
+        Management.class, 
+        Management.class 
+    };
+
+    private static final String HANDLER_PREFIX = 
+            ReflectiveRequestDispatcher.class.getPackage().getName() + ".handler";
     
     static final class HandlerEntry {
         
@@ -59,9 +69,9 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
     private static final Map<String, HandlerEntry> cache = new WeakHashMap<String, HandlerEntry>();
     
-    public ReflectiveRequestDispatcher(final Management req, final HttpServletRequest httpReq)
-    throws JAXBException, SOAPException {
-        super(req, httpReq);
+    public ReflectiveRequestDispatcher(final Management req, 
+            final HandlerContext context) throws JAXBException, SOAPException {
+        super(req, context);
     }
     
     public Management call() throws Exception {
@@ -127,7 +137,8 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         
         final String action = request.getAction();
         try {
-            he.getMethod().invoke(he.getInstance(), action, resource, httpRequest, request, response);
+            he.getMethod().invoke(he.getInstance(), action, resource, 
+                    context, request, response);
         } catch (InvocationTargetException itex) {
             // the cause might be FaultException if a Fault is being indicated by the handler
             final Throwable cause = itex.getCause();

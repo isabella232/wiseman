@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.10 2006-07-08 23:48:23 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.11 2006-07-11 21:30:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -24,13 +24,13 @@ import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.server.EventingSupport;
+import com.sun.ws.management.server.HandlerContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServletRequest;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -52,7 +52,7 @@ public class eventing_Handler implements Handler {
     private final Timer eventTimer = new Timer(true);
     
     public void handle(final String action, final String resource,
-            final HttpServletRequest httpRequest,
+            final HandlerContext context,
             final Management request, final Management response) throws Exception {
         
         final Eventing evtRequest = new Eventing(request);
@@ -62,7 +62,7 @@ public class eventing_Handler implements Handler {
             evtResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
             final Map<String, String> namespaces = new HashMap<String, String>();
             namespaces.put(NS_PREFIX, NS_URI);
-            final Object context = EventingSupport.subscribe(evtRequest, evtResponse, namespaces);
+            final Object evtContext = EventingSupport.subscribe(evtRequest, evtResponse, namespaces);
             
             // setup a timer to send some test events
             final TimerTask sendEventTask = new TimerTask() {
@@ -80,7 +80,7 @@ public class eventing_Handler implements Handler {
                         msg.getBody().addDocument(doc);
                         
                         final String info = root.getNodeName() + " " + root.getTextContent();
-                        if (EventingSupport.sendEvent(context, msg)) {
+                        if (EventingSupport.sendEvent(evtContext, msg)) {
                             LOG.info("Sent event " + info);
                         } else {
                             LOG.info("Event filtered " + info);

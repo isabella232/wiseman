@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.8 2006-06-20 22:27:08 akhilarora Exp $
+ * $Id: RequestDispatcher.java,v 1.9 2006-07-11 21:30:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -35,7 +35,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
@@ -45,22 +44,24 @@ public abstract class RequestDispatcher implements Callable {
     
     private static final Logger LOG = Logger.getLogger(RequestDispatcher.class.getName());
     private static final String UUID_SCHEME = "uuid:";
-    
-    protected final HttpServletRequest httpRequest;
+
+    protected final HandlerContext context;
     protected final Management request;
     protected final Management response;
     
     private boolean responseTooBig = false;
     
-    public RequestDispatcher(final Management req, final HttpServletRequest httpReq)
+    public RequestDispatcher(final Management req, final HandlerContext ctx) 
     throws JAXBException, SOAPException {
         
         request = req;
-        httpRequest = httpReq;
+        context = ctx;
         response = new Management();
         
         // set the character encoding of the response to be the same as that of the request
-        final ContentType contentType = ContentType.createFromHttpContentType(httpReq.getContentType());
+        final ContentType contentType = 
+                ContentType.createFromHttpContentType(
+                context.getHttpServletRequest().getContentType());
         response.setContentType(contentType);
     }
     
@@ -164,14 +165,14 @@ public abstract class RequestDispatcher implements Callable {
     }
     
     public void authenticate() throws SecurityException, JAXBException, SOAPException {
-        final Principal user = httpRequest.getUserPrincipal();
+        final Principal user = context.getHttpServletRequest().getUserPrincipal();
         final String resource = request.getResourceURI();
         // TODO: perform access control, throw SecurityException to deny access
     }
     
     private void log(final byte[] bits) throws UnsupportedEncodingException {
         if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine(new String(bits, httpRequest.getCharacterEncoding()));
+            LOG.fine(new String(bits, context.getHttpServletRequest().getCharacterEncoding()));
         }
     }
 }

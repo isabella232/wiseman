@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: timeout_Handler.java,v 1.2 2006-06-27 19:53:02 akhilarora Exp $
+ * $Id: timeout_Handler.java,v 1.3 2006-07-11 21:30:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.server.Handler;
-import javax.servlet.http.HttpServletRequest;
+import com.sun.ws.management.server.HandlerContext;
 
 public class timeout_Handler implements Handler {
     
     public void handle(final String action, final String resource,
-            final HttpServletRequest httpRequest,
+            final HandlerContext context,
             final Management request, final Management response) throws Exception {
+
         while (true) {
             Thread.currentThread().sleep(Long.MAX_VALUE);
         }

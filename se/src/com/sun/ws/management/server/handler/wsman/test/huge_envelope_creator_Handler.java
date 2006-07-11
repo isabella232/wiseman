@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: huge_envelope_creator_Handler.java,v 1.2 2006-06-27 19:53:02 akhilarora Exp $
+ * $Id: huge_envelope_creator_Handler.java,v 1.3 2006-07-11 21:30:32 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -21,34 +21,34 @@ package com.sun.ws.management.server.handler.wsman.test;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.transfer.Transfer;
 import java.util.Calendar;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class huge_envelope_creator_Handler implements Handler {
     
     public void handle(final String action, final String resource,
-            final HttpServletRequest httpRequest,
-      final Management request, final Management response) throws Exception {
+            final HandlerContext context,
+            final Management request, final Management response) throws Exception {
         
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.setAction(Transfer.GET_RESPONSE_URI);
             final Calendar now = Calendar.getInstance();
-
+            
             final Document doc = response.newDocument();
             final String ns = "https://wiseman.dev.java.net/ws/";
             final Element root = doc.createElementNS(ns +
-              now.get(Calendar.YEAR) + "/" + now.get(Calendar.MONTH) + "/wsman",
-              "wiseman:SomeFakeRootElement");
+                    now.get(Calendar.YEAR) + "/" + now.get(Calendar.MONTH) + "/wsman",
+                    "wiseman:SomeFakeRootElement");
             doc.appendChild(root);
-
+            
             for (int i=0; i < 100; i++) {
                 final Element uuid = doc.createElementNS("http://sun.com/ws/" +
-                  now.get(Calendar.YEAR) + "/" + now.get(Calendar.MONTH) + "/wsman",
-                  "wiseman:SomeFakeElement");
+                        now.get(Calendar.YEAR) + "/" + now.get(Calendar.MONTH) + "/wsman",
+                        "wiseman:SomeFakeElement");
                 uuid.setTextContent(UUID.randomUUID().toString());
                 root.appendChild(uuid);
             }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.8 2006-06-27 21:54:37 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.9 2006-07-11 21:30:33 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -24,6 +24,7 @@ import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.transfer.Transfer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -42,7 +42,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
     private static final String NS_URI = "https://wiseman.dev.java.net/java";
     private static final String NS_PREFIX = "java";
     private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
-
+    
     static {
         NAMESPACES.put(NS_PREFIX, NS_URI);
     }
@@ -53,7 +53,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
     }
     
     public void handle(final String action, final String resource,
-            final HttpServletRequest httpRequest,
+            final HandlerContext hcontext,
             final Management request, final Management response) throws Exception {
         
         final Enumeration enuRequest = new Enumeration(request);

@@ -21,6 +21,7 @@ import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 /**
@@ -72,7 +72,7 @@ public class fragment_Handler extends base_Handler {
     }
 
     public void handle(final String action, final String resource, 
-            final HttpServletRequest httpRequest,
+            final HandlerContext context,
             final Management request, final Management response) throws Exception {
         
         final Document doc = response.newDocument();

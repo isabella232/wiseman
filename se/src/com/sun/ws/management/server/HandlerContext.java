@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.
+ * Copyright 2006 Sun Microsystems, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Handler.java,v 1.3 2006-07-11 21:30:30 akhilarora Exp $
+ * $Id: HandlerContext.java,v 1.1 2006-07-11 21:30:30 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Management;
+import java.util.Map;
+import javax.servlet.ServletConfig;
+import javax.servlet.http.HttpServletRequest;
 
-public interface Handler {
+public interface HandlerContext {
     
-    void handle(final String action, final String resource,
-            final HandlerContext context,
-            final Management request, final Management response) throws Exception;
+    HttpServletRequest getHttpServletRequest();
+    ServletConfig getServletConfig();
+    Map<String, String> getProperties();
 }

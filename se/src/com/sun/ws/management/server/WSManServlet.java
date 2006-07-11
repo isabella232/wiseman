@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.22 2006-07-10 01:41:08 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.23 2006-07-11 21:30:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +55,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -66,7 +68,6 @@ import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -79,17 +80,11 @@ public class WSManServlet extends HttpServlet {
     private static final Logger LOG = Logger.getLogger(WSManServlet.class.getName());
     private static final long DEFAULT_TIMEOUT = 30000;
     private static final long MIN_ENVELOPE_SIZE = 8192;
+    private static final String PROPERTY_FILE_NAME = "/wsman.properties";
     
-    private static final Properties wsmanProperties = new Properties();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
-    
     private static final Map<QName, String> extraIdInfo = new HashMap<QName, String>();
-    
-    public static Map<Object, Object> getProperties() {
-        return Collections.unmodifiableMap(wsmanProperties);
-    }
-    
-    private XmlBinding xmlBinding = null;
+    private Map<String, String> properties = null;
     
     public void init() throws ServletException {
         final InputStream isl = WSManServlet.class.getResourceAsStream("/log.properties");
@@ -103,19 +98,32 @@ public class WSManServlet extends HttpServlet {
                 LOG.log(Level.WARNING, "Error reading log configuration", iex);
             }
         }
-        
-        final InputStream ism = WSManServlet.class.getResourceAsStream("/wsman.properties");
+
+        // load subsystem properties and save them in a type-safe, unmodifiable Map
+        final InputStream ism = WSManServlet.class.getResourceAsStream(PROPERTY_FILE_NAME);
         if (ism != null) {
+            final Properties props = new Properties();
             try {
-                wsmanProperties.load(ism);
+                props.load(ism);
             } catch (IOException iex) {
-                LOG.log(Level.WARNING, "Error reading wsman properties", iex);
+                LOG.log(Level.WARNING, "Error reading properties from " + PROPERTY_FILE_NAME, iex);
                 throw new ServletException(iex);
             }
+            final Map<String, String> propertySet = new HashMap<String, String>();
+            final Iterator<Entry<Object, Object>> ei = props.entrySet().iterator();
+            while (ei.hasNext()) {
+                final Entry<Object, Object> entry = ei.next();
+                final Object key = entry.getKey();
+                final Object value = entry.getValue();
+                if (key instanceof String && value instanceof String) {
+                    propertySet.put((String) key, (String) value);
+                }
+            }
+            properties = Collections.unmodifiableMap(propertySet);
         }
         
-        extraIdInfo.put(Identify.BUILD_ID, wsmanProperties.getProperty("build.version"));
-        extraIdInfo.put(Identify.SPEC_VERSION, wsmanProperties.getProperty("spec.version"));
+        extraIdInfo.put(Identify.BUILD_ID, properties.get("build.version"));
+        extraIdInfo.put(Identify.SPEC_VERSION, properties.get("spec.version"));
         
         try {
             SOAP.initialize();
@@ -152,7 +160,7 @@ public class WSManServlet extends HttpServlet {
         
         try {
             // schema might be null if no XSDs were found in the war
-            SOAP.setXmlBinding(xmlBinding = new XmlBinding(schema));
+            SOAP.setXmlBinding(new XmlBinding(schema));
         } catch (JAXBException jex) {
             LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
             throw new ServletException(jex);
@@ -209,8 +217,8 @@ public class WSManServlet extends HttpServlet {
     }
     
     protected RequestDispatcher createDispatcher(final Management request,
-            final HttpServletRequest req) throws SOAPException, JAXBException, IOException {
-        return new ReflectiveRequestDispatcher(request, req);
+            final HandlerContext context) throws SOAPException, JAXBException, IOException {
+        return new ReflectiveRequestDispatcher(request, context);
     }
     
     protected void handle(final InputStream is, final ContentType contentType,
@@ -230,8 +238,10 @@ public class WSManServlet extends HttpServlet {
         if (timeoutDuration != null) {
             timeout = timeoutDuration.getTimeInMillis(new Date());
         }
-        
-        final RequestDispatcher dispatcher = createDispatcher(request, req);
+
+        final HandlerContext context = 
+                new HandlerContextImpl(req, getServletConfig(), properties);
+        final RequestDispatcher dispatcher = createDispatcher(request, context);
         
         long maxEnvelopeSize = Long.MAX_VALUE;
         final MaxEnvelopeSizeType maxSize = request.getMaxEnvelopeSize();
@@ -289,8 +299,8 @@ public class WSManServlet extends HttpServlet {
         }
         final Identify response = new Identify();
         response.setIdentifyResponse(
-                wsmanProperties.getProperty("impl.vendor") + " - " + wsmanProperties.getProperty("impl.url"),
-                wsmanProperties.getProperty("impl.version"),
+                properties.get("impl.vendor") + " - " + properties.get("impl.url"),
+                properties.get("impl.version"),
                 Management.NS_URI,
                 extraIdInfo);
         response.writeTo(os);
