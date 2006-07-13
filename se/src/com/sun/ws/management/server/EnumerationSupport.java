@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.18 2006-06-28 22:32:46 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.19 2006-07-13 00:15:59 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -98,7 +98,7 @@ public final class EnumerationSupport extends BaseSupport {
      */
     public static void enumerate(final Enumeration request, final Enumeration response,
             final EnumerationIterator enumIterator, final Object clientContext,
-            final Map<String, String> namespaces)
+            final Map<String, String>... namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         assert datatypeFactory != null : UNINITIALIZED;
