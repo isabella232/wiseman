@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.7 2006-06-12 23:53:58 akhilarora Exp $
+ * $Id: TestBase.java,v 1.8 2006-07-13 20:58:19 akhilarora Exp $
  */
 
 package management;
 
+import com.sun.ws.management.Message;
 import com.sun.ws.management.soap.SOAP;
 import junit.framework.*;
 import com.sun.ws.management.transport.HttpClient;
@@ -29,8 +30,8 @@ import java.io.FileOutputStream;
  */
 public abstract class TestBase extends TestCase {
     
-    protected static final String UUID_SCHEME = "uuid:";
-    protected static final String DESTINATION =
+    public static final String UUID_SCHEME = "uuid:";
+    public static final String DESTINATION =
             System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
     
     protected static final String NS_URI = "http://schemas.company.com/model";
@@ -57,5 +58,9 @@ public abstract class TestBase extends TestCase {
     
     protected void tearDown() throws java.lang.Exception {
         logfile.close();
+    }
+    
+    public void log(final Message msg) throws Exception {
+        msg.prettyPrint(logfile);
     }
 }
