@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: NamespaceMap.java,v 1.3 2006-06-28 22:32:46 akhilarora Exp $
+ * $Id: NamespaceMap.java,v 1.4 2006-07-13 00:17:44 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -47,12 +47,27 @@ public final class NamespaceMap implements NamespaceContext {
         namespaces = new HashMap<String, String>(ns);
     }
     
+    // walk the document tree to extract all namespace declarations,
+    // combining namespaces from (optional) supplied maps
+    public NamespaceMap(final Node node, final Map<String, String>... nsMaps) {
+        namespaces = new HashMap<String, String>();
+        
+        scanNodeRecursive(node);
+        
+        // combine declarations from supplied maps, if any
+        if (nsMaps != null) {
+            for (final Map<String, String> ns : nsMaps) {
+                namespaces.putAll(ns);
+            }
+        }
+    }
+    
     // walk the message tree to extract all namespace declarations,
     // combining namespaces from (optional) supplied maps
     public NamespaceMap(final Message msg, final Map<String, String>... nsMaps) {
         namespaces = new HashMap<String, String>();
         final SOAPEnvelope env = msg.getEnvelope();
-
+        
         // first collect all namespaces declared in the soap envelope
         final Iterator<String> pi = env.getNamespacePrefixes();
         while (pi.hasNext()) {
@@ -61,7 +76,7 @@ public final class NamespaceMap implements NamespaceContext {
             assert uri != null : "namespace uri for env prefix " + prefix + " cannot be null";
             namespaces.put(prefix, uri);
         }
-
+        
         // now walk the soap message to collect others
         scanNodeRecursive(env);
         
@@ -74,34 +89,39 @@ public final class NamespaceMap implements NamespaceContext {
     }
     
     private void scanNodeRecursive(final Node node) {
-        if (node != null) {
-            final String prefix = node.getPrefix();
-            final String uri = node.getNamespaceURI();
-            if (prefix != null) {
-                switch (node.getNodeType()) {
-                    case Node.ATTRIBUTE_NODE:
-                        if ("xmlns".equals(prefix) && "http://www.w3.org/2000/xmlns/".equals(uri)) {
-                            namespaces.put(node.getLocalName(), node.getNodeValue());
-                        }
-                        break;
-                        
-                    case Node.ELEMENT_NODE:
-                        namespaces.put(prefix, uri);
-                        
-                        final NodeList children = node.getChildNodes();
-                        for (int i = children.getLength(); i >= 0; i--) {
-                            scanNodeRecursive(children.item(i));
-                        }
-                        
-                        final NamedNodeMap attributes = node.getAttributes();
-                        if (attributes != null) {
-                            for (int i = attributes.getLength(); i >= 0; i--) {
-                                scanNodeRecursive(attributes.item(i));
-                            }
-                        }
-                        break;
+        if (node == null) {
+            return;
+        }
+        
+        final String prefix = node.getPrefix();
+        final String uri = node.getNamespaceURI();
+        
+        switch (node.getNodeType()) {
+            case Node.ATTRIBUTE_NODE:
+                if ("xmlns".equals(prefix) && "http://www.w3.org/2000/xmlns/".equals(uri)) {
+                    namespaces.put(node.getLocalName(), node.getNodeValue());
                 }
-            }
+                break;
+                
+            case Node.DOCUMENT_NODE:
+            case Node.DOCUMENT_FRAGMENT_NODE:
+            case Node.ELEMENT_NODE:
+                if (prefix != null) {
+                    namespaces.put(prefix, uri);
+                }
+                
+                final NodeList children = node.getChildNodes();
+                for (int i = children.getLength(); i >= 0; i--) {
+                    scanNodeRecursive(children.item(i));
+                }
+                
+                final NamedNodeMap attributes = node.getAttributes();
+                if (attributes != null) {
+                    for (int i = attributes.getLength(); i >= 0; i--) {
+                        scanNodeRecursive(attributes.item(i));
+                    }
+                }
+                break;
         }
     }
     
