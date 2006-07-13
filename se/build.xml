@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.32 2006-07-10 00:19:48 akhilarora Exp $
+ $Id: build.xml,v 1.33 2006-07-13 21:15:44 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -174,6 +174,8 @@
                   includes="*.xsd" />
       <zipfileset dir="${build.classes.dir}"
                   includes="*.properties" />
+      <zipfileset dir="${src.dir}"
+                  includes="**/*.xml" />
     </war>
   </target>
   
@@ -385,4 +387,29 @@
     </java>
   </target>
   
+  <target name="interop" depends="lib,test-compile">
+    <copy todir="${ant.home}/lib" 
+          file="${test.lib.dir}/junit.jar" />
+    <taskdef name="junit"
+             classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" />
+    <junit dir="${test.run.dir}"
+           showoutput="true"
+           fork="true">
+      <assertions>
+        <enable/>
+      </assertions>
+      <batchtest todir="${test.run.dir}">
+        <fileset dir="${test.src.dir}">
+          <include name="interop/_06/*Test.java" />
+        </fileset>
+      </batchtest>
+      <classpath refid="test.run.classpath" />
+      <formatter usefile="false" type="brief"/>
+      <formatter type="xml"/>
+      <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+      <jvmarg value="-Dwsman.user=wsman" />
+      <jvmarg value="-Dwsman.password=secret" />
+      <jvmarg value="-Dwsman.basicauthentication=true" />
+    </junit>
+  </target>
 </project>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<p:CIM_NumericSensor 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:p="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" 
+    xmlns:cim="http://schemas.dmtf.org/wbem/wsman/1/base">
+    <p:Accuracy>0</p:Accuracy>
+    <p:Availability xsi:nil="true"/>
+    <p:BaseUnits>2</p:BaseUnits>
+    <p:Caption>Temperature(10.0.32)</p:Caption>
+    <p:CreationClassName>NumericSensor</p:CreationClassName>
+    <p:CurrentReading>190</p:CurrentReading>
+    <p:CurrentState>OK</p:CurrentState>
+    <p:Description>PCI-X Slot Temp(10.0.32):Temperature for Other 1</p:Description>
+    <p:DeviceID>10.0.32</p:DeviceID>
+    <p:ElementName>PCI-X Slot Temp(10.0.32)</p:ElementName>
+    <p:EnabledDefault>2</p:EnabledDefault>
+    <p:EnabledState>5</p:EnabledState>
+    <p:ErrorCleared xsi:nil="true"/>
+    <p:ErrorDescription xsi:nil="true"/>
+    <p:HealthState xsi:nil="true"/>
+    <p:Hysteresis>0</p:Hysteresis>
+    <p:InstallDate xsi:nil="true"/>
+    <p:IsLinear>true</p:IsLinear>
+    <p:LastErrorCode xsi:nil="true"/>
+    <p:LowerThresholdCritical>-550</p:LowerThresholdCritical>
+    <p:LowerThresholdFatal>-550</p:LowerThresholdFatal>
+    <p:LowerThresholdNonCritical>40</p:LowerThresholdNonCritical>
+    <p:MaxQuiesceTime xsi:nil="true"/>
+    <p:MaxReadable>2000</p:MaxReadable>
+    <p:MinReadable>-550</p:MinReadable>
+    <p:Name>PCI-X Slot Temp(10.0.32)</p:Name>
+    <p:NominalReading>300</p:NominalReading>
+    <p:NormalMax>350</p:NormalMax>
+    <p:NormalMin>250</p:NormalMin>
+    <p:OtherEnabledState xsi:nil="true"/>
+    <p:OtherSensorTypeDescription xsi:nil="true"/>
+    <p:PollingInterval xsi:nil="true"/>
+    <p:PossibleStates>OK</p:PossibleStates>
+    <p:PossibleStates>N/A</p:PossibleStates>
+    <p:PossibleStates>at or below lower non-critical threshold</p:PossibleStates>
+    <p:PossibleStates>at or below lower critical threshold</p:PossibleStates>
+    <p:PossibleStates>at or below lower non-recoverable threshold</p:PossibleStates>
+    <p:PossibleStates>at or above upper non-critical threshold</p:PossibleStates>
+    <p:PossibleStates>at or above upper critical threshold</p:PossibleStates>
+    <p:PossibleStates>at or above upper non-recoverable threshold</p:PossibleStates>
+    <p:PowerManagementSupported xsi:nil="true"/>
+    <p:PowerOnHours xsi:nil="true"/>
+    <p:RateUnits>0</p:RateUnits>
+    <p:RequestedState>12</p:RequestedState>
+    <p:Resolution>0</p:Resolution>
+    <p:SensorType>2</p:SensorType>
+    <p:Status xsi:nil="true"/>
+    <p:StatusInfo xsi:nil="true"/>
+    <p:SystemCreationClassName>ComputerSystem</p:SystemCreationClassName>
+    <p:SystemName>IPMI Controller 32</p:SystemName>
+    <p:TimeOfLastStateChange xsi:nil="true"/>
+    <p:Tolerance xsi:nil="true"/>
+    <p:TotalPowerOnHours xsi:nil="true"/>
+    <p:UnitModifier>-1</p:UnitModifier>
+    <p:UpperThresholdCritical>550</p:UpperThresholdCritical>
+    <p:UpperThresholdFatal>-550</p:UpperThresholdFatal>
+    <p:UpperThresholdNonCritical>450</p:UpperThresholdNonCritical>
+</p:CIM_NumericSensor>
