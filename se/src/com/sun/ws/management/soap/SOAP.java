@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.10 2006-07-10 01:41:09 akhilarora Exp $
+ * $Id: SOAP.java,v 1.11 2006-07-13 00:12:03 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -59,6 +59,7 @@ public abstract class SOAP extends Message {
     public static final QName RECEIVER = new QName(NS_URI, "Receiver", NS_PREFIX);
     
     public static final String TRUE = "true";
+    public static final String FALSE = "false";
     
     private static XmlBinding binding = null;
     
