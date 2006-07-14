@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.1 2006-07-13 21:15:42 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.2 2006-07-14 23:01:36 akhilarora Exp $
  */
 
 package interop._06;
@@ -30,6 +30,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.xml.XML;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPHeaderElement;
 import management.TestBase;
@@ -45,6 +47,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3._2003._05.soap_envelope.Fault;
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -62,7 +65,7 @@ public final class InteropTest extends TestBase {
     private static final String NUMERIC_SENSOR_RESOURCE =
             "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
     
-    private static final String TIMEOUT_RESOURCE = 
+    private static final String TIMEOUT_RESOURCE =
             "wsman:test/timeout";
     
     private static final String CIM_COMPUTER_SYSTEM = "CIM_ComputerSystem";
@@ -99,7 +102,7 @@ public final class InteropTest extends TestBase {
         mgmt.setResourceURI(COMPUTER_SYSTEM_RESOURCE);
         
         final Set<SelectorType> selectors = new HashSet<SelectorType>();
-    
+        
         final SelectorType selector1 = new SelectorType();
         selector1.setName("CreationClassName");
         selector1.getContent().add(CIM_COMPUTER_SYSTEM);
@@ -152,7 +155,7 @@ public final class InteropTest extends TestBase {
         mgmt.setResourceURI(COMPUTER_SYSTEM_RESOURCE.substring(0, COMPUTER_SYSTEM_RESOURCE.length() - 1));
         
         final Set<SelectorType> selectors = new HashSet<SelectorType>();
-    
+        
         final SelectorType selector1 = new SelectorType();
         selector1.setName("CreationClassName");
         selector1.getContent().add(CIM_COMPUTER_SYSTEM);
@@ -212,7 +215,7 @@ public final class InteropTest extends TestBase {
         mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
         
         final Set<SelectorType> selectors = new HashSet<SelectorType>();
-    
+        
         final SelectorType selector1 = new SelectorType();
         selector1.setName("CreationClassName");
         selector1.getContent().add(CIM_NUMERIC_SENSOR);
@@ -264,7 +267,7 @@ public final class InteropTest extends TestBase {
     }
     
     /**
-     * Interop Scenario 6.5 - Get failure with nvalid selectors
+     * Interop Scenario 6.5 - Get failure with invalid selectors
      */
     public void testGetFailWithInvalidSelectors() throws Exception {
         
@@ -277,7 +280,7 @@ public final class InteropTest extends TestBase {
         mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
         
         final Set<SelectorType> selectors = new HashSet<SelectorType>();
-    
+        
         final SelectorType selector1 = new SelectorType();
         selector1.setName("CreationClassName");
         selector1.getContent().add(CIM_NUMERIC_SENSOR);
@@ -341,7 +344,7 @@ public final class InteropTest extends TestBase {
         assertEquals(TimedOutFault.TIMED_OUT, fault.getCode().getSubcode().getValue());
         assertEquals(TimedOutFault.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
     }
-
+    
     /**
      * Interop Scenario 6.7 - Fragment Get
      */
@@ -356,7 +359,7 @@ public final class InteropTest extends TestBase {
         mgmt.setResourceURI(COMPUTER_SYSTEM_RESOURCE);
         
         final Set<SelectorType> selectors = new HashSet<SelectorType>();
-    
+        
         final SelectorType selector1 = new SelectorType();
         selector1.setName("CreationClassName");
         selector1.getContent().add(CIM_COMPUTER_SYSTEM);
@@ -406,11 +409,11 @@ public final class InteropTest extends TestBase {
         assertNotNull(roles);
         assertTrue(roles.length == 1);
         assertEquals("p", roles[0].getPrefix());
-        assertEquals("http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem", roles[0].getNamespaceURI());
+        assertEquals(COMPUTER_SYSTEM_RESOURCE, roles[0].getNamespaceURI());
         assertEquals("Roles", roles[0].getLocalName());
         assertEquals("Hardware Management Controller", roles[0].getTextContent());
     }
-
+    
     /**
      * Interop Scenario 7.1 - Enumerate instances of CIM_NumericSensor
      */
@@ -458,7 +461,7 @@ public final class InteropTest extends TestBase {
         assertNotNull(context);
         
         // pull request
-
+        
         mgmt = new Management();
         mgmt.setAction(Enumeration.PULL_ACTION_URI);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -504,7 +507,7 @@ public final class InteropTest extends TestBase {
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         
         // second pull request
-
+        
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
         pi = new Enumeration(mgmt);
@@ -538,5 +541,95 @@ public final class InteropTest extends TestBase {
         assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+    }
+    
+    /**
+     * Interop Scenario 9.1 - Change Threshold on an instance of CIM_NumericSensor
+     */
+    public void testPut() throws Exception {
+        
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.PUT_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        final Set<SelectorType> selectors = new HashSet<SelectorType>();
+        
+        final SelectorType selector1 = new SelectorType();
+        selector1.setName("CreationClassName");
+        selector1.getContent().add(CIM_NUMERIC_SENSOR);
+        selectors.add(selector1);
+        
+        final SelectorType selector2 = new SelectorType();
+        selector2.setName("DeviceID");
+        selector2.getContent().add("10.0.32");
+        selectors.add(selector2);
+        
+        final SelectorType selector3 = new SelectorType();
+        selector3.setName("SystemCreationClassName");
+        selector3.getContent().add(CIM_COMPUTER_SYSTEM);
+        selectors.add(selector3);
+        
+        final SelectorType selector4 = new SelectorType();
+        selector4.setName("SystemName");
+        selector4.getContent().add("IPMI Controller 32");
+        selectors.add(selector4);
+        
+        mgmt.setSelectors(selectors);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        Document resourceDoc = null;
+        final String resourceDocName = "Put.xml";
+        final InputStream is = InteropTest.class.getResourceAsStream(resourceDocName);
+        if (is == null) {
+            fail("Failed to load " + resourceDocName);
+        }
+        try {
+            resourceDoc = mgmt.getDocumentBuilder().parse(is);
+        } catch (Exception ex) {
+            fail("Error parsing " + resourceDocName + ": " + ex.getMessage());
+        }
+        
+        mgmt.getBody().addDocument(resourceDoc);
+        
+        log(mgmt);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Transfer to = new Transfer(response);
+        
+        assertEquals(Transfer.PUT_RESPONSE_URI, to.getAction());
+        final SOAPElement[] item = to.getChildren(to.getBody());
+        assertNotNull(item);
+        assertTrue(item.length == 1);
+        assertEquals("p", item[0].getPrefix());
+        assertEquals(NUMERIC_SENSOR_RESOURCE, item[0].getNamespaceURI());
+        assertEquals(CIM_NUMERIC_SENSOR, item[0].getLocalName());
+
+        final QName lowerThresholdName = new QName(NUMERIC_SENSOR_RESOURCE, 
+                "LowerThresholdNonCritical", "p");
+        final SOAPElement[] lowerThreshold = to.getChildren(item[0], lowerThresholdName);
+        assertNotNull(lowerThreshold);
+        assertTrue(lowerThreshold.length == 1);
+        assertEquals("100", lowerThreshold[0].getTextContent());
     }
 }

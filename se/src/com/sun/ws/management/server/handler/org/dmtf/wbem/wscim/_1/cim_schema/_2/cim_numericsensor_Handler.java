@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.1 2006-07-13 21:15:45 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.2 2006-07-14 23:01:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -58,6 +58,11 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             if (selectors.size() < 4) {
                 throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
             }
+        } else if (Transfer.PUT_ACTION_URI.equals(action)) {
+            response.setAction(Transfer.PUT_RESPONSE_URI);
+            final Document resourceDoc = request.getBody().extractContentAsDocument();
+            // TODO: upate the resource
+            response.getBody().addDocument(resourceDoc);
         } else if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             final Enumeration ereq = new Enumeration(request);
             final Enumeration eres = new Enumeration(response);

@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.33 2006-07-13 21:15:44 akhilarora Exp $
+ $Id: build.xml,v 1.34 2006-07-14 23:01:36 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -288,6 +288,11 @@
       <classpath refid="test.compile.classpath" />
       <src path="${test.src.dir}" />
     </javac>
+    <copy todir="${test.build.classes.dir}">
+      <fileset dir="${test.src.dir}">
+        <include name="**/*.xml" />
+      </fileset>
+    </copy>
   </target>
   
   <path id="test.run.classpath">
