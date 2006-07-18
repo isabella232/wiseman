@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.5 2006-07-08 23:48:22 akhilarora Exp $
+ * $Id: BaseSupport.java,v 1.6 2006-07-18 18:16:26 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -22,6 +22,7 @@ import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.xml.XPath;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -72,9 +73,15 @@ class BaseSupport {
     protected static String initFilter(final String filterDialect, final List<Object> filterExpressions)
     throws FaultException {
         
-        if (!com.sun.ws.management.xml.XPath.NS_URI.equals(filterDialect)) {
-            throw new FilteringRequestedUnavailableFault(null,
-                    com.sun.ws.management.xml.XPath.SUPPORTED_FILTER_DIALECTS);
+        String dialect = filterDialect;
+        if (dialect == null) {
+            // implied value
+            dialect = XPath.NS_URI;
+        } else {
+            if (!XPath.isSupportedDialect(dialect)) {
+                throw new FilteringRequestedUnavailableFault(null,
+                        com.sun.ws.management.xml.XPath.SUPPORTED_FILTER_DIALECTS);
+            }
         }
         if (filterExpressions == null) {
             throw new InvalidMessageFault("Missing a filter expression");
