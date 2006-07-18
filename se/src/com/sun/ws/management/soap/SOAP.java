@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.11 2006-07-13 00:12:03 akhilarora Exp $
+ * $Id: SOAP.java,v 1.12 2006-07-18 18:12:03 akhilarora Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -103,17 +103,13 @@ public abstract class SOAP extends Message {
         return (SOAPHeaderElement[]) ml.toArray(new SOAPHeaderElement[ml.size()]);
     }
     
-    public SOAPElement[] getChildren(final SOAPElement parent) throws SOAPException {
-        return getChildren(parent, null);
-    }
-    
-    public SOAPElement[] getChildren(final SOAPElement parent, final QName qname) throws SOAPException {
+    public SOAPElement[] getChildren(final SOAPElement parent, final QName... qname) throws SOAPException {
         final List<SOAPElement> al = new ArrayList<SOAPElement>();
         final Iterator<SOAPElement> ei;
-        if (qname == null) {
-            ei = parent.getChildElements();
+        if (qname != null && qname.length > 0 && qname[0] != null) {
+            ei = parent.getChildElements(qname[0]);
         } else {
-            ei = parent.getChildElements(qname);
+            ei = parent.getChildElements();
         }
         while (ei.hasNext()) {
             al.add(ei.next());
@@ -121,7 +117,7 @@ public abstract class SOAP extends Message {
         return (SOAPElement[]) al.toArray(new SOAPElement[al.size()]);
     }
     
-    protected Object unbind(final SOAPElement parent, final QName qname) throws JAXBException, SOAPException {
+    protected Object unbind(final SOAPElement parent, final QName... qname) throws JAXBException, SOAPException {
         final SOAPElement[] elements = getChildren(parent, qname);
         if (elements.length == 0) {
             return null;
