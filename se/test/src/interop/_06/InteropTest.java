@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.2 2006-07-14 23:01:36 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.3 2006-07-18 18:55:06 akhilarora Exp $
  */
 
 package interop._06;
@@ -24,9 +24,12 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.xml.XML;
@@ -48,9 +51,13 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
@@ -65,8 +72,8 @@ public final class InteropTest extends TestBase {
     private static final String NUMERIC_SENSOR_RESOURCE =
             "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
     
-    private static final String TIMEOUT_RESOURCE =
-            "wsman:test/timeout";
+    private static final String TIMEOUT_RESOURCE = "wsman:test/timeout";
+    private static final String PULL_SOURCE_RESOURCE = "wsman:test/pull_source";
     
     private static final String CIM_COMPUTER_SYSTEM = "CIM_ComputerSystem";
     private static final String CIM_NUMERIC_SENSOR = "CIM_NumericSensor";
@@ -530,6 +537,471 @@ public final class InteropTest extends TestBase {
         // there should be no context at end of sequence
         assertNull(ect);
         ilt = pr.getItems();
+        assertNotNull(ilt);
+        il = ilt.getAny();
+        assertNotNull(il);
+        assertTrue(il.size() == 1);
+        obj = il.get(0);
+        assertTrue(obj instanceof Node);
+        node = (Node) obj;
+        assertEquals("p", node.getPrefix());
+        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+    }
+    
+    /**
+     * Interop Scenario 7.2 - Optimized Enumeration
+     */
+    public void testOptimizedEnumeration() throws Exception {
+        
+        Management mgmt = new Management();
+        mgmt.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        final Enumeration ei = new Enumeration(mgmt);
+        // TODO: add optimize option
+        ei.setEnumerate(null, null, null);
+        
+        log(mgmt);
+        Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration eo = new Enumeration(response);
+        assertEquals(Enumeration.ENUMERATE_RESPONSE_URI, eo.getAction());
+        final EnumerateResponse er = eo.getEnumerateResponse();
+        assertNotNull(er);
+        EnumerationContextType ect = er.getEnumerationContext();
+        assertNotNull(ect);
+        Object context = ect.getContent().get(0);
+        assertNotNull(context);
+        
+        /* TODO
+        // should contain an item due to the optimization
+        List<Object> il = er.getAny();
+        assertNotNull(il);
+        assertTrue(il.size() == 1);
+        Object obj = il.get(0);
+        assertTrue(obj instanceof Node);
+        Node node = (Node) obj;
+        assertEquals("p", node.getPrefix());
+        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+        
+        // pull request
+        
+        mgmt = new Management();
+        mgmt.setAction(Enumeration.PULL_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        mgmt.setTimeout(timeout);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        mgmt.setLocale(locale);
+        
+        Enumeration pi = new Enumeration(mgmt);
+        pi.setPull(context, -1, 1, null);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        Enumeration po = new Enumeration(response);
+        assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
+        PullResponse pr = po.getPullResponse();
+        assertNotNull(pr);
+        // at end of sequence now
+        assertNotNull(pr.getEndOfSequence());
+        ect = pr.getEnumerationContext();
+        assertNotNull(ect);
+        context = ect.getContent().get(0);
+        assertNotNull(context);
+        ItemListType ilt = pr.getItems();
+        assertNotNull(ilt);
+        il = ilt.getAny();
+        assertNotNull(il);
+        assertTrue(il.size() == 1);
+        obj = il.get(0);
+        assertTrue(obj instanceof Node);
+        node = (Node) obj;
+        assertEquals("p", node.getPrefix());
+        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+        */
+    }
+    
+    /**
+     * Interop Scenario 7.3 - Enumerate Failure
+     */
+    public void testEnumerateFailure() throws Exception {
+        
+        Management mgmt = new Management();
+        mgmt.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        final Enumeration ei = new Enumeration(mgmt);
+        ei.setEnumerate(null, null, null);
+        
+        log(mgmt);
+        Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration eo = new Enumeration(response);
+        assertEquals(Enumeration.ENUMERATE_RESPONSE_URI, eo.getAction());
+        final EnumerateResponse er = eo.getEnumerateResponse();
+        assertNotNull(er);
+        EnumerationContextType ect = er.getEnumerationContext();
+        assertNotNull(ect);
+        Object context = ect.getContent().get(0);
+        assertNotNull(context);
+        
+        // pull request
+        
+        mgmt = new Management();
+        mgmt.setAction(Enumeration.PULL_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        mgmt.setTimeout(timeout);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        mgmt.setLocale(locale);
+        
+        Enumeration pi = new Enumeration(mgmt);
+        pi.setPull(context, -1, 1, null);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        Enumeration po = new Enumeration(response);
+        assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
+        PullResponse pr = po.getPullResponse();
+        assertNotNull(pr);
+        // not end of sequence yet
+        assertNull(pr.getEndOfSequence());
+        ect = pr.getEnumerationContext();
+        assertNotNull(ect);
+        context = ect.getContent().get(0);
+        assertNotNull(context);
+        ItemListType ilt = pr.getItems();
+        assertNotNull(ilt);
+        List<Object> il = ilt.getAny();
+        assertNotNull(il);
+        assertTrue(il.size() == 1);
+        Object obj = il.get(0);
+        assertTrue(obj instanceof Node);
+        Node node = (Node) obj;
+        assertEquals("p", node.getPrefix());
+        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+        
+        // second pull request with invalid context
+        
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        pi = new Enumeration(mgmt);
+        // create an invalid context
+        context = UUID_SCHEME + UUID.randomUUID().toString();
+        pi.setPull(context, -1, 1, null);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (!response.getBody().hasFault()) {
+            fail("Invalid enumeration context accepted");
+        }
+        
+        final Fault fault = response.getFault();
+        assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
+        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT, fault.getCode().getSubcode().getValue());
+        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT_REASON, fault.getReason().getText().get(0).getValue());
+    }
+    
+    /**
+     * Interop Scenario 7.4 - Enumerate ObjectAndEPR
+     */
+    public void testEnumerateObjectAndEPR() throws Exception {
+        
+        Management mgmt = new Management();
+        mgmt.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        final Enumeration ei = new Enumeration(mgmt);
+        // TODO: add EnumerationMode.EnumerateObjectAndEPR
+        ei.setEnumerate(null, null, null);
+        
+        log(mgmt);
+        Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration eo = new Enumeration(response);
+        assertEquals(Enumeration.ENUMERATE_RESPONSE_URI, eo.getAction());
+        final EnumerateResponse er = eo.getEnumerateResponse();
+        assertNotNull(er);
+        EnumerationContextType ect = er.getEnumerationContext();
+        assertNotNull(ect);
+        Object context = ect.getContent().get(0);
+        assertNotNull(context);
+        
+        // pull request
+        
+        mgmt = new Management();
+        mgmt.setAction(Enumeration.PULL_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        mgmt.setTimeout(timeout);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        mgmt.setLocale(locale);
+        
+        Enumeration pi = new Enumeration(mgmt);
+        pi.setPull(context, -1, 1, null);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        /* TODO
+        Enumeration po = new Enumeration(response);
+        assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
+        PullResponse pr = po.getPullResponse();
+        assertNotNull(pr);
+        assertNotNull(pr.getEndOfSequence());
+        ect = pr.getEnumerationContext();
+        // there should be no context at end of sequence
+        assertNull(ect);
+
+        ItemListType ilt = pr.getItems();
+        assertNotNull(ilt);
+        List<Object> il = ilt.getAny();
+        assertNotNull(il);
+        // there should be two items - a sensor and its EPR
+        assertTrue(il.size() == 2);
+        
+        // the first item is a sensor
+        Object obj = il.get(0);
+        assertTrue(obj instanceof Node);
+        Node node = (Node) obj;
+        assertEquals("p", node.getPrefix());
+        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+        
+        // the second item should be the EPR
+        obj = il.get(1);
+        assertTrue(obj instanceof Node);
+        node = (Node) obj;
+        assertEquals(Addressing.ENDPOINT_REFERENCE.getNamespaceURI(), node.getNamespaceURI());
+        assertEquals(Addressing.ENDPOINT_REFERENCE.getLocalPart(), node.getLocalName());
+        assertTrue(obj instanceof SOAPElement);
+        final SOAPElement elt = (SOAPElement) obj;
+        final EndpointReferenceType epr = response.getEndpointReference(elt);
+        assertNotNull(epr);
+        assertEquals(Addressing.ANONYMOUS_ENDPOINT_URI, epr.getAddress().getValue());
+        for (final Object refp : epr.getReferenceParameters().getAny()) {
+            System.out.println(refp.getClass().getName() + ": " + refp);
+        }
+        */
+    }
+    
+    /**
+     * Interop Scenario 7.5 - Filtered Enumeration with XPath filter dialect
+     */
+    public void testFilteredEnumeration() throws Exception {
+        
+        Management mgmt = new Management();
+        mgmt.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        final Enumeration ei = new Enumeration(mgmt);
+        final FilterType filter = new FilterType();
+        // TODO: correct filter expression
+        filter.getContent().add("//SensorType/text()=\"2\"");
+        ei.setEnumerate(null, null, filter);
+        
+        log(mgmt);
+        Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration eo = new Enumeration(response);
+        assertEquals(Enumeration.ENUMERATE_RESPONSE_URI, eo.getAction());
+        final EnumerateResponse er = eo.getEnumerateResponse();
+        assertNotNull(er);
+        EnumerationContextType ect = er.getEnumerationContext();
+        assertNotNull(ect);
+        Object context = ect.getContent().get(0);
+        assertNotNull(context);
+        
+        // pull request
+        
+        mgmt = new Management();
+        mgmt.setAction(Enumeration.PULL_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        mgmt.setTimeout(timeout);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        mgmt.setLocale(locale);
+        
+        Enumeration pi = new Enumeration(mgmt);
+        pi.setPull(context, -1, 1, null);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        /* TODO
+        Enumeration po = new Enumeration(response);
+        assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
+        PullResponse pr = po.getPullResponse();
+        assertNotNull(pr);
+        // not end of sequence yet
+        assertNull(pr.getEndOfSequence());
+        ect = pr.getEnumerationContext();
+        assertNotNull(ect);
+        context = ect.getContent().get(0);
+        assertNotNull(context);
+        ItemListType ilt = pr.getItems();
+        assertNotNull(ilt);
+        List<Object> il = ilt.getAny();
+        assertNotNull(il);
+        assertTrue(il.size() == 1);
+        Object obj = il.get(0);
+        assertTrue(obj instanceof Node);
+        Node node = (Node) obj;
+        assertEquals("p", node.getPrefix());
+        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+        
+        // second pull request
+        
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        pi = new Enumeration(mgmt);
+        pi.setPull(context, -1, 1, null);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        po = new Enumeration(response);
+        assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
+        pr = po.getPullResponse();
+        assertNotNull(pr);
+        // at end of sequence now
+        assertNotNull(pr.getEndOfSequence());
+        ect = pr.getEnumerationContext();
+        // there should be no context at end of sequence
+        assertNull(ect);
         ilt = pr.getItems();
         assertNotNull(ilt);
         il = ilt.getAny();
@@ -541,6 +1013,7 @@ public final class InteropTest extends TestBase {
         assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+        */
     }
     
     /**
@@ -631,5 +1104,136 @@ public final class InteropTest extends TestBase {
         assertNotNull(lowerThreshold);
         assertTrue(lowerThreshold.length == 1);
         assertEquals("100", lowerThreshold[0].getTextContent());
+    }
+    
+    /**
+     * Interop Scenario 10 - Eventing
+     */
+    public void testEventing() throws Exception {
+        
+        Management mgmt = new Management();
+        mgmt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(PULL_SOURCE_RESOURCE);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        final EventingExtensions exi = new EventingExtensions(mgmt);
+        exi.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null, null);
+        
+        log(mgmt);
+        Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Eventing eo = new Eventing(response);
+        assertEquals(Eventing.SUBSCRIBE_RESPONSE_URI, eo.getAction());
+        final SubscribeResponse sr = eo.getSubscribeResponse();
+        assertNotNull(sr);
+        assertNotNull(sr.getExpires());
+        // TODO - is a SubscriptionManager and Identifier needed in Pull mode?
+        // final EndpointReferenceType sm = sr.getSubscriptionManager();
+        // assertNotNull(sm);
+        // assertNotNull(sm.getAddress());
+        // assertNotNull(sm.getReferenceProperties().getAny().get(0));
+        Object context = null;
+        final Object obj = sr.getAny().get(0);
+        if (obj instanceof Element) {
+            final Element elt = (Element) obj;
+            assertEquals(Enumeration.ENUMERATION_CONTEXT.getNamespaceURI(), elt.getNamespaceURI());
+            assertEquals(Enumeration.ENUMERATION_CONTEXT.getLocalPart(), elt.getLocalName());
+            context = elt.getTextContent();
+        }
+        assertNotNull(context);
+        
+        // pull an event
+
+        mgmt = new Management();
+        mgmt.setAction(Enumeration.PULL_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(PULL_SOURCE_RESOURCE);
+        
+        mgmt.setTimeout(timeout);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        mgmt.setLocale(locale);
+        
+        Enumeration pi = new Enumeration(mgmt);
+        pi.setPull(context, -1, 1, null);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        Enumeration po = new Enumeration(response);
+        assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
+        PullResponse pr = po.getPullResponse();
+        assertNotNull(pr);
+        // not end of sequence yet
+        assertNull(pr.getEndOfSequence());
+        EnumerationContextType ect = pr.getEnumerationContext();
+        assertNotNull(ect);
+        context = ect.getContent().get(0);
+        assertNotNull(context);
+        ItemListType ilt = pr.getItems();
+        assertNotNull(ilt);
+        List<Object> il = ilt.getAny();
+        assertNotNull(il);
+        assertTrue(il.size() == 1);
+        assertNotNull(il.get(0));
+        
+        // unsubscribe
+        
+        mgmt = new Management();
+        mgmt.setAction(Eventing.UNSUBSCRIBE_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(PULL_SOURCE_RESOURCE);
+        
+        mgmt.setTimeout(timeout);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        mgmt.setLocale(locale);
+        
+        Eventing unsub = new Eventing(mgmt);
+        unsub.setUnsubscribe();
+        // TODO
+        /*
+        unsub.setIdentifier(identifier);
+        
+        log(mgmt);
+        response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        Eventing unsubo = new Eventing(response);
+        assertEquals(Eventing.UNSUBSCRIBE_RESPONSE_URI, unsubo.getAction());
+        assertNull(unsubo.getBody().getFirstChild());
+        */
     }
 }
