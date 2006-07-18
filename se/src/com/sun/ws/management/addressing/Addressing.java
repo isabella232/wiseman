@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.7 2006-05-01 23:32:20 akhilarora Exp $
+ * $Id: Addressing.java,v 1.8 2006-07-18 18:15:08 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -284,6 +284,11 @@ public class Addressing extends SOAP {
             relationships[i] = ((JAXBElement<Relationship>) relation).getValue();
         }
         return relationships;
+    }
+    
+    public EndpointReferenceType getEndpointReference(final SOAPElement parent, final QName... qname) throws JAXBException, SOAPException {
+        final Object value = unbind(parent, qname);
+        return value == null ? null : ((JAXBElement<EndpointReferenceType>) value).getValue();
     }
     
     // get helpers
