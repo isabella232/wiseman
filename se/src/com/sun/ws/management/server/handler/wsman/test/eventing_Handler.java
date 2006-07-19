@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.11 2006-07-11 21:30:32 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.12 2006-07-19 22:41:38 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -25,6 +25,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.server.EventingSupport;
 import com.sun.ws.management.server.HandlerContext;
+import com.sun.ws.management.server.NamespaceMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -49,20 +50,26 @@ public class eventing_Handler implements Handler {
         { "event5", "critical" }
     };
     
+    private static NamespaceMap nsMap = null;
+    
     private final Timer eventTimer = new Timer(true);
     
     public void handle(final String action, final String resource,
             final HandlerContext context,
             final Management request, final Management response) throws Exception {
         
+        if (nsMap == null) {
+            final Map<String, String> map = new HashMap<String, String>();
+            map.put(NS_PREFIX, NS_URI);
+            nsMap = new NamespaceMap(map);
+        }
+        
         final Eventing evtRequest = new Eventing(request);
         final Eventing evtResponse = new Eventing(response);
         
         if (Eventing.SUBSCRIBE_ACTION_URI.equals(action)) {
             evtResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-            final Map<String, String> namespaces = new HashMap<String, String>();
-            namespaces.put(NS_PREFIX, NS_URI);
-            final Object evtContext = EventingSupport.subscribe(evtRequest, evtResponse, namespaces);
+            final Object evtContext = EventingSupport.subscribe(evtRequest, evtResponse, nsMap);
             
             // setup a timer to send some test events
             final TimerTask sendEventTask = new TimerTask() {
@@ -80,7 +87,7 @@ public class eventing_Handler implements Handler {
                         msg.getBody().addDocument(doc);
                         
                         final String info = root.getNodeName() + " " + root.getTextContent();
-                        if (EventingSupport.sendEvent(evtContext, msg)) {
+                        if (EventingSupport.sendEvent(evtContext, msg, nsMap)) {
                             LOG.info("Sent event " + info);
                         } else {
                             LOG.info("Event filtered " + info);

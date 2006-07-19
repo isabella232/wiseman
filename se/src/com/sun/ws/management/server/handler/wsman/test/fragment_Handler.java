@@ -60,20 +60,20 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
  */
 public class fragment_Handler extends base_Handler {
     
-    public static final String NS_PREFIX = "f";
-    public static final String NS_URI = "https://wiseman.dev.java.net/1/fragment";
-    
     private static final String CUSTOM_JAXB_PREFIX = "jb";
     private static final String CUSTOM_JAXB_NS = "http://test.foo";
     private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
-
-    static {
-        NAMESPACES.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
-    }
-
-    public void handle(final String action, final String resource, 
+    
+    private static NamespaceMap nsMap = null;
+    
+    public void handle(final String action, final String resource,
             final HandlerContext context,
             final Management request, final Management response) throws Exception {
+        
+        if (nsMap == null) {
+            NAMESPACES.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
+            nsMap = new NamespaceMap(NAMESPACES);
+        }
         
         final Document doc = response.newDocument();
         buildContentDocument(doc);
@@ -85,8 +85,6 @@ public class fragment_Handler extends base_Handler {
         final String expression = fragmentHeader == null ? null : fragmentHeader.getTextContent();
         final String dialect = fragmentHeader == null ? null : fragmentHeader.getAttributeValue(TransferExtensions.DIALECT);
         
-        final NamespaceMap map = new NamespaceMap(NAMESPACES);
-        
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.addNamespaceDeclarations(NAMESPACES);
             response.setAction(Transfer.GET_RESPONSE_URI);
@@ -96,7 +94,7 @@ public class fragment_Handler extends base_Handler {
                 response.getBody().addDocument(doc);
             } else {
                 transExtResponse.setFragmentGetResponse(fragmentHeader,
-                        XPath.filter(doc.getDocumentElement(), expression, dialect, map));
+                        XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap));
             }
             return;
         }
@@ -116,7 +114,7 @@ public class fragment_Handler extends base_Handler {
                     nodeContent.add(childNodes.item(i));
                 }
                 transExtResponse.setFragmentPutResponse(fragmentHeader, nodeContent,
-                        expression, XPath.filter(doc.getDocumentElement(), expression, dialect, map));
+                        expression, XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap));
             }
             // dump the modified doc for debugging
             prettyPrint(doc);
@@ -132,7 +130,7 @@ public class fragment_Handler extends base_Handler {
                 // TODO
             } else {
                 transExtResponse.setFragmentDeleteResponse(fragmentHeader,
-                        XPath.filter(doc.getDocumentElement(), expression, dialect, map));
+                        XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap));
             }
             // dump the modified doc for debugging
             prettyPrint(doc);
@@ -153,11 +151,11 @@ public class fragment_Handler extends base_Handler {
                 for (int i = 0; i < childNodes.getLength(); i++) {
                     nodeContent.add(childNodes.item(i));
                 }
-                final EndpointReferenceType epr = 
-                        transExtRequest.createEndpointReference(transExtRequest.getTo(), 
+                final EndpointReferenceType epr =
+                        transExtRequest.createEndpointReference(transExtRequest.getTo(),
                         null, null, null, null);
                 transExtResponse.setFragmentCreateResponse(fragmentHeader, nodeContent,
-                        expression, XPath.filter(doc.getDocumentElement(), expression, dialect, map),
+                        expression, XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap),
                         epr);
             }
             // dump the modified doc for debugging

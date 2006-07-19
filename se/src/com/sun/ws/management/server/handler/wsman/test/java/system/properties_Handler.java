@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.9 2006-07-11 21:30:33 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.10 2006-07-19 22:41:40 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -25,6 +25,7 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.HandlerContext;
+import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,9 +44,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
     private static final String NS_PREFIX = "java";
     private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
     
-    static {
-        NAMESPACES.put(NS_PREFIX, NS_URI);
-    }
+    private static NamespaceMap nsMap = null;
     
     private static final class Context {
         boolean cancelled;
@@ -55,6 +54,11 @@ public class properties_Handler implements Handler, EnumerationIterator {
     public void handle(final String action, final String resource,
             final HandlerContext hcontext,
             final Management request, final Management response) throws Exception {
+        
+        if (nsMap == null) {
+            NAMESPACES.put(NS_PREFIX, NS_URI);
+            nsMap = new NamespaceMap(NAMESPACES);
+        }
         
         final Enumeration enuRequest = new Enumeration(request);
         final Enumeration enuResponse = new Enumeration(response);
@@ -72,7 +76,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
             context.properties = System.getProperties();
             context.cancelled = false;
             
-            EnumerationSupport.enumerate(enuRequest, enuResponse, this, context, NAMESPACES);
+            EnumerationSupport.enumerate(enuRequest, enuResponse, this, context, nsMap);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);
@@ -134,5 +138,9 @@ public class properties_Handler implements Handler, EnumerationIterator {
         final Context ctx = (Context) context;
         final Properties props = ctx.properties;
         return props.size();
+    }
+
+    public NamespaceMap getNamespaces() {
+        return nsMap;
     }
 }

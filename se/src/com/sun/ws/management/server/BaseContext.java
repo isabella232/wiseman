@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseContext.java,v 1.6 2006-06-28 22:32:45 akhilarora Exp $
+ * $Id: BaseContext.java,v 1.7 2006-07-19 22:41:36 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -28,20 +30,28 @@ import org.w3c.dom.Node;
 class BaseContext {
     
     private final XMLGregorianCalendar expiration;
-    private final XPathExpression filter;
+    private final String expression;
+    private final NamespaceMap initialNamespaceMap;
+    private final Map<String, String> aggregateNamespaces = new HashMap<String, String>();
+    private final XPath xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
+    
+    private NamespaceMap aggregateNamespaceMap = null;
     
     BaseContext(final XMLGregorianCalendar expiry,
             final String expr,
             final NamespaceMap namespaces) throws XPathExpressionException {
         
         expiration = expiry;
-        
-        if (expr == null) {
-            filter = null;
-        } else {
-            final XPath xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
-            xpath.setNamespaceContext(namespaces);
-            filter = xpath.compile(expr);
+        expression = expr;
+        initialNamespaceMap = namespaces;
+        if (initialNamespaceMap != null) {
+            aggregateNamespaces.putAll(initialNamespaceMap.getMap());
+            aggregateNamespaceMap = new NamespaceMap(aggregateNamespaces);
+            xpath.setNamespaceContext(aggregateNamespaceMap);
+        }
+        if (expression != null) {
+            // compile the expression just to see if it's valid
+            xpath.compile(expression);
         }
     }
     
@@ -57,10 +67,19 @@ class BaseContext {
         return now.compare(expiration) > 0;
     }
     
-    boolean evaluate(final Node content) throws XPathExpressionException {
+    boolean evaluate(final Node content, final NamespaceMap... ns) throws XPathExpressionException {
         // pass-thru if no filter is defined
         boolean pass = true;
-        if (filter != null) {
+        if (expression != null) {
+            if (ns != null && ns.length > 0) {
+                for (final NamespaceMap map : ns) {
+                    aggregateNamespaces.putAll(map.getMap());
+                }
+                aggregateNamespaceMap = new NamespaceMap(aggregateNamespaces);
+            }
+            
+            xpath.setNamespaceContext(aggregateNamespaceMap);
+            final XPathExpression filter = xpath.compile(expression);
             pass = (Boolean) filter.evaluate(content, XPathConstants.BOOLEAN);
         }
         return pass;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: NamespaceMap.java,v 1.4 2006-07-13 00:17:44 akhilarora Exp $
+ * $Id: NamespaceMap.java,v 1.5 2006-07-19 22:41:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -33,27 +33,10 @@ import org.w3c.dom.NodeList;
 
 public final class NamespaceMap implements NamespaceContext {
     
-    private final Map<String, String> namespaces;
+    private final Map<String, String> namespaces = new HashMap<String, String>();
     
     // key:prefix value:URI
-    public NamespaceMap(final Map<String, String> ns) {
-        if (ns == null) {
-            throw new IllegalArgumentException("Namespace prefix/URI map cannot be null");
-        }
-        if (ns.isEmpty()) {
-            throw new IllegalArgumentException("Namespace prefix/URI map cannot be empty");
-        }
-        // make a defensive deep copy
-        namespaces = new HashMap<String, String>(ns);
-    }
-    
-    // walk the document tree to extract all namespace declarations,
-    // combining namespaces from (optional) supplied maps
-    public NamespaceMap(final Node node, final Map<String, String>... nsMaps) {
-        namespaces = new HashMap<String, String>();
-        
-        scanNodeRecursive(node);
-        
+    public NamespaceMap(final Map<String, String>... nsMaps) {
         // combine declarations from supplied maps, if any
         if (nsMaps != null) {
             for (final Map<String, String> ns : nsMaps) {
@@ -62,29 +45,35 @@ public final class NamespaceMap implements NamespaceContext {
         }
     }
     
+    public NamespaceMap(final NamespaceMap... nsMaps) {
+        // combine declarations from supplied maps, if any
+        if (nsMaps != null) {
+            for (final NamespaceMap ns : nsMaps) {
+                namespaces.putAll(ns.namespaces);
+            }
+        }
+    }
+    
+    // walk the document tree to extract all namespace declarations,
+    // combining namespaces from (optional) supplied maps
+    public NamespaceMap(final Node node, final NamespaceMap... nsMaps) {
+        this(nsMaps);
+        scanNodeRecursive(node);
+    }
+    
     // walk the message tree to extract all namespace declarations,
     // combining namespaces from (optional) supplied maps
-    public NamespaceMap(final Message msg, final Map<String, String>... nsMaps) {
-        namespaces = new HashMap<String, String>();
+    public NamespaceMap(final Message msg, final NamespaceMap... nsMaps) {
+        this(msg.getEnvelope(), nsMaps);
+
+        // collect all namespaces declared in the soap envelope
         final SOAPEnvelope env = msg.getEnvelope();
-        
-        // first collect all namespaces declared in the soap envelope
         final Iterator<String> pi = env.getNamespacePrefixes();
         while (pi.hasNext()) {
             final String prefix = pi.next();
             final String uri = env.getNamespaceURI(prefix);
             assert uri != null : "namespace uri for env prefix " + prefix + " cannot be null";
             namespaces.put(prefix, uri);
-        }
-        
-        // now walk the soap message to collect others
-        scanNodeRecursive(env);
-        
-        // combine declarations from supplied maps, if any
-        if (nsMaps != null) {
-            for (final Map<String, String> ns : nsMaps) {
-                namespaces.putAll(ns);
-            }
         }
     }
     

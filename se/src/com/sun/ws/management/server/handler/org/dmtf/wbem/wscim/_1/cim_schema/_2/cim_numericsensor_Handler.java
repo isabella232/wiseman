@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.2 2006-07-14 23:01:37 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.3 2006-07-19 22:41:38 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -27,10 +27,13 @@ import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
+import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilder;
@@ -39,6 +42,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
+    
+    private NamespaceMap nsMap = null;
     
     private static final class Context {
         HandlerContext hcontext = null;
@@ -51,9 +56,15 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             final HandlerContext hcontext,
             final Management request, final Management response) throws Exception {
         
+        if (nsMap == null) {
+            final Map<String, String> map = new HashMap<String, String>();
+            map.put("p", "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor");
+            nsMap = new NamespaceMap(map);
+        }
+        
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.setAction(Transfer.GET_RESPONSE_URI);
-
+            
             final Set<SelectorType> selectors = request.getSelectors();
             if (selectors.size() < 4) {
                 throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
@@ -84,7 +95,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             throw new ActionNotSupportedFault(action);
         }
     }
-
+    
     public List<Element> next(final DocumentBuilder db, final Object context,
             final int start, final int count) {
         final Context ctx = (Context) context;
@@ -102,7 +113,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             } catch (Exception ex) {
                 throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
             }
-        
+            
             items.add(resourceDoc.getDocumentElement());
         }
         return items;
@@ -121,6 +132,10 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     public int estimateTotalItems(final Object context) {
         final Context ctx = (Context) context;
         return ctx.count;
+    }
+    
+    public NamespaceMap getNamespaces() {
+        return nsMap;
     }
     
     private static final InputStream load(final ServletContext context, final String docName) {

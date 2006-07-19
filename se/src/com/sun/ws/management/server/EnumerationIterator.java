@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.5 2006-06-07 17:56:51 akhilarora Exp $
+ * $Id: EnumerationIterator.java,v 1.6 2006-07-19 22:41:36 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -32,12 +32,24 @@ import org.w3c.dom.Element;
 public interface EnumerationIterator {
     
     /**
-     * Estimate the number of elements available. 
+     * Supply the namespace mappings used by the elements of the iteration. The
+     * namespace mapping is primarily used for resolution of namespace prefixes
+     * during evaluation of XPath expressions for filtered enumeration.
+     *
+     * @return a NamespaceMap of all the namespace mappings used by the elements
+     * of this iteration. An implementation can choose to return null or
+     * an empty map, in which case evaluation of XPath expressions with namespace
+     * prefixes may fail.
+     */
+    NamespaceMap getNamespaces();
+    
+    /**
+     * Estimate the number of elements available.
      *
      * @param context The client context that was specified to
      * {@link EnumerationSupport#enumerate enumerate} is returned.
      *
-     * @return an estimate of the number of elements available in the enumeration. 
+     * @return an estimate of the number of elements available in the enumeration.
      * Return a negative number if an estimate is not available.
      */
     int estimateTotalItems(final Object context);
@@ -58,7 +70,7 @@ public interface EnumerationIterator {
      * {@link com.sun.ws.management.enumeration.TimedOutFault TimedOutFault}
      * is returned.
      *
-     * @param db A document builder that can be used to create documents into 
+     * @param db A document builder that can be used to create documents into
      * which the returned items will be placed. Note that each item must be
      * placed as the root element of a new Document for XPath filtering to work
      * properly.

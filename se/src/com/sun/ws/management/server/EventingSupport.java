@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.11 2006-07-08 23:48:23 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.12 2006-07-19 22:41:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -29,7 +29,6 @@ import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.HttpClient;
 import java.io.IOException;
 import java.util.GregorianCalendar;
-import java.util.Map;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -78,7 +77,7 @@ public final class EventingSupport extends BaseSupport {
     
     // the EventingExtensions.PULL_DELIVERY_MODE is handled by EnumerationSupport
     public static Object subscribe(final Eventing request, final Eventing response,
-            final Map<String, String> namespaces)
+            final NamespaceMap... namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         final Subscribe subscribe = request.getSubscribe();
@@ -128,9 +127,10 @@ public final class EventingSupport extends BaseSupport {
         
         EventingContext ctx = null;
         try {
-            ctx = new EventingContext(initExpiration(subscribe.getExpires()),
+            ctx = new EventingContext(
+                    initExpiration(subscribe.getExpires()),
                     filterExpression,
-                    new NamespaceMap(request, namespaces),
+                    namespaces == null ? null : namespaces[0],
                     notifyTo);
         } catch (XPathExpressionException xpx) {
             throw new EventSourceUnableToProcessFault("Unable to compile XPath: " +
@@ -171,7 +171,7 @@ public final class EventingSupport extends BaseSupport {
         final Object found = removeContext(UUID.fromString(identifier));
         if (found == null) {
             // TODO: throw an InvalidContextFault when available
-            throw new InvalidMessageFault("Subscription with Identifier: " + 
+            throw new InvalidMessageFault("Subscription with Identifier: " +
                     identifier + " not found");
         }
         
@@ -179,8 +179,9 @@ public final class EventingSupport extends BaseSupport {
     }
     
     // TODO: avoid blocking the sender - use a thread pool to send notifications
-    public static boolean sendEvent(final Object context, final Addressing msg)
-    throws SOAPException, JAXBException, IOException, XPathExpressionException {
+    public static boolean sendEvent(final Object context, final Addressing msg,
+            final NamespaceMap nsMap)
+            throws SOAPException, JAXBException, IOException, XPathExpressionException {
         
         assert datatypeFactory != null : UNINITIALIZED;
         
@@ -202,7 +203,7 @@ public final class EventingSupport extends BaseSupport {
         
         // the filter is only applied to the first child in soap body
         final Node content = msg.getBody().getFirstChild();
-        if (!ctx.evaluate(content)) {
+        if (!ctx.evaluate(content, nsMap)) {
             return false;
         }
         

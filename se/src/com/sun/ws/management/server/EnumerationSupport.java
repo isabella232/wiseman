@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.20 2006-07-13 20:55:49 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.21 2006-07-19 22:41:37 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -98,7 +98,7 @@ public final class EnumerationSupport extends BaseSupport {
      */
     public static void enumerate(final Enumeration request, final Enumeration response,
             final EnumerationIterator enumIterator, final Object clientContext,
-            final Map<String, String>... namespaces)
+            final NamespaceMap... namespaces)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         assert datatypeFactory != null : UNINITIALIZED;
@@ -143,11 +143,13 @@ public final class EnumerationSupport extends BaseSupport {
             expiration.add(defaultExpiration);
         }
         
+        final NamespaceMap nsMap = enumIterator.getNamespaces();
         EnumerationContext ctx = null;
         try {
-            ctx = new EnumerationContext(expiration,
-                    filterExpression, 
-                    new NamespaceMap(request, namespaces),
+            ctx = new EnumerationContext(
+                    expiration,
+                    filterExpression,
+                    nsMap,
                     clientContext, enumIterator);
         } catch (XPathExpressionException xpx) {
             throw new CannotProcessFilterFault("Unable to compile XPath: " +
@@ -246,6 +248,7 @@ public final class EnumerationSupport extends BaseSupport {
         final DocumentBuilder db = response.getDocumentBuilder();
         final List<Element> passed = new ArrayList<Element>(ctx.getCount());
         
+        final NamespaceMap nsMap = iterator.getNamespaces();
         while (passed.size() < ctx.getCount() && iterator.hasNext(clientContext, ctx.getCursor())) {
             final TimerTask ttask = new TimerTask() {
                 public void run() {
@@ -273,12 +276,13 @@ public final class EnumerationSupport extends BaseSupport {
                     owner.appendChild(item);
                 }
                 try {
-                    if (ctx.evaluate(item)) {
+                    if (ctx.evaluate(item, nsMap)) {
                         passed.add(item);
                         env.addNamespaceDeclaration(item.getPrefix(), item.getNamespaceURI());
                     }
                 } catch (XPathException xpx) {
-                    throw new CannotProcessFilterFault("Error evaluating XPath");
+                    throw new CannotProcessFilterFault("Error evaluating XPath: " +
+                            xpx.getMessage());
                 }
             }
         }
@@ -350,7 +354,7 @@ public final class EnumerationSupport extends BaseSupport {
     }
     
     private static void insertTotalItemCountEstimate(final Enumeration request,
-            final Enumeration response, final EnumerationIterator iterator, 
+            final Enumeration response, final EnumerationIterator iterator,
             final Object clientContext)
             throws SOAPException, JAXBException {
         // place an item count estimate if one was requested
