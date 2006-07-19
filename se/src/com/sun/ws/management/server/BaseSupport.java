@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.6 2006-07-18 18:16:26 akhilarora Exp $
+ * $Id: BaseSupport.java,v 1.7 2006-07-19 16:09:17 obiwan314 Exp $
  */
 
 package com.sun.ws.management.server;
@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.logging.Logger;
+
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
@@ -59,7 +61,8 @@ class BaseSupport {
             }
         }
     };
-    
+    private static final Logger LOG = Logger.getLogger(BaseSupport.class.getName());
+
     private static final int CLEANUP_INTERVAL = 60000;
     private static final Timer cleanupTimer = new Timer(true);
     
@@ -67,7 +70,14 @@ class BaseSupport {
     
     public static void initialize() throws DatatypeConfigurationException {
         datatypeFactory = DatatypeFactory.newInstance();
-        cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
+        try{
+        	cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
+        } catch(java.lang.IllegalStateException e){
+        	// NOTE: the cleanup timer has been throwing this
+        	// exception during unit tests. Re-initalizing it should not
+        	// cause it to fail so this exception is being silenced.
+        	LOG.fine("Base support was re-initalized.");
+        }
     }
     
     protected static String initFilter(final String filterDialect, final List<Object> filterExpressions)
@@ -150,3 +160,5 @@ class BaseSupport {
         return contextMap.remove(context);
     }
 }
+
+    
