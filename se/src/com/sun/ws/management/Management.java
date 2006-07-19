@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.7 2006-07-19 16:07:31 obiwan314 Exp $
+ * $Id: Management.java,v 1.8 2006-07-19 20:41:58 obiwan314 Exp $
  */
 
 package com.sun.ws.management;
@@ -137,12 +137,8 @@ public class Management extends Addressing {
     }
     
     public Duration getTimeout() throws JAXBException, SOAPException {
-    	try{
     		final Object value = unbind(getHeader(), OPERATION_TIMEOUT);
     	    return value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
-    	} catch (UnmarshalException e){
-    		return null;
-    	}
     }
     
     public Set<SelectorType> getSelectors() throws JAXBException, SOAPException {
