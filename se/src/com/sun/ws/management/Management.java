@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.6 2006-05-01 23:32:19 akhilarora Exp $
+ * $Id: Management.java,v 1.7 2006-07-19 16:07:31 obiwan314 Exp $
  */
 
 package com.sun.ws.management;
@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.Set;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.UnmarshalException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
@@ -136,8 +137,12 @@ public class Management extends Addressing {
     }
     
     public Duration getTimeout() throws JAXBException, SOAPException {
-        final Object value = unbind(getHeader(), OPERATION_TIMEOUT);
-        return value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
+    	try{
+    		final Object value = unbind(getHeader(), OPERATION_TIMEOUT);
+    	    return value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
+    	} catch (UnmarshalException e){
+    		return null;
+    	}
     }
     
     public Set<SelectorType> getSelectors() throws JAXBException, SOAPException {
@@ -160,3 +165,5 @@ public class Management extends Addressing {
         return (Locale) value;
     }
 }
+
+    
