@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.12 2006-07-19 16:13:06 obiwan314 Exp $
+ * $Id: XmlBinding.java,v 1.13 2006-07-19 18:16:23 obiwan314 Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -104,18 +104,18 @@ public final class XmlBinding {
     
     public Object unmarshal(final Node node) throws JAXBException {
         final Unmarshaller unmarshaller = context.createUnmarshaller();
-        final ValidationHandler handler = new ValidationHandler();
         if (schema != null) {
             unmarshaller.setSchema(schema);
-            unmarshaller.setEventHandler(handler);
-       }
+        }
+        final ValidationHandler handler = new ValidationHandler();
+        unmarshaller.setEventHandler(handler);
         final Object obj = unmarshaller.unmarshal(node);
         final FaultException fault = handler.getFault();
         if (fault != null) {
             throw fault;
         }
         return obj;
-    }
+    }    
     
     public boolean isValidating() {
         return schema != null;
