@@ -1,0 +1,331 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=iso-8859-1">
+  <title>wiseman Project - Quick Start Guide for NetBeans</title>
+  <meta name="GENERATOR" content="StarOffice 8  (Solaris Sparc)">
+  <meta name="CREATED" content="20060628;12263500">
+  <meta name="CHANGED" content="20060628;14254700">
+  <meta name="DESCRIPTION"
+ content="A Java implementation of WS-Management">
+  <meta name="KEYWORDS"
+ content="sun microsystems, sun, java, solaris, sparc, unix, ws-management, ws-management catalog, ws-addressing, ws-transfer, ws-enumeration, ws-eventing, open-source, open source, web services, web services management, systems management, management using web services, cim, ws-cim, cim mapping, schema, xsd, wsdl, apache license">
+  <style type="text/css">
+    body { font-family: sans-serif }
+    table { width: 100% }
+    td { vertical-align: top }
+    tr.green-head { background-color: #ddffee } 
+    tr.green-row { background-color: #eeffee }
+    tr.blue-head { background-color: #ddeeff } 
+    tr.blue-row { background-color: #eeeeff }
+  </style>
+</head>
+<body dir="ltr" lang="en-US">
+<h3>NetBeans Usage<br>
+</h3>
+This guide describes how to load the wiseman project into NetBeans and
+use it directly from NetBeans.&nbsp; It uses the built-in Tomcat
+instance and the debugger can subsequently be used when developing new
+code.&nbsp; The process is fairly complex and the instructions are
+relatively fragile and may need some work for your own installation of
+NetBeans.<br>
+<br>
+These instructions were built using a NetBeans 5.5 Beta installation on
+Solaris 10.<br>
+<br>
+The instructions <span style="font-style: italic;">only</span> discuss
+the building and usage of the wiseman server and server JUnit
+tests.&nbsp; The mapping portion of the project is not currently
+documented in this page.<br>
+<h3>NetBeans Updates</h3>
+<ul>
+  <li>
+    <p>7/19/06 - Creation of instructions</p>
+  </li>
+</ul>
+<h3>NetBeans Contents</h3>
+<p>This page contains the following sections:<br>
+</p>
+<ul>
+  <li><a href="#dependencies">Dependencies</a></li>
+  <li><a href="#download">Download wiseman</a></li>
+  <li><a href="#configure">Configuration</a><br>
+  </li>
+  <li><a href="#compile">Compile and Run</a><br>
+  </li>
+  <li><a href="#Starting_the_Debugger">Starting the Debugger</a></li>
+  <li><a href="#Common_Problems">Common Problems</a><br>
+  </li>
+</ul>
+<p> </p>
+<ul>
+</ul>
+<h3><a name="dependencies"></a>Dependencies</h3>
+<p>Downloading and installing the proper versions of dependencies is
+critical for running the wiseman project. Backlevel dependencies, in
+particular, can cause difficult to debug problems. Often, &#8220;newer&#8221;
+versions of the dependencies will be fine but we strongly recommend
+that you stay with the recommended software dependencies listed in
+this section.</p>
+<table border="0" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr class="green-head">
+      <th>
+      <p>Dependency</p>
+      </th>
+      <th>
+      <p>Description</p>
+      </th>
+    </tr>
+    <tr class="green-row">
+      <td>
+      <p><a href="http://java.sun.com/j2se/1.5.0/index.jsp">Java SE 5+</a>
+or above</p>
+      </td>
+      <td>
+      <p>This is the Java Standard Edition 1.5 available from Sun
+Microsystems. Be sure you have the SDK, not just the JRE. Throughout
+this document, I will refer to Java's Home directory as /usr/java.</p>
+      </td>
+    </tr>
+    <tr class="green-row">
+      <td>
+      <p><a href="https://jaxb.dev.java.net/">JAXB 2.0</a></p>
+      </td>
+      <td>
+      <p>Java Architecture for XML Binding (JAXB). </p>
+      <ul>
+        <li>
+          <p style="margin-bottom: 0in;">Go to the downloads link and
+be sure to download the 2.0 FINAL version, though 2.0.1 may work. Note:
+I originally downloaded an older version and had all kinds of runtime
+errors. Also note: there are several options for downloading files, get
+the JAXB_RI2.0_FCS. </p>
+        </li>
+        <li>
+          <p style="margin-bottom: 0in;">Once its downloaded, go to the
+directory where you stored it and run "java -jar JAXB2_20060426.jar"
+(substitute the .jar file name as appropriate). </p>
+        </li>
+        <li>
+          <p>Remember where it unpacked everything, for me, the "root"
+directory of JAXB 2.0 is:
+/home/pm141145/downloads/wiseman_dependencies/jaxb-ri-20060426, I will
+use this directory throughout the rest of the document </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr class="green-row">
+      <td>
+      <p><a href="https://saaj.dev.java.net/">SAAJ 1.3</a></p>
+      </td>
+      <td>
+      <p>SOAP with Attachments API for Java (SAAJ). </p>
+      <ul>
+        <li>
+          <p style="margin-bottom: 0in;">Download the 1.3 version of
+SAAJ from the website, a .zip file should be located in your downloads
+directory afterwards </p>
+        </li>
+        <li>
+          <p>Unzip the file, you should be left with an API and an
+Implementation .jar file, remember where these are, we will use them
+later. </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr class="green-row">
+      <td>
+      <p><a
+ href="http://prdownloads.sourceforge.net/junit/junit3.8.2.zip?download">JUnit
+3.8.2</a></p>
+      </td>
+      <td>
+      <p>JUnit is required if you are going to compile and run the
+tests. JUnit 3.8.2 (NOT the latest) should work well. The
+build.properties file depends on ant tasks defined in the junit.jar
+that are not present in JUnit 4.x.&nbsp; <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><a href="http://netbeans.org/">NetBeans
+5.5 Beta</a><br>
+      </td>
+      <td style="vertical-align: top;">These instructions use the
+NetBeans 5.5 Beta, they should be applicable to other versions of
+NetBeans as well.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h3><a name="download"></a>Download wiseman</h3>
+<p>For now, wiseman is available in <i>source</i> form only. As a
+result, check
+out the source from the CVS tree using the <a
+ href="https://wiseman.dev.java.net/servlets/ProjectSource#wincvs">instructions
+located on the project site</a>.</p>
+<h3><a name="configure"></a>Configure</h3>
+<p>
+There are several "pre"-configuration steps to do before adding the
+project to NetBeans.&nbsp; These instructions are similar to running
+the project outside of NetBeans, but slightly different so be careful
+to follow this version:<br>
+</p>
+<ul>
+  <li>The se/lib/jaxb/README file contains a list of required .jar
+files from the JAXB download.&nbsp; Copy the files listed in the README
+from the open source installation to the se/lib/jaxb directory
+(for me, this is "cp
+/home/pm141145/downloads/wiseman_dependencies/jaxb-ri-20060426/lib/[listedfile].jar
+se/lib/jaxb/") </li>
+  <li>Copy the SAAJ libraries libraries to the wiseman/se/lib/jaxrpc
+directory
+(for me, this is "cp
+/home/pm141145/downloads/wiseman_dependencies/saaj*.jar
+se/lib/jaxrpc/") </li>
+  <li>Copy the Servlet API jar from NetBeans. In my installation, I
+copied it from
+netbeans-5.5beta/enterprise3/apache-tomcat-5.5.16/common/lib/servlet-api.jar.
+(for me, the copy command is cp
+/home/pm141145/netbeans-5.5beta/enterprise3/apache-tomcat-5.5.16/common/lib/servlet-api.jar
+se/lib/) </li>
+  <li>Copy the junit.jar file from your JUnit download to the
+se/test/lib directory.</li>
+</ul>
+Start your NetBeans IDE, the rest of the instructions will use the
+environment:<br>
+<ul>
+  <li>Figure out the Catalina Home (this is the "Home" location of the
+built-in Tomcat instance) and Catalina Base (this is where your
+personal configuration files are stored):&nbsp; Go to the Runtime tab,
+expand the
+"Servers" node, Right-click on the "Bundled Tomcat" instance and choose
+"Properties".&nbsp; In the "Connection" tab on the Properties page, you
+should see Catalina Home.&nbsp; Save this location for later use.&nbsp;
+For the remainder of this guide, I will refer to it as
+${catalina.home}.&nbsp; Also, you should see the Catalina Base
+location, save it as well, I will refer to it as ${catalina.base}.<br>
+  </li>
+  <li>Edit the ${catalina.base}/conf/tomcat-users.xml file.&nbsp;
+First, note the username "ide" and its password, you will need this
+later.&nbsp; Next,&nbsp; add the
+wsman role and user.&nbsp; The following two lines achieve this:</li>
+</ul>
+&lt;role rolename="wsman"/&gt;<br>
+&lt;user username="wsman" password="secret" roles="wsman"/&gt;<br>
+<br>
+<ul>
+  <li>Load the NetBeans project into your NetBeans IDE.&nbsp; There is
+a NetBeans project delivered with the code, to use it simply use
+File/Open Project, then locate the wiseman/se directory and use the
+"Open Project Folder" button.</li>
+  <li>Edit the wiseman/se/project.properties file, several changes are
+necessary (BE CAREFUL NOT TO ACCIDENTALLY PUT THIS BACK TO THE PROJECT)</li>
+  <ul>
+    <li>Add the&nbsp; line "catalina.home=${catalina.home}" where
+you've properly resolved ${catalina.home} to the full path to your
+Tomcat instance.</li>
+    <li>Change the catalina.manager.url location to
+http://localhost:8084/manager (the default ports for the bundled tomcat
+instance are different than a stand-alone installation)</li>
+    <li>Change the catalina.manager.username to ide</li>
+    <li>Change the catalina.manager.password to the one found in the
+tomcat-users.xml file earlier</li>
+    <li>Add a "project.home" variable to the file at the top that
+points to the base wiseman/se directory</li>
+    <li>Prefix the dist.dir, src.dir, lib.dir, gen.src.dir, build.dir,
+rund.dir and test.dir with ${project.home}/</li>
+    <li>My project.properties with all of the changes is displayed here:</li>
+  </ul>
+</ul>
+catalina.home=/home/pm141145/netbeans-5.5beta/enterprise3/apache-tomcat-5.5.16<br>
+project.home=/home/pm141145/projects/wiseman/wiseman/se<br>
+dist.dir=${project.home}/dist<br>
+src.dir=${project.home}/src<br>
+lib.dir=${project.home}/lib<br>
+gen.src.dir=${project.home}/gen-src<br>
+build.dir=${project.home}/build<br>
+run.dir=${project.home}/run<br>
+test.dir=${project.home}/test<br>
+doc.dist.dir=${dist.dir}/doc<br>
+build.classes.dir=${build.dir}/classes<br>
+test.build.dir=${test.dir}/build<br>
+test.build.classes.dir=${test.build.dir}/classes<br>
+test.src.dir=${test.dir}/src<br>
+test.lib.dir=${test.dir}/lib<br>
+test.run.dir=${test.dir}/run<br>
+jaxb.lib.dir=${lib.dir}/jaxb<br>
+jaxrpc.lib.dir=${lib.dir}/jaxrpc<br>
+war.filename=wsman.war<br>
+lib.filename=wsman.jar<br>
+events.filename=events.war<br>
+debug=true<br>
+catalina.manager.url=http://localhost:8084/manager<br>
+catalina.manager.username=ide<br>
+catalina.manager.password=password_from_tomcat-users.xml<br>
+war.context.path=/wsman<br>
+spec.version=1.0.0a<br>
+impl.version=0.4<br>
+impl.vendor=The Wiseman Project<br>
+impl.url=https://wiseman.dev.java.net<br>
+<ul>
+</ul>
+<h3><a name="compile"></a>Compile and Run</h3>
+Once everything is set up properly, using the IDE is fast and
+efficient.&nbsp; To compile, right click on the project node and choose
+"Build Project".<br>
+<br>
+Start Tomcat (click on the Runtime tab, expand the "Servers" node,
+locate the "Bundled Tomcat" instance and choose "Start").<br>
+<br>
+Go back to the Projects tab, right click on the project node and choose
+"Run Project".&nbsp; This deploys the project into the Bundled Tomcat.<br>
+<br>
+To run the unit tests, right click and choose "Test Project".<br>
+<h3><a name="Starting_the_Debugger"></a>Starting the Debugger</h3>
+To start the debugger:<br>
+<ul>
+  <li>Modify the wiseman/se/nbproject/debug.properties file.&nbsp;
+Comment the "Tomcat using shared memory section" and uncomment the
+Tomcat using a socket section (see end of this section for what it
+should look like)</li>
+  <li>Modify the wiseman/se/nbproject/<br>
+  </li>
+  <li>Stop the Bundled Tomcat Server if its already running</li>
+  <li>Start the Bundled Tomcat Server in debug mode by choosing the
+"Start in Debug Mode" option</li>
+  <li>Go back to the projects tab, right click on the project and
+choose "Debug Project"</li>
+  <li>Set breakpoints, run the various targets</li>
+</ul>
+nws113 &lt;nbproject&gt; $ cat debug.properties<br>
+jpda.session.name=wiseman<br>
+jpda.host=localhost<br>
+<br>
+# Sun Java System Application Server using shared memory (on Windows)<br>
+# jpda.address=localhost4848<br>
+# jpda.transport=dt_shmem<br>
+<br>
+# Sun Java System Application Server using a socket<br>
+# jpda.address=9009<br>
+# jpda.transport=dt_socket<br>
+<br>
+# Tomcat using shared memory (on Windows)<br>
+# jpda.address=tomcat_shared_memory_id<br>
+# jpda.transport=dt_shmem<br>
+<br>
+# Tomcat using a socket<br>
+jpda.address=11555<br>
+jpda.transport=dt_socket<br>
+<br>
+<h3><a name="Common_Problems"></a>Common Problems</h3>
+<ol>
+</ol>
+<br>
+<br>
+</body>
+</html>
