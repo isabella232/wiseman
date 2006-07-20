@@ -21,6 +21,7 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.server.NamespaceMap;
 
 /**
  *
@@ -32,7 +33,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
      * items to be enumerated. The prefix is the key and the URI is the value in the Map.
      * The namespaces map is used during filter evaluation.
      */
-    private Map<String, String> namespaces = new HashMap<String, String>();
+    private NamespaceMap namespaces;
 
     /**
      * The implemented Iterator which can traverse the "dataset"
@@ -201,7 +202,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
     
     public void setNamespaces(Map<String, String> namespaces)
     {
-        this.namespaces = namespaces;
+        this.namespaces = new NamespaceMap(namespaces);
     }
 
     public void setClientContext(Object clientContext)
