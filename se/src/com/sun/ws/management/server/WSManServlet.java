@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.24 2006-07-19 16:11:16 obiwan314 Exp $
+ * $Id: WSManServlet.java,v 1.25 2006-07-20 00:12:00 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -137,7 +137,7 @@ public class WSManServlet extends HttpServlet {
         final ServletContext context = getServletContext();
         final Set<String> xsdLocSet = context.getResourcePaths("/xsd");
         
-        if (xsdLocSet != null&&xsdLocSet.size()>0) {
+        if (xsdLocSet != null && xsdLocSet.size() > 0) {
             // sort the list of XSD documents so that dependencies come first
             // it is assumed that the files are named in the desired loading order
             // for example, 1-xml.xsd, 2-soap.xsd, 3-addressing.xsd...

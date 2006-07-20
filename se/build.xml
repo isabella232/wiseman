@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.35 2006-07-19 21:04:29 obiwan314 Exp $
+ $Id: build.xml,v 1.36 2006-07-20 00:11:59 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -115,33 +115,9 @@
   </target>
 
   <target name="lib" depends="compile">
-    <!--jar destfile="${dist.dir}/${lib.filename}"
-         index="true">
-      <fileset dir="${build.classes.dir}">
-        <exclude name="com/sun/ws/management/server/**" />
-      </fileset>
-      <fileset dir="${build.classes.dir}">
-        <include name="wsman.properties" />
-      </fileset>
-      <manifest>
-        <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
-        <attribute name="Specification-Title" value="WS-Management" />
-        <attribute name="Specification-Version" value="${spec.version}" />
-        <attribute name="Implementation-Title" value="Wiseman SE Library" />
-        <attribute name="Implementation-Version" value="${impl.version}" />
-        <attribute name="Implementation-Vendor" value="${impl.vendor}" />
-        <attribute name="Implementation-URL" value="${impl.url}" />
-        <attribute name="Sealed" value="true" />
-      </manifest>
-      <metainf dir=".">
-        <include name="LICENSE" />
-        <include name="NOTICE" />
-      </metainf>
-    </jar -->
-    
-  	<!-- Build Server Shared Jar -->
-  	<jar destfile="${dist.dir}/${lib.filename}"
+
+    <!-- Build Server Shared Jar -->
+    <jar destfile="${dist.dir}/${lib.filename}"
          index="true">
       <fileset dir="${build.classes.dir}">
         <exclude name="com/sun/ws/management/server/handler/**" />
@@ -165,8 +141,9 @@
         <include name="NOTICE" />
       </metainf>
     </jar>
-  	<!-- Build src Jar -->
-  	<jar destfile="${dist.dir}/${src.lib.filename}"
+
+    <!-- Build src Jar -->
+    <jar destfile="${dist.dir}/${src.lib.filename}"
          index="true">
       <fileset dir="${src.dir}">
         <exclude name="com/sun/ws/management/server/handler/**" />
@@ -176,7 +153,7 @@
         <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
         <attribute name="Specification-Title" value="WS-Management" />
         <attribute name="Specification-Version" value="${spec.version}" />
-        <attribute name="Implementation-Title" value="Wiseman SE Library" />
+        <attribute name="Implementation-Title" value="Wiseman SE Library Source" />
         <attribute name="Implementation-Version" value="${impl.version}" />
         <attribute name="Implementation-Vendor" value="${impl.vendor}" />
         <attribute name="Implementation-URL" value="${impl.url}" />
@@ -202,9 +179,9 @@
           <include name="com/hp/**" />
           <include name="framework/models/**" />
         </classes>
-    	<lib dir="${dist.dir}">
-            <include name="${lib.filename}" />
-    	</lib>
+      <lib dir="${dist.dir}">
+        <include name="${lib.filename}" />
+      </lib>
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
@@ -226,12 +203,11 @@
       <webinf dir="etc">
         <include name="sun-web.xml" />
       </webinf>
+      <!-- the build runs without schema validation by default 
+           to enable schema validation, see etc/xsd/README -->
       <zipfileset dir="etc/xsd"
                   prefix="xsd"
                   includes="*.xsd" />
-        <zipfileset dir="${test.dir}/etc/xsd"
-                     prefix="xsd"
-                     includes="*.xsd" />
       <zipfileset dir="${build.classes.dir}"
                   includes="*.properties" />
       <zipfileset dir="${src.dir}"
@@ -283,9 +259,6 @@
         <include name="saaj-api.jar" />
         <include name="saaj-impl.jar" />
       </fileset>
-      <!--fileset dir="${dist.dir}">
-        <include name="${lib.filename}" />
-      </fileset -->
     </copy>
     <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
             path="${war.context.path}" war="${dist.dir}/${war.filename}" update="true" />

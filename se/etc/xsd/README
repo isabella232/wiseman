@@ -21,6 +21,9 @@ javax.xml.bind.UnmarshalException
         at com.sun.ws.management.server.WSManServlet.handleIfIdentify(WSManServlet.java:289)
 ...
 
+To be able to run the unit tests with validation, also copy here all the XSDs 
+from test/etc/xsd.
+
 As of June 2006, the WS-Management and WS-Management Identity XSDs are
 not yet available publically, so current drafts need to be downloaded 
 from the Committee Drafts folder of the DMTF WS-Management WG -
