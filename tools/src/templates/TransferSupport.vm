@@ -1,0 +1,79 @@
+#*
+  This is the template to produce the required CUSTOM delegate.
+
+  This delegate utilizes TransferSupport.
+
+  Required Velocity Variables: 
+    ${package}              - packagename for the class
+    ${delegateName}         - simple name of delegate class
+    ${hasCustomOpNames}     - boolean. Determines if a mapping is needed for
+                              SPEC Action URIs to custom op names
+    ${hasCustomOps}         - boolean. Determines if there are custom operations.
+    ${overriddenMethodMap}  - Map containing key:String ActionURI to value:WsManOp
+                              this is used for overridden SPEC operation names
+    ${customOperationMap}   - Map containing key:String ActionURI to value:WsManOp
+                              this is used for custom operations
+*#
+package ${package};
+
+import com.sun.ws.management.framework.transfer.TransferSupport;
+import com.sun.ws.management.Management;
+
+import java.util.logging.Logger;
+import java.util.Map;
+
+/**
+ * ${delegateName} deligate is responsible for processing WS-Transfer actions.
+ * @GENERATED
+ */
+public class ${delegateName} extends TransferSupport
+{
+    //Log for logging messages
+    private Logger m_log = Logger.getLogger(${delegateName}.class.getName());
+
+#if(!${hasCustomOpNames})
+    public void create(Management request, Management response)
+    {
+        super.create(request, response);
+    }
+
+    public void delete(Management request, Management response)
+    {
+        super.delete(request, response);
+    }
+
+    public void get(Management request, Management response)
+    {
+        super.get(request, response);
+    }
+
+    public void put(Management request)
+    {
+        super.put(request);
+    }
+#end
+
+#if(${hasCustomOpNames})
+#foreach( $key in ${overriddenMethodMap.keySet()} )
+     public void ${overriddenMethodMap.get($key).OverriddenOpName}( String resource, Management request, Management response )
+     {
+         //TODO IMPLEMENT
+         ${overriddenMethodMap.get($key).OperationName}( request, response);
+     }
+
+#end
+
+#end
+
+#if(${hasCustomOps})
+#foreach( $key in ${customOperationMap.keySet()} )
+     public void ${customOperationMap.get($key).OperationName}( String resource, Management request, Management response )
+     {
+         //TODO IMPLEMENT CUSTOM OPERATION
+     }
+
+#end
+
+#end
+
+}

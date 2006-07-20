@@ -1,0 +1,95 @@
+#*
+  This is the template to produce the required WISEMAN handler.
+
+  This handler utilizes the DelegateHandler and a GENERATED Delegate
+  to setup the request dispatching to the Delegate.
+
+  Required Velocity Variables:
+    ${wisemanPackage}       - packagename for the class, based on Wiseman dispatching
+    ${delegateClassName}        - fully qualified class name of the Delegate
+    ${delegateName}         - simple name of delegate class
+    ${handlerName}          - name of Delegate class (no package)
+    ${hasCustomOpNames}     - boolean. Determines if a mapping is needed for
+                              SPEC Action URIs to custom op names
+    ${hasCustomOps}         - boolean. Determines if there are custom operations.
+    ${overriddenMethodMap}  - Map containing key:String ActionURI to value:WsManOp
+                              this is used for overridden SPEC operation names
+    ${customOperationMap}   - Map containing key:String ActionURI to value:WsManOp
+                              this is used for custom operations
+*#
+package ${wisemanPackage};
+
+import com.sun.ws.management.framework.handlers.DelegatingHandler;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.Management;
+
+import java.util.logging.Logger;
+
+import ${delegateClassName};
+
+/**
+ * This Handler deligates to the ${delegateClassName} class.
+ * There is typically nothing to implement in this class.
+ *
+ * @GENERATED
+ */
+public class ${handlerName} extends DelegatingHandler
+{
+    //Log for logging messages
+    private Logger m_log = Logger.getLogger(${handlerName}.class.getName());
+
+    private static ${delegateName} m_delegate;
+    static
+    {
+        m_delegate = new ${delegateName}();
+    }
+
+    public ${handlerName}()
+    {
+        super(m_delegate);
+    } 
+
+#if(${hasCustomOpNames})
+   /**
+    * Overridden handle operation to support the custom operation name mapping
+    * to wsa:Action uri for SPEC Action URIs
+    */
+    @Override
+    public void handle(String action, String resourceURI, HttpServletRequest httpRequest, Management request, Management response) throws Exception
+    {
+#foreach( $key in ${overriddenMethodMap.keySet()} )
+        if ("$key".equals(action))
+        {
+            response.setAction("${overriddenMethodMap.get($key).ResponseURI}");
+#if(${overriddenMethodMap.get($key).isEnumMethod})            
+            m_delegate.${overriddenMethodMap.get($key).OverriddenOpName}(new Enumeration(request), new Enumeration(response));   
+#else
+            m_delegate.${overriddenMethodMap.get($key).OverriddenOpName}(resourceURI, request, response);     
+#end
+            return;
+        }
+
+#end
+        super.handle(action, resourceURI, httpRequest, request, response);//be sure to call to super to ensure all operations are handled.
+    }
+#end
+
+#if(${hasCustomOps})
+    /**
+     * Overridden method to handle custom operations and custom Action URIs
+     */
+    public boolean customDispatch(String action, String resourceURI, Management request, Management response) throws Exception
+    {
+#foreach( $key in ${customOperationMap.keySet()} )
+        if ("$key".equals(action))
+        {
+            response.setAction("${customOperationMap.get($key).ResponseURI}");
+            m_delegate.${customOperationMap.get($key).OperationName}(resourceURI, request, response);
+            return true;
+        }
+
+#end
+        return false;
+    }
+#end
+}

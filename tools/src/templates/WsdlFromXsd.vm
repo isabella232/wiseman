@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+*****************************************
+Generated from file ${xsd_file}
+target_namespace=${target_namespace}
+xsd_file=${xsd_file}
+resource_name=${resource_name}
+*****************************************
+-->
+<definitions xmlns:tns="${target_namespace}"
+        xmlns:state="${target_namespace}"
+        xmlns:wxf="http://schemas.xmlsoap.org/ws/2004/09/transfer"
+        xmlns:wsen="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
+        xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+        xmlns="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+        xmlns:wsman="http://schemas.xmlsoap.org/ws/2005/06/management" 
+        targetNamespace="${target_namespace}">
+        <import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
+                location="http://schemas.xmlsoap.org/ws/2004/09/transfer/transfer.wsdl" />
+        <import
+                namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
+                location="http://schemas.xmlsoap.org/ws/2004/09/enumeration/enumeration.wsdl" />
+        <import
+                namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
+                location="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.wsdl" />
+        <types>
+                <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                        elementFormDefault="qualified" blockDefault="#all">
+                        <xs:import
+                                namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
+                                schemaLocation="http://schemas.xmlsoap.org/ws/2004/09/transfer/transfer.xsd" />
+                       <!--  xs:import
+                                namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
+                                schemaLocation="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.xsd" / -->                                                                
+                        <xs:import namespace="${target_namespace}" schemaLocation="../xsd/${xsd_file}"/>
+                </xs:schema>
+        </types>
+        <!-- Custom Messages -->
+        <message name="${resource_name}Message">
+                <part name="${resource_name}Message" element="state:${element_name}" />
+        </message>
+        <message name="CreateResponseMessage">
+                <part name="CreateResponseMessage"
+                        element="wxf:ResourceCreated" />
+        </message>
+
+        <!-- PortTypes -->
+        <portType name="${service_name}Enumeration">
+                <documentation>
+                        This port type defines a list of resources that have been created.
+                </documentation>
+                <!-- WS-Enumeration Operations -->
+                <operation name="EnumerateOp">
+                        <input message="wsen:EnumerateMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate" />
+                        <output message="wsen:EnumerateResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse" />
+                </operation>
+                <operation name="PullOp">
+                        <input message="wsen:PullMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Pull" />
+                        <output message="wsen:PullResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/PullResponse" />
+                </operation>
+                <operation name="RenewOp">
+                        <input message="wsen:RenewMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Renew" />
+                        <output message="wsen:RenewResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/RenewResponse" />
+                </operation>
+                <operation name="GetStatusOp">
+                        <input message="wsen:GetStatusMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatus" />
+                        <output message="wsen:GetStatusResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatusResponse" />
+                </operation>
+                <operation name="ReleaseOp">
+                        <input message="wsen:ReleaseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Release" />
+                        <output message="wsen:ReleaseResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/ReleaseResponse" />
+                </operation>
+                <operation name="EnumerationEndOp">
+                        <output message="wsen:EnumerationEndMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd" />
+                </operation>
+        </portType>
+        
+        <portType name="${service_name}Resource">
+                <documentation>
+                        This port type defines a resource that may be read, written,
+                        and deleted.
+                </documentation>
+                <!-- WS-Transfer Operations -->
+                <operation name="Get">
+                        <input message="wxf:EmptyMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Get" />
+                        <output message="tns:${resource_name}Message"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/GetResponse" />
+                </operation>
+                <operation name="Put">
+                        <input message="tns:${resource_name}Message"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Put" />
+                        <output message="wxf:OptionalXmlMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/PutResponse" />
+                </operation>
+                <operation name="Delete">
+                        <input message="wxf:EmptyMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete" />
+                        <output message="wxf:EmptyMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/DeleteResponse" />
+                </operation>
+
+                <!-- Custom Operations with Custom wsa:Action Attributes -->
+                <operation name="CustomOp">
+                        <input message="wxf:EmptyMessage"
+                                wsa:Action="http://wsman.test/schema/CustomOp" />
+                        <output message="wxf:EmptyMessage"
+                                wsa:Action="http://wsman.test/schema/CustomOpResponse" />
+                </operation>
+        </portType>
+        <!-- Factory PortType for Create Operation -->
+        <portType name="${service_name}ResourceFactory">
+                <documentation>
+                        This port type defines the create for creating resources
+                </documentation>
+                <!-- -WS-Tranfer Create Operation -->
+                <operation name="Create">
+                        <input message="tns:${resource_name}Message"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create" />
+                        <output message="tns:CreateResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse" />
+                </operation>
+        </portType>
+        
+        <binding name="${service_name}EnumerationBinding" type="tns:${service_name}Enumeration">
+          <wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+                <!-- WS-Enumeration Operations -->
+                <operation name="EnumerateOp">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="PullOp">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Pull"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="RenewOp">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Renew"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="GetStatusOp">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatus"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>   
+                </operation>
+                <operation name="ReleaseOp">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/Release"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="EnumerationEndOp">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>                
+                </operation>
+        </binding>
+
+        <binding name="${service_name}ResourceBinding" type="tns:${service_name}Resource">
+          <wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+
+                <operation name="Get">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/transfer/Get"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="Put">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/transfer/Put"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output> 
+                </operation>
+                <operation name="Delete">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <!-- Custom Operations with Custom wsa:Action Attributes -->
+                <operation name="TerminateOp">
+                <wsoap12:operation soapAction="http://wsman.test/schema/CustomOp"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>               
+                </operation>
+        </binding>
+        
+        <binding name="${service_name}ResourceFactoryBinding" type="tns:${service_name}ResourceFactory">
+          <wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+
+          <operation name="Create">
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create"/>
+                <input>                        
+                        <wsoap12:body use="literal"/>
+                </input>
+                <output>
+                        <wsoap12:body use="literal"/>
+                </output>
+          </operation>
+        </binding>
+
+        <service name="${service_name}Service">
+          <documentation>${service_name} Service</documentation>                               
+                
+                <port name="${service_name}Resource" binding="tns:${service_name}ResourceBinding">
+                  <wsoap12:address location="http://localhost/wsman"/>
+                  <wsa:EndpointReference>
+                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:ReferenceParameters>
+                       <wsman:ResourceURI>wsman:${service_name}/resource</wsman:ResourceURI>
+                    </wsa:ReferenceParameters>
+                  </wsa:EndpointReference>
+                </port>        
+                
+                <port name="${service_name}Enumeration" binding="tns:${service_name}EnumerationBinding">
+                  <wsoap12:address location="http://localhost/wsman"/>
+                  <wsa:EndpointReference>
+                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:ReferenceParameters>
+                       <wsman:ResourceURI>wsman:${service_name}/list</wsman:ResourceURI>
+                    </wsa:ReferenceParameters>
+                  </wsa:EndpointReference>
+                </port>        
+
+                <port name="${service_name}ResourceFactory" binding="tns:${service_name}ResourceFactoryBinding">
+                  <wsoap12:address location="http://localhost/wsman"/>
+                  <wsa:EndpointReference>
+                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:ReferenceParameters>
+                       <wsman:ResourceURI>wsman:${service_name}/factory</wsman:ResourceURI>
+                    </wsa:ReferenceParameters>
+                  </wsa:EndpointReference>
+                </port>        
+                
+        </service>                        
+</definitions>

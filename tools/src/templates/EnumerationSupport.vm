@@ -1,0 +1,92 @@
+#*
+  This is the template to produce the required CUSTOM delegate.
+
+  This delegate utilizes EnumerationImpl.
+
+  Required Velocity Variables: 
+    ${package}              - packagename for the class
+    ${delegateName}         - simple name of delegate class
+    ${hasCustomOpNames}     - boolean. Determines if a mapping is needed for
+                              SPEC Action URIs to custom op names
+    ${hasCustomOps}         - boolean. Determines if there are custom operations.
+    ${overriddenMethodMap}  - Map containing key:String ActionURI to value:WsManOp
+                              this is used for overridden SPEC operation names
+    ${customOperationMap}   - Map containing key:String ActionURI to value:WsManOp
+                              this is used for custom operations
+*#
+package ${package};
+
+import com.sun.ws.management.framework.enumeration.EnumerationImpl;
+import com.sun.ws.management.server.EnumerationIterator;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.Management;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.logging.Logger;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Document;
+
+import javax.xml.parsers.DocumentBuilder;
+
+/**
+ * ${delegateName} deligate is responsible for processing enumeration actions.
+ *
+ * @GENERATED
+ */
+public class ${delegateName} extends EnumerationImpl
+{    
+    //Log for logging messages
+    private Logger m_log = Logger.getLogger(${delegateName}.class.getName());
+
+    //the namespace map should be populated to handle filter requests
+    private Map<String, String> m_namespaces = null;
+    
+    private Object m_clientContext;//TODO initialize this
+
+    public ${delegateName}()
+    {
+        super(new ${enumerationIteratorName}());
+
+
+        setNamespaces(m_namespaces);
+        /**
+         * TODO set the client context object
+         * The clientContext is the dataset used in the Enumeration.
+         */        
+        setClientContext(m_clientContext);
+    }
+
+#if(${hasCustomOpNames})
+
+#foreach( $key in ${overriddenMethodMap.keySet()} )
+#if(${overriddenMethodMap.get($key).isEnumMethod})
+     public void ${overriddenMethodMap.get($key).OverriddenOpName}( Enumeration enuRequest, Enumeration enuResponse )
+     {
+         ${overriddenMethodMap.get($key).OperationName}( enuRequest, enuResponse);
+     }
+#else
+     public void ${overriddenMethodMap.get($key).OverriddenOpName}( String resource, Management request, Management response )
+     {
+         //TODO IMPLEMENT
+         ${overriddenMethodMap.get($key).OperationName}( request, response);
+     }
+#end
+
+#end
+
+#if(${hasCustomOps})
+#foreach( $key in ${customOperationMap.keySet()} )
+     public void ${customOperationMap.get($key).OperationName}( String resource, Management request, Management response )
+     {
+         //TODO IMPLEMENT CUSTOM OPERATION
+     }
+
+#end
+
+#end
+
+#end
+}
