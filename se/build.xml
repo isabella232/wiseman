@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.36 2006-07-20 00:11:59 akhilarora Exp $
+ $Id: build.xml,v 1.37 2006-07-20 21:58:28 akhilarora Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -240,7 +240,10 @@
     </war>
   </target>
 
-  <!-- set catalina.home in "${user.home}/.ant.properties" -->
+  <!-- verify that catalina.home is set in "${user.home}/.ant.properties" -->
+  <fail message="Please set catalina.home in '${user.home}/.ant.properties'"
+        unless="catalina.home" />
+
   <path id="deployer.classpath">
     <pathelement path="${catalina.home}/server/lib/catalina-ant.jar" />
   </path>
