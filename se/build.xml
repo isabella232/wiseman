@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.37 2006-07-20 21:58:28 akhilarora Exp $
+ $Id: build.xml,v 1.38 2006-07-21 18:36:04 obiwan314 Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -114,7 +114,7 @@
     </copy>
   </target>
 
-  <target name="lib" depends="compile">
+  <target name="lib" depends="test-compile,compile">
 
     <!-- Build Server Shared Jar -->
     <jar destfile="${dist.dir}/${lib.filename}"
@@ -164,7 +164,32 @@
         <include name="NOTICE" />
       </metainf>
     </jar>
-  </target>
+  	<!-- Build reusable unit test jar -->
+  	<jar destfile="${dist.dir}/wiseman_test.jar"
+         index="true">
+      <fileset dir="${test.build.classes.dir}">
+        <include name="com/hp/**" />
+        <include name="framework/models/**" />
+        <include name="util/**" />
+        <include name="transport/**" />
+      </fileset>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
+        <attribute name="Specification-Title" value="WS-Management" />
+        <attribute name="Specification-Version" value="${spec.version}" />
+        <attribute name="Implementation-Title" value="Wiseman Test Utility Library" />
+        <attribute name="Implementation-Version" value="${impl.version}" />
+        <attribute name="Implementation-Vendor" value="${impl.vendor}" />
+        <attribute name="Implementation-URL" value="${impl.url}" />
+        <attribute name="Sealed" value="false" />
+      </manifest>
+      <metainf dir=".">
+        <include name="LICENSE" />
+        <include name="NOTICE" />
+      </metainf>
+    </jar>
+ </target>
   
   <target name="war" depends="test-compile,compile">
     <war destfile="${dist.dir}/${war.filename}"
