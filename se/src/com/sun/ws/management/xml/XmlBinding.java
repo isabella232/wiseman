@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.13 2006-07-19 18:16:23 obiwan314 Exp $
+ * $Id: XmlBinding.java,v 1.14 2006-07-21 22:16:51 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -22,7 +22,9 @@ import com.sun.ws.management.SchemaValidationErrorFault;
 import com.sun.ws.management.soap.FaultException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -34,13 +36,14 @@ import org.w3c.dom.Node;
 
 public final class XmlBinding {
     
-    private static final String DEFAULT_PACKAGES =
-            "org.w3._2003._05.soap_envelope:" +
-            "org.xmlsoap.schemas.ws._2004._08.addressing:" +
-            "org.xmlsoap.schemas.ws._2004._08.eventing:" +
-            "org.xmlsoap.schemas.ws._2004._09.enumeration:" +
-            "org.xmlsoap.schemas.ws._2004._09.transfer:" +
-            "org.dmtf.schemas.wbem.wsman._1.wsman";
+    private static final String[] DEFAULT_PACKAGES = {
+            "org.w3._2003._05.soap_envelope",
+            "org.xmlsoap.schemas.ws._2004._08.addressing",
+            "org.xmlsoap.schemas.ws._2004._08.eventing",
+            "org.xmlsoap.schemas.ws._2004._09.enumeration",
+            "org.xmlsoap.schemas.ws._2004._09.transfer",
+            "org.dmtf.schemas.wbem.wsman._1.wsman"
+    };
     
     private static final Properties BINDING_PROPERTIES = new Properties();
     private static final String BINDING_PROPERTIES_FILE = "/binding.properties";
@@ -49,6 +52,7 @@ public final class XmlBinding {
     
     final JAXBContext context;
     final Schema schema;
+    final Set packageNamesHandled = new HashSet<String>();
     
     private static final class ValidationHandler implements ValidationEventHandler {
         
@@ -67,6 +71,18 @@ public final class XmlBinding {
     
     public XmlBinding(final Schema schema, final String... customPackages) throws JAXBException {
         
+        final StringBuilder packageNames = new StringBuilder();
+        boolean first = true;
+        for (final String p : DEFAULT_PACKAGES) {
+            if (first) {
+                first = false;
+            } else {
+                packageNames.append(":");
+            }
+            packageNames.append(p);
+            packageNamesHandled.add(p);
+        }
+        
         final InputStream ism = XmlBinding.class.getResourceAsStream(BINDING_PROPERTIES_FILE);
         if (ism != null) {
             try {
@@ -76,19 +92,20 @@ public final class XmlBinding {
             }
         }
         
-        StringBuilder packageNames = new StringBuilder(DEFAULT_PACKAGES);
-        
         final String customPackageNames = (String) BINDING_PROPERTIES.get(CUSTOM_PACKAGE_NAMES);
         if (customPackageNames != null && !customPackageNames.equals("")) {
             for (final String packageName : customPackageNames.split(",")) {
+                final String pkg = packageName.trim();
                 packageNames.append(":");
-                packageNames.append(packageName.trim());
+                packageNames.append(pkg);
+                packageNamesHandled.add(pkg);
             }
         }
         
         for (final String p : customPackages) {
             packageNames.append(":");
             packageNames.append(p);
+            packageNamesHandled.add(p);
         }
         
         context = JAXBContext.newInstance(packageNames.toString(),
@@ -119,5 +136,9 @@ public final class XmlBinding {
     
     public boolean isValidating() {
         return schema != null;
+    }
+    
+    public boolean isPackageHandled(final String pkg) {
+        return packageNamesHandled.contains(pkg);
     }
 }
