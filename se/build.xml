@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.38 2006-07-21 18:36:04 obiwan314 Exp $
+ $Id: build.xml,v 1.39 2006-07-21 19:48:52 obiwan314 Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -289,7 +289,7 @@
       </fileset>
     </copy>
     <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
-            path="${war.context.path}" war="${dist.dir}/${war.filename}" update="true" />
+            path="${war.context.path}" war="${basedir}/${dist.dir}/${war.filename}" update="true" />
   </target>
 
   <taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask" classpathref="deployer.classpath" />
@@ -370,7 +370,7 @@
 
   <target name="test-deploy" depends="events">
     <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
-            path="/events" war="${dist.dir}/${events.filename}" update="true" />
+            path="/events" war="${basedir}/${dist.dir}/${events.filename}" update="true" />
   </target>
   
   <target name="test" depends="lib,test-compile,deploy,test-deploy">
@@ -479,4 +479,7 @@
       <jvmarg value="-Dwsman.basicauthentication=true" />
     </junit>
   </target>
+	
+  <target name="autobuild" depends="clean,deploy,test,javadoc" />
+
 </project>

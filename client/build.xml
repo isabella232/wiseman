@@ -5,7 +5,7 @@
      Wiseman-Man Client    
      ====================================================================== 
 -->
-<project name="Wiseman Client" default="test">
+<project name="Wiseman Client" default="dist">
     <description>
             This is a build file for the Wiseman client implementation.
     </description>
@@ -81,7 +81,7 @@
     </target>
 	  
     <target name="javadoc" depends="compile" description="Generate the javadocs">
-       <javadoc sourcepath="${src.dir}" destdir="${apidocs.dir}" packagenames="com.hp.ws.management.*">
+       <javadoc sourcepath="${src.dir}" destdir="${apidocs.dir}" packagenames="*">
            <classpath>
                <path refid="compile.classpath" />
                <pathelement location="${build.classes.dir}" />
@@ -91,14 +91,14 @@
 
 	
 	
-	<target name="dist" depends="javadoc,test">
-	    <jar destfile="${client.jar.file}">
+	<target name="dist" depends="javadoc,jar">
+	    <!-- jar destfile="${client.jar.file}">
 	      	<fileset dir="${build.classes.dir}">
 	      		<include name="com/**"/>
 	      	</fileset>
 	    </jar>
 		
-       <!-- copy everything to staging area
+       <copy everything to staging area
         <copy todir="${staging.dir}" file="${client.jar.file}" />
         <copy todir="${staging.dir}" file="build.xml" />
             <copy todir="${staging.dir}" file="project.properties" />
@@ -155,6 +155,7 @@
 
     </target>
 	
+	<target name="autobuild" depends="javadoc,jar,test" />
 
 </project>
 

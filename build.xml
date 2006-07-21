@@ -15,14 +15,13 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.1 2006-07-21 18:47:37 obiwan314 Exp $
+ $Id: build.xml,v 1.2 2006-07-21 19:48:52 obiwan314 Exp $
 -->
 
 <project name="wiseman" default="build" basedir=".">
 
   <target name="build">
-	<ant antfile="se/build.xml" inheritall="no" description="Build wiseman clean" target="clean"/>
-	<ant antfile="se/build.xml" inheritall="no" description="Build wiseman" target="lib"/>
-	<ant antfile="client/build.xml" inheritall="no" description="Build Client" target="jar"/>
+	<ant antfile="se/build.xml" inheritall="no" description="Build Wiseman" target="autobuild"/>
+	<ant antfile="client/build.xml" inheritall="no" description="Build Wiseman Client" target="autobuild"/>
   </target>
 </project>
