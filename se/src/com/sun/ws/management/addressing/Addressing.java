@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.8 2006-07-18 18:15:08 akhilarora Exp $
+ * $Id: Addressing.java,v 1.9 2006-07-21 21:20:56 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -298,8 +298,7 @@ public class Addressing extends SOAP {
         return value == null ? null : ((JAXBElement<AttributedURI>) value).getValue().getValue().trim();
     }
     
-    private EndpointReferenceType getEndpointReference(final QName qname) throws JAXBException, SOAPException {
-        final Object value = unbind(getHeader(), qname);
-        return value == null ? null : ((JAXBElement<EndpointReferenceType>) value).getValue();
+    private EndpointReferenceType getEndpointReference(final QName... qname) throws JAXBException, SOAPException {
+        return getEndpointReference(getHeader(), qname);
     }
 }
