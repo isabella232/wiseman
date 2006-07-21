@@ -2,6 +2,7 @@ package com.sun.ws.management.client.impl;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Calendar;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -49,7 +50,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	private static ObjectFactory userFactory = new ObjectFactory();
 
-	public static String destUrl = "http://localhost:8080/hpwsman/";
+	public static String destUrl = "http://localhost:8080/wsman/";
 
 	public static String resourceUri = "wsman:auth/user";
 
@@ -136,7 +137,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		assertEquals(returnedUser.getState(), user.getState());
 		assertEquals(returnedUser.getZip(), user.getZip());
 		assertEquals(returnedUser.getAge(), user.getAge());
-
+		resource.delete();
 	}
 
 	/*
@@ -193,6 +194,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 //		System.out.println("RsState:"+resourceState.toString());
 		//Test that no other part of the fragment, like fName was returned.
 		assertTrue(resourceState.toString().indexOf(fName)==-1);
+		resource.delete();
 
 	}
 
@@ -244,6 +246,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		assertEquals("Values not same.", "Joe", newResource.getSelectorSet()
 				.getSelector().get(1).getContent().get(0));
 
+		newResource.delete();
 	}
 
 	/*
@@ -257,7 +260,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		String dest = ResourceImplTest.destUrl;
 		String resource = ResourceImplTest.resourceUri;
 
-		String lastName ="Finkle-Fragment";
+		String lastName ="Finkle-Fragment"+Calendar.getInstance().getTimeInMillis();
 		UserType user = userFactory.createUserType();
 		user.setLastname(lastName);
 		user.setFirstname("Joe");
@@ -342,6 +345,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		assertEquals(returnedUser.getLastname(),user.getLastname());
 		assertEquals(returnedUser.getFirstname(),user.getFirstname());
 		assertEquals("Value not retrieved correctly.",(int)returnedUser.getAge(),number);
+		newResource.delete();
 
 	}
 
@@ -499,6 +503,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 		assertEquals("Values not equal.", addressModified, user.getAddress());
 
+		created.delete();
 	}
 
 //	public void testFragmentPut() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
