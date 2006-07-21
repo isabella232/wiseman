@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.14 2006-06-07 17:56:52 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.15 2006-07-21 20:26:24 pmonday Exp $
  */
 
 package management;
@@ -24,13 +24,16 @@ import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.server.EnumerationElement;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
@@ -83,7 +86,6 @@ public class EnumerationTest extends TestBase {
         assertEquals(filter.getDialect(), enu2.getFilter().getDialect());
         assertEquals(filter.getContent().get(0), enu2.getFilter().getContent().get(0));
     }
-    
     public void testEnumerateResponseVisual() throws Exception {
         
         final Enumeration enu = new Enumeration();
@@ -134,11 +136,13 @@ public class EnumerationTest extends TestBase {
         enu.setAction(Enumeration.PULL_RESPONSE_URI);
         
         final String context = "context";
-        final List<Element> items = new ArrayList<Element>();
+        final List<EnumerationElement> items = new ArrayList<EnumerationElement>();
         final Document doc = enu.newDocument();
         final Element itemElement = doc.createElementNS(NS_URI, NS_PREFIX + ":anItem");
-        items.add(itemElement);
-        enu.setPullResponse(items, context, true);
+        EnumerationElement ee = new EnumerationElement();
+        ee.setElement(itemElement);
+        items.add(ee);
+        enu.setPullResponse(items, context, null, true);
         
         enu.prettyPrint(logfile);
         
@@ -173,6 +177,90 @@ public class EnumerationTest extends TestBase {
     public void testEnumerate() throws Exception {
         enumerateTest(null);
         enumerateTest("/java:java.specification.version");
+    }
+    
+    /**
+     * Test ability to return EPRs in an enumeration
+     * rather than objects
+     */
+
+    public void testEnumerateEPR() throws Exception {
+        enumerateTestWithEPRs(false);
+    }
+
+    
+    /**
+     * Test ability to return objects and their associated Endpoint References
+     * in an enumeration
+     */
+    public void testEnumerateObjectAndEPR() throws Exception {
+        enumerateTestWithEPRs(true);
+    }
+
+    public void testRelease() throws Exception {
+        
+        final String RESOURCE = "wsman:test/java/system/properties";
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        enu.setEnumerate(null, null, null);
+        
+        final Management mgmt = new Management(enu);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(RESOURCE);
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault()) {
+            response.prettyPrint(System.err);
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration enuResponse = new Enumeration(response);
+        final EnumerateResponse enr = enuResponse.getEnumerateResponse();
+        String context = (String) enr.getEnumerationContext().getContent().get(0);
+        
+        final Enumeration releaseRequest = new Enumeration();
+        releaseRequest.setAction(Enumeration.RELEASE_ACTION_URI);
+        releaseRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        releaseRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        releaseRequest.setRelease(context);
+        
+        final Management mr = new Management(releaseRequest);
+        mr.setTo(DESTINATION);
+        mr.setResourceURI(RESOURCE);
+        
+        mr.prettyPrint(logfile);
+        final Addressing rraddr = HttpClient.sendRequest(mr);
+        rraddr.prettyPrint(logfile);
+        if (rraddr.getBody().hasFault()) {
+            rraddr.prettyPrint(System.err);
+            fail(rraddr.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration pullRequest = new Enumeration();
+        pullRequest.setAction(Enumeration.PULL_ACTION_URI);
+        pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        pullRequest.setPull(context, 0, 3, null);
+        
+        final Management mp = new Management(pullRequest);
+        mp.setTo(DESTINATION);
+        mp.setResourceURI(RESOURCE);
+        
+        mp.prettyPrint(logfile);
+        final Addressing praddr = HttpClient.sendRequest(mp);
+        praddr.prettyPrint(logfile);
+        if (!praddr.getBody().hasFault()) {
+            fail("pull after release succeeded");
+        }
+        
+        final Fault fault = new Addressing(praddr).getFault();
+        assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
+        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT, fault.getCode().getSubcode().getValue());
+        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT_REASON, fault.getReason().getText().get(0).getValue());
     }
     
     private void enumerateTest(final String filter) throws Exception {
@@ -263,70 +351,149 @@ public class EnumerationTest extends TestBase {
             assertTrue(pe.getValue().intValue() > 0);
         } while (!done);
     }
-    
-    public void testRelease() throws Exception {
+
+    /**
+     * Workhorse method for the enumeration test with EPRs
+     * @param includeObjects determines whether the objects should be included
+     * in addition to the EPRs themselves
+     */
+    private void enumerateTestWithEPRs(final boolean includeObjects) throws Exception {
         
         final String RESOURCE = "wsman:test/java/system/properties";
-        final Enumeration enu = new Enumeration();
+        
+        /*
+         * Prepare the Enumeration Request
+         */
+        final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        enu.setEnumerate(null, null, null);
-        
+        final DatatypeFactory factory = DatatypeFactory.newInstance();
+        final EnumerationExtensions.Mode enumerationMode = 
+                includeObjects ? 
+                    /* EnumerationModeType.valueOf("EnumerateObjectAndEPR") */
+                    EnumerationExtensions.Mode.EnumerateObjectAndEPR
+                    : 
+                    /* EnumerationModeType.valueOf("EnumerateEPR") */
+                    EnumerationExtensions.Mode.EnumerateEPR ;
+                    
+        enu.setEnumerate(null, factory.newDuration(60000).toString(),
+                null, enumerationMode);
+
+        /*
+         * Prepare the request
+         */
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
-        
         mgmt.prettyPrint(logfile);
+        
+        /*
+         * Retrieve the response
+         */
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
+            // this test fails with an AccessDenied fault if the server is
+            // running in the sun app server with a security manager in
+            // place (the default), which disallows enumeration of
+            // system properties
             fail(response.getBody().getFault().getFaultString());
         }
         
-        final Enumeration enuResponse = new Enumeration(response);
+        /*
+         * Prepare response objects 
+         */
+        final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
-        
-        final Enumeration releaseRequest = new Enumeration();
-        releaseRequest.setAction(Enumeration.RELEASE_ACTION_URI);
-        releaseRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        releaseRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        releaseRequest.setRelease(context);
-        
-        final Management mr = new Management(releaseRequest);
-        mr.setTo(DESTINATION);
-        mr.setResourceURI(RESOURCE);
-        
-        mr.prettyPrint(logfile);
-        final Addressing rraddr = HttpClient.sendRequest(mr);
-        rraddr.prettyPrint(logfile);
-        if (rraddr.getBody().hasFault()) {
-            rraddr.prettyPrint(System.err);
-            fail(rraddr.getBody().getFault().getFaultString());
-        }
-        
-        final Enumeration pullRequest = new Enumeration();
-        pullRequest.setAction(Enumeration.PULL_ACTION_URI);
-        pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        pullRequest.setPull(context, 0, 3, null);
-        
-        final Management mp = new Management(pullRequest);
-        mp.setTo(DESTINATION);
-        mp.setResourceURI(RESOURCE);
-        
-        mp.prettyPrint(logfile);
-        final Addressing praddr = HttpClient.sendRequest(mp);
-        praddr.prettyPrint(logfile);
-        if (!praddr.getBody().hasFault()) {
-            fail("pull after release succeeded");
-        }
-        
-        final Fault fault = new Addressing(praddr).getFault();
-        assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
-        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT, fault.getCode().getSubcode().getValue());
-        assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT_REASON, fault.getReason().getText().get(0).getValue());
+
+        /*
+         * Walk through the response
+         */
+        boolean done = false;
+        do {
+            /*
+             * Set up a request to pull the next item of the enumeration
+             */
+            final EnumerationExtensions pullRequest = new EnumerationExtensions();
+            pullRequest.setAction(Enumeration.PULL_ACTION_URI);
+            pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+            pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+            pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
+
+            /*
+             * Set up the target
+             */
+            final Management mp = new Management(pullRequest);
+            mp.setTo(DESTINATION);
+            mp.setResourceURI(RESOURCE);
+            mp.prettyPrint(logfile);
+            final Addressing praddr = HttpClient.sendRequest(mp);
+            praddr.prettyPrint(logfile);
+            
+            /*
+             * Fail if response is an error
+             */
+            if (praddr.getBody().hasFault()) {
+                praddr.prettyPrint(System.err);
+                fail(praddr.getBody().getFault().getFaultString());
+            }
+            
+            /*
+             * Check the response for appropriate EPRs
+             */
+            final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
+            final PullResponse pr = pullResponse.getPullResponse();
+            // update context for the next pull (if any)
+            if (pr.getEnumerationContext() != null) {
+                context = (String) pr.getEnumerationContext().getContent().get(0);
+            }
+
+            /*
+             * The returned items are in one of two forms, if we are doing
+             * an enumeration of the form EnumerateEPR, then every item will
+             * be an EPR, as in:
+             * <wsa:EndpointReference> ... </wsa:EndpointReference>
+             *
+             * If the enumeration is of the form EnumerateObjectAndEPR, then
+             * every item will be of the form
+             * <payloadobject>...</payloadobject>
+             * <wsa:EndpointReference> ... </wsa:EndpointReference>
+             * Basically, the EPRs will go right after the payload objects
+             *
+             * We will verify that the proper sequence of EPRs
+             * are in place.  We will <i>not</i> validate that the EPRs are
+             * usable
+             */
+            final List<Object> items = pr.getItems().getAny();
+            final Iterator itemsIterator = items.iterator();
+            while(itemsIterator.hasNext()) {
+                Object obj = itemsIterator.next();
+                
+                if(includeObjects) {
+                    // this should be a payload object, ignore and retrieve the next
+                    // which should be an EPRs
+                    if(itemsIterator.hasNext()) {
+                        obj = itemsIterator.next();
+                    } else {
+                        fail("EnumerateObjectAndEPR should be in pairs and was not");
+                    }
+                }
+                
+                final JAXBElement<EndpointReferenceType> eprJaxb = (JAXBElement<EndpointReferenceType>)obj;
+                final EndpointReferenceType epr = eprJaxb.getValue();
+                
+                // validate that the element is an EndpointReference
+                final String address = epr.getAddress().getValue();
+                assertEquals(address, DESTINATION);
+            }
+            
+            if (pr.getEndOfSequence() != null) {
+                done = true;
+            }
+
+        } while (!done);
     }
 }

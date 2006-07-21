@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.6 2006-07-19 22:41:36 akhilarora Exp $
+ * $Id: EnumerationIterator.java,v 1.7 2006-07-21 20:26:22 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
-import org.w3c.dom.Element;
 
 /**
  * The inteface to be presented by a data source that would like to be
@@ -84,11 +83,11 @@ public interface EnumerationIterator {
      * @param count The number of items desired in this
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
      *
-     * @return a List of {@link org.w3c.dom.Element Elements} that will be
-     * returned in the
+     * @return a List of {@link EnumerationElement Elements} that are used to 
+     * construct proper responses for a 
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
-    List<Element> next(final DocumentBuilder db, final Object context,
+    List<EnumerationElement> next(final DocumentBuilder db, final Object context,
             final int startPos, final int count);
     
     /**

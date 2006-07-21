@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: exec_Handler.java,v 1.6 2006-07-19 22:41:39 akhilarora Exp $
+ * $Id: exec_Handler.java,v 1.7 2006-07-21 20:26:19 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -22,6 +22,7 @@ import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.server.EnumerationElement;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.Handler;
@@ -143,16 +144,22 @@ public class exec_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<Element> next(final DocumentBuilder db, final Object context, final int startPos, final int count) {
+    public List<EnumerationElement> next(final DocumentBuilder db, final Object context, final int startPos, final int count) {
         cancelled = false;
         final String[] lines = (String[]) context;
         final int returnCount = Math.min(count, lines.length - startPos);
-        final List<Element> items = new ArrayList(returnCount);
+        final List<EnumerationElement> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !cancelled; i++) {
             final Document doc = db.newDocument();
             final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + EXEC);
             item.setTextContent(lines[startPos + i]);
-            items.add(item);
+            
+            // create an enumeration element to support multiple enumeration modes
+            EnumerationElement ee = new EnumerationElement();
+            ee.setElement(item);
+            // todo: add the EPR
+            
+            items.add(ee);
         }
         return items;
     }

@@ -13,31 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.3 2006-06-28 22:32:46 akhilarora Exp $
+ * $Id: EnumerationContext.java,v 1.4 2006-07-21 20:26:22 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.xpath.XPathExpressionException;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 
 final class EnumerationContext extends BaseContext {
     
     private final Object clientContext;
     private final EnumerationIterator iterator;
-
+    private final EnumerationModeType mode;
+    
     // implied value
     private int count = 1;
     private int cursor = 0;
     
     EnumerationContext(final XMLGregorianCalendar expiration,
             final String filter,
+            final EnumerationModeType mode,
             final NamespaceMap namespaces,
             final Object clientContext,
             final EnumerationIterator iterator) throws XPathExpressionException {
         super(expiration, filter, namespaces);
         this.clientContext = clientContext;
         this.iterator = iterator;
+        this.mode = mode;
+    }
+    
+    /**
+     * Returns the EnumerationMode
+     * @return the EnumerationModeType, null if the mode was not set
+     */
+    public EnumerationModeType getEnumerationMode(){
+        return mode;
     }
     
     int getCursor() {

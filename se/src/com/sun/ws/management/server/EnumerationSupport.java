@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.21 2006-07-19 22:41:37 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.22 2006-07-21 20:26:21 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -30,11 +30,12 @@ import com.sun.ws.management.soap.FaultException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
@@ -44,6 +45,7 @@ import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
@@ -143,12 +145,31 @@ public final class EnumerationSupport extends BaseSupport {
             expiration.add(defaultExpiration);
         }
         
+        // Locate the EnumerationMode in the enumerate request
+        //   null after execution of the body implies no special enumeration mode
+        EnumerationModeType enumerationMode = null;
+        final List<Object> additionalValues = enumerate.getAny();
+        final Iterator additionalValuesIterator = additionalValues.iterator();
+        boolean found=false;
+        while(additionalValuesIterator.hasNext() && !found){
+            final Object additionalValue = additionalValuesIterator.next();
+            if(additionalValue instanceof JAXBElement) {
+                final JAXBElement jaxbElement = (JAXBElement)additionalValue;
+                if(jaxbElement.getDeclaredType().equals(EnumerationModeType.class)){
+                    found=true;
+                    enumerationMode = (EnumerationModeType)jaxbElement.getValue();
+                }
+            }
+        }
+        
         final NamespaceMap nsMap = enumIterator.getNamespaces();
+
         EnumerationContext ctx = null;
         try {
             ctx = new EnumerationContext(
                     expiration,
-                    filterExpression,
+                    filterExpression, 
+                    enumerationMode,
                     nsMap,
                     clientContext, enumIterator);
         } catch (XPathExpressionException xpx) {
@@ -246,7 +267,7 @@ public final class EnumerationSupport extends BaseSupport {
         
         final SOAPEnvelope env = response.getEnvelope();
         final DocumentBuilder db = response.getDocumentBuilder();
-        final List<Element> passed = new ArrayList<Element>(ctx.getCount());
+        final List<EnumerationElement> passed = new ArrayList<EnumerationElement>(ctx.getCount());
         
         final NamespaceMap nsMap = iterator.getNamespaces();
         while (passed.size() < ctx.getCount() && iterator.hasNext(clientContext, ctx.getCursor())) {
@@ -259,7 +280,7 @@ public final class EnumerationSupport extends BaseSupport {
             final Timer timeoutTimer = new Timer(true);
             timeoutTimer.schedule(ttask, timeout);
             
-            final List<Element> items = iterator.next(db, clientContext, ctx.getCursor(),
+            final List<EnumerationElement> items = iterator.next(db, clientContext, ctx.getCursor(),
                     ctx.getCount() - passed.size());
             if (items == null) {
                 throw new TimedOutFault();
@@ -268,7 +289,9 @@ public final class EnumerationSupport extends BaseSupport {
             ctx.setCursor(ctx.getCursor() + items.size());
             
             // apply filter, if any
-            for (final Element item : items) {
+            for (final EnumerationElement ee : items) {
+                // retrieve the document element from the enumeration element
+                final Element item = ee.getElement();
                 // append the Element to the owner document if it has not been done
                 // this is critical for XPath filtering to work
                 final Document owner = item.getOwnerDocument();
@@ -277,7 +300,7 @@ public final class EnumerationSupport extends BaseSupport {
                 }
                 try {
                     if (ctx.evaluate(item, nsMap)) {
-                        passed.add(item);
+                        passed.add(ee);
                         env.addNamespaceDeclaration(item.getPrefix(), item.getNamespaceURI());
                     }
                 } catch (XPathException xpx) {
@@ -290,11 +313,11 @@ public final class EnumerationSupport extends BaseSupport {
         if (iterator.hasNext(clientContext, ctx.getCursor())) {
             // update
             putContext(context, ctx);
-            response.setPullResponse(passed, context.toString(), true);
+            response.setPullResponse(passed, context.toString(), ctx.getEnumerationMode(), true);
         } else {
             // remove the context - a subsequent release will fault with an invalid context
             removeContext(context);
-            response.setPullResponse(passed, null, false);
+            response.setPullResponse(passed, null, ctx.getEnumerationMode(), false);
         }
         
         // place an item count estimate if one was requested
