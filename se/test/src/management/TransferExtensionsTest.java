@@ -26,6 +26,7 @@ import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
 import foo.test.Foo;
 import foo.test.Is;
+import java.io.IOException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -269,8 +270,13 @@ public class TransferExtensionsTest extends TestBase {
      * @throws Exception
      */
     public void testFragmentDelete() throws Exception {
+        
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
+            // skip this test if JAXB is not initialized with the foo.test package
+            return;
+        }
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.DELETE_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -399,6 +405,10 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentPut() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
+            // skip this test if JAXB is not initialized with the foo.test package
+            return;
+        }
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.PUT_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -551,6 +561,10 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentCreate() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
+            // skip this test if JAXB is not initialized with the foo.test package
+            return;
+        }
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.CREATE_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -639,5 +653,15 @@ public class TransferExtensionsTest extends TestBase {
         }
         
     }
-    
+
+    private boolean checkIfBindingIsAvailable(final XmlBinding binding) throws IOException {
+        final boolean available = binding.isPackageHandled(JAXB_PACKAGE_FOO_TEST);
+        if (!available) {
+            final String msg = "Skipping test " + getName() + 
+                    " since binding is currently not enabled for package " + 
+                    JAXB_PACKAGE_FOO_TEST;
+            logfile.write(msg.getBytes());
+        }
+        return available;
+    }
 }
