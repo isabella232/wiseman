@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.22 2006-07-21 20:26:21 pmonday Exp $
+ * $Id: EnumerationSupport.java,v 1.23 2006-07-21 20:42:47 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -110,6 +110,8 @@ public final class EnumerationSupport extends BaseSupport {
         String filterExpression = null;
         
         final Enumerate enumerate = request.getEnumerate();
+        EnumerationModeType enumerationMode = null;
+        
         if (enumerate == null) {
             // see if this is a pull event mode subscribe request
             final EventingExtensions evtx = new EventingExtensions(request);
@@ -136,6 +138,23 @@ public final class EnumerationSupport extends BaseSupport {
             if (enumerate.getEndTo() != null) {
                 throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
+            
+            // Locate the EnumerationMode in the enumerate request
+            //   null after execution of the body implies no special enumeration mode
+            final List<Object> additionalValues = enumerate.getAny();
+            final Iterator additionalValuesIterator = additionalValues.iterator();
+            boolean found=false;
+            while(additionalValuesIterator.hasNext() && !found){
+                final Object additionalValue = additionalValuesIterator.next();
+                if(additionalValue instanceof JAXBElement) {
+                    final JAXBElement jaxbElement = (JAXBElement)additionalValue;
+                    if(jaxbElement.getDeclaredType().equals(EnumerationModeType.class)){
+                        found=true;
+                        enumerationMode = (EnumerationModeType)jaxbElement.getValue();
+                    }
+                }
+            }
+                    
         }
         
         XMLGregorianCalendar expiration = initExpiration(expires);
@@ -143,23 +162,6 @@ public final class EnumerationSupport extends BaseSupport {
             final GregorianCalendar now = new GregorianCalendar();
             expiration = datatypeFactory.newXMLGregorianCalendar(now);
             expiration.add(defaultExpiration);
-        }
-        
-        // Locate the EnumerationMode in the enumerate request
-        //   null after execution of the body implies no special enumeration mode
-        EnumerationModeType enumerationMode = null;
-        final List<Object> additionalValues = enumerate.getAny();
-        final Iterator additionalValuesIterator = additionalValues.iterator();
-        boolean found=false;
-        while(additionalValuesIterator.hasNext() && !found){
-            final Object additionalValue = additionalValuesIterator.next();
-            if(additionalValue instanceof JAXBElement) {
-                final JAXBElement jaxbElement = (JAXBElement)additionalValue;
-                if(jaxbElement.getDeclaredType().equals(EnumerationModeType.class)){
-                    found=true;
-                    enumerationMode = (EnumerationModeType)jaxbElement.getValue();
-                }
-            }
         }
         
         final NamespaceMap nsMap = enumIterator.getNamespaces();
