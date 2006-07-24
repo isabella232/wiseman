@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.12 2006-07-19 22:41:37 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.13 2006-07-24 13:15:00 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -147,7 +147,7 @@ public final class EventingSupport extends BaseSupport {
         doc.appendChild(identifier);
         refParams.getAny().add(doc.getDocumentElement());
         final EndpointReferenceType subMgrEPR =
-                response.createEndpointReference(request.getTo(),
+                Addressing.createEndpointReference(request.getTo(),
                 null, refParams, null, null);
         response.setSubscribeResponse(subMgrEPR, ctx.getExpiration());
         

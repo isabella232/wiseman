@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.4 2006-07-21 20:26:16 pmonday Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.5 2006-07-24 13:13:00 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -23,7 +23,7 @@ import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.server.EnumerationElement;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.Handler;
@@ -97,11 +97,11 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<EnumerationElement> next(final DocumentBuilder db, final Object context,
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
             final int start, final int count) {
         final Context ctx = (Context) context;
         final int returnCount = Math.min(count, ctx.count - start);
-        final List<EnumerationElement> items = new ArrayList(returnCount);
+        final List<EnumerationItem> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
             Document resourceDoc = null;
             final String resourceDocName = "Pull" + "_" + start + ".xml";
@@ -116,10 +116,8 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             }
             
             // create an enumeration element 
-            EnumerationElement ee = new EnumerationElement();
-            // add the primary item
-            ee.setElement(resourceDoc.getDocumentElement());
-            // todo: add the EPR
+            EnumerationItem ee = new EnumerationItem(resourceDoc.getDocumentElement(), null);
+            // TODO: add the EPR
             
             items.add(ee);
         }

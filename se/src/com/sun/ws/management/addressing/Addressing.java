@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.9 2006-07-21 21:20:56 akhilarora Exp $
+ * $Id: Addressing.java,v 1.10 2006-07-24 13:14:58 pmonday Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -31,6 +31,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedQName;
@@ -106,9 +107,9 @@ public class Addressing extends SOAP {
     }
     
     // only address is mandatory, the rest of the params are optional and can be null
-    public EndpointReferenceType createEndpointReference(final String address,
+    public static EndpointReferenceType createEndpointReference(final String address,
             final ReferencePropertiesType props, final ReferenceParametersType params,
-            final AttributedQName portType, final ServiceNameType serviceName) throws JAXBException {
+            final AttributedQName portType, final ServiceNameType serviceName) {
         
         final EndpointReferenceType epr = FACTORY.createEndpointReferenceType();
         
@@ -301,4 +302,5 @@ public class Addressing extends SOAP {
     private EndpointReferenceType getEndpointReference(final QName... qname) throws JAXBException, SOAPException {
         return getEndpointReference(getHeader(), qname);
     }
+    
 }

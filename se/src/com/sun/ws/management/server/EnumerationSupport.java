@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.23 2006-07-21 20:42:47 pmonday Exp $
+ * $Id: EnumerationSupport.java,v 1.24 2006-07-24 13:15:00 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -143,14 +143,12 @@ public final class EnumerationSupport extends BaseSupport {
             //   null after execution of the body implies no special enumeration mode
             final List<Object> additionalValues = enumerate.getAny();
             final Iterator additionalValuesIterator = additionalValues.iterator();
-            boolean found=false;
-            while(additionalValuesIterator.hasNext() && !found){
-                final Object additionalValue = additionalValuesIterator.next();
-                if(additionalValue instanceof JAXBElement) {
+            for (final Object additionalValue : enumerate.getAny()) {
+                if (additionalValue instanceof JAXBElement) {
                     final JAXBElement jaxbElement = (JAXBElement)additionalValue;
-                    if(jaxbElement.getDeclaredType().equals(EnumerationModeType.class)){
-                        found=true;
+                    if (jaxbElement.getDeclaredType().equals(EnumerationModeType.class)) {
                         enumerationMode = (EnumerationModeType)jaxbElement.getValue();
+                        break;
                     }
                 }
             }
@@ -269,7 +267,7 @@ public final class EnumerationSupport extends BaseSupport {
         
         final SOAPEnvelope env = response.getEnvelope();
         final DocumentBuilder db = response.getDocumentBuilder();
-        final List<EnumerationElement> passed = new ArrayList<EnumerationElement>(ctx.getCount());
+        final List<EnumerationItem> passed = new ArrayList<EnumerationItem>(ctx.getCount());
         
         final NamespaceMap nsMap = iterator.getNamespaces();
         while (passed.size() < ctx.getCount() && iterator.hasNext(clientContext, ctx.getCursor())) {
@@ -282,7 +280,7 @@ public final class EnumerationSupport extends BaseSupport {
             final Timer timeoutTimer = new Timer(true);
             timeoutTimer.schedule(ttask, timeout);
             
-            final List<EnumerationElement> items = iterator.next(db, clientContext, ctx.getCursor(),
+            final List<EnumerationItem> items = iterator.next(db, clientContext, ctx.getCursor(),
                     ctx.getCount() - passed.size());
             if (items == null) {
                 throw new TimedOutFault();
@@ -291,24 +289,28 @@ public final class EnumerationSupport extends BaseSupport {
             ctx.setCursor(ctx.getCursor() + items.size());
             
             // apply filter, if any
-            for (final EnumerationElement ee : items) {
+            for (final EnumerationItem ee : items) {
                 // retrieve the document element from the enumeration element
                 final Element item = ee.getElement();
-                // append the Element to the owner document if it has not been done
-                // this is critical for XPath filtering to work
-                final Document owner = item.getOwnerDocument();
-                if (owner.getDocumentElement() == null) {
-                    owner.appendChild(item);
-                }
-                try {
-                    if (ctx.evaluate(item, nsMap)) {
-                        passed.add(ee);
-                        env.addNamespaceDeclaration(item.getPrefix(), item.getNamespaceURI());
+                
+                if (item != null) {
+                    // append the Element to the owner document if it has not been done
+                    // this is critical for XPath filtering to work
+                    final Document owner = item.getOwnerDocument();
+                    if (owner.getDocumentElement() == null) {
+                        owner.appendChild(item);
                     }
-                } catch (XPathException xpx) {
-                    throw new CannotProcessFilterFault("Error evaluating XPath: " +
-                            xpx.getMessage());
+                    try {
+                        if (ctx.evaluate(item, nsMap)) {
+                            passed.add(ee);
+                            env.addNamespaceDeclaration(item.getPrefix(), item.getNamespaceURI());
+                        }
+                    } catch (XPathException xpx) {
+                        throw new CannotProcessFilterFault("Error evaluating XPath: " +
+                                xpx.getMessage());
+                    }
                 }
+                
             }
         }
         

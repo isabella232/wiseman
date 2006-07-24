@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.15 2006-07-21 20:26:24 pmonday Exp $
+ * $Id: EnumerationTest.java,v 1.16 2006-07-24 13:14:58 pmonday Exp $
  */
 
 package management;
@@ -24,7 +24,7 @@ import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.server.EnumerationElement;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
@@ -67,7 +67,7 @@ public class EnumerationTest extends TestBase {
         final Enumeration enu = new Enumeration();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         
-        final EndpointReferenceType endTo = enu.createEndpointReference("http://host/endTo", null, null, null, null);
+        final EndpointReferenceType endTo = Addressing.createEndpointReference("http://host/endTo", null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         final FilterType filter = Enumeration.FACTORY.createFilterType();
         filter.setDialect("http://mydomain/my.filter.dialect");
@@ -136,11 +136,11 @@ public class EnumerationTest extends TestBase {
         enu.setAction(Enumeration.PULL_RESPONSE_URI);
         
         final String context = "context";
-        final List<EnumerationElement> items = new ArrayList<EnumerationElement>();
+        final List<EnumerationItem> items = new ArrayList<EnumerationItem>();
         final Document doc = enu.newDocument();
         final Element itemElement = doc.createElementNS(NS_URI, NS_PREFIX + ":anItem");
-        EnumerationElement ee = new EnumerationElement();
-        ee.setElement(itemElement);
+        EnumerationItem ee = new EnumerationItem(itemElement, null);
+        // TODO: Add EPR to ctor
         items.add(ee);
         enu.setPullResponse(items, context, null, true);
         
@@ -380,17 +380,13 @@ public class EnumerationTest extends TestBase {
         enu.setEnumerate(null, factory.newDuration(60000).toString(),
                 null, enumerationMode);
 
-        /*
-         * Prepare the request
-         */
+        // prepare the request
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
         mgmt.prettyPrint(logfile);
         
-        /*
-         * Retrieve the response
-         */
+        // retrieve the response
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
@@ -402,30 +398,22 @@ public class EnumerationTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        /*
-         * Prepare response objects 
-         */
+        // Prepare response objects 
         final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
 
-        /*
-         * Walk through the response
-         */
+        // walk the response
         boolean done = false;
         do {
-            /*
-             * Set up a request to pull the next item of the enumeration
-             */
+            // Set up a request to pull the next item of the enumeration
             final EnumerationExtensions pullRequest = new EnumerationExtensions();
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
             pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
 
-            /*
-             * Set up the target
-             */
+            // Set up the target
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION);
             mp.setResourceURI(RESOURCE);
@@ -433,17 +421,13 @@ public class EnumerationTest extends TestBase {
             final Addressing praddr = HttpClient.sendRequest(mp);
             praddr.prettyPrint(logfile);
             
-            /*
-             * Fail if response is an error
-             */
+            // Fail if response is an error
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);
                 fail(praddr.getBody().getFault().getFaultString());
             }
             
-            /*
-             * Check the response for appropriate EPRs
-             */
+            // Check the response for appropriate EPRs
             final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
             final PullResponse pr = pullResponse.getPullResponse();
             // update context for the next pull (if any)

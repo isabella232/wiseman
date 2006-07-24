@@ -2,7 +2,7 @@ package framework.models;
 
 
 
-import com.sun.ws.management.server.EnumerationElement;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
 
 import com.sun.ws.management.server.NamespaceMap;
@@ -117,7 +117,7 @@ public class FileEnumerationIterator implements EnumerationIterator
 
      */
 
-    public List<EnumerationElement> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
 
     {
 
@@ -127,7 +127,7 @@ public class FileEnumerationIterator implements EnumerationIterator
 
         final int returnCount = Math.min(count, props.length - startPos);
 
-        final List<EnumerationElement> items = new ArrayList<EnumerationElement>(returnCount);
+        final List<EnumerationItem> items = new ArrayList<EnumerationItem>(returnCount);
 
 
 
@@ -143,8 +143,8 @@ public class FileEnumerationIterator implements EnumerationIterator
 
             item.appendChild(doc.createTextNode(value.getAbsolutePath()));
 
-            EnumerationElement ee = new EnumerationElement();
-            ee.setElement(item);
+            EnumerationItem ee = new EnumerationItem(item, null);
+            // TODO: fix to add EPR
             
             items.add(ee);
 

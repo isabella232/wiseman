@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.9 2006-07-08 23:48:25 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.10 2006-07-24 13:14:58 pmonday Exp $
  */
 
 package management;
@@ -191,7 +191,7 @@ public class EventingTest extends TestBase {
         final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
         delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
         final String recvrAddress = "http://localhost:8080/events";
-        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        final EndpointReferenceType notifyToEPR = Addressing.createEndpointReference(recvrAddress, null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, null);
         
@@ -303,7 +303,7 @@ public class EventingTest extends TestBase {
         final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
         delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
         final String recvrAddress = "http://localhost:8080/events";
-        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        final EndpointReferenceType notifyToEPR = Addressing.createEndpointReference(recvrAddress, null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         final FilterType filter = Eventing.FACTORY.createFilterType();
         filter.setDialect(XPath.NS_URI);
@@ -337,7 +337,7 @@ public class EventingTest extends TestBase {
         final DeliveryType delivery = Eventing.FACTORY.createDeliveryType();
         delivery.setMode(Eventing.PUSH_DELIVERY_MODE);
         final String recvrAddress = "http://localhost:8080/events";
-        final EndpointReferenceType notifyToEPR = evt.createEndpointReference(recvrAddress, null, null, null, null);
+        final EndpointReferenceType notifyToEPR = Addressing.createEndpointReference(recvrAddress, null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         final FilterType filter = Eventing.FACTORY.createFilterType();
         filter.setDialect(XPath.NS_URI);

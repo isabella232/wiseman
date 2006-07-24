@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.4 2006-07-21 20:26:22 pmonday Exp $
+ * $Id: EnumerationContext.java,v 1.5 2006-07-24 13:15:00 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -48,7 +48,7 @@ final class EnumerationContext extends BaseContext {
      * Returns the EnumerationMode
      * @return the EnumerationModeType, null if the mode was not set
      */
-    public EnumerationModeType getEnumerationMode(){
+    public EnumerationModeType getEnumerationMode() {
         return mode;
     }
     

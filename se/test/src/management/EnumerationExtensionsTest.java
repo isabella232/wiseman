@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.2 2006-06-05 22:56:48 akhilarora Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.3 2006-07-24 13:14:58 pmonday Exp $
  */
 
 package management;
 
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.Enumeration;
 import java.io.ByteArrayInputStream;
@@ -50,7 +51,7 @@ public class EnumerationExtensionsTest extends TestBase {
         final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         
-        final EndpointReferenceType endTo = enu.createEndpointReference("http://host/endTo", null, null, null, null);
+        final EndpointReferenceType endTo = Addressing.createEndpointReference("http://host/endTo", null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
         final FilterType filter = Enumeration.FACTORY.createFilterType();
         filter.setDialect("http://mydomain/my.filter.dialect");

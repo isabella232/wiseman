@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.7 2006-07-21 20:26:22 pmonday Exp $
+ * $Id: EnumerationIterator.java,v 1.8 2006-07-24 13:15:00 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -87,7 +87,7 @@ public interface EnumerationIterator {
      * construct proper responses for a 
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
-    List<EnumerationElement> next(final DocumentBuilder db, final Object context,
+    List<EnumerationItem> next(final DocumentBuilder db, final Object context,
             final int startPos, final int count);
     
     /**

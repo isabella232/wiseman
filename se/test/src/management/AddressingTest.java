@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: AddressingTest.java,v 1.2 2006-02-01 21:50:38 akhilarora Exp $
+ * $Id: AddressingTest.java,v 1.3 2006-07-24 13:14:58 pmonday Exp $
  */
 
 package management;
@@ -87,7 +87,7 @@ public class AddressingTest extends TestBase {
         
         final String fromAddr = "https://client:8080/wsman/receiver";
         final EndpointReferenceType eprFrom =
-                addr.createEndpointReference(fromAddr, propsFrom, paramsFrom, portTypeFrom, serviceNameFrom);
+                Addressing.createEndpointReference(fromAddr, propsFrom, paramsFrom, portTypeFrom, serviceNameFrom);
         addr.setFrom(eprFrom);
         
         // test that both forms work and that multiple RelatesTo are allowed

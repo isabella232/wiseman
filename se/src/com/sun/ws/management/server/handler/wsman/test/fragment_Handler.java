@@ -21,6 +21,7 @@ import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
@@ -152,7 +153,7 @@ public class fragment_Handler extends base_Handler {
                     nodeContent.add(childNodes.item(i));
                 }
                 final EndpointReferenceType epr =
-                        transExtRequest.createEndpointReference(transExtRequest.getTo(),
+                        Addressing.createEndpointReference(transExtRequest.getTo(),
                         null, null, null, null);
                 transExtResponse.setFragmentCreateResponse(fragmentHeader, nodeContent,
                         expression, XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap),

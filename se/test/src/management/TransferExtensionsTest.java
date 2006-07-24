@@ -536,7 +536,7 @@ public class TransferExtensionsTest extends TestBase {
         final Element requestFooElement = doc.createElement("foo");//create a foo with no bar
         requestContent.add(requestFooElement);
 
-        final EndpointReferenceType epr = transfer.createEndpointReference(transfer.getTo(), null, null, null, null);
+        final EndpointReferenceType epr = Addressing.createEndpointReference(transfer.getTo(), null, null, null, null);
         transfer.setFragmentCreateResponse(fragmentHeader, requestContent, expression, content, epr);
         
         //print contents of Transfer

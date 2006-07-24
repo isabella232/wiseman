@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.7 2006-07-21 20:26:19 pmonday Exp $
+ * $Id: pull_source_Handler.java,v 1.8 2006-07-24 13:14:59 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -26,7 +26,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.server.EnumerationElement;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.HandlerContext;
@@ -93,12 +93,12 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<EnumerationElement> next(final DocumentBuilder db, final Object context,
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
             final int start, final int count) {
         cancelled = false;
         final String[][] events = (String[][]) context;
         final int returnCount = Math.min(count, events.length - start);
-        final List<EnumerationElement> items = new ArrayList(returnCount);
+        final List<EnumerationItem> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !cancelled; i++) {
             final String key = events[start + i][0];
             final String value = events[start + i][1];
@@ -107,9 +107,8 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
             item.setTextContent(value);
             
             // create an enumeration element to support multiple enumeration modes
-            EnumerationElement ee = new EnumerationElement();
-            ee.setElement(item);
-            // todo: add the EPR to the EnumerationElement instance
+            EnumerationItem ee = new EnumerationItem(item, null);
+            // TODO: add the EPR to the EnumerationElement instance
             
             items.add(ee);
         }

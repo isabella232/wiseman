@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.11 2006-07-21 20:26:20 pmonday Exp $
+ * $Id: properties_Handler.java,v 1.12 2006-07-24 13:14:59 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -21,10 +21,11 @@ package com.sun.ws.management.server.handler.wsman.test.java.system;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
-import com.sun.ws.management.server.EnumerationElement;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
@@ -37,6 +38,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilder;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
@@ -138,12 +140,12 @@ public class properties_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<EnumerationElement> next(final DocumentBuilder db, final Object context,
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
             final int start, final int count) {
         final Context ctx = (Context) context;
         final Properties props = ctx.properties;
         final int returnCount = Math.min(count, props.size() - start);
-        final List<EnumerationElement> items = new ArrayList(returnCount);
+        final List<EnumerationItem> items = new ArrayList(returnCount);
         final Object[] keys = props.keySet().toArray();
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
             final Object key = keys[start + i];
@@ -154,9 +156,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
             
             // construct an endpoint reference to accompany the element
             EndpointReferenceType epr = constructEPR(ctx.requestPath, RESOURCE, (String)key);
-            EnumerationElement ee = new EnumerationElement();
-            ee.setElement(item);
-            ee.setEndpointReference(epr);
+            EnumerationItem ee = new EnumerationItem(item, epr);
             
             items.add(ee);
         }
@@ -193,16 +193,9 @@ public class properties_Handler implements Handler, EnumerationIterator {
      * @return a valid EndpointReferenceType
      */
     protected EndpointReferenceType constructEPR(String serverURL, String resourceIdentifier, String key) {
-        ObjectFactory factory = new ObjectFactory();
-        EndpointReferenceType epr = factory.createEndpointReferenceType();
-                
-        // set up the return address
-        AttributedURI toUri = factory.createAttributedURI();
-        toUri.setValue(serverURL);
-        epr.setAddress(toUri);
         
         // prepare a reference parameters node to insert the selector and resourceuri
-        ReferenceParametersType referenceParameters = factory.createReferenceParametersType();
+        ReferenceParametersType referenceParameters = Addressing.FACTORY.createReferenceParametersType();
         
         // setup the resource uri
         org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory wsmanObjectFactory =
@@ -213,7 +206,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
         JAXBElement<AttributableURI> resourceURI = 
                 wsmanObjectFactory.createResourceURI(attributableURI);
         referenceParameters.getAny().add(resourceURI);
-        
+   
         // setup the selectorset
         SelectorSetType selectorSet = wsmanObjectFactory.createSelectorSetType();
         SelectorType selector = wsmanObjectFactory.createSelectorType();
@@ -222,7 +215,8 @@ public class properties_Handler implements Handler, EnumerationIterator {
         selectorSet.getSelector().add(selector);
         JAXBElement<SelectorSetType> selectorSetJaxb = wsmanObjectFactory.createSelectorSet(selectorSet);
         referenceParameters.getAny().add(selectorSetJaxb);
-        epr.setReferenceParameters(referenceParameters);
+        EndpointReferenceType epr = null;
+        epr = Addressing.createEndpointReference (serverURL, null, referenceParameters, null, null);
         
         return epr;
     }
