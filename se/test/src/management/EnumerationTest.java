@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.16 2006-07-24 13:14:58 pmonday Exp $
+ * $Id: EnumerationTest.java,v 1.17 2006-07-24 20:38:33 akhilarora Exp $
  */
 
 package management;
@@ -183,11 +183,11 @@ public class EnumerationTest extends TestBase {
      * Test ability to return EPRs in an enumeration
      * rather than objects
      */
-
+    
     public void testEnumerateEPR() throws Exception {
         enumerateTestWithEPRs(false);
     }
-
+    
     
     /**
      * Test ability to return objects and their associated Endpoint References
@@ -196,7 +196,7 @@ public class EnumerationTest extends TestBase {
     public void testEnumerateObjectAndEPR() throws Exception {
         enumerateTestWithEPRs(true);
     }
-
+    
     public void testRelease() throws Exception {
         
         final String RESOURCE = "wsman:test/java/system/properties";
@@ -317,7 +317,7 @@ public class EnumerationTest extends TestBase {
             // request total item count estimates
             final EnumerationExtensions pqx = new EnumerationExtensions(pullRequest);
             pqx.setRequestTotalItemsCountEstimate();
-        
+            
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION);
             mp.setResourceURI(RESOURCE);
@@ -344,14 +344,14 @@ public class EnumerationTest extends TestBase {
             if (pr.getEndOfSequence() != null) {
                 done = true;
             }
-
+            
             final EnumerationExtensions prx = new EnumerationExtensions(pullResponse);
             final AttributableNonNegativeInteger pe = prx.getTotalItemsCountEstimate();
             assertNotNull(pe);
             assertTrue(pe.getValue().intValue() > 0);
         } while (!done);
     }
-
+    
     /**
      * Workhorse method for the enumeration test with EPRs
      * @param includeObjects determines whether the objects should be included
@@ -369,17 +369,15 @@ public class EnumerationTest extends TestBase {
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         final DatatypeFactory factory = DatatypeFactory.newInstance();
-        final EnumerationExtensions.Mode enumerationMode = 
-                includeObjects ? 
-                    /* EnumerationModeType.valueOf("EnumerateObjectAndEPR") */
+        final EnumerationExtensions.Mode enumerationMode =
+                includeObjects ?
                     EnumerationExtensions.Mode.EnumerateObjectAndEPR
-                    : 
-                    /* EnumerationModeType.valueOf("EnumerateEPR") */
+                :
                     EnumerationExtensions.Mode.EnumerateEPR ;
-                    
+        
         enu.setEnumerate(null, factory.newDuration(60000).toString(),
                 null, enumerationMode);
-
+        
         // prepare the request
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);
@@ -398,11 +396,11 @@ public class EnumerationTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        // Prepare response objects 
+        // Prepare response objects
         final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
-
+        
         // walk the response
         boolean done = false;
         do {
@@ -412,7 +410,7 @@ public class EnumerationTest extends TestBase {
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
             pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
-
+            
             // Set up the target
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION);
@@ -434,7 +432,7 @@ public class EnumerationTest extends TestBase {
             if (pr.getEnumerationContext() != null) {
                 context = (String) pr.getEnumerationContext().getContent().get(0);
             }
-
+            
             /*
              * The returned items are in one of two forms, if we are doing
              * an enumeration of the form EnumerateEPR, then every item will
@@ -452,21 +450,21 @@ public class EnumerationTest extends TestBase {
              * usable
              */
             final List<Object> items = pr.getItems().getAny();
-            final Iterator itemsIterator = items.iterator();
-            while(itemsIterator.hasNext()) {
+            final Iterator<Object> itemsIterator = items.iterator();
+            while (itemsIterator.hasNext()) {
                 Object obj = itemsIterator.next();
+                assertNotNull(obj);
                 
-                if(includeObjects) {
-                    // this should be a payload object, ignore and retrieve the next
-                    // which should be an EPRs
-                    if(itemsIterator.hasNext()) {
+                if (includeObjects) {
+                    // retrieve the next item, which should be an EPR
+                    if (itemsIterator.hasNext()) {
                         obj = itemsIterator.next();
                     } else {
                         fail("EnumerateObjectAndEPR should be in pairs and was not");
                     }
                 }
                 
-                final JAXBElement<EndpointReferenceType> eprJaxb = (JAXBElement<EndpointReferenceType>)obj;
+                final JAXBElement<EndpointReferenceType> eprJaxb = (JAXBElement<EndpointReferenceType>) obj;
                 final EndpointReferenceType epr = eprJaxb.getValue();
                 
                 // validate that the element is an EndpointReference
@@ -477,7 +475,6 @@ public class EnumerationTest extends TestBase {
             if (pr.getEndOfSequence() != null) {
                 done = true;
             }
-
         } while (!done);
     }
 }
