@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.12 2006-07-24 13:14:59 pmonday Exp $
+ * $Id: Enumeration.java,v 1.13 2006-07-24 20:19:46 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.List;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
@@ -169,23 +168,18 @@ public class Enumeration extends Addressing {
         final PullResponse response = FACTORY.createPullResponse();
         
         final ItemListType itemList = FACTORY.createItemListType();
-        
         final List<Object> itemListAny = itemList.getAny();
-        final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory addressingFactory =
-                new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
-
         // go through each element in the list and add appropriate item to list
         //  depending on the EnumerationModeType
-        for(EnumerationItem ee : items) {
+        for (final EnumerationItem ee : items) {
             if (mode == null || EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
                 itemListAny.add(ee.getElement());
             }
             if (mode != null) {
-                JAXBElement<EndpointReferenceType> epr = addressingFactory.createEndpointReference(ee.getEndpointReference());
-                itemListAny.add(epr);
-            } 
+                itemListAny.add(Addressing.FACTORY.createEndpointReference(ee.getEndpointReference()));
+            }
         }
-
+        
         response.setItems(itemList);
         
         if (haveMore) {
@@ -196,9 +190,7 @@ public class Enumeration extends Addressing {
             response.setEndOfSequence("");
         }
         
-        XmlBinding binding = getXmlBinding();
-        SOAPBody body = getBody();
-        binding.marshal(response, body);
+        getXmlBinding().marshal(response, getBody());
     }
     
     public void setRelease(final Object context) throws JAXBException, SOAPException {
