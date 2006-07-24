@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.25 2006-07-24 20:22:00 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.26 2006-07-24 21:33:07 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
+import com.sun.ws.management.Management;
 import com.sun.ws.management.UnsupportedFeatureFault;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
@@ -30,7 +32,10 @@ import com.sun.ws.management.soap.FaultException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -44,9 +49,14 @@ import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -354,6 +364,43 @@ public final class EnumerationSupport extends BaseSupport {
         if (ctx == null) {
             throw new InvalidEnumerationContextFault();
         }
+    }
+    
+    /**
+     * Utility method to create an EPR for accessing individual elements of an
+     * enumeration directly.
+     *
+     * @param address The transport address of the service.
+     *
+     * @param resource The resource being addressed.
+     *
+     * @param selectorMaps Selectors used to identify the resource. Optional.
+     */
+    public static EndpointReferenceType createEndpointReference(final String address,
+            final String resource, final Map<String, String>... selectorMaps) {
+        
+        final ReferenceParametersType refp = Addressing.FACTORY.createReferenceParametersType();
+        
+        final AttributableURI attributableURI = Management.FACTORY.createAttributableURI();
+        attributableURI.setValue(resource);
+        refp.getAny().add(Management.FACTORY.createResourceURI(attributableURI));
+        
+        if (selectorMaps != null) {
+            final SelectorSetType selectorSet = Management.FACTORY.createSelectorSetType();
+            for (final Map<String, String> sMap : selectorMaps) {
+                final Iterator<Entry<String, String> > si = sMap.entrySet().iterator();
+                while (si.hasNext()) {
+                    final Entry<String, String> entry = si.next();
+                    final SelectorType selector = Management.FACTORY.createSelectorType();
+                    selector.setName(entry.getKey());
+                    selector.getContent().add(entry.getValue());
+                    selectorSet.getSelector().add(selector);
+                }
+            }
+            refp.getAny().add(Management.FACTORY.createSelectorSet(selectorSet));
+        }
+        
+        return Addressing.createEndpointReference(address, null, refp, null, null);
     }
     
     private static UUID extractContext(final EnumerationContextType contextType)

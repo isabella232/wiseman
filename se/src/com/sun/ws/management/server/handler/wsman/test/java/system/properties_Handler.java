@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.12 2006-07-24 13:14:59 pmonday Exp $
+ * $Id: properties_Handler.java,v 1.13 2006-07-24 21:33:08 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -38,24 +38,21 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilder;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 
 public class properties_Handler implements Handler, EnumerationIterator {
+    
     private static final String PROPERTY_SELECTOR_KEY = "property";
     private static final String NS_URI = "https://wiseman.dev.java.net/java";
     private static final String NS_PREFIX = "java";
     private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
-    private final String RESOURCE = "wsman:test/java/system/properties";    
     
     private static NamespaceMap nsMap = null;
     
@@ -77,6 +74,8 @@ public class properties_Handler implements Handler, EnumerationIterator {
          * Server request path that can be used for creating an EPR
          */
         String requestPath;
+
+        String resourceURI;
     }
     
     public void handle(final String action, final String resource,
@@ -96,6 +95,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
             enuResponse.addNamespaceDeclarations(NAMESPACES);
             
             final Context context = new Context();
+            context.resourceURI = resource;
             // this generates an AccessDenied exception which is returned
             // to the client as an AccessDenied fault if the server is
             // running in the sun app server with a security manager in
@@ -106,8 +106,8 @@ public class properties_Handler implements Handler, EnumerationIterator {
             
             // retrieve the request path for use in EPR construction and store
             //  it in the context for later retrieval
-            HttpServletRequest servletRequest = hcontext.getHttpServletRequest();
-            String path = servletRequest.getRequestURL().toString();
+            final HttpServletRequest servletRequest = hcontext.getHttpServletRequest();
+            final String path = servletRequest.getRequestURL().toString();
             context.requestPath = path;
             
             // call the server to process the enumerate request
@@ -145,7 +145,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
         final Context ctx = (Context) context;
         final Properties props = ctx.properties;
         final int returnCount = Math.min(count, props.size() - start);
-        final List<EnumerationItem> items = new ArrayList(returnCount);
+        final List<EnumerationItem> items = new ArrayList<EnumerationItem>(returnCount);
         final Object[] keys = props.keySet().toArray();
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
             final Object key = keys[start + i];
@@ -155,10 +155,12 @@ public class properties_Handler implements Handler, EnumerationIterator {
             item.setTextContent(value.toString());
             
             // construct an endpoint reference to accompany the element
-            EndpointReferenceType epr = constructEPR(ctx.requestPath, RESOURCE, (String)key);
-            EnumerationItem ee = new EnumerationItem(item, epr);
-            
-            items.add(ee);
+            final Map<String, String> selectors = new HashMap<String, String>();
+            selectors.put(PROPERTY_SELECTOR_KEY, key.toString());
+            final EndpointReferenceType epr = 
+                    EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors);
+            final EnumerationItem ei = new EnumerationItem(item, epr);
+            items.add(ei);
         }
         return items;
     }
@@ -179,46 +181,8 @@ public class properties_Handler implements Handler, EnumerationIterator {
         final Properties props = ctx.properties;
         return props.size();
     }
-
+    
     public NamespaceMap getNamespaces() {
         return nsMap;
     }
-    
-    /**
-     * Construct an EPR based on information provided during the enumeration
-     * @param serverURL a fully qualified URL referring to the server and context
-     * path that can facilitate the request
-     * @param resourceURI is the resource in which the item resides
-     * @param key is a selector that can be used to get a direct path to the item
-     * @return a valid EndpointReferenceType
-     */
-    protected EndpointReferenceType constructEPR(String serverURL, String resourceIdentifier, String key) {
-        
-        // prepare a reference parameters node to insert the selector and resourceuri
-        ReferenceParametersType referenceParameters = Addressing.FACTORY.createReferenceParametersType();
-        
-        // setup the resource uri
-        org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory wsmanObjectFactory =
-                new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
-        AttributableURI attributableURI = wsmanObjectFactory.createAttributableURI();
-                
-        attributableURI.setValue(resourceIdentifier);
-        JAXBElement<AttributableURI> resourceURI = 
-                wsmanObjectFactory.createResourceURI(attributableURI);
-        referenceParameters.getAny().add(resourceURI);
-   
-        // setup the selectorset
-        SelectorSetType selectorSet = wsmanObjectFactory.createSelectorSetType();
-        SelectorType selector = wsmanObjectFactory.createSelectorType();
-        selector.setName(PROPERTY_SELECTOR_KEY);
-        selector.getContent().add(key);
-        selectorSet.getSelector().add(selector);
-        JAXBElement<SelectorSetType> selectorSetJaxb = wsmanObjectFactory.createSelectorSet(selectorSet);
-        referenceParameters.getAny().add(selectorSetJaxb);
-        EndpointReferenceType epr = null;
-        epr = Addressing.createEndpointReference (serverURL, null, referenceParameters, null, null);
-        
-        return epr;
-    }
-    
 }
