@@ -1,21 +1,28 @@
 
 package wsman.traffic.lightlist;
 
-import com.hp.traffic.light.ui.TrafficLight;
-import com.sun.ws.management.framework.transfer.TransferSupport;
-import com.sun.ws.management.server.EnumerationIterator;
-import com.sun.ws.management.server.NamespaceMap;
-
-import org.w3c.dom.Element;
-
-import javax.xml.bind.JAXBException;
-import javax.xml.parsers.DocumentBuilder;
-import java.util.logging.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
+
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.parsers.DocumentBuilder;
+
+import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+
+import wsman.traffic.light.LightHandler;
+
+import com.sun.traffic.light.types.TrafficLightType;
+import com.sun.traffic.light.ui.TrafficLight;
+import com.sun.ws.management.framework.transfer.TransferSupport;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.EnumerationIterator;
+import com.sun.ws.management.server.NamespaceMap;
 
 /**
  * The class to be presented by a data source that would like to be
@@ -71,7 +78,7 @@ public class LightlistHandlerEnumerationIterator implements EnumerationIterator
      * returned in the
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */    
-    public List<Element> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
     {
     	/*************************** Implementation ************************************/
     	// Create a set of elements to be returned
@@ -79,7 +86,7 @@ public class LightlistHandlerEnumerationIterator implements EnumerationIterator
         // list from startPos totalling count items
     	Map<String,TrafficLight> lights=(Map<String,TrafficLight>)context;
         int returnCount = Math.min(count, lights.size() - startPos);
-        List<Element> items = new ArrayList(returnCount);
+        List<EnumerationItem> items = new ArrayList(returnCount);
         Set<String> keysSet = lights.keySet();
         Object[] keys = keysSet.toArray();
         for (int i = 0; i < returnCount && !m_cancelled; i++)
@@ -90,7 +97,13 @@ public class LightlistHandlerEnumerationIterator implements EnumerationIterator
             selectors.put("name", light.getName());
             try
             {
-                items.add(TransferSupport.createEpr(null, "wsman:traffic/light", selectors));
+            	EndpointReferenceType epr = TransferSupport.createEpr(null, "wsman:traffic/light", selectors);
+            	
+            	// Make a traffic light type to support epr or element enum
+            	Element lightElement = LightHandler.createLightElement(LightHandler.createLightType(light));
+           
+            	EnumerationItem item = new EnumerationItem(lightElement,epr);
+                items.add(item);
             }
             catch (JAXBException e)
             {
