@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.17 2006-07-24 20:38:33 akhilarora Exp $
+ * $Id: EnumerationTest.java,v 1.18 2006-07-24 20:55:13 pmonday Exp $
  */
 
 package management;
@@ -183,7 +183,6 @@ public class EnumerationTest extends TestBase {
      * Test ability to return EPRs in an enumeration
      * rather than objects
      */
-    
     public void testEnumerateEPR() throws Exception {
         enumerateTestWithEPRs(false);
     }
@@ -360,10 +359,8 @@ public class EnumerationTest extends TestBase {
     private void enumerateTestWithEPRs(final boolean includeObjects) throws Exception {
         
         final String RESOURCE = "wsman:test/java/system/properties";
-        
-        /*
-         * Prepare the Enumeration Request
-         */
+        // final String RESOURCE = "wsman:test/pull_source";
+        // prepare the test
         final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);

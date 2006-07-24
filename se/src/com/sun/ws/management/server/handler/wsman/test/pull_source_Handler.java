@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.8 2006-07-24 13:14:59 pmonday Exp $
+ * $Id: pull_source_Handler.java,v 1.9 2006-07-24 20:55:13 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -24,6 +24,7 @@ import com.sun.ws.management.server.EventingSupport;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.server.EnumerationItem;
@@ -35,26 +36,57 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.JAXBElement;
 import javax.xml.parsers.DocumentBuilder;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 
 public class pull_source_Handler implements Handler, EnumerationIterator {
-    
+    private static final String SELECTOR_KEY = "log";    
     private static final String NS_URI = "https://wiseman.dev.java.net/test/events/pull";
     private static final String NS_PREFIX = "log";
-
+    private static final String RESOURCE = "wsman:test/pull_source";
+    private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
     private static NamespaceMap nsMap = null;
-    
-    // TODO: replace with real events - perhaps from the JVM?
-    private static final String[][] EVENT_LOG = {
-        { "event1", "critical" },
-        { "event2", "warning" },
-        { "event3", "info" },
-        { "event4", "debug" }
-    };
+
+    /**
+     * A context class to pass with enumeration requests
+     */
+    private static final class Context {
+        /**
+         * Indication of whether the request was cancelled during processing
+         */
+        boolean cancelled;
+        
+        /**
+         * System properties
+         */
+        Properties properties;
+        
+        /**
+         * Server request path that can be used for creating an EPR
+         */
+        String requestPath;
+        
+        /**
+         * A log of events to pass.  These should be replaced with real events.
+         */
+        String[][] eventLog = {
+            { "event1", "critical" },
+            { "event2", "warning" },
+            { "event3", "info" },
+            { "event4", "debug" }        
+        };
+    }
     
     private boolean cancelled;
     
@@ -63,9 +95,8 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
             final Management request, final Management response) throws Exception {
         
         if (nsMap == null) {
-            final Map<String, String> map = new HashMap<String, String>();
-            map.put(NS_PREFIX, NS_URI);
-            nsMap = new NamespaceMap(map);
+            NAMESPACES.put(NS_PREFIX, NS_URI);
+            nsMap = new NamespaceMap(NAMESPACES);
         }
         
         final Enumeration enuRequest = new Enumeration(request);
@@ -77,11 +108,33 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
             final DeliveryType deliveryType = subscribe.getDelivery();
             if (EventingExtensions.PULL_DELIVERY_MODE.equals(deliveryType.getMode())) {
                 enuResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-                EnumerationSupport.enumerate(enuRequest, enuResponse, this, EVENT_LOG, nsMap);
+                final Context ctx = new Context();   
+                ctx.cancelled = false;
+                // retrieve the request path for use in EPR construction and store
+                //  it in the context for later retrieval
+                final HttpServletRequest servletRequest = context.getHttpServletRequest();
+                final String path = servletRequest.getRequestURL().toString();
+                ctx.requestPath = path;                
+                EnumerationSupport.enumerate(enuRequest, enuResponse, this, ctx, nsMap);
             } else {
                 throw new DeliveryModeRequestedUnavailableFault(
                         EventingSupport.getSupportedDeliveryModes());
             }
+        } else if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
+            enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
+            enuResponse.addNamespaceDeclarations(NAMESPACES);
+            
+            final Context ctx = new Context();
+            ctx.cancelled = false;
+            
+            // retrieve the request path for use in EPR construction and store
+            //  it in the context for later retrieval
+            HttpServletRequest servletRequest = context.getHttpServletRequest();
+            String path = servletRequest.getRequestURL().toString();
+            ctx.requestPath = path;
+            
+            // call the server to process the enumerate request
+            EnumerationSupport.enumerate(enuRequest, enuResponse, this, ctx, nsMap);            
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
             EnumerationSupport.pull(enuRequest, enuResponse);
@@ -96,27 +149,30 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
     public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
             final int start, final int count) {
         cancelled = false;
-        final String[][] events = (String[][]) context;
-        final int returnCount = Math.min(count, events.length - start);
+        final Context ctx = (Context) context;
+        final int returnCount = Math.min(count, ctx.eventLog.length - start);
         final List<EnumerationItem> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !cancelled; i++) {
-            final String key = events[start + i][0];
-            final String value = events[start + i][1];
+            final String key = ctx.eventLog[start + i][0];
+            final String value = ctx.eventLog[start + i][1];
             final Document doc = db.newDocument();
             final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
             item.setTextContent(value);
             
+            // construct an endpoint reference to accompany the element
+            final EndpointReferenceType epr = constructEPR(ctx.requestPath, RESOURCE, (String)key);            
+            
             // create an enumeration element to support multiple enumeration modes
-            EnumerationItem ee = new EnumerationItem(item, null);
-            // TODO: add the EPR to the EnumerationElement instance
+            final EnumerationItem ee = new EnumerationItem(item, epr);
             
             items.add(ee);
+            
         }
         return items;
     }
     
     public boolean hasNext(final Object context, final int startPos) {
-        final String[][] events = (String[][]) context;
+        final String[][] events = ((Context)context).eventLog;
         return startPos < events.length;
     }
     
@@ -132,4 +188,40 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
     public NamespaceMap getNamespaces() {
         return nsMap;
     }
+    
+    /**
+     * Construct an EPR based on information provided during the enumeration
+     * @param serverURL a fully qualified URL referring to the server and context
+     * path that can facilitate the request
+     * @param resourceURI is the resource in which the item resides
+     * @param key is a selector that can be used to get a direct path to the item
+     * @return a valid EndpointReferenceType
+     */
+    protected EndpointReferenceType constructEPR(final String serverURL, final String resourceId, final String key) {
+        // prepare a reference parameters node to insert the selector and resourceuri
+        final ReferenceParametersType referenceParms = Addressing.FACTORY.createReferenceParametersType();
+        
+        // setup the resource uri
+        final org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory wsmanOF =
+                new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
+        final AttributableURI attributableURI = wsmanOF.createAttributableURI();
+                
+        attributableURI.setValue(resourceId);
+        final JAXBElement<AttributableURI> resourceURI = 
+                wsmanOF.createResourceURI(attributableURI);
+        referenceParms.getAny().add(resourceURI);
+   
+        // setup the selectorset
+        final SelectorSetType selectorSet = wsmanOF.createSelectorSetType();
+        final SelectorType selector = wsmanOF.createSelectorType();
+        selector.setName(SELECTOR_KEY);
+        selector.getContent().add(key);
+        selectorSet.getSelector().add(selector);
+        final JAXBElement<SelectorSetType> selectorSetJaxb = wsmanOF.createSelectorSet(selectorSet);
+        referenceParms.getAny().add(selectorSetJaxb);
+        EndpointReferenceType epr = null;
+        epr = Addressing.createEndpointReference (serverURL, null, referenceParms, null, null);
+        
+        return epr;
+    }    
 }
