@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.14 2006-07-11 21:30:31 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.15 2006-07-24 20:22:59 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -32,20 +32,20 @@ import javax.xml.soap.SOAPException;
 
 public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
-    private static final Logger LOG = 
+    private static final Logger LOG =
             Logger.getLogger(ReflectiveRequestDispatcher.class.getName());
-
+    
     private static final Class<Handler> HANDLER_INTERFACE = Handler.class;
-
-    private static final Class[] HANDLER_PARAMS = { 
-        String.class, 
-        String.class, 
-        HandlerContext.class, 
-        Management.class, 
-        Management.class 
+    
+    private static final Class[] HANDLER_PARAMS = {
+        String.class,
+        String.class,
+        HandlerContext.class,
+        Management.class,
+        Management.class
     };
-
-    private static final String HANDLER_PREFIX = 
+    
+    private static final String HANDLER_PREFIX =
             ReflectiveRequestDispatcher.class.getPackage().getName() + ".handler";
     
     static final class HandlerEntry {
@@ -69,7 +69,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
     
     private static final Map<String, HandlerEntry> cache = new WeakHashMap<String, HandlerEntry>();
     
-    public ReflectiveRequestDispatcher(final Management req, 
+    public ReflectiveRequestDispatcher(final Management req,
             final HandlerContext context) throws JAXBException, SOAPException {
         super(req, context);
     }
@@ -137,7 +137,7 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         
         final String action = request.getAction();
         try {
-            he.getMethod().invoke(he.getInstance(), action, resource, 
+            he.getMethod().invoke(he.getInstance(), action, resource,
                     context, request, response);
         } catch (InvocationTargetException itex) {
             // the cause might be FaultException if a Fault is being indicated by the handler
