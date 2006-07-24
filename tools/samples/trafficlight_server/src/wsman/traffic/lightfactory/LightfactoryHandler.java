@@ -8,9 +8,9 @@ import java.util.logging.Logger;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
-import com.hp.traffic.light.ui.TrafficLight;
 import com.sun.traffic.light.model.TrafficLightModel;
 import com.sun.traffic.light.types.TrafficLightType;
+import com.sun.traffic.light.ui.TrafficLight;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;

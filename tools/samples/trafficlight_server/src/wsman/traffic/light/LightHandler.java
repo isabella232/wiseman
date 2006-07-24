@@ -1,9 +1,9 @@
 package wsman.traffic.light;
 
-import com.hp.traffic.light.ui.TrafficLight;
 import com.sun.traffic.light.model.TrafficLightModel;
 import com.sun.traffic.light.types.ObjectFactory;
 import com.sun.traffic.light.types.TrafficLightType;
+import com.sun.traffic.light.ui.TrafficLight;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
@@ -24,6 +24,7 @@ import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * LightHandler deligate is responsible for processing WS-Transfer actions.
@@ -35,19 +36,20 @@ public class LightHandler extends TransferSupport {
 	private Logger m_log = Logger.getLogger(LightHandler.class.getName());
 
 	/**************************** Implementation Specific ***************************/
-	private XmlBinding binding;
-
+	private static XmlBinding binding;
+	{
+		try {
+			binding = new XmlBinding(null,TRAFFIC_LIGHT_JAXB_PACKAGE);
+		} catch (JAXBException e) {
+			throw new InternalErrorFault(e.getMessage());
+		}
+	}
 	private static final String TRAFFIC_LIGHT_JAXB_PACKAGE = "com.sun.traffic.light.types";
 
 	private static final ObjectFactory trafficLightFactory = new ObjectFactory();
 
 	public LightHandler() {
 		super();
-		try {
-			binding = new XmlBinding(null,TRAFFIC_LIGHT_JAXB_PACKAGE);
-		} catch (JAXBException e) {
-			throw new InternalErrorFault(e.getMessage());
-		}
 	}
 
 	/*******************************************************************************/
@@ -63,14 +65,7 @@ public class LightHandler extends TransferSupport {
 							+ name);
 			throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
 		}
-		// Create a new, empty JAXB TrafficLight Type
-		TrafficLightType tlType = trafficLightFactory.createTrafficLightType();
-
-		// Transfer State from model to JAXB Type
-		tlType.setName(light.getName());
-		tlType.setColor(light.getColor());
-		tlType.setX(light.getX());
-		tlType.setY(light.getY());
+		TrafficLightType tlType = createLightType(light);
 
 		// Convert JABX to an element and copy it to the SOAP
 		// Response Body
@@ -94,6 +89,23 @@ public class LightHandler extends TransferSupport {
 
 	}
 
+	public static TrafficLightType createLightType(TrafficLight light) {
+		// Create a new, empty JAXB TrafficLight Type
+		TrafficLightType tlType = trafficLightFactory.createTrafficLightType();
+
+		// Transfer State from model to JAXB Type
+		tlType.setName(light.getName());
+		tlType.setColor(light.getColor());
+		tlType.setX(light.getX());
+		tlType.setY(light.getY());
+		return tlType;
+	}
+	public static Element createLightElement(TrafficLightType light) throws JAXBException {
+		Document doc = Management.newDocument();
+		binding.marshal(trafficLightFactory.createTrafficlight(light),
+				doc);
+		return (Element)doc.getFirstChild();
+	}
 	public void Put(String resource, Management request, Management response) {
     	/*************************** Implementation  ***********************************/
  	    // Use name selector to find the right light
