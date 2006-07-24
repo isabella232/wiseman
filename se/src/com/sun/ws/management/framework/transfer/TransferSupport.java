@@ -69,11 +69,8 @@ public class TransferSupport implements Transferable {
 	 */
 	protected void appendCreateResponse(Management response, String resourceUri,Map<String,String> selectors) throws JAXBException  {
 		EndpointReferenceType epr=null;
-		try {
-			epr = response.createEndpointReference(Addressing.ANONYMOUS_ENDPOINT_URI, null,null,null,null);
-		} catch (JAXBException e) {
-			throw new InternalErrorFault();
-		}
+		epr = response.createEndpointReference(Addressing.ANONYMOUS_ENDPOINT_URI, null,null,null,null);
+
 		JAXBElement<EndpointReferenceType> resp = xferFactory.createResourceCreated(epr); 
 
         // Build the reference parameters
@@ -114,7 +111,7 @@ public class TransferSupport implements Transferable {
 		}
 	}
 
-    public static Element createEpr(String endpointUrl,String resourceUri, Map<String, String> selectors) throws JAXBException
+    public static EndpointReferenceType createEpr(String endpointUrl,String resourceUri, Map<String, String> selectors) throws JAXBException
     {
         // Get a JAXB Epr
         EndpointReferenceType epr = addressingFactory.createEndpointReferenceType();
@@ -151,11 +148,11 @@ public class TransferSupport implements Transferable {
 
         paramList.add(managementFactory.createSelectorSet(selectorSetType));
 
-        XmlBinding xmlBinding = new XmlBinding(null);
-        Document document = Management.newDocument();
-        xmlBinding.marshal(addressingFactory.createEndpointReference(epr), document);
+//        XmlBinding xmlBinding = new XmlBinding(null);
+//        Document document = Management.newDocument();
+//        xmlBinding.marshal(addressingFactory.createEndpointReference(epr), document);
 
-        return (Element) document.getFirstChild();
+        return epr;
 
     }
 }
