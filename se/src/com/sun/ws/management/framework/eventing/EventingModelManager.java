@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.
+ * Copyright 2006 Sun Microsystems, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * $Id: EventingModelManager.java,v 1.3 2006-07-24 18:39:02 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.eventing;
