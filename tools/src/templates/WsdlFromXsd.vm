@@ -225,7 +225,7 @@ resource_name=${resource_name}
                         </output>
                 </operation>
                 <!-- Custom Operations with Custom wsa:Action Attributes -->
-                <operation name="TerminateOp">
+                <operation name="CustomOp">
                 <wsoap12:operation soapAction="http://wsman.test/schema/CustomOp"/>
                         <input>                        
                                 <wsoap12:body use="literal"/>
