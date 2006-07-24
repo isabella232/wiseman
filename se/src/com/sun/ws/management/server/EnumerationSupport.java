@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.24 2006-07-24 13:15:00 pmonday Exp $
+ * $Id: EnumerationSupport.java,v 1.25 2006-07-24 20:22:00 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -30,7 +30,6 @@ import com.sun.ws.management.soap.FaultException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -141,18 +140,15 @@ public final class EnumerationSupport extends BaseSupport {
             
             // Locate the EnumerationMode in the enumerate request
             //   null after execution of the body implies no special enumeration mode
-            final List<Object> additionalValues = enumerate.getAny();
-            final Iterator additionalValuesIterator = additionalValues.iterator();
             for (final Object additionalValue : enumerate.getAny()) {
                 if (additionalValue instanceof JAXBElement) {
-                    final JAXBElement jaxbElement = (JAXBElement)additionalValue;
+                    final JAXBElement jaxbElement = (JAXBElement) additionalValue;
                     if (jaxbElement.getDeclaredType().equals(EnumerationModeType.class)) {
-                        enumerationMode = (EnumerationModeType)jaxbElement.getValue();
+                        enumerationMode = (EnumerationModeType) jaxbElement.getValue();
                         break;
                     }
                 }
             }
-                    
         }
         
         XMLGregorianCalendar expiration = initExpiration(expires);
@@ -163,12 +159,12 @@ public final class EnumerationSupport extends BaseSupport {
         }
         
         final NamespaceMap nsMap = enumIterator.getNamespaces();
-
+        
         EnumerationContext ctx = null;
         try {
             ctx = new EnumerationContext(
                     expiration,
-                    filterExpression, 
+                    filterExpression,
                     enumerationMode,
                     nsMap,
                     clientContext, enumIterator);
@@ -292,7 +288,6 @@ public final class EnumerationSupport extends BaseSupport {
             for (final EnumerationItem ee : items) {
                 // retrieve the document element from the enumeration element
                 final Element item = ee.getElement();
-                
                 if (item != null) {
                     // append the Element to the owner document if it has not been done
                     // this is critical for XPath filtering to work
@@ -310,7 +305,6 @@ public final class EnumerationSupport extends BaseSupport {
                                 xpx.getMessage());
                     }
                 }
-                
             }
         }
         
