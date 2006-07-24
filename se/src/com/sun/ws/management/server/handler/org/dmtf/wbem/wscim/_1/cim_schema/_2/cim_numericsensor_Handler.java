@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.5 2006-07-24 13:13:00 pmonday Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.6 2006-07-24 22:56:29 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -44,6 +44,16 @@ import org.w3c.dom.Element;
 
 public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     
+    private static final String NS_URI = "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
+    private static final String NS_PREFIX = "p";
+
+    private static String[] SELECTOR_KEYS = {
+        "CreationClassName",
+        "DeviceID",
+        "SystemCreationClassName",
+        "SystemName"
+    };
+    
     private NamespaceMap nsMap = null;
     
     private static final class Context {
@@ -51,6 +61,8 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         boolean cancelled = false;
         int index = 0;
         int count = 2;
+        String address;
+        String resourceURI;
     }
     
     public void handle(final String action, final String resource,
@@ -59,7 +71,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         
         if (nsMap == null) {
             final Map<String, String> map = new HashMap<String, String>();
-            map.put("p", "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor");
+            map.put(NS_PREFIX, NS_URI);
             nsMap = new NamespaceMap(map);
         }
         
@@ -67,7 +79,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             response.setAction(Transfer.GET_RESPONSE_URI);
             
             final Set<SelectorType> selectors = request.getSelectors();
-            if (selectors.size() < 4) {
+            if (selectors.size() < SELECTOR_KEYS.length) {
                 throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
             }
         } else if (Transfer.PUT_ACTION_URI.equals(action)) {
@@ -81,6 +93,8 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             eres.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
             final Context context = new Context();
             context.hcontext = hcontext;
+            context.address = hcontext.getHttpServletRequest().getRequestURL().toString();
+            context.resourceURI = resource;
             EnumerationSupport.enumerate(ereq, eres, this, context);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             final Enumeration ereq = new Enumeration(request);
@@ -114,12 +128,17 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             } catch (Exception ex) {
                 throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
             }
+            final Element root = resourceDoc.getDocumentElement();
             
-            // create an enumeration element 
-            EnumerationItem ee = new EnumerationItem(resourceDoc.getDocumentElement(), null);
-            // TODO: add the EPR
-            
-            items.add(ee);
+            final Map<String, String> selectors = new HashMap<String, String>();
+            for (final String selector : SELECTOR_KEYS) {
+                selectors.put(selector, root.getElementsByTagNameNS(NS_URI, selector).item(0).getTextContent());
+            }
+            items.add(new EnumerationItem(root,
+                    EnumerationSupport.createEndpointReference(
+                        ctx.address,
+                        ctx.resourceURI,
+                        selectors)));
         }
         return items;
     }

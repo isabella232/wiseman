@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.4 2006-07-19 22:41:36 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.5 2006-07-24 22:56:28 akhilarora Exp $
  */
 
 package interop._06;
@@ -24,6 +24,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.transport.HttpClient;
@@ -46,8 +47,10 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPHeaderElement;
 import management.TestBase;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
@@ -797,9 +800,8 @@ public final class InteropTest extends TestBase {
         locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
         mgmt.setLocale(locale);
         
-        final Enumeration ei = new Enumeration(mgmt);
-        // TODO: add EnumerationMode.EnumerateObjectAndEPR
-        ei.setEnumerate(null, null, null);
+        final EnumerationExtensions ei = new EnumerationExtensions(mgmt);
+        ei.setEnumerate(null, null, null, EnumerationExtensions.Mode.EnumerateObjectAndEPR);
         
         log(mgmt);
         Addressing response = HttpClient.sendRequest(mgmt);
@@ -841,15 +843,15 @@ public final class InteropTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        /* TODO
         Enumeration po = new Enumeration(response);
         assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
         PullResponse pr = po.getPullResponse();
         assertNotNull(pr);
-        assertNotNull(pr.getEndOfSequence());
         ect = pr.getEnumerationContext();
-        // there should be no context at end of sequence
-        assertNull(ect);
+        // we have two sensors, not yet at end of enumeration
+        // assertNotNull(pr.getEndOfSequence());
+        // there should be no context if we were at the end of enumeration
+        // assertNull(ect);
 
         ItemListType ilt = pr.getItems();
         assertNotNull(ilt);
@@ -868,19 +870,26 @@ public final class InteropTest extends TestBase {
         
         // the second item should be the EPR
         obj = il.get(1);
-        assertTrue(obj instanceof Node);
-        node = (Node) obj;
-        assertEquals(Addressing.ENDPOINT_REFERENCE.getNamespaceURI(), node.getNamespaceURI());
-        assertEquals(Addressing.ENDPOINT_REFERENCE.getLocalPart(), node.getLocalName());
-        assertTrue(obj instanceof SOAPElement);
-        final SOAPElement elt = (SOAPElement) obj;
-        final EndpointReferenceType epr = response.getEndpointReference(elt);
+        assertTrue(obj instanceof JAXBElement);
+        JAXBElement jelt = (JAXBElement) obj;
+        final EndpointReferenceType epr = (EndpointReferenceType) jelt.getValue();
         assertNotNull(epr);
-        assertEquals(Addressing.ANONYMOUS_ENDPOINT_URI, epr.getAddress().getValue());
+        assertEquals(DESTINATION, epr.getAddress().getValue());
         for (final Object refp : epr.getReferenceParameters().getAny()) {
-            System.out.println(refp.getClass().getName() + ": " + refp);
+            if (refp instanceof JAXBElement) {
+                JAXBElement jref = (JAXBElement) refp;
+                if (AttributableURI.class.equals(jref.getDeclaredType())) {
+                    assertEquals(Management.RESOURCE_URI, jref.getName());
+                    assertEquals(NUMERIC_SENSOR_RESOURCE, ((AttributableURI) jref.getValue()).getValue());
+                } else if (SelectorSetType.class.equals(jref.getDeclaredType())) {
+                    final List<SelectorType> ss = ((SelectorSetType) jref.getValue()).getSelector();
+                    assertTrue(ss.size() > 0);
+                    for (final SelectorType sel : ss) {
+                        // System.out.println(sel.getName() + ": " + sel.getContent());
+                    }
+                }
+            }
         }
-        */
     }
     
     /**
