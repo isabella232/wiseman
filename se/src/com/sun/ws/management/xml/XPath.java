@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPath.java,v 1.5 2006-05-24 05:39:41 akhilarora Exp $
+ * $Id: XPath.java,v 1.6 2006-07-25 17:48:09 pmonday Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -60,25 +60,36 @@ public final class XPath {
         return isSupportedDialect;
     }
     
+    /**
+     * Filter a set of nodes based on an XPath expression.
+     * @param content is a node containing several  
+     */
     public static List<Node> filter(final Node content, 
             final String expression, final String dialect, 
             final NamespaceMap namespaces)
     throws XPathExpressionException {
+        assert(expression!=null);
         
         final javax.xml.xpath.XPath xpath = XPATH_FACTORY.newXPath();
         if (namespaces != null) {
             xpath.setNamespaceContext(namespaces);
         }
         
-        // TODO: throw wsman:CannotProcessFilter on compilation failure
-        final XPathExpression filter = xpath.compile(expression);
-        final NodeList result = (NodeList) filter.evaluate(content, XPathConstants.NODESET);
+        List<Node> ret = null;
+        try {
+            final XPathExpression filter = xpath.compile(expression);
+            final NodeList result = (NodeList) filter.evaluate(content, XPathConstants.NODESET);
 
-        final int size = result.getLength();
-        final List<Node> ret = new ArrayList<Node>(size);
-        for (int i = 0; i < size; i++) {
-            ret.add(result.item(i));
+            final int size = result.getLength();
+            ret = new ArrayList<Node>(size);
+            for (int i = 0; i < size; i++) {
+                ret.add(result.item(i));
+            }
+        } catch (XPathExpressionException xpee) {
+            throw new CannotProcessFilterFault("Unable to compile XPath: " +
+                    "\"" + expression + "\"");            
         }
+        
         return ret;
     }
 }
