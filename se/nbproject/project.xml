@@ -90,7 +90,9 @@
                     <ide-action name="debug"/>
                 </context-menu>
             </view>
-            <subprojects/>
+            <subprojects>
+                <project>.</project>
+            </subprojects>
         </general-data>
         <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
             <compilation-unit>
@@ -108,7 +110,7 @@
             <compilation-unit>
                 <package-root>test/src</package-root>
                 <unit-tests/>
-                <classpath mode="compile">build/classes:lib/jaxb/jaxb-api.jar:lib/jaxrpc/saaj-api.jar:test/lib/junit.jar</classpath>
+                <classpath mode="compile">build/classes:lib/jaxb/activation.jar:lib/jaxb/jaxb-api.jar:lib/jaxb/jaxb-impl.jar:lib/jaxb/jaxb-xjc.jar:lib/jaxb/jsr173_1.0_api.jar:lib/jaxrpc/saaj-api.jar:lib/jaxrpc/saaj-impl.jar:test/lib/junit.jar</classpath>
                 <built-to>test/build/classes</built-to>
                 <source-level>1.5</source-level>
             </compilation-unit>
