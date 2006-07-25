@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.26 2006-07-24 21:33:07 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.27 2006-07-25 05:57:05 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
@@ -271,6 +272,32 @@ public final class EnumerationSupport extends BaseSupport {
             maxTime = datatypeFactory.newDuration(System.currentTimeMillis() + DEFAULT_MAX_TIMEOUT_MILLIS);
         }
         
+        boolean includeItem = false;
+        boolean includeEPR = false;
+        final EnumerationModeType mode = ctx.getEnumerationMode();
+        if (mode != null) {
+            System.out.println("xxxx mode: " + mode.value() + " =? " + EnumerationExtensions.Mode.EnumerateEPR.toString());
+        }
+        if (mode == null) {
+            includeItem = true;
+            includeEPR = false;
+        } else {
+            final String modeString = mode.value();
+            if (modeString.equals(EnumerationExtensions.Mode.EnumerateEPR.toString())) {
+                includeItem = false;
+                includeEPR = true;
+            } else if (modeString.equals(EnumerationExtensions.Mode.EnumerateObjectAndEPR.toString())) {
+                includeItem = true;
+                includeEPR = true;
+            } else {
+                throw new InternalErrorFault("Unsupported enumeration mode: " + modeString);
+            }
+        }
+        if (!includeItem && !includeEPR) {
+            throw new InternalErrorFault("Must include one or both of Item & EPR for mode " +
+                    mode == null ? "null" : mode.value());
+        }
+        
         final SOAPEnvelope env = response.getEnvelope();
         final DocumentBuilder db = response.getDocumentBuilder();
         final List<EnumerationItem> passed = new ArrayList<EnumerationItem>(ctx.getCount());
@@ -286,7 +313,12 @@ public final class EnumerationSupport extends BaseSupport {
             final Timer timeoutTimer = new Timer(true);
             timeoutTimer.schedule(ttask, timeout);
             
-            final List<EnumerationItem> items = iterator.next(db, clientContext, ctx.getCursor(),
+            final List<EnumerationItem> items =
+                    iterator.next(db,
+                    clientContext,
+                    includeItem,
+                    includeEPR,
+                    ctx.getCursor(),
                     ctx.getCount() - passed.size());
             if (items == null) {
                 throw new TimedOutFault();
@@ -297,7 +329,7 @@ public final class EnumerationSupport extends BaseSupport {
             // apply filter, if any
             for (final EnumerationItem ee : items) {
                 // retrieve the document element from the enumeration element
-                final Element item = ee.getElement();
+                final Element item = ee.getItem();
                 if (item != null) {
                     // append the Element to the owner document if it has not been done
                     // this is critical for XPath filtering to work

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.13 2006-07-24 21:33:08 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.14 2006-07-25 05:57:06 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -21,7 +21,6 @@ package com.sun.ws.management.server.handler.wsman.test.java.system;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
-import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
@@ -37,15 +36,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.JAXBElement;
 import javax.xml.parsers.DocumentBuilder;
-import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 
 public class properties_Handler implements Handler, EnumerationIterator {
     
@@ -74,7 +68,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
          * Server request path that can be used for creating an EPR
          */
         String requestPath;
-
+        
         String resourceURI;
     }
     
@@ -141,6 +135,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
     }
     
     public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
+            final boolean includeItem, final boolean includeEPR,
             final int start, final int count) {
         final Context ctx = (Context) context;
         final Properties props = ctx.properties;
@@ -154,12 +149,13 @@ public class properties_Handler implements Handler, EnumerationIterator {
             final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
             item.setTextContent(value.toString());
             
-            // construct an endpoint reference to accompany the element
+            // construct an endpoint reference to accompany the element, if needed
             final Map<String, String> selectors = new HashMap<String, String>();
             selectors.put(PROPERTY_SELECTOR_KEY, key.toString());
-            final EndpointReferenceType epr = 
-                    EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors);
-            final EnumerationItem ei = new EnumerationItem(item, epr);
+            final EndpointReferenceType epr = includeEPR ?
+                EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors) :
+                null;
+            final EnumerationItem ei = new EnumerationItem(includeItem ? item : null, epr);
             items.add(ei);
         }
         return items;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.6 2006-07-24 22:56:29 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.7 2006-07-25 05:57:06 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -41,12 +41,13 @@ import javax.xml.parsers.DocumentBuilder;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     
     private static final String NS_URI = "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
     private static final String NS_PREFIX = "p";
-
+    
     private static String[] SELECTOR_KEYS = {
         "CreationClassName",
         "DeviceID",
@@ -112,6 +113,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     }
     
     public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
+            final boolean includeItem, final boolean includeEPR,
             final int start, final int count) {
         final Context ctx = (Context) context;
         final int returnCount = Math.min(count, ctx.count - start);
@@ -134,11 +136,12 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             for (final String selector : SELECTOR_KEYS) {
                 selectors.put(selector, root.getElementsByTagNameNS(NS_URI, selector).item(0).getTextContent());
             }
-            items.add(new EnumerationItem(root,
-                    EnumerationSupport.createEndpointReference(
-                        ctx.address,
-                        ctx.resourceURI,
-                        selectors)));
+            final EndpointReferenceType epr = includeEPR ?
+                EnumerationSupport.createEndpointReference(
+                    ctx.address,
+                    ctx.resourceURI,
+                    selectors) : null;
+            items.add(new EnumerationItem(root, epr));
         }
         return items;
     }

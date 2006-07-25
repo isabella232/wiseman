@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.8 2006-07-24 13:15:00 pmonday Exp $
+ * $Id: EnumerationIterator.java,v 1.9 2006-07-25 05:57:05 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -77,17 +77,24 @@ public interface EnumerationIterator {
      * @param context The client context that was specified to
      * {@link EnumerationSupport#enumerate enumerate} is returned.
      *
+     * @param includeItem Indicates whether items are desired, as specified by
+     * the EnumerationMode in the Enumerate request.
+     *
+     * @param includeEPR Indicates whether EPRs are desired, as specified by
+     * the EnumerationMode in the Enumerate request.
+     *
      * @param startPos The starting position (cursor) for this
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
      *
      * @param count The number of items desired in this
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
      *
-     * @return a List of {@link EnumerationElement Elements} that are used to 
-     * construct proper responses for a 
+     * @return a List of {@link EnumerationElement Elements} that are used to
+     * construct proper responses for a
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
     List<EnumerationItem> next(final DocumentBuilder db, final Object context,
+            final boolean includeItem, final boolean includeEPR,
             final int startPos, final int count);
     
     /**

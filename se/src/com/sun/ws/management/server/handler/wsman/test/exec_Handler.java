@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: exec_Handler.java,v 1.8 2006-07-24 13:15:00 pmonday Exp $
+ * $Id: exec_Handler.java,v 1.9 2006-07-25 05:57:06 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -144,7 +144,9 @@ public class exec_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, final int startPos, final int count) {
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, 
+            final boolean includeItem, final boolean includeEPR,
+            final int startPos, final int count) {
         cancelled = false;
         final String[] lines = (String[]) context;
         final int returnCount = Math.min(count, lines.length - startPos);
