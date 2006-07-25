@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.14 2006-07-25 05:57:06 akhilarora Exp $
+ * $Id: properties_Handler.java,v 1.15 2006-07-25 15:10:15 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -148,13 +148,13 @@ public class properties_Handler implements Handler, EnumerationIterator {
             final Document doc = db.newDocument();
             final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
             item.setTextContent(value.toString());
-            
+            EndpointReferenceType epr = null;
             // construct an endpoint reference to accompany the element, if needed
-            final Map<String, String> selectors = new HashMap<String, String>();
-            selectors.put(PROPERTY_SELECTOR_KEY, key.toString());
-            final EndpointReferenceType epr = includeEPR ?
-                EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors) :
-                null;
+            if (includeEPR) {
+                final Map<String, String> selectors = new HashMap<String, String>();
+                selectors.put(PROPERTY_SELECTOR_KEY, key.toString());
+                epr = EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors);
+            }
             final EnumerationItem ei = new EnumerationItem(includeItem ? item : null, epr);
             items.add(ei);
         }
