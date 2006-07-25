@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.3 2006-07-24 13:14:58 pmonday Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.4 2006-07-25 16:51:16 pmonday Exp $
  */
 
 package management;
 
+import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.transport.HttpClient;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 /**
  * Unit test for WS-Enumeration extensions in WS-Management
@@ -96,8 +103,24 @@ public class EnumerationExtensionsTest extends TestBase {
         totalItemCountEstimateVisual(BigInteger.TEN);
         totalItemCountEstimateVisual(BigInteger.ONE);
         totalItemCountEstimateVisual(BigInteger.ZERO);
-        // TODO: does not work yet
         // totalItemCountEstimateVisual(null);
+    }
+ 
+    /**
+     * Test ability to return EPRs in an enumeration
+     * rather than objects
+     */
+    public void testEnumerateEPR() throws Exception {
+        enumerateTestWithEPRs(false);
+    }
+    
+    
+    /**
+     * Test ability to return objects and their associated Endpoint References
+     * in an enumeration
+     */
+    public void testEnumerateObjectAndEPR() throws Exception {
+        enumerateTestWithEPRs(true);
     }
     
     public void totalItemCountEstimateVisual(final BigInteger itemCount) throws Exception {
@@ -118,4 +141,128 @@ public class EnumerationExtensionsTest extends TestBase {
         assertNotNull(count);
         assertEquals(itemCount, count.getValue());
     }
+    
+    /**
+     * Workhorse method for the enumeration test with EPRs
+     * @param includeObjects determines whether the objects should be included
+     * in addition to the EPRs themselves
+     */
+    private void enumerateTestWithEPRs(final boolean includeObjects) throws Exception {
+        
+        final String RESOURCE = "wsman:test/java/system/properties";
+        // final String RESOURCE = "wsman:test/pull_source";
+        // prepare the test
+        final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final DatatypeFactory factory = DatatypeFactory.newInstance();
+        final EnumerationExtensions.Mode enumerationMode =
+                includeObjects ?
+                    EnumerationExtensions.Mode.EnumerateObjectAndEPR
+                :
+                    EnumerationExtensions.Mode.EnumerateEPR ;
+        
+        enu.setEnumerate(null, factory.newDuration(60000).toString(),
+                null, enumerationMode);
+        
+        // prepare the request
+        final Management mgmt = new Management(enu);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(RESOURCE);
+        mgmt.prettyPrint(logfile);
+        
+        // retrieve the response
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault()) {
+            response.prettyPrint(System.err);
+            // this test fails with an AccessDenied fault if the server is
+            // running in the sun app server with a security manager in
+            // place (the default), which disallows enumeration of
+            // system properties
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        // Prepare response objects
+        final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
+        final EnumerateResponse enr = enuResponse.getEnumerateResponse();
+        String context = (String) enr.getEnumerationContext().getContent().get(0);
+        
+        // walk the response
+        boolean done = false;
+        do {
+            // Set up a request to pull the next item of the enumeration
+            final EnumerationExtensions pullRequest = new EnumerationExtensions();
+            pullRequest.setAction(Enumeration.PULL_ACTION_URI);
+            pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+            pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+            pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
+            
+            // Set up the target
+            final Management mp = new Management(pullRequest);
+            mp.setTo(DESTINATION);
+            mp.setResourceURI(RESOURCE);
+            mp.prettyPrint(logfile);
+            final Addressing praddr = HttpClient.sendRequest(mp);
+            praddr.prettyPrint(logfile);
+            
+            // Fail if response is an error
+            if (praddr.getBody().hasFault()) {
+                praddr.prettyPrint(System.err);
+                fail(praddr.getBody().getFault().getFaultString());
+            }
+            
+            // Check the response for appropriate EPRs
+            final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
+            final PullResponse pr = pullResponse.getPullResponse();
+            // update context for the next pull (if any)
+            if (pr.getEnumerationContext() != null) {
+                context = (String) pr.getEnumerationContext().getContent().get(0);
+            }
+            
+            /*
+             * The returned items are in one of two forms, if we are doing
+             * an enumeration of the form EnumerateEPR, then every item will
+             * be an EPR, as in:
+             * <wsa:EndpointReference> ... </wsa:EndpointReference>
+             *
+             * If the enumeration is of the form EnumerateObjectAndEPR, then
+             * every item will be of the form
+             * <payloadobject>...</payloadobject>
+             * <wsa:EndpointReference> ... </wsa:EndpointReference>
+             * Basically, the EPRs will go right after the payload objects
+             *
+             * We will verify that the proper sequence of EPRs
+             * are in place.  We will <i>not</i> validate that the EPRs are
+             * usable
+             */
+            final List<Object> items = pr.getItems().getAny();
+            final Iterator<Object> itemsIterator = items.iterator();
+            while (itemsIterator.hasNext()) {
+                Object obj = itemsIterator.next();
+                assertNotNull(obj);
+                
+                if (includeObjects) {
+                    // retrieve the next item, which should be an EPR
+                    if (itemsIterator.hasNext()) {
+                        obj = itemsIterator.next();
+                    } else {
+                        fail("EnumerateObjectAndEPR should be in pairs and was not");
+                    }
+                }
+                
+                final JAXBElement<EndpointReferenceType> eprJaxb = (JAXBElement<EndpointReferenceType>) obj;
+                final EndpointReferenceType epr = eprJaxb.getValue();
+                
+                // validate that the element is an EndpointReference
+                final String address = epr.getAddress().getValue();
+                assertEquals(address, DESTINATION);
+            }
+            
+            if (pr.getEndOfSequence() != null) {
+                done = true;
+            }
+        } while (!done);
+    }    
 }
