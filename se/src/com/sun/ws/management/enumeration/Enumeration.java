@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.13 2006-07-24 20:19:46 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.14 2006-07-25 05:49:42 akhilarora Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -173,7 +173,7 @@ public class Enumeration extends Addressing {
         //  depending on the EnumerationModeType
         for (final EnumerationItem ee : items) {
             if (mode == null || EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
-                itemListAny.add(ee.getElement());
+                itemListAny.add(ee.getItem());
             }
             if (mode != null) {
                 itemListAny.add(Addressing.FACTORY.createEndpointReference(ee.getEndpointReference()));
