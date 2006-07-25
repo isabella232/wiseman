@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.13 2006-07-24 13:15:00 pmonday Exp $
+ * $Id: EventingSupport.java,v 1.14 2006-07-25 18:13:56 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -170,7 +170,14 @@ public final class EventingSupport extends BaseSupport {
         
         final Object found = removeContext(UUID.fromString(identifier));
         if (found == null) {
-            // TODO: throw an InvalidContextFault when available
+            /*
+             * Throw an invalid message fault in the case that the
+             * context cannot be found.  Based on the WS-Event and
+             * WS-Management specifications, this is the most specific and
+             * applicable message fault.  Within the WS-Eventing specification,
+             * the InvalidMessageFault is sent when the server cannot
+             * comply with a request.
+             */
             throw new InvalidMessageFault("Subscription with Identifier: " +
                     identifier + " not found");
         }
