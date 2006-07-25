@@ -13,58 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationItem.java,v 1.1 2006-07-24 13:16:52 pmonday Exp $
+ * $Id: EnumerationItem.java,v 1.2 2006-07-25 05:49:04 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
 
-import java.io.Serializable;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 /**
- * EnumerationElement instances contain all of the necessary contents
- * from a handler for the server to return elements for a request.
- * {@link EnumerationIterator EnumerationIterator}.
- *
- * @see EnumerationIterator
+ * EnumerationItem instances contain all of the necessary contents
+ * from a handler for the server to return elements for an enumeation request.
  */
 public final class EnumerationItem {
     
     /**
-     * Holds value of property element.
+     * Holds an enumeration item.
      */
-    private Element element = null;
+    private final Element item;
 
     /**
-     * Holds value of property endpointReference.
+     * Holds a reference to the item.
      */
-    private EndpointReferenceType endpointReference;
+    private final EndpointReferenceType endpointReference;
 
-    public EnumerationItem() {
-        
-    }
-    
-    public EnumerationItem(Element element, EndpointReferenceType endpointReference) {
-        this.element = element;
-        this.endpointReference = endpointReference;
+    public EnumerationItem(final Element it, final EndpointReferenceType epr) {
+        item = it;
+        endpointReference = epr;
     }
     
     /**
-     * Getter for property element.
-     * @return Value of property element.
+     * Getter for enumeration item.
+     * @return Value of item element.
      */
-    public Element getElement()
-    {
-        return this.element;
+    public Element getItem() {
+        return item;
     }
 
     /**
-     * Getter for property endpointReference.
-     * @return Value of property endpointReference.
+     * Getter for item's EndpointReference.
+     * @return Value of item endpointReference.
      */
-    public EndpointReferenceType getEndpointReference()
-    {
-        return this.endpointReference;
+    public EndpointReferenceType getEndpointReference() {
+        return endpointReference;
     }
 }
