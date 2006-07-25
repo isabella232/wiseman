@@ -21,8 +21,7 @@ import java.io.File;
  *
  * @see EnumerationIterator
  */
-public class FileEnumerationIterator implements EnumerationIterator 
-{
+public class FileEnumerationIterator implements EnumerationIterator {
     private boolean m_cancelled = false;
     
     /**
@@ -49,6 +48,12 @@ public class FileEnumerationIterator implements EnumerationIterator
      * @param context The client context that was specified to
      * {@link com.sun.ws.management.server.EnumerationSupport#enumerate enumerate} is returned.
      *
+     * @param includeItem Indicates whether items are desired, as specified by
+     * the EnumerationMode in the Enumerate request.
+     *
+     * @param includeEPR Indicates whether EPRs are desired, as specified by
+     * the EnumerationMode in the Enumerate request.
+     *
      * @param startPos The starting position (cursor) for this
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
      *
@@ -60,15 +65,15 @@ public class FileEnumerationIterator implements EnumerationIterator
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
     
-    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
-    {
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
+            final boolean includeItem, final boolean includeEPR,
+            final int startPos, final int count) {
         m_cancelled = false;
         final File[] props = (File[]) context;
         final int returnCount = Math.min(count, props.length - startPos);
         final List<EnumerationItem> items = new ArrayList<EnumerationItem>(returnCount);
         
-        for (int i = 0; i < returnCount && !m_cancelled; i++)
-        {
+        for (int i = 0; i < returnCount && !m_cancelled; i++) {
             final File value = props[startPos + i];
             final Document doc = db.newDocument();
             final Element item = doc.createElementNS(FileEnumerationHandler.NS_URI, FileEnumerationHandler.NS_PREFIX + ":File");
@@ -92,8 +97,7 @@ public class FileEnumerationIterator implements EnumerationIterator
      * @return {@code true} if there are more elements in the iteration,
      * {@code false} otherwise.
      */
-    public boolean hasNext(final Object context, final int startPos)
-    {
+    public boolean hasNext(final Object context, final int startPos) {
         return startPos < ((File[]) context).length;
     }
     
@@ -109,8 +113,7 @@ public class FileEnumerationIterator implements EnumerationIterator
      * @param context The client context that was specified to
      * {@link com.sun.ws.management.server.EnumerationSupport#enumerate enumerate} is returned.
      */
-    public void cancel(final Object context)
-    {
+    public void cancel(final Object context) {
         m_cancelled = true;
     }
     
