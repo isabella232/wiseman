@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPath.java,v 1.6 2006-07-25 17:48:09 pmonday Exp $
+ * $Id: XPath.java,v 1.7 2006-07-26 03:20:18 pmonday Exp $
  */
 
 package com.sun.ws.management.xml;
 
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.server.NamespaceMap;
 import java.util.ArrayList;
 import java.util.List;

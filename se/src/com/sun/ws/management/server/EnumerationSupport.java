@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.28 2006-07-25 17:49:13 pmonday Exp $
+ * $Id: EnumerationSupport.java,v 1.29 2006-07-26 03:22:28 pmonday Exp $
  */
 
 package com.sun.ws.management.server;
@@ -22,7 +22,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.xml.CannotProcessFilterFault;
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
