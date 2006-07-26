@@ -78,8 +78,8 @@ public class LightlistHandlerEnumerationIterator implements EnumerationIterator
      * returned in the
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */    
-    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
-    {
+//    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
+	public List<EnumerationItem> next(DocumentBuilder db, Object context, boolean includeItem, boolean includeEPR, int startPos, int count) {
     	/*************************** Implementation ************************************/
     	// Create a set of elements to be returned
         // In this case each will be an EPR starting in the
@@ -163,4 +163,8 @@ public class LightlistHandlerEnumerationIterator implements EnumerationIterator
 	public NamespaceMap getNamespaces() {
 		return null;
 	}
+//	public List<EnumerationItem> next(DocumentBuilder db, Object context, boolean includeItem, boolean includeEPR, int startPos, int count) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 }
