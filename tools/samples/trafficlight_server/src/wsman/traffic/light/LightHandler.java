@@ -1,22 +1,8 @@
 package wsman.traffic.light;
 
-import com.sun.traffic.light.model.TrafficLightModel;
-import com.sun.traffic.light.types.ObjectFactory;
-import com.sun.traffic.light.types.TrafficLightType;
-import com.sun.traffic.light.ui.TrafficLight;
-import com.sun.ws.management.InternalErrorFault;
-import com.sun.ws.management.InvalidSelectorsFault;
-import com.sun.ws.management.Management;
-import com.sun.ws.management.framework.transfer.TransferSupport;
-import com.sun.ws.management.transfer.InvalidRepresentationFault;
-import com.sun.ws.management.xml.XmlBinding;
-
-import framework.models.Utilities;
-
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Map;
-import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -25,6 +11,17 @@ import javax.xml.soap.SOAPException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.sun.traffic.light.model.TrafficLightModel;
+import com.sun.traffic.light.types.ObjectFactory;
+import com.sun.traffic.light.types.TrafficLightType;
+import com.sun.traffic.light.ui.TrafficLight;
+import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.InvalidSelectorsFault;
+import com.sun.ws.management.Management;
+import com.sun.ws.management.framework.transfer.TransferSupport;
+import com.sun.ws.management.xml.XmlBinding;
+
 
 /**
  * LightHandler deligate is responsible for processing WS-Transfer actions.
@@ -147,12 +144,12 @@ public class LightHandler extends TransferSupport {
 			m_log.log(Level.WARNING,"A name selector could not be found inside this request",e );
 			throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
 		}
-		if(Utilities.getSelectorByName("name",selectors)==null){
+		if(getSelectorByName("name",selectors)==null){
 			m_log.log(Level.WARNING,"A name selector could not be found inside this request");
 			throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
 		}
 
-		return (String)Utilities.getSelectorByName("name",selectors).getContent().get(0);
+		return (String)getSelectorByName("name",selectors).getContent().get(0);
     }
  	/*************************** Implementation  ***********************************/
  	void copyStateFromRequestToModel(Management request, TrafficLight light) {
@@ -178,5 +175,13 @@ public class LightHandler extends TransferSupport {
   			} 
   	 }
   	 /******************************************************************************/
+	   public SelectorType getSelectorByName(String name,Set<SelectorType> selectorSet){
+	    	for (SelectorType selectorType : selectorSet) {
+	    		if(selectorType.getName().equals(name)){
+	    			return selectorType;
+	    		}
+			}
+			return null;
+		}
 
 }
