@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import com.sun.traffic.light.model.TrafficLightModel;
+import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 
@@ -38,7 +39,11 @@ public class LightlistHandler extends EnumerationHandler
     }
 
 
-     public void EnumerateOp( Enumeration enuRequest, Enumeration enuResponse )
+    public void enumerateEprs(Enumeration enuRequest, Enumeration enuResponse) {
+
+    }
+
+    public void EnumerateOp( Enumeration enuRequest, Enumeration enuResponse )
      {
          enumerate( enuRequest, enuResponse);
      }
