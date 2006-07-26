@@ -43,6 +43,7 @@
 	    <mkdir dir="${build.classes.dir}" />
 	    <mkdir dir="${test.build.classes.dir}" />
 	    <mkdir dir="${gen.src.dir}" />
+	    <mkdir dir="${lib.dir}" />
 	    <mkdir dir="${doc.dir}" />
 	    <mkdir dir="${apidocs.dir}" />	
 	  </target>
@@ -78,6 +79,11 @@
 	      		<include name="com/**"/>
 	      	</fileset>
 	    </jar>
+	    <jar destfile="${dist.dir}/wiseman-client-src.jar">
+	      	<fileset dir="${src.dir}">
+	      		<include name="com/**"/>
+	      	</fileset>
+	    </jar>
     </target>
 	  
     <target name="javadoc" depends="compile" description="Generate the javadocs">
@@ -87,6 +93,8 @@
                <pathelement location="${build.classes.dir}" />
            </classpath>
        </javadoc>
+      	<zip destfile="${dist.dir}/wiseman-client-apidocs.zip" basedir="${apidocs.dir}"/>
+
     </target>
 
 	
