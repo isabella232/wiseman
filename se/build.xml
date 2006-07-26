@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.39 2006-07-21 19:48:52 obiwan314 Exp $
+ $Id: build.xml,v 1.40 2006-07-26 21:50:26 obiwan314 Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -322,6 +322,7 @@
         <include name="org/**" />
       </packageset>
     </javadoc>
+  	<zip destfile="${dist.dir}/wiseman-apidocs.zip" basedir="${doc.dist.dir}"/>
   </target>
 
   <path id="test.compile.classpath">
