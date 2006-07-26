@@ -45,14 +45,14 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 			{
 				traffic = new JLabel();
 				this.add(traffic, BorderLayout.CENTER);
-				traffic.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/hp/traffic/light/ui/images/trafic.gif")));
+				traffic.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic.gif")));
 				traffic.setPreferredSize(new java.awt.Dimension(68, 130));
 				traffic.setSize(68, 130);
 			}
 			{
 				trafficRed = new JLabel();
 				this.add(trafficRed, BorderLayout.CENTER);
-				trafficRed.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/hp/traffic/light/ui/images/trafic_red.gif")));
+				trafficRed.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic_red.gif")));
 				trafficRed.setVisible(false);
 				trafficRed.setPreferredSize(new java.awt.Dimension(68, 130));
 				trafficRed.setSize(68, 130);
@@ -60,7 +60,7 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 			{
 				trafficYellow = new JLabel();
 				this.add(trafficYellow, BorderLayout.CENTER);
-				trafficYellow.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/hp/traffic/light/ui/images/trafic_yellow.gif")));
+				trafficYellow.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic_yellow.gif")));
 				trafficYellow.setVisible(false);
 				trafficYellow.setPreferredSize(new java.awt.Dimension(68, 130));
 				trafficYellow.setSize(68, 130);
@@ -68,7 +68,7 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 			{
 				trafficGreen = new JLabel();
 				this.add(trafficGreen, BorderLayout.CENTER);
-				trafficGreen.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/hp/traffic/light/ui/images/trafic_green.gif")));
+				trafficGreen.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic_green.gif")));
 				trafficGreen.setVisible(false);
 				trafficGreen.setPreferredSize(new java.awt.Dimension(68, 130));
 				trafficGreen.setSize(68, 130);
