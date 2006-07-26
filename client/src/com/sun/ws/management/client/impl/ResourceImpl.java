@@ -7,6 +7,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Element;
@@ -34,11 +35,11 @@ public class ResourceImpl extends EnumerationResourceImpl implements Resource {
 	
 	public ResourceImpl(){};
 	
-	public ResourceImpl(String destination, String resourceURI,long timeout,SelectorSetType selectors){
+	public ResourceImpl(String destination, String resourceURI,long timeout,SelectorSetType selectors) throws SOAPException, JAXBException{
 		super(destination, resourceURI,timeout,selectors);//
 	}
 
-	public ResourceImpl(String destination, String resourceURI, long timeout) {
+	public ResourceImpl(String destination, String resourceURI, long timeout) throws SOAPException, JAXBException {
 		super(destination, resourceURI, timeout,null);
 	}
 
@@ -80,8 +81,8 @@ public class ResourceImpl extends EnumerationResourceImpl implements Resource {
 		List<Object> refParams = epr.getReferenceParameters().getAny();
 		for (Object param : refParams) {
 			Object testType= ((JAXBElement)param).getValue();
-			if(testType instanceof AttributedURI){
-				AttributedURI rUri = (AttributedURI)testType;
+			if(testType instanceof AttributableURI){
+				AttributableURI rUri = (AttributableURI)testType;
 				setResourceURI(rUri.getValue());				
 			}
 			if(testType instanceof SelectorSetType){
