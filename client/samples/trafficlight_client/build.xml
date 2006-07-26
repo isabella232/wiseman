@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="trafficlight_client" default="dist" basedir=".">
+	  
+	<property file="project.properties"/>
+	  
+
+	  <path id="compile.classpath">
+	    <path path="${build.classes.dir}" />
+	    <fileset dir="${lib.dir}">
+	      <include name="**/*.jar"/>
+	    </fileset>
+	    <fileset dir="../../${dist.dir}">
+	      <include name="*.jar"/>
+	    </fileset>
+	    <fileset dir="${wiseman.root}/${dist.dir}">
+	      <include name="*.jar"/>
+	    </fileset>
+	  	
+	  	
+	  </path>
+	
+	<target name="init">
+	    <tstamp />
+	    <mkdir dir="${dist.dir}" />
+	    <mkdir dir="${build.dir}" />
+	    <mkdir dir="${build.classes.dir}" />
+	  </target>
+
+	<target name="jar" depends="compile">
+	    <jar destfile="${client.jar.file}"
+	         >
+	      <manifest>
+	        <attribute name="Built-By" value="${user.name}" />
+	        <attribute name="Built-At" value="${DSTAMP}" />
+	        <attribute name="Specification-Title" value="WS-Management" />
+	        <attribute name="Specification-Version" value="06/2005" />
+	        <attribute name="Implementation-Title" value="Traffic Client" />
+	        <attribute name="Implementation-Version" value="1.0" />
+	        <attribute name="Sealed" value="false" />
+	      	<attribute name="Main-Class" value="com.sun.ws.management.traffic.client.TrafficClientApp" />
+	      	<attribute name="Class-Path" value="../wiseman-client.jar ../wiseman.jar lib/jaxb/activation.jar lib/jaxb/jaxb-api.jar lib/jaxb/jaxb-impl.jar lib/jaxb/jsr173_1.0_api.jar lib/jaxrpc/saaj-api.jar lib/jaxrpc/saaj-impl.jar" />
+	      </manifest>
+	        <!-- fileset dir="${src.dir}/**/*.gif"/ -->
+	        <fileset dir="${build.classes.dir}"/>
+	    </jar>
+	  </target>
+
+	
+	  <target name="compile" depends="init">
+	    <javac destdir="${build.classes.dir}"
+	           debug="${debug}">
+	      <classpath refid="compile.classpath" />
+	    
+	      <src path="${src.dir}" />
+	    </javac>
+	    <copy todir="${build.classes.dir}">
+	      <fileset dir="${src.dir}">
+	        <include name="**/*.properties" />
+	        <!-- include name="**/*.gif" / -->
+	      </fileset>
+	    </copy>
+	  </target>
+
+	
+	<target name="dist" depends="jar">
+	</target>
+</project>
