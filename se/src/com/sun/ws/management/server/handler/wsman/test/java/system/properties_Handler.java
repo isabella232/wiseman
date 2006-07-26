@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.15 2006-07-25 15:10:15 pmonday Exp $
+ * $Id: properties_Handler.java,v 1.16 2006-07-26 03:40:24 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
 
-import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
-import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,8 +36,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -144,23 +147,30 @@ public class properties_Handler implements Handler, EnumerationIterator {
         final Object[] keys = props.keySet().toArray();
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
             final Object key = keys[start + i];
-            final Object value = props.get(key);
-            final Document doc = db.newDocument();
-            final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
-            item.setTextContent(value.toString());
-            EndpointReferenceType epr = null;
+
+            // construct an item if necessary for the enumeration
+            Element item = null;
+            if (includeItem) {
+                final Object value = props.get(key);
+                final Document doc = db.newDocument();
+                item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
+                item.setTextContent(value.toString());
+            }
+
             // construct an endpoint reference to accompany the element, if needed
+            EndpointReferenceType epr = null;
             if (includeEPR) {
                 final Map<String, String> selectors = new HashMap<String, String>();
                 selectors.put(PROPERTY_SELECTOR_KEY, key.toString());
                 epr = EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors);
             }
-            final EnumerationItem ei = new EnumerationItem(includeItem ? item : null, epr);
+
+            final EnumerationItem ei = new EnumerationItem(item, epr);
             items.add(ei);
         }
         return items;
     }
-    
+
     public boolean hasNext(final Object context, final int start) {
         final Context ctx = (Context) context;
         final Properties props = ctx.properties;
