@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<!-- ====================================================================== 
+     Mar 22, 2006 9:55:07 AM                                                        
+
+     Wiseman- tooling    
+     ====================================================================== 
+-->
+<project name="Wiseman Tooling" default="install">
+    <description>
+            This is a build file for the Wiseman client implementation.
+    </description>
+	
+	<!-- Load the properties -->
+	<property file="project.properties"/>
+	<property file="${user.home}/.ant.properties"/>
+
+	<!-- Compilation classpath -->
+	  <path id="compile.classpath">
+	    <fileset dir="${lib.dir}">
+	      <include name="**/*.jar"/>
+	    </fileset>
+	    <fileset dir="${wiseman.root}/${lib.dir}">
+	      <include name="**/*.jar"/>
+	    </fileset>
+	    <fileset dir="${wiseman.root}/${dist.dir}">
+	      <include name="**/*.jar"/>
+	    </fileset>
+	  </path>	
+	
+	<target name="clean">
+		<delete dir="${dist.dir}"/>
+	    <delete dir="${build.dir}" />
+	    <delete dir="${build.classes.dir}" />
+	    <delete dir="${gen.src.dir}" />
+	    <delete dir="${apidocs.dir}" />	
+	</target>
+	
+	<!-- Recreate all necessary directories. -->
+	<target name="init" depends="clean">
+	    <tstamp />
+	    <mkdir dir="${dist.dir}" />
+	    <mkdir dir="${build.dir}" />
+	    <mkdir dir="${build.classes.dir}" />
+	    <mkdir dir="${test.build.classes.dir}" />
+	    <mkdir dir="${gen.src.dir}" />
+	    <mkdir dir="${doc.dir}" />
+	    <mkdir dir="${apidocs.dir}" />	
+	  </target>
+	
+	
+	<!-- Compile -->
+	<target name="compile" depends="init">
+	  	<javac destdir="${build.classes.dir}"
+	           debug="${debug}">
+	      <classpath refid="compile.classpath" />
+		  <src path="${src.dir}" />
+	    </javac>
+		
+	  	<!--javac destdir="${test.build.classes.dir}"
+	           debug="${debug}">
+	      <classpath> 
+	      		<path refid="compile.classpath" />
+          		<path path="${build.classes.dir}" />
+	      	</classpath>
+	      	<src path="${test.src.dir}" />
+	    </javac -->
+
+		<copy todir="${build.classes.dir}">
+	      <fileset dir="${src.dir}">
+	        <include name="**/*.properties" />
+	        <include name="**/*.vm" />
+	      </fileset>
+	    </copy>
+	</target>
+
+	<target name="jar" depends="compile">
+	    <jar destfile="${client.jar.file}">
+	      	<fileset dir="${build.classes.dir}">
+	      		<include name="com/**"/>
+	      		<include name="templates/**"/>
+	      	</fileset>
+	    </jar>
+    </target>
+	  
+    <target name="javadoc" depends="compile" description="Generate the javadocs">
+       <javadoc sourcepath="${src.dir}" destdir="${apidocs.dir}" packagenames="*">
+           <classpath>
+               <path refid="compile.classpath" />
+               <pathelement location="${build.classes.dir}" />
+           </classpath>
+       </javadoc>
+    </target>
+
+	
+	
+	<target name="install" depends="jar">
+	</target>
+	
+ 	
+	<target name="autobuild" depends="javadoc,jar" />
+
+</project>
+
+
