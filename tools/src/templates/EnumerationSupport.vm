@@ -16,7 +16,7 @@
 *#
 package ${package};
 
-import com.sun.ws.management.framework.enumeration.EnumerationImpl;
+import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.Management;
@@ -36,7 +36,7 @@ import javax.xml.parsers.DocumentBuilder;
  *
  * @GENERATED
  */
-public class ${delegateName} extends EnumerationImpl
+public class ${delegateName} extends EnumerationHandler
 {    
     //Log for logging messages
     private Logger m_log = Logger.getLogger(${delegateName}.class.getName());

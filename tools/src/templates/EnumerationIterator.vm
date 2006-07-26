@@ -66,8 +66,9 @@ public class ${enumerationIteratorName} implements EnumerationIterator
      * returned in the
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */    
-    public List<Element> next(final DocumentBuilder db, final Object context, final int startPos, final int count)
-    {
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
+            final boolean includeItem, final boolean includeEPR,
+            final int startPos, final int count){
         return null;
     }
     /**
@@ -102,4 +103,32 @@ public class ${enumerationIteratorName} implements EnumerationIterator
     {
         m_cancelled = true;
     }
+    
+    /**
+     * Estimate the number of elements available.
+     *
+     * @param context The client context that was specified to
+     * {@link EnumerationSupport#enumerate enumerate} is returned.
+     *
+     * @return an estimate of the number of elements available in the enumeration.
+     * Return a negative number if an estimate is not available.
+     */
+    public int estimateTotalItems(final Object context){
+    	return -1;
+    }
+    
+    /**
+     * Supply the namespace mappings used by the elements of the iteration. The
+     * namespace mapping is primarily used for resolution of namespace prefixes
+     * during evaluation of XPath expressions for filtered enumeration.
+     *
+     * @return a NamespaceMap of all the namespace mappings used by the elements
+     * of this iteration. An implementation can choose to return null or
+     * an empty map, in which case evaluation of XPath expressions with namespace
+     * prefixes may fail.
+     */
+    public NamespaceMap getNamespaces(){
+    	return null;
+    }
+        
 }
