@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: exec_Handler.java,v 1.9 2006-07-25 05:57:06 akhilarora Exp $
+ * $Id: exec_Handler.java,v 1.10 2006-07-26 04:20:16 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -29,6 +29,7 @@ import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -38,10 +39,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 /**
  * This handler allows an arbitrary command to be executed and its output
@@ -73,14 +78,36 @@ public class exec_Handler implements Handler, EnumerationIterator {
     
     public static final String NS_PREFIX = "ex";
     public static final String NS_URI = "https://wiseman.dev.java.net/1/exec";
-    private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
 
     private static NamespaceMap nsMap = null;
     
     private static final String EXEC = "exec";
-    
-    private boolean cancelled = false;
-    
+
+    /**
+     * A context class to pass with enumeration requests
+     */
+    private static final class Context {
+        /**
+         * Indication of whether the request was cancelled during processing
+         */
+        boolean cancelled = false;
+
+        /**
+         * Server request path that can be used for creating an EPR
+         */
+        String requestPath;
+
+        /**
+         * URI that identifies the resource being manipulated
+         */
+        String resourceURI;
+        
+        /**
+         * Results of exec operation for use across calls
+         */
+        String[] results;
+    }
+
     public void handle(final String action, final String resource,
             final HandlerContext context,
             final Management request, final Management response) throws Exception {
@@ -125,7 +152,19 @@ public class exec_Handler implements Handler, EnumerationIterator {
         
         if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
-            EnumerationSupport.enumerate(enuRequest, enuResponse, this, result.split("\n"), nsMap);
+
+            final Context ctx = new Context();
+            ctx.resourceURI = resource;
+
+            // retrieve the request path for use in EPR construction and store
+            //  it in the context for later retrieval
+            final HttpServletRequest servletRequest = context.getHttpServletRequest();
+            final String path = servletRequest.getRequestURL().toString();
+            ctx.requestPath = path;
+
+            ctx.results = result.split ("\n");
+
+            EnumerationSupport.enumerate(enuRequest, enuResponse, this, ctx, nsMap);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
             EnumerationSupport.pull(enuRequest, enuResponse);
@@ -144,34 +183,41 @@ public class exec_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, 
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
             final boolean includeItem, final boolean includeEPR,
             final int startPos, final int count) {
-        cancelled = false;
-        final String[] lines = (String[]) context;
-        final int returnCount = Math.min(count, lines.length - startPos);
+        final Context ctx = (Context)context;
+        final int returnCount = Math.min(count, ctx.results.length - startPos);
         final List<EnumerationItem> items = new ArrayList(returnCount);
-        for (int i = 0; i < returnCount && !cancelled; i++) {
-            final Document doc = db.newDocument();
-            final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + EXEC);
-            item.setTextContent(lines[startPos + i]);
-            
-            // create an enumeration element to support multiple enumeration modes
-            // TODO: add the EPR
-            EnumerationItem ee = new EnumerationItem(item, null);
-            
-            items.add(ee);
+        for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
+            // create an enumeration element only if necessary
+            Element item = null;
+            if (includeItem) {
+                final Document doc = db.newDocument();
+                item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + EXEC);
+                item.setTextContent(ctx.results[startPos + i]);
+            }
+
+            // construct an endpoint reference to accompany the element, if needed
+            EndpointReferenceType epr = null;
+            if (includeEPR) {
+                epr = EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI);
+            }
+            final EnumerationItem ei = new EnumerationItem(item, epr);
+
+            items.add(ei);
         }
         return items;
     }
     
     public boolean hasNext(final Object context, final int startPos) {
-        final String[] lines = (String[]) context;
-        return startPos < lines.length;
+        final Context ctx = (Context)context;
+        return startPos < ctx.results.length;
     }
     
     public void cancel(final Object context) {
-        cancelled = true;
+        final Context ctx = (Context)context;
+        ctx.cancelled = true;
     }
     
     public int estimateTotalItems(final Object context) {

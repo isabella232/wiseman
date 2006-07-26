@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.10 2006-07-25 05:57:06 akhilarora Exp $
+ * $Id: pull_source_Handler.java,v 1.11 2006-07-26 04:20:16 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -125,8 +125,8 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
             
             // retrieve the request path for use in EPR construction and store
             //  it in the context for later retrieval
-            HttpServletRequest servletRequest = context.getHttpServletRequest();
-            String path = servletRequest.getRequestURL().toString();
+            final HttpServletRequest servletRequest = context.getHttpServletRequest();
+            final String path = servletRequest.getRequestURL().toString();
             ctx.requestPath = path;
             
             // call the server to process the enumerate request
@@ -150,18 +150,25 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
         final List<EnumerationItem> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
             final String key = ctx.eventLog[start + i][0];
-            final String value = ctx.eventLog[start + i][1];
-            final Document doc = db.newDocument();
-            final Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
-            item.setTextContent(value);
-            
+
+            // construct an item if necessary for the enumeration
+            Element item = null;
+            if (includeItem) {
+                final String value = ctx.eventLog[start + i][1];
+                final Document doc = db.newDocument();
+                item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
+                item.setTextContent(value);
+            }
+
             // construct an endpoint reference to accompany the element, if needed
-            final Map<String, String> selectors = new HashMap<String, String>();
-            selectors.put(SELECTOR_KEY, key);
-            final EndpointReferenceType epr = includeEPR ?
-                EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors) :
-                null;
-            final EnumerationItem ei = new EnumerationItem(includeItem ? item : null, epr);
+            EndpointReferenceType epr = null;
+            if (includeEPR) {
+                final Map<String, String> selectors = new HashMap<String, String>();
+                selectors.put(SELECTOR_KEY, key);
+                epr = EnumerationSupport.createEndpointReference(ctx.requestPath, ctx.resourceURI, selectors);
+            }
+
+            final EnumerationItem ei = new EnumerationItem(item, epr);
             items.add(ei);
         }
         return items;
