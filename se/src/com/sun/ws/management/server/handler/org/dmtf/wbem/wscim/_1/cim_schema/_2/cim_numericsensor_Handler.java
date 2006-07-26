@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.7 2006-07-25 05:57:06 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.8 2006-07-26 04:41:49 pmonday Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -119,28 +119,35 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         final int returnCount = Math.min(count, ctx.count - start);
         final List<EnumerationItem> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
-            Document resourceDoc = null;
-            final String resourceDocName = "Pull" + "_" + start + ".xml";
-            final InputStream is = load(ctx.hcontext.getServletConfig().getServletContext(), resourceDocName);
-            if (is == null) {
-                throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
+
+            Element root = null;
+            if (includeItem) {
+                Document resourceDoc = null;
+                final String resourceDocName = "Pull" + "_" + start + ".xml";
+                final InputStream is = load(ctx.hcontext.getServletConfig().getServletContext(), resourceDocName);
+                if (is == null) {
+                    throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
+                }
+                try {
+                    resourceDoc = db.parse(is);
+                } catch (Exception ex) {
+                    throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
+                }
+                root = resourceDoc.getDocumentElement();
             }
-            try {
-                resourceDoc = db.parse(is);
-            } catch (Exception ex) {
-                throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
+
+            EndpointReferenceType epr = null;
+            if(includeEPR) {
+                final Map<String, String> selectors = new HashMap<String, String>();
+                for (final String selector : SELECTOR_KEYS) {
+                    selectors.put(selector, root.getElementsByTagNameNS(NS_URI, selector).item(0).getTextContent());
+                }
+                epr = EnumerationSupport.createEndpointReference(
+                        ctx.address,
+                        ctx.resourceURI,
+                        selectors);
             }
-            final Element root = resourceDoc.getDocumentElement();
-            
-            final Map<String, String> selectors = new HashMap<String, String>();
-            for (final String selector : SELECTOR_KEYS) {
-                selectors.put(selector, root.getElementsByTagNameNS(NS_URI, selector).item(0).getTextContent());
-            }
-            final EndpointReferenceType epr = includeEPR ?
-                EnumerationSupport.createEndpointReference(
-                    ctx.address,
-                    ctx.resourceURI,
-                    selectors) : null;
+
             items.add(new EnumerationItem(root, epr));
         }
         return items;
