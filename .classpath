@@ -2,6 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="se/src"/>
 	<classpathentry kind="src" path="se/test/src"/>
+	<classpathentry kind="src" path="tools/src"/>
+	<classpathentry kind="src" path="client/src"/>
+	<classpathentry kind="src" path="client/test"/>
+	<classpathentry kind="src" path="client/samples/trafficlight_client/src"/>
+	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/activation.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/javax.servlet.jar"/>
@@ -11,7 +16,12 @@
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jsr173_1.0_api.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxrpc/saaj-api.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxrpc/saaj-impl.jar"/>
+	<classpathentry kind="lib" path="/Users/wire/java/apache-tomcat-5.5.17/server/lib/catalina-ant.jar"/>
+	<classpathentry kind="lib" path="tools/lib/wsdl4j.jar"/>
+	<classpathentry kind="lib" path="tools/lib/velocity-dep-1.4.jar"/>
+	<classpathentry kind="lib" path="tools/lib/velocity-1.4.jar"/>
+	<classpathentry kind="lib" path="tools/lib/ant.jar"/>
 	<classpathentry kind="src" path="se/gen-src"/>
-	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/org.junit_3.8.1/junit.jar"/>
+	<classpathentry exported="true" kind="var" path="ECLIPSE_HOME/plugins/org.junit_3.8.1/junit.jar"/>
 	<classpathentry kind="output" path="ebin"/>
 </classpath>
