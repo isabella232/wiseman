@@ -30,6 +30,8 @@ import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.enumeration.EnumerationExtensions.Mode;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
@@ -43,7 +45,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
     protected static final String UUID_SCHEME = "uuid:";
     private static Logger log = Logger.getLogger(EnumerationResourceImpl.class.getName());
 
-	public EnumerationResourceImpl(String destination, String resourceURI,long timeout, SelectorSetType selectors){
+	public EnumerationResourceImpl(String destination, String resourceURI,long timeout, SelectorSetType selectors) throws SOAPException, JAXBException{
 		super(destination, resourceURI,timeout,selectors);
 	}
 	
@@ -76,7 +78,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	 * @param dialect The dialect to be used in filter expressions. XPATH_DIALECT
 	 * can be used for XPath. 
 	 * @param useEprs  useEprs sets the EnumerateEpr Element causing subsequent pulls to
-	 * contain erps
+	 * contain erps only
 	 * @return An enumeration context
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -103,17 +105,29 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId("uuid:" + UUID.randomUUID().toString());
+
+        Mode enumerationMode = 
+        	useEprs ? 
+                    /* EnumerationModeType.valueOf("EnumerateEPR") */
+                    EnumerationExtensions.Mode.EnumerateEPR
+                : 
+                    /* EnumerationModeType.valueOf("EnumerateObjectAndEPR") */
+                    EnumerationExtensions.Mode.EnumerateObjectAndEPR;
+                
+
+        
         final DatatypeFactory factory = DatatypeFactory.newInstance();
         final FilterType filterType = Enumeration.FACTORY.createFilterType();
+        final EndpointReferenceType endTo = Addressing.createEndpointReference("http://host/endTo", null, null, null, null);
 
         if(filters!=null){
 	        filterType.setDialect(XPath.NS_URI);
 	        filterType.getContent().add(filter);
-	        enu.setEnumerate(null, factory.newDuration(getMessageTimeout()).toString(),
-                    filter == null ? null : filterType);
+	        enu.setEnumerate(endTo, factory.newDuration(getMessageTimeout()).toString(),
+                    filter == null ? null : filterType,enumerationMode.toBinding());
         }else{
         	enu.setEnumerate(null, factory.newDuration(getMessageTimeout()).toString(),
-                         null);
+                         null,enumerationMode.toBinding());//,
         }
         
         final Management mgmt = new Management(enu);
@@ -177,7 +191,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 		Vector ret=new Vector();
 		for(int index=0;index<eprNodes.getLength();index++){
 			Element eprElement = (Element)eprNodes.item(index);
-			ret.add(new TransferableResourceImpl(eprElement,endpointUrl));
+			ret.add(new ResourceImpl(eprElement,endpointUrl));
 		}
 		
 		return (Resource[]) ret.toArray(new Resource[]{});
