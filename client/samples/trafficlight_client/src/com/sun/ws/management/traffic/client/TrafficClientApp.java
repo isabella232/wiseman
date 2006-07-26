@@ -31,6 +31,7 @@ import com.sun.ws.management.client.ResourceFactory;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
+import com.sun.ws.management.transport.HttpClient;
 
 
 /**
@@ -83,6 +84,13 @@ public class TrafficClientApp extends javax.swing.JFrame {
 	public TrafficClientApp() {
 		super();		
 		initGUI();
+		
+		// Temporarily set authentication manually
+		System.setProperty("wsman.user", "wsman");
+        System.setProperty("wsman.password", "secret");
+        HttpClient.setAuthenticator(new transport.BasicAuthenticator());
+ 
+		
 		getExistingLights();
 	}
 	
@@ -109,7 +117,7 @@ public class TrafficClientApp extends javax.swing.JFrame {
 				JOptionPane.showMessageDialog(this,"An error has occured during your enumerate operation: There is no enumeration resource","Error",JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-//			Resource enumResource = resources[0];
+
 			EnumerableResource enumResource = (EnumerableResource) resources[0];
 			String[] filters=null;
 			boolean useEprs=true;
