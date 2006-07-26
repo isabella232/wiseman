@@ -39,6 +39,7 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceState;
@@ -71,7 +72,7 @@ public class TransferableResourceImpl implements TransferableResource {
 	
 	public TransferableResourceImpl(){};
 	
-	public TransferableResourceImpl(String destination, String resourceURI,long timeout,SelectorSetType selectors){
+	public TransferableResourceImpl(String destination, String resourceURI,long timeout,SelectorSetType selectors) throws SOAPException, JAXBException{
 		setDestination(destination);
 		setResourceURI(resourceURI);
 		messageTimeout=timeout;
@@ -81,22 +82,17 @@ public class TransferableResourceImpl implements TransferableResource {
 
 	}
 
-	private void initJAXB() {
+	private void initJAXB() throws SOAPException, JAXBException {
 		//initialize JAXB bindings
-        try {
-			if(new Addressing().getXmlBinding()==null){
-				SOAP.setXmlBinding(new XmlBinding(null));
-			}
-		} catch (SOAPException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JAXBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		Message.initialize();
+
+		if (new Addressing().getXmlBinding() == null)
+		{
+		    SOAP.setXmlBinding(new XmlBinding(null));
 		}
 	}
 
-	public TransferableResourceImpl(Element eprElement, String endpointUrl) {
+	public TransferableResourceImpl(Element eprElement, String endpointUrl) throws SOAPException, JAXBException {
 		initJAXB();
 		XmlBinding binding=null;
 		try {
@@ -592,4 +588,14 @@ public class TransferableResourceImpl implements TransferableResource {
         }
         return null;
     }
+    
+	   public static SelectorType getSelectorByName(String name,Set<SelectorType> selectorSet){
+	    	for (SelectorType selectorType : selectorSet) {
+	    		if(selectorType.getName().equals(name)){
+	    			return selectorType;
+	    		}
+			}
+			return null;
+		}
+
 }
