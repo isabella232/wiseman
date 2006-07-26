@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.29 2006-07-26 03:22:28 pmonday Exp $
+ * $Id: EnumerationSupport.java,v 1.30 2006-07-26 18:10:31 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -275,9 +275,6 @@ public final class EnumerationSupport extends BaseSupport {
         boolean includeItem = false;
         boolean includeEPR = false;
         final EnumerationModeType mode = ctx.getEnumerationMode();
-        if (mode != null) {
-            System.out.println("xxxx mode: " + mode.value() + " =? " + EnumerationExtensions.Mode.EnumerateEPR.toString());
-        }
         if (mode == null) {
             includeItem = true;
             includeEPR = false;
