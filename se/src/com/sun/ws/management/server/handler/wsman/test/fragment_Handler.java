@@ -19,6 +19,7 @@ package com.sun.ws.management.server.handler.wsman.test;
 
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.Addressing;
@@ -85,6 +86,9 @@ public class fragment_Handler extends base_Handler {
         final SOAPHeaderElement fragmentHeader = transExtRequest.getFragmentHeader();
         final String expression = fragmentHeader == null ? null : fragmentHeader.getTextContent();
         final String dialect = fragmentHeader == null ? null : fragmentHeader.getAttributeValue(TransferExtensions.DIALECT);
+        if (!XPath.isSupportedDialect(dialect)) {
+            throw new FragmentDialectNotSupportedFault(XPath.SUPPORTED_FILTER_DIALECTS);
+        }
         
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.addNamespaceDeclarations(NAMESPACES);
@@ -95,7 +99,7 @@ public class fragment_Handler extends base_Handler {
                 response.getBody().addDocument(doc);
             } else {
                 transExtResponse.setFragmentGetResponse(fragmentHeader,
-                        XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap));
+                        XPath.filter(doc.getDocumentElement(), expression, nsMap));
             }
             return;
         }
@@ -115,7 +119,7 @@ public class fragment_Handler extends base_Handler {
                     nodeContent.add(childNodes.item(i));
                 }
                 transExtResponse.setFragmentPutResponse(fragmentHeader, nodeContent,
-                        expression, XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap));
+                        expression, XPath.filter(doc.getDocumentElement(), expression, nsMap));
             }
             // dump the modified doc for debugging
             prettyPrint(doc);
@@ -131,7 +135,7 @@ public class fragment_Handler extends base_Handler {
                 // TODO
             } else {
                 transExtResponse.setFragmentDeleteResponse(fragmentHeader,
-                        XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap));
+                        XPath.filter(doc.getDocumentElement(), expression, nsMap));
             }
             // dump the modified doc for debugging
             prettyPrint(doc);
@@ -156,7 +160,7 @@ public class fragment_Handler extends base_Handler {
                         Addressing.createEndpointReference(transExtRequest.getTo(),
                         null, null, null, null);
                 transExtResponse.setFragmentCreateResponse(fragmentHeader, nodeContent,
-                        expression, XPath.filter(doc.getDocumentElement(), expression, dialect, nsMap),
+                        expression, XPath.filter(doc.getDocumentElement(), expression, nsMap),
                         epr);
             }
             // dump the modified doc for debugging

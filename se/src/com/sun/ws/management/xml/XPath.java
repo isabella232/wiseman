@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPath.java,v 1.7 2006-07-26 03:20:18 pmonday Exp $
+ * $Id: XPath.java,v 1.8 2006-07-27 18:59:48 akhilarora Exp $
  */
 
 package com.sun.ws.management.xml;
 
-import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.server.NamespaceMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +45,7 @@ public final class XPath {
      * @return true if it is a supported dialect (or if dialect is null=default), else false
      */
     public static boolean isSupportedDialect(final String dialect) {
-        //if dialect is null, then it is default so return true
+        // if dialect is null, then it is default so return true
         if (dialect == null) {
             return true;
         }
@@ -63,34 +62,25 @@ public final class XPath {
     
     /**
      * Filter a set of nodes based on an XPath expression.
-     * @param content is a node containing several  
      */
-    public static List<Node> filter(final Node content, 
-            final String expression, final String dialect, 
-            final NamespaceMap namespaces)
-    throws XPathExpressionException {
-        assert(expression!=null);
+    public static List<Node> filter(final Node content,
+            final String expression,
+            final NamespaceMap... namespaces)
+            throws XPathExpressionException {
         
         final javax.xml.xpath.XPath xpath = XPATH_FACTORY.newXPath();
-        if (namespaces != null) {
-            xpath.setNamespaceContext(namespaces);
+        if (namespaces != null && namespaces.length > 0) {
+            xpath.setNamespaceContext(namespaces[0]);
         }
         
-        List<Node> ret = null;
-        try {
-            final XPathExpression filter = xpath.compile(expression);
-            final NodeList result = (NodeList) filter.evaluate(content, XPathConstants.NODESET);
-
-            final int size = result.getLength();
-            ret = new ArrayList<Node>(size);
-            for (int i = 0; i < size; i++) {
-                ret.add(result.item(i));
-            }
-        } catch (XPathExpressionException xpee) {
-            throw new CannotProcessFilterFault("Unable to compile XPath: " +
-                    "\"" + expression + "\"");            
-        }
+        final XPathExpression filter = xpath.compile(expression);
+        final NodeList result = (NodeList) filter.evaluate(content, XPathConstants.NODESET);
         
+        final int size = result.getLength();
+        final List<Node> ret = new ArrayList<Node>(size);
+        for (int i = 0; i < size; i++) {
+            ret.add(result.item(i));
+        }
         return ret;
     }
 }

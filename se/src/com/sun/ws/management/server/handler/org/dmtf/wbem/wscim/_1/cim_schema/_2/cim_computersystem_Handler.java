@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_computersystem_Handler.java,v 1.1 2006-07-13 21:15:44 akhilarora Exp $
+ * $Id: cim_computersystem_Handler.java,v 1.2 2006-07-27 18:59:48 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
 
+import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
@@ -42,7 +43,7 @@ public class cim_computersystem_Handler implements Handler {
         
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.setAction(Transfer.GET_RESPONSE_URI);
-
+            
             Document resourceDoc = null;
             final String resourceDocName = "Get.xml";
             final InputStream is = load(context.getServletConfig().getServletContext(), resourceDocName);
@@ -58,8 +59,11 @@ public class cim_computersystem_Handler implements Handler {
                 final TransferExtensions txo = new TransferExtensions(response);
                 final String expression = hdr.getTextContent();
                 final String dialect = hdr.getAttributeValue(TransferExtensions.DIALECT);
+                if (!XPath.isSupportedDialect(dialect)) {
+                    throw new FragmentDialectNotSupportedFault(XPath.SUPPORTED_FILTER_DIALECTS);
+                }
                 final NamespaceMap namespaces = new NamespaceMap(resourceDoc);
-                final List<Node> content = XPath.filter(resourceDoc, expression, dialect, namespaces);
+                final List<Node> content = XPath.filter(resourceDoc, expression, namespaces);
                 txo.setFragmentGetResponse(hdr, content);
                 return;
             }
