@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.30 2006-07-26 18:10:31 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.31 2006-07-27 00:05:57 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -337,7 +337,11 @@ public final class EnumerationSupport extends BaseSupport {
                     try {
                         if (ctx.evaluate(item, nsMap)) {
                             passed.add(ee);
-                            env.addNamespaceDeclaration(item.getPrefix(), item.getNamespaceURI());
+                            final String nsURI = item.getNamespaceURI();
+                            final String nsPrefix = item.getPrefix();
+                            if (nsPrefix != null && nsURI != null) {
+                                env.addNamespaceDeclaration(nsPrefix, nsURI);
+                            }
                         }
                     } catch (XPathException xpx) {
                         throw new CannotProcessFilterFault("Error evaluating XPath: " +
