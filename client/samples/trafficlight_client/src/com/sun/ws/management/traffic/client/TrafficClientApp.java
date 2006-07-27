@@ -24,7 +24,6 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathExpressionException;
 
-import com.sun.ws.management.Management;
 import com.sun.ws.management.client.EnumerableResource;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
@@ -88,7 +87,7 @@ public class TrafficClientApp extends javax.swing.JFrame {
 		// Temporarily set authentication manually
 		System.setProperty("wsman.user", "wsman");
         System.setProperty("wsman.password", "secret");
-        HttpClient.setAuthenticator(new transport.BasicAuthenticator());
+        HttpClient.setAuthenticator(new TrafficAuthenticator());
  
 		
 		getExistingLights();
