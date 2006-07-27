@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.6 2006-07-27 18:45:53 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.7 2006-07-27 19:29:15 akhilarora Exp $
  */
 
 package interop._06;
@@ -311,7 +311,7 @@ public final class InteropTest extends TestBase {
         final Addressing response = HttpClient.sendRequest(mgmt);
         log(response);
         if (!response.getBody().hasFault()) {
-            fail("Invalid ResourceURI accepted");
+            fail("Insufficient Selectors accepted");
         }
         
         final Fault fault = response.getFault();
