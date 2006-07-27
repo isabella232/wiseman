@@ -20,6 +20,13 @@ import com.sun.ws.management.client.exceptions.FaultException;
  * 
  */
 public interface TransferableResource {
+	/**
+	 * Returns the selectorset used by this resource.
+	 * @return A JAXB selector set.
+	 */
+	public org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType getSelectorSet();
+
+
 
 	/** Generates a DELETE request over WS-Man protocol for this resource.
 	 * 

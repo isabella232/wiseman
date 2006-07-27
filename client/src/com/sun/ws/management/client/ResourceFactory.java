@@ -30,7 +30,9 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.impl.EnumerationResourceImpl;
 import com.sun.ws.management.client.impl.ResourceImpl;
+import com.sun.ws.management.client.impl.ServerIdentityImpl;
 import com.sun.ws.management.client.impl.TransferableResourceImpl;
+import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
@@ -435,5 +437,12 @@ public class ResourceFactory {
 		        //set the SOAP Header for Fragment Transfer
 		        new Addressing().getXmlBinding().marshal(fragmentTransfer, mgmt.getHeader());
 		    }
+
+			public static ServerIdentity getIdentity(String destination) throws SOAPException, IOException, JAXBException{
+		        final Identify identify = new Identify();
+		        identify.setIdentify();
+		        final Addressing response = HttpClient.sendRequest(identify.getMessage(), destination);
+		        return new ServerIdentityImpl(response.getBody().extractContentAsDocument());
+			}
 
 }

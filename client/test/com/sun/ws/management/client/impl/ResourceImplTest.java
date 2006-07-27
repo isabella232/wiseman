@@ -31,6 +31,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
 import com.sun.ws.management.client.ResourceState;
+import com.sun.ws.management.client.ServerIdentity;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.client.impl.EnumerationResourceImpl;
@@ -75,6 +76,22 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
+	}
+	
+	public void testIdentity() throws XPathExpressionException, NoMatchFoundException, SOAPException, IOException, JAXBException{
+		ServerIdentity serverInfo = ResourceFactory.getIdentity(destUrl);
+		assertNotNull(serverInfo);
+		assertNotNull(serverInfo.getProductVendor());
+		assertNotNull(serverInfo.getProductVersion());
+		assertNotNull(serverInfo.getProtocolVersion());
+		assertNotNull(serverInfo.getSpecVersion());
+		assertNotNull(serverInfo.getBuildId());
+		assertEquals(serverInfo.getProductVendor(),"The Wiseman Project - https://wiseman.dev.java.net");
+		assertEquals(serverInfo.getProductVersion(),"0.4");
+		assertEquals(serverInfo.getProtocolVersion(),"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
+		assertEquals(serverInfo.getSpecVersion(),"1.0.0a");
+		assertTrue(serverInfo.getBuildId().startsWith("2006"));
+
 	}
 
 	/*

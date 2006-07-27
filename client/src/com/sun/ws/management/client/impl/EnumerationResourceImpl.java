@@ -27,6 +27,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceState;
+import com.sun.ws.management.client.ServerIdentity;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.enumeration.Enumeration;
@@ -396,5 +397,6 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	public SelectorSetType getSelectorSet() {
 		return this.selectorSet;
 	}
+
 
 }
