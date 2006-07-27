@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.5 2006-07-24 22:56:28 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.6 2006-07-27 18:45:53 akhilarora Exp $
  */
 
 package interop._06;
@@ -251,7 +251,7 @@ public final class InteropTest extends TestBase {
         final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
         mgmt.setTimeout(timeout);
         
-        final BigInteger envSize = new BigInteger("8190");
+        final BigInteger envSize = new BigInteger("100");
         final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
         maxEnvSize.setValue(envSize);
         maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
@@ -261,7 +261,7 @@ public final class InteropTest extends TestBase {
         final Addressing response = HttpClient.sendRequest(mgmt);
         log(response);
         if (!response.getBody().hasFault()) {
-            fail("Invalid ResourceURI accepted");
+            fail("Accepted a too small MaxEnvelopeSize of " + envSize.toString());
         }
         
         final Fault fault = response.getFault();
@@ -418,7 +418,6 @@ public final class InteropTest extends TestBase {
         final SOAPElement[] roles = txo.getChildren(fragment[0]);
         assertNotNull(roles);
         assertTrue(roles.length == 1);
-        assertEquals("p", roles[0].getPrefix());
         assertEquals(COMPUTER_SYSTEM_RESOURCE, roles[0].getNamespaceURI());
         assertEquals("Roles", roles[0].getLocalName());
         assertEquals("Hardware Management Controller", roles[0].getTextContent());
@@ -512,7 +511,6 @@ public final class InteropTest extends TestBase {
         Object obj = il.get(0);
         assertTrue(obj instanceof Node);
         Node node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         
@@ -547,7 +545,6 @@ public final class InteropTest extends TestBase {
         obj = il.get(0);
         assertTrue(obj instanceof Node);
         node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
     }
@@ -607,7 +604,6 @@ public final class InteropTest extends TestBase {
         Object obj = il.get(0);
         assertTrue(obj instanceof Node);
         Node node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         
@@ -653,7 +649,6 @@ public final class InteropTest extends TestBase {
         obj = il.get(0);
         assertTrue(obj instanceof Node);
         node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         */
@@ -747,7 +742,6 @@ public final class InteropTest extends TestBase {
         Object obj = il.get(0);
         assertTrue(obj instanceof Node);
         Node node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         
@@ -864,7 +858,6 @@ public final class InteropTest extends TestBase {
         Object obj = il.get(0);
         assertTrue(obj instanceof Node);
         Node node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         
@@ -965,7 +958,6 @@ public final class InteropTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        /* TODO
         Enumeration po = new Enumeration(response);
         assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
         PullResponse pr = po.getPullResponse();
@@ -984,7 +976,6 @@ public final class InteropTest extends TestBase {
         Object obj = il.get(0);
         assertTrue(obj instanceof Node);
         Node node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         
@@ -1019,10 +1010,8 @@ public final class InteropTest extends TestBase {
         obj = il.get(0);
         assertTrue(obj instanceof Node);
         node = (Node) obj;
-        assertEquals("p", node.getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
-        */
     }
     
     /**
@@ -1103,7 +1092,6 @@ public final class InteropTest extends TestBase {
         final SOAPElement[] item = to.getChildren(to.getBody());
         assertNotNull(item);
         assertTrue(item.length == 1);
-        assertEquals("p", item[0].getPrefix());
         assertEquals(NUMERIC_SENSOR_RESOURCE, item[0].getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, item[0].getLocalName());
 
