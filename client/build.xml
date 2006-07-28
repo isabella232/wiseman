@@ -146,12 +146,15 @@
             <enable/>
           </assertions>
             <batchtest>
-              <fileset dir="${test.build.classes.dir}" includes="**/*Test.class" />
-            </batchtest>
+                <fileset dir="${test.dir}">
+                  <include name="**/*Test*.java"/>
+                  <exclude name="**/*Interop*.java"/>
+                </fileset>
+             </batchtest>
             <classpath >
                   <path refid="compile.classpath" />
-        	    <path path="${build.classes.dir}" />
-        	    <path path="${test.build.classes.dir}" />
+        	    	<path path="${build.classes.dir}" />
+        	    	<path path="${test.build.classes.dir}" />
               </classpath>
           <formatter usefile="false" type="brief"/>
           <formatter type="xml"/>
