@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.7 2006-07-27 19:29:15 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.8 2006-07-28 22:55:24 akhilarora Exp $
  */
 
 package interop._06;
@@ -31,6 +31,7 @@ import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.xml.XML;
@@ -576,9 +577,8 @@ public final class InteropTest extends TestBase {
         locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
         mgmt.setLocale(locale);
         
-        final Enumeration ei = new Enumeration(mgmt);
-        // TODO: add optimize option
-        ei.setEnumerate(null, null, null);
+        final EnumerationExtensions ei = new EnumerationExtensions(mgmt);
+        ei.setEnumerate(null, null, null, null, true, 1);
         
         log(mgmt);
         Addressing response = HttpClient.sendRequest(mgmt);
@@ -596,16 +596,22 @@ public final class InteropTest extends TestBase {
         Object context = ect.getContent().get(0);
         assertNotNull(context);
         
-        /* TODO
         // should contain an item due to the optimization
         List<Object> il = er.getAny();
         assertNotNull(il);
         assertTrue(il.size() == 1);
         Object obj = il.get(0);
-        assertTrue(obj instanceof Node);
-        Node node = (Node) obj;
+        if (obj instanceof JAXBElement) {
+            EnumerationExtensions.ITEMS.equals(((JAXBElement)obj).getName());
+        }
+        final List<EnumerationItem> items = EnumerationExtensions.getItems(er);
+        assertNotNull(items);
+        assertTrue(items.size() == 1);
+        Node node = items.get(0).getItem();
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+        
+        assertFalse(EnumerationExtensions.isEndOfSequence(er));
         
         // pull request
         
@@ -638,9 +644,7 @@ public final class InteropTest extends TestBase {
         // at end of sequence now
         assertNotNull(pr.getEndOfSequence());
         ect = pr.getEnumerationContext();
-        assertNotNull(ect);
-        context = ect.getContent().get(0);
-        assertNotNull(context);
+        assertNull(ect);
         ItemListType ilt = pr.getItems();
         assertNotNull(ilt);
         il = ilt.getAny();
@@ -651,7 +655,6 @@ public final class InteropTest extends TestBase {
         node = (Node) obj;
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
-        */
     }
     
     /**
@@ -795,7 +798,9 @@ public final class InteropTest extends TestBase {
         mgmt.setLocale(locale);
         
         final EnumerationExtensions ei = new EnumerationExtensions(mgmt);
-        ei.setEnumerate(null, null, null, EnumerationExtensions.Mode.EnumerateObjectAndEPR);
+        ei.setEnumerate(null, null, null, 
+                EnumerationExtensions.Mode.EnumerateObjectAndEPR,
+                false, -1);
         
         log(mgmt);
         Addressing response = HttpClient.sendRequest(mgmt);

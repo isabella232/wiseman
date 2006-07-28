@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.5 2006-07-24 13:15:00 pmonday Exp $
+ * $Id: EnumerationContext.java,v 1.6 2006-07-28 22:55:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,6 +27,8 @@ final class EnumerationContext extends BaseContext {
     private final Object clientContext;
     private final EnumerationIterator iterator;
     private final EnumerationModeType mode;
+    private final boolean optimize;
+    private final int maxElements;
     
     // implied value
     private int count = 1;
@@ -37,11 +39,15 @@ final class EnumerationContext extends BaseContext {
             final EnumerationModeType mode,
             final NamespaceMap namespaces,
             final Object clientContext,
-            final EnumerationIterator iterator) throws XPathExpressionException {
+            final EnumerationIterator iterator,
+            final boolean optimize,
+            final int maxElements) throws XPathExpressionException {
         super(expiration, filter, namespaces);
         this.clientContext = clientContext;
         this.iterator = iterator;
         this.mode = mode;
+        this.optimize = optimize;
+        this.maxElements = maxElements;
     }
     
     /**
@@ -74,5 +80,13 @@ final class EnumerationContext extends BaseContext {
 
     EnumerationIterator getIterator() {
         return iterator;
+    }
+    
+    boolean isOptimized() {
+        return optimize;
+    }
+    
+    int getMaxElements() {
+        return maxElements;
     }
 }

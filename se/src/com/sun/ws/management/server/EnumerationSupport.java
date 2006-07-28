@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.31 2006-07-27 00:05:57 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.32 2006-07-28 22:55:23 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -45,11 +45,14 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
@@ -121,6 +124,8 @@ public final class EnumerationSupport extends BaseSupport {
         
         final Enumerate enumerate = request.getEnumerate();
         EnumerationModeType enumerationMode = null;
+        boolean optimize = false;
+        int maxElements = -1;
         
         if (enumerate == null) {
             // see if this is a pull event mode subscribe request
@@ -149,14 +154,23 @@ public final class EnumerationSupport extends BaseSupport {
                 throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
             
-            // Locate the EnumerationMode in the enumerate request
-            //   null after execution of the body implies no special enumeration mode
+            // Locate the EnumerationMode, OptimizeEnumeration and MaxElements in the enumerate request
+            //   null EnumerationMode after execution of the body implies no special enumeration mode
             for (final Object additionalValue : enumerate.getAny()) {
                 if (additionalValue instanceof JAXBElement) {
                     final JAXBElement jaxbElement = (JAXBElement) additionalValue;
-                    if (jaxbElement.getDeclaredType().equals(EnumerationModeType.class)) {
-                        enumerationMode = (EnumerationModeType) jaxbElement.getValue();
-                        break;
+                    final QName name = jaxbElement.getName();
+                    final Class<Object> type = jaxbElement.getDeclaredType();
+                    final Object value = jaxbElement.getValue();
+                    if (type.equals(EnumerationModeType.class) &&
+                            EnumerationExtensions.ENUMERATION_MODE.equals(name)) {
+                        enumerationMode = (EnumerationModeType) value;
+                    } else if (type.equals(AttributableEmpty.class) &&
+                            EnumerationExtensions.OPTIMIZE_ENUMERATION.equals(name)) {
+                        optimize = true;
+                    } else if (type.equals(AttributablePositiveInteger.class) &&
+                            EnumerationExtensions.MAX_ELEMENTS.equals(name)) {
+                        maxElements = ((AttributablePositiveInteger) value).getValue().intValue();
                     }
                 }
             }
@@ -178,10 +192,19 @@ public final class EnumerationSupport extends BaseSupport {
                     filterExpression,
                     enumerationMode,
                     nsMap,
-                    clientContext, enumIterator);
+                    clientContext,
+                    enumIterator,
+                    optimize,
+                    maxElements);
         } catch (XPathExpressionException xpx) {
             throw new CannotProcessFilterFault("Unable to compile XPath: " +
                     "\"" + filterExpression + "\"");
+        }
+        
+        if (maxElements <= 0) {
+            ctx.setCount(DEFAULT_ITEM_COUNT);
+        } else {
+            ctx.setCount(maxElements);
         }
         
         final UUID context = initContext(ctx);
@@ -190,10 +213,17 @@ public final class EnumerationSupport extends BaseSupport {
             final EventingExtensions evtx = new EventingExtensions(response);
             evtx.setSubscribeResponse(null, ctx.getExpiration(), context.toString());
         } else {
-            response.setEnumerateResponse(context.toString(), ctx.getExpiration());
-            
-            // place an item count estimate if one was requested
-            insertTotalItemCountEstimate(request, response, enumIterator, clientContext);
+            if (optimize) {
+                final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
+                final boolean more = doPull(request, response, context, ctx, null, passed);
+                final EnumerationExtensions enx = new EnumerationExtensions(response);
+                enx.setEnumerateResponse(context.toString(), ctx.getExpiration(),
+                        passed, enumerationMode, more);
+            } else {
+                // place an item count estimate if one was requested
+                insertTotalItemCountEstimate(request, response, enumIterator, clientContext);
+                response.setEnumerateResponse(context.toString(), ctx.getExpiration());
+            }
         }
     }
     
@@ -255,8 +285,6 @@ public final class EnumerationSupport extends BaseSupport {
             throw new InvalidEnumerationContextFault();
         }
         final EnumerationContext ctx = (EnumerationContext) bctx;
-        final Object clientContext = ctx.getClientContext();
-        final EnumerationIterator iterator = ctx.getIterator();
         
         final BigInteger maxElements = pull.getMaxElements();
         if (maxElements == null) {
@@ -266,7 +294,24 @@ public final class EnumerationSupport extends BaseSupport {
             ctx.setCount(maxElements.intValue());
         }
         
-        Duration maxTime = pull.getMaxTime();
+        final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
+        final boolean more = doPull(request, response, context, ctx, pull.getMaxTime(), passed);
+        if (more) {
+            response.setPullResponse(passed, context.toString(), ctx.getEnumerationMode(), true);
+        } else {
+            response.setPullResponse(passed, null, ctx.getEnumerationMode(), false);
+        }
+    }
+    
+    private static boolean doPull(final Enumeration request, final Enumeration response,
+            final UUID context, final EnumerationContext ctx, final Duration maxTimeout,
+            final List<EnumerationItem> passed)
+            throws SOAPException, JAXBException, FaultException {
+        
+        final Object clientContext = ctx.getClientContext();
+        final EnumerationIterator iterator = ctx.getIterator();
+        
+        Duration maxTime = maxTimeout;
         if (maxTime == null) {
             // no timeout - set to a default max timeout
             maxTime = datatypeFactory.newDuration(System.currentTimeMillis() + DEFAULT_MAX_TIMEOUT_MILLIS);
@@ -297,21 +342,24 @@ public final class EnumerationSupport extends BaseSupport {
         
         final SOAPEnvelope env = response.getEnvelope();
         final DocumentBuilder db = response.getDocumentBuilder();
-        final List<EnumerationItem> passed = new ArrayList<EnumerationItem>(ctx.getCount());
         
         final NamespaceMap nsMap = iterator.getNamespaces();
-        while (passed.size() < ctx.getCount() && iterator.hasNext(clientContext, ctx.getCursor())) {
+        boolean more = false;
+        boolean full = false;
+        while ((full = passed.size() < ctx.getCount()) &&
+                (more = iterator.hasNext(clientContext, ctx.getCursor()))) {
+            
             final TimerTask ttask = new TimerTask() {
                 public void run() {
                     iterator.cancel(clientContext);
                 }
             };
+            final GregorianCalendar now = new GregorianCalendar();
             final long timeout = maxTime.getTimeInMillis(now);
             final Timer timeoutTimer = new Timer(true);
             timeoutTimer.schedule(ttask, timeout);
             
-            final List<EnumerationItem> items =
-                    iterator.next(db,
+            final List<EnumerationItem> items = iterator.next(db,
                     clientContext,
                     includeItem,
                     includeEPR,
@@ -351,18 +399,22 @@ public final class EnumerationSupport extends BaseSupport {
             }
         }
         
-        if (iterator.hasNext(clientContext, ctx.getCursor())) {
+        if (!full) {
+            more = iterator.hasNext(clientContext, ctx.getCursor());
+        }
+        
+        if (more) {
             // update
             putContext(context, ctx);
-            response.setPullResponse(passed, context.toString(), ctx.getEnumerationMode(), true);
         } else {
             // remove the context - a subsequent release will fault with an invalid context
             removeContext(context);
-            response.setPullResponse(passed, null, ctx.getEnumerationMode(), false);
         }
         
         // place an item count estimate if one was requested
         insertTotalItemCountEstimate(request, response, iterator, clientContext);
+        
+        return more;
     }
     
     /**
@@ -460,6 +512,9 @@ public final class EnumerationSupport extends BaseSupport {
             throws SOAPException, JAXBException {
         // place an item count estimate if one was requested
         final EnumerationExtensions enx = new EnumerationExtensions(request);
+        try {
+            enx.prettyPrint(System.out);
+        } catch (Exception ignore) {}
         if (enx.getRequestTotalItemsCountEstimate() != null) {
             final EnumerationExtensions rx = new EnumerationExtensions(response);
             final int estimate = iterator.estimateTotalItems(clientContext);

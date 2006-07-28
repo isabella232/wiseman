@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.4 2006-07-25 16:51:16 pmonday Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.5 2006-07-28 22:55:24 akhilarora Exp $
  */
 
 package management;
@@ -22,6 +22,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transport.HttpClient;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -64,7 +66,7 @@ public class EnumerationExtensionsTest extends TestBase {
         filter.setDialect("http://mydomain/my.filter.dialect");
         filter.getContent().add("my/filter/expression");
         final EnumerationExtensions.Mode mode = EnumerationExtensions.Mode.EnumerateObjectAndEPR;
-        enu.setEnumerate(endTo, expires, filter, mode);
+        enu.setEnumerate(endTo, expires, filter, mode, true, 2);
         
         enu.prettyPrint(logfile);
         
@@ -80,14 +82,14 @@ public class EnumerationExtensionsTest extends TestBase {
         final EnumerationExtensions.Mode mode2 = EnumerationExtensions.Mode.fromBinding((JAXBElement<EnumerationModeType>) enu2.getAny().get(0));
         assertEquals(mode, mode2);
     }
-
+    
     public void testEnumerateItemCountEstimateVisual() throws Exception {
         
         final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         
         enu.setEnumerate(null, null, null);
-
+        
         enu.setRequestTotalItemsCountEstimate();
         
         enu.prettyPrint(logfile);
@@ -98,14 +100,14 @@ public class EnumerationExtensionsTest extends TestBase {
         
         assertNotNull(e2.getRequestTotalItemsCountEstimate());
     }
-
+    
     public void testEnumerateTotalItemCountEstimateVisual() throws Exception {
         totalItemCountEstimateVisual(BigInteger.TEN);
         totalItemCountEstimateVisual(BigInteger.ONE);
         totalItemCountEstimateVisual(BigInteger.ZERO);
         // totalItemCountEstimateVisual(null);
     }
- 
+    
     /**
      * Test ability to return EPRs in an enumeration
      * rather than objects
@@ -164,7 +166,7 @@ public class EnumerationExtensionsTest extends TestBase {
                     EnumerationExtensions.Mode.EnumerateEPR ;
         
         enu.setEnumerate(null, factory.newDuration(60000).toString(),
-                null, enumerationMode);
+                null, enumerationMode, false, -1);
         
         // prepare the request
         final Management mgmt = new Management(enu);
@@ -264,5 +266,111 @@ public class EnumerationExtensionsTest extends TestBase {
                 done = true;
             }
         } while (!done);
-    }    
+    }
+    
+    public void testOptimizedEnumeration() throws Exception {
+        // first do the tests with EPRs turned off
+        optimizedEnumerationTest(null, 2);
+        // do not specify MaxElements, letting it default to its implied value of 1
+        optimizedEnumerationTest(null, -1);
+        
+        // now repeat the same tests with EPRs turned on
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, 2);
+        // do not specify MaxElements, letting it default to its implied value of 1
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, -1);
+        
+        // finally, repeat the same tests with only EPRs (no items)
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, 2);
+        // do not specify MaxElements, letting it default to its implied value of 1
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, -1);
+    }
+    
+    public void optimizedEnumerationTest(final EnumerationExtensions.Mode mode,
+            final int maxElements) throws Exception {
+        final String RESOURCE = "wsman:test/java/system/properties";
+        final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final DatatypeFactory factory = DatatypeFactory.newInstance();
+        enu.setEnumerate(null, factory.newDuration(60000).toString(), null,
+                mode, true, maxElements);
+        
+        final Management mgmt = new Management(enu);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(RESOURCE);
+        
+        mgmt.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault()) {
+            response.prettyPrint(System.err);
+            // this test fails with an AccessDenied fault if the server is
+            // running in the sun app server with a security manager in
+            // place (the default), which disallows enumeration of
+            // system properties
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final Enumeration enuResponse = new Enumeration(response);
+        final EnumerateResponse enr = enuResponse.getEnumerateResponse();
+        String context = (String) enr.getEnumerationContext().getContent().get(0);
+        for (final EnumerationItem item : EnumerationExtensions.getItems(enr)) {
+            assertMode(mode, item);
+        }
+        
+        boolean done = EnumerationExtensions.isEndOfSequence(enr);
+        while (!done) {
+            final Enumeration pullRequest = new Enumeration();
+            pullRequest.setAction(Enumeration.PULL_ACTION_URI);
+            pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+            pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+            pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
+            
+            final Management mp = new Management(pullRequest);
+            mp.setTo(DESTINATION);
+            mp.setResourceURI(RESOURCE);
+            
+            mp.prettyPrint(logfile);
+            final Addressing praddr = HttpClient.sendRequest(mp);
+            praddr.prettyPrint(logfile);
+            if (praddr.getBody().hasFault()) {
+                praddr.prettyPrint(System.err);
+                fail(praddr.getBody().getFault().getFaultString());
+            }
+            
+            final Enumeration pullResponse = new Enumeration(praddr);
+            final PullResponse pr = pullResponse.getPullResponse();
+            // update context for the next pull (if any)
+            if (pr.getEnumerationContext() != null) {
+                context = (String) pr.getEnumerationContext().getContent().get(0);
+            }
+            for (final EnumerationItem item : EnumerationExtensions.unbindItems(pr.getItems().getAny())) {
+                assertMode(mode, item);
+            }
+            if (pr.getEndOfSequence() != null) {
+                done = true;
+            }
+        }
+    }
+    
+    private static void assertMode(final EnumerationExtensions.Mode mode,
+            final EnumerationItem item) {
+        
+        final Element elt = item.getItem();
+        final EndpointReferenceType epr = item.getEndpointReference();
+        
+        if (mode == null) {
+            assertNotNull(elt);
+            assertNull(epr);
+        } else if (EnumerationExtensions.Mode.EnumerateObjectAndEPR.equals(mode)) {
+            assertNotNull(elt);
+            assertNotNull(epr);
+        } else if (EnumerationExtensions.Mode.EnumerateEPR.equals(mode)) {
+            assertNull(elt);
+            assertNotNull(epr);
+        } else {
+            fail("invalid mode");
+        }
+    }
 }
