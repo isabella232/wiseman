@@ -4,6 +4,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -25,6 +26,7 @@ import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathExpressionException;
 
 import com.sun.ws.management.client.EnumerableResource;
+import com.sun.ws.management.client.EnumerationCtx;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
 import com.sun.ws.management.client.ResourceState;
@@ -110,17 +112,18 @@ public class TrafficClientApp extends javax.swing.JFrame {
 		DefaultComboBoxModel model = ((DefaultComboBoxModel)jListLights.getModel());
 		model.removeAllElements();
 		try {
-			Resource[] resources = ResourceFactory.find(endpointUrl,RESOURCELIST_URI,30000,null);
+			HashMap<String,String> selectors=null;
+
+			Resource[] resources = ResourceFactory.find(endpointUrl,RESOURCELIST_URI,30000,selectors);
 			
 			if(resources==null||resources.length==0){
 				JOptionPane.showMessageDialog(this,"An error has occured during your enumerate operation: There is no enumeration resource","Error",JOptionPane.ERROR_MESSAGE);
-				return;
 			}
 
 			EnumerableResource enumResource = (EnumerableResource) resources[0];
 			String[] filters=null;
 			boolean useEprs=true;
-			String context = enumResource.enumerate(filters,Resource.XPATH_DIALECT,useEprs);
+			 EnumerationCtx context = enumResource.enumerate(filters,Resource.XPATH_DIALECT,useEprs,false);
 			int timeout = 30000;
 			int numberOfRecords=5;
 			
