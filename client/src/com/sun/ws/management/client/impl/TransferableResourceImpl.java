@@ -2,6 +2,7 @@ package com.sun.ws.management.client.impl;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -30,6 +31,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
@@ -64,11 +66,11 @@ public class TransferableResourceImpl implements TransferableResource {
     //Attributes
 	protected String resourceURI=null; 			//Specific resource access details
 	protected String destination = null;		//Specific host and port access details
-	protected long messageTimeout = 40000; 	//Message timeout before reaping
+	protected long messageTimeout = 30000; 	//Message timeout before reaping
 
-//	private Document xmlPayload = null; 	//Xml content
 	//private EndpointReferenceType resourceEpr = null; //stores ordered selector values
 	protected SelectorSetType selectorSet = null;
+	protected long  maxEnvelopeSize=-1;
 	
 	public TransferableResourceImpl(){};
 	
@@ -126,8 +128,6 @@ public class TransferableResourceImpl implements TransferableResource {
 				this.selectorSet=(SelectorSetType)testType;
 			}
 		}
-		messageTimeout=30000;
-		
 	}
 
 
@@ -210,15 +210,15 @@ public class TransferableResourceImpl implements TransferableResource {
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.TransferableResource#put(org.w3c.dom.Document)
 	 */
-	public void put(Document content) throws SOAPException, 
+	public ResourceState put(Document content) throws SOAPException, 
 			JAXBException, IOException, FaultException, 
 			DatatypeConfigurationException {
-		put(content,null,null);
+		return put(content,null,null);
 	}
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.TransferableResource#put(org.w3c.dom.Document, java.lang.String, java.lang.String)
 	 */
-	public void put(Document content,String fragmentExpression, String fragmentDialect ) throws SOAPException, 
+	public ResourceState put(Document content,String fragmentExpression, String fragmentDialect ) throws SOAPException, 
 			JAXBException, IOException, FaultException, 
 			DatatypeConfigurationException {
 		
@@ -331,7 +331,20 @@ public class TransferableResourceImpl implements TransferableResource {
 		//parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors
 		//SOAPBody body = response.getBody();
-				
+        SOAPBody body = response.getBody();
+        
+        // Make sure you get the nevelope NameSpaces
+//        Iterator iter = response.getEnvelope().getNamespacePrefixes();
+//        while(iter.hasNext()){
+//        	String ns = (String)iter.next();
+//        	body.addNamespaceDeclaration(ns,response.getEnvelope().getNamespaceURI(ns));
+//        }
+       try {
+        Document bodyDoc = body.extractContentAsDocument();
+		return new ResourceStateImpl(bodyDoc);
+       } catch (SOAPException e){
+    	   return null;
+       }
 	}
 
 
@@ -369,12 +382,17 @@ public class TransferableResourceImpl implements TransferableResource {
         xf.setAction(Transfer.GET_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); //Replying to creator
         xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
         final Management mgmt = new Management(xf);
         mgmt.setTo(destination);
         mgmt.setResourceURI(resourceURI);
         final Duration timeout = DatatypeFactory.newInstance().newDuration(messageTimeout);
         mgmt.setTimeout(timeout);
+        if(maxEnvelopeSize!=-1){
+        	MaxEnvelopeSizeType size = TransferableResource.managementFactory.createMaxEnvelopeSizeType();
+        	BigInteger bi = new BigInteger(""+maxEnvelopeSize);
+        	size.setValue(bi);
+        	mgmt.setMaxEnvelopeSize(size);
+        }
         
         //populate attribute details
         setMessageTimeout(messageTimeout);
@@ -396,24 +414,32 @@ public class TransferableResourceImpl implements TransferableResource {
         	mgmt.setSelectors(selectors1);
         }
                 
-        log.fine("REQUEST:\n"+mgmt+"\n");
+        log.info("REQUEST:\n"+mgmt+"\n");
         //Send the request
         final Addressing response = HttpClient.sendRequest(mgmt);
 
         //Check for fault during message generation
         if (response.getBody().hasFault()) {
+        	log.severe("RESPONSE:\n"+response+"\n");
             SOAPFault fault = response.getBody().getFault();
             throw new FaultException(fault.getFaultString());
         }
         
         //Process the response to extract useful information.
-        log.fine("RESPONSE:\n"+response+"\n");
+        log.info("RESPONSE:\n"+response+"\n");
         
         //parse response and retrieve contents.
         // Iterate through the create response to obtain the selectors
         SOAPBody body = response.getBody();
-        
-		return new ResourceStateImpl(body.extractContentAsDocument());
+     
+        // Make sure you get the nevelope NameSpaces
+//        Iterator iter = response.getEnvelope().getNamespacePrefixes();
+//        while(iter.hasNext()){
+//        	String ns = (String)iter.next();
+//        	body.addNamespaceDeclaration(ns,response.getEnvelope().getNamespaceURI(ns));
+//        }
+        Document bodyDoc = body.extractContentAsDocument();
+		return new ResourceStateImpl(bodyDoc);
 	}
 
 	/* (non-Javadoc)
@@ -445,80 +471,35 @@ public class TransferableResourceImpl implements TransferableResource {
 		return this.selectorSet;
 	}
 
-
-	/**
-	 * @param xmlPayload The xmlPayload to set.
-	 */
-//	private void setXmlPayload(Document createXmlPayload) {
-//		this.xmlPayload = createXmlPayload;
-//	}
-
 	/**
 	 * @param destination The destination to set.
 	 */
-	private void setDestination(String destination) {
+	public void setDestination(String destination) {
 		this.destination = destination;
 	}
 
 	/**
 	 * @param messageTimeout The messageTimeout to set.
 	 */
-	private void setMessageTimeout(long messageTimeout) {
+	public void setMessageTimeout(long messageTimeout) {
 		this.messageTimeout = messageTimeout;
 	}
 
-	/**
-	 * @param resourceEpr The resourceEpr to set.
-	 */
-//	private void setResourceEpr(EndpointReferenceType resourceEpr) {
-//		this.resourceEpr = resourceEpr;
-//	}
 
 	/**
 	 * @param resourceURI The resourceURI to set.
 	 */
-	protected void setResourceURI(String resourceURI) {
+	public void setResourceURI(String resourceURI) {
 		this.resourceURI = resourceURI;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.sun.ws.management.client.impl.TransferableResource#put(com.sun.ws.management.client.ResourceState)
-	 */
-//	private void setSelectorSet(SelectorSetType selectorSet) {
-//		this.selectorSet = selectorSet;
-//	}
 
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.Resource#put(com.sun.ws.management.client.ResourceState)
 	 */
-	public void put(ResourceState newState) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
-		put(newState.getDocument()); 
+	public ResourceState put(ResourceState newState) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
+		return put(newState.getDocument()); 
 	}
-
-//	public String enumerate(String[] filters, String dialect, boolean useEprs) throws SOAPException,JAXBException, IOException, FaultException, DatatypeConfigurationException {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-//
-//	public ResourceState pull(String enumerationContext, int maxTime, int maxElements, int maxCharacters) throws SOAPException,JAXBException, IOException, FaultException, DatatypeConfigurationException {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-//
-//	public void release(String enumerationContext) throws SOAPException,JAXBException, 
-//	IOException, FaultException, DatatypeConfigurationException  {
-//		
-//	}
-//	public void renew(String enumerationContext) throws SOAPException,JAXBException, 
-//	IOException, FaultException, DatatypeConfigurationException  {
-//		
-//	}
-//
-//	public EndpointReferenceType subscribe(EndpointReferenceType EndToEpr, String deliveryType, Duration expires, String[] filters, String dialect) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
 
 	@Override
 	public String toString() {
@@ -535,15 +516,7 @@ public class TransferableResourceImpl implements TransferableResource {
 			return super.toString();
 	}
 
-	public Resource[] pullResources(String enumerationContext, int maxTime, int maxElements, int maxCharacters,String endpointUrl) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	public ResourceState optomizedEnumerate(String[] filters, String dialect, boolean useEprs) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
 	//TODO: Once this method included in next build use that version
     public void setFragmentHeader(final String expression, final String dialect,
     		Management mgmt) throws SOAPException, JAXBException {
@@ -597,5 +570,14 @@ public class TransferableResourceImpl implements TransferableResource {
 			}
 			return null;
 		}
+
+	public void setMaxEnvelopeSize(long i) {
+		
+		maxEnvelopeSize=i;
+	}
+
+	public long getMaxEnvelopeSize() {
+		return maxEnvelopeSize;
+	}
 
 }

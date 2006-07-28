@@ -1,9 +1,11 @@
 package com.sun.ws.management.client;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -393,26 +395,37 @@ public class ResourceFactory {
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
 		Resource[] resourceList = null;
-		if (selectors == null) {// then return an Resource where enumeration ops
-								// are implemented
 			resourceList = new Resource[1];
 			// lazy instantiation
-			// if(ResourceFactory.enumerationResource ==null){
-			Resource enumerationResource = new ResourceImpl(
-					destination, resourceURI, timeout);
-			// }
+			Resource enumerationResource = new ResourceImpl(destination, resourceURI, timeout,selectors);
 			resourceList[0] = enumerationResource;
-		} else {
-			// TODO: implement for when searching for specific existing
-			// resource(s)
-			resourceList = new Resource[0];
-		}
-		return resourceList;
+
+			return resourceList;
 	}
 
-			//TODO: Once this method included in next build use that version
-		    public static void setFragmentHeader(final String expression, final String dialect,
-		    		Management mgmt) throws SOAPException, JAXBException {
+	public static Resource[] find(String destination, String resourceURI,
+			long timeout, Map<String,String> selectors) throws SOAPException,JAXBException, IOException, FaultException,
+			DatatypeConfigurationException {
+		SelectorSetType selectorsSetType=null;
+		if(selectors!=null){
+			selectorsSetType=wsManFactory.createSelectorSetType();
+			List<SelectorType> selectorList = selectorsSetType.getSelector();
+			for (String name : selectors.keySet()) {
+				SelectorType selectorType = wsManFactory.createSelectorType();
+				selectorType.setName(name);
+				List<Serializable> content = selectorType.getContent();
+				content.add(selectors.get(name));
+				selectorList.add(selectorType);
+			}
+		}
+		
+		
+		return find( destination,  resourceURI, timeout,  selectorsSetType);
+	}
+	
+	//TODO: Once this method included in next build use that version
+    public static void setFragmentHeader(final String expression, final String dialect,
+    		Management mgmt) throws SOAPException, JAXBException {
 
 		        // remove existing, if any
 //		        removeChildren(mgmt.getHeader(), FRAGMENT_TRANSFER);
@@ -438,11 +451,11 @@ public class ResourceFactory {
 		        new Addressing().getXmlBinding().marshal(fragmentTransfer, mgmt.getHeader());
 		    }
 
-			public static ServerIdentity getIdentity(String destination) throws SOAPException, IOException, JAXBException{
-		        final Identify identify = new Identify();
-		        identify.setIdentify();
-		        final Addressing response = HttpClient.sendRequest(identify.getMessage(), destination);
-		        return new ServerIdentityImpl(response.getBody().extractContentAsDocument());
-			}
+	public static ServerIdentity getIdentity(String destination) throws SOAPException, IOException, JAXBException{
+        final Identify identify = new Identify();
+        identify.setIdentify();
+        final Addressing response = HttpClient.sendRequest(identify.getMessage(), destination);
+        return new ServerIdentityImpl(response.getBody().extractContentAsDocument());
+	}
 
 }

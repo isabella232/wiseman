@@ -30,8 +30,8 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract String enumerate(String[] filters, String dialect,
-			boolean useEprs) throws SOAPException, JAXBException, IOException,
+	public abstract EnumerationCtx enumerate(String[] filters, String dialect,
+			boolean useEprs,boolean useObjects) throws SOAPException, JAXBException, IOException,
 			FaultException, DatatypeConfigurationException;
 	
 	/**
@@ -54,7 +54,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws XPathExpressionException
 	 * @throws NoMatchFoundException
 	 */
-	public abstract Resource[] pullResources(String enumerationContext,
+	public abstract Resource[] pullResources(EnumerationCtx enumerationContext,
 			int maxTime, int maxElements, int maxCharacters, String endpointUrl)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
@@ -79,7 +79,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract ResourceState pull(String enumerationContext, int maxTime,
+	public abstract ResourceState pull(EnumerationCtx enumerationContext, int maxTime,
 			int maxElements, int maxCharacters) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
@@ -95,7 +95,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
-	public abstract void release(String enumerationContext)
+	public abstract void release(EnumerationCtx enumerationContext)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 	
@@ -110,7 +110,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
-	public abstract void renew(String enumerationContext) throws SOAPException,
+	public abstract void renew(EnumerationCtx EnumerationCtx) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 

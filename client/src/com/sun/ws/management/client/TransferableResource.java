@@ -6,6 +6,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory;
 import org.w3c.dom.Document;
 
 import com.sun.ws.management.AccessDeniedFault;
@@ -20,6 +21,9 @@ import com.sun.ws.management.client.exceptions.FaultException;
  * 
  */
 public interface TransferableResource {
+    public static final ObjectFactory managementFactory = new ObjectFactory();
+
+	
 	/**
 	 * Returns the selectorset used by this resource.
 	 * @return A JAXB selector set.
@@ -64,7 +68,7 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract void put(Document content) throws SOAPException,
+	public abstract ResourceState put(Document content) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 
@@ -80,7 +84,7 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract void put(Document content, String fragmentExpression,
+	public abstract ResourceState put(Document content, String fragmentExpression,
 			String fragmentDialect) throws SOAPException, JAXBException,
 			IOException, FaultException, DatatypeConfigurationException;
 
@@ -93,7 +97,7 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract void put(ResourceState newState) throws SOAPException,
+	public ResourceState put(ResourceState newState) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 
@@ -129,5 +133,10 @@ public interface TransferableResource {
 	public abstract String getDestination();
 
 	public abstract long getMessageTimeout();
+	public abstract void setMessageTimeout(long i);
+	
+	public abstract void setMaxEnvelopeSize(long i);
+	public abstract long getMaxEnvelopeSize();
+
 
 }

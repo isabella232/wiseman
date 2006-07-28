@@ -1,8 +1,5 @@
 package com.sun.ws.management.client;
 
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.transport.HttpClient;
 
 
 /**
@@ -17,11 +14,12 @@ import com.sun.ws.management.transport.HttpClient;
  * @author spinder
  * 
  */
-public interface Resource extends EnumerableResource{
+public interface Resource extends EnumerableResource {
 
 	static final String XPATH_DIALECT = "http://www.w3.org/TR/1999/REC-xpath-19991116";
 
 	static final int IGNORE_MAX_CHARS = 0;
+
 
 
 }
