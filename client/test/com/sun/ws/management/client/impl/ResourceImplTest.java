@@ -3,6 +3,7 @@ package com.sun.ws.management.client.impl;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Calendar;
+import java.util.HashMap;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -593,9 +594,10 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		// test that Find works to retrieve the Enumeration instance.
 		String dest = "";
 		String resUri = "";
+		HashMap<String,String> selectors=null;
 		Resource[] enumerableResources = ResourceFactory.find(
 				ResourceImplTest.destUrl, ResourceImplTest.resourceUri,
-				ResourceImplTest.timeoutInMilliseconds, null);
+				ResourceImplTest.timeoutInMilliseconds, selectors);
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
 		// TODO: write test for specific resource retrieval.
 		// Source src = null;
