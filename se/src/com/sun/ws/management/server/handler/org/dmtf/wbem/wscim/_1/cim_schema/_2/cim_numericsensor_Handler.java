@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.8 2006-07-26 04:41:49 pmonday Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.9 2006-07-29 20:13:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
 
+import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
@@ -30,6 +31,8 @@ import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transfer.TransferExtensions;
+import com.sun.ws.management.xml.XPath;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,10 +40,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.servlet.ServletContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.soap.SOAPHeaderElement;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
@@ -67,8 +75,8 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     }
     
     public void handle(final String action, final String resource,
-            final HandlerContext hcontext,
-            final Management request, final Management response) throws Exception {
+        final HandlerContext hcontext,
+        final Management request, final Management response) throws Exception {
         
         if (nsMap == null) {
             final Map<String, String> map = new HashMap<String, String>();
@@ -85,9 +93,58 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             }
         } else if (Transfer.PUT_ACTION_URI.equals(action)) {
             response.setAction(Transfer.PUT_RESPONSE_URI);
-            final Document resourceDoc = request.getBody().extractContentAsDocument();
-            // TODO: upate the resource
-            response.getBody().addDocument(resourceDoc);
+            final TransferExtensions txi = new TransferExtensions(request);
+            final SOAPHeaderElement hdr = txi.getFragmentHeader();
+            if (hdr != null) {
+                // this is a fragment transfer, update the resource fragment
+                final TransferExtensions txo = new TransferExtensions(response);
+                final String expression = hdr.getTextContent();
+                final String dialect = hdr.getAttributeValue(TransferExtensions.DIALECT);
+                if (!XPath.isSupportedDialect(dialect)) {
+                    throw new FragmentDialectNotSupportedFault(XPath.SUPPORTED_FILTER_DIALECTS);
+                }
+                
+                final Node xmlFragmentNode = (Node) txi.getBody().getChildElements().next();
+                final NodeList childNodes = xmlFragmentNode.getChildNodes();
+                final List<Node> nodeContent = new ArrayList<Node>();
+                for (int i = 0; i < childNodes.getLength(); i++) {
+                    nodeContent.add(childNodes.item(i));
+                }
+                
+                Document resourceDoc = null;
+                final String resourceDocName = "Pull_0.xml";
+                final InputStream is = load(hcontext.getServletConfig().getServletContext(), resourceDocName);
+                if (is == null) {
+                    throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
+                }
+                try {
+                    resourceDoc = response.getDocumentBuilder().parse(is);
+                } catch (Exception ex) {
+                    throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
+                }
+                
+                // TODO - need XSD and JAXB artifacts pre-compiled for this to work
+                /*
+                final List<Node> content = XPath.filter(resourceDoc, expression, nsMap);
+                txo.setFragmentPutResponse(hdr, nodeContent, expression, content);
+                */
+                
+                response.getHeader().addChildElement(hdr);
+                
+                final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+                final JAXBElement<MixedDataType> xmlFragment = Management.FACTORY.createXmlFragment(mixedDataType);
+                Element lowerThresholdNonCriticalElement =
+                    response.getBody().getOwnerDocument().createElementNS(resource,
+                    "p:LowerThresholdNonCritical");
+                lowerThresholdNonCriticalElement.setTextContent("100");
+                mixedDataType.getContent().add(lowerThresholdNonCriticalElement);
+                response.getXmlBinding().marshal(xmlFragment, response.getBody());
+            } else {
+                // this is regular transfer, update the entire resource
+                final Document resourceDoc = request.getBody().extractContentAsDocument();
+                // TODO: upate the resource
+                response.getBody().addDocument(resourceDoc);
+            }
         } else if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             final Enumeration ereq = new Enumeration(request);
             final Enumeration eres = new Enumeration(response);
@@ -113,13 +170,13 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     }
     
     public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
-            final boolean includeItem, final boolean includeEPR,
-            final int start, final int count) {
+        final boolean includeItem, final boolean includeEPR,
+        final int start, final int count) {
         final Context ctx = (Context) context;
         final int returnCount = Math.min(count, ctx.count - start);
         final List<EnumerationItem> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
-
+            
             Element root = null;
             if (includeItem) {
                 Document resourceDoc = null;
@@ -135,19 +192,19 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
                 }
                 root = resourceDoc.getDocumentElement();
             }
-
+            
             EndpointReferenceType epr = null;
-            if(includeEPR) {
+            if (includeEPR) {
                 final Map<String, String> selectors = new HashMap<String, String>();
                 for (final String selector : SELECTOR_KEYS) {
                     selectors.put(selector, root.getElementsByTagNameNS(NS_URI, selector).item(0).getTextContent());
                 }
                 epr = EnumerationSupport.createEndpointReference(
-                        ctx.address,
-                        ctx.resourceURI,
-                        selectors);
+                    ctx.address,
+                    ctx.resourceURI,
+                    selectors);
             }
-
+            
             items.add(new EnumerationItem(root, epr));
         }
         return items;
@@ -174,9 +231,9 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     
     private static final InputStream load(final ServletContext context, final String docName) {
         final String xml =
-                cim_numericsensor_Handler.class.getPackage().getName().replace('.', '/') +
-                "/" +
-                cim_numericsensor_Handler.class.getSimpleName() + "_" + docName;
+            cim_numericsensor_Handler.class.getPackage().getName().replace('.', '/') +
+            "/" +
+            cim_numericsensor_Handler.class.getSimpleName() + "_" + docName;
         return context.getResourceAsStream(xml);
     }
 }

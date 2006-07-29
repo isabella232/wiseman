@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.10 2006-07-29 06:46:45 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.11 2006-07-29 20:13:03 akhilarora Exp $
  */
 
 package interop._06;
@@ -46,12 +46,14 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPBodyElement;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPHeaderElement;
 import management.TestBase;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3._2003._05.soap_envelope.Fault;
@@ -1201,6 +1203,92 @@ public final class InteropTest extends TestBase {
         assertEquals("100", lowerThreshold[0].getTextContent());
     }
     
+    /**
+     * Interop Scenario 9.2 - Fragment Put
+     */
+    public void testFragmentPut() throws Exception {
+        
+        final Management mgmt = new Management();
+        mgmt.setAction(Transfer.PUT_ACTION_URI);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(NUMERIC_SENSOR_RESOURCE);
+        
+        final Set<SelectorType> selectors = new HashSet<SelectorType>();
+        
+        final SelectorType selector1 = new SelectorType();
+        selector1.setName("CreationClassName");
+        selector1.getContent().add(CIM_NUMERIC_SENSOR);
+        selectors.add(selector1);
+        
+        final SelectorType selector2 = new SelectorType();
+        selector2.setName("DeviceID");
+        selector2.getContent().add("81.0.32");
+        selectors.add(selector2);
+        
+        final SelectorType selector3 = new SelectorType();
+        selector3.setName("SystemCreationClassName");
+        selector3.getContent().add(CIM_COMPUTER_SYSTEM);
+        selectors.add(selector3);
+        
+        final SelectorType selector4 = new SelectorType();
+        selector4.setName("SystemName");
+        selector4.getContent().add("IPMI Controller 32");
+        selectors.add(selector4);
+        
+        mgmt.setSelectors(selectors);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        final TransferExtensions txi = new TransferExtensions(mgmt);
+        txi.setFragmentHeader("//p:LowerThresholdNonCritical", null);
+        
+        final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+        final JAXBElement<MixedDataType> xmlFragment = Management.FACTORY.createXmlFragment(mixedDataType);
+        Element lowerThresholdNonCriticalElement = 
+            mgmt.getBody().getOwnerDocument().createElementNS(NUMERIC_SENSOR_RESOURCE, 
+            "p:LowerThresholdNonCritical");
+        lowerThresholdNonCriticalElement.setTextContent("100");
+        mixedDataType.getContent().add(lowerThresholdNonCriticalElement);
+        mgmt.getXmlBinding().marshal(xmlFragment, mgmt.getBody());
+
+        log(mgmt);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final TransferExtensions txo = new TransferExtensions(response);
+        
+        assertEquals(Transfer.PUT_RESPONSE_URI, txo.getAction());
+        final SOAPHeaderElement hdr = txo.getFragmentHeader();
+        assertNotNull(hdr);
+        final SOAPElement[] fragment = txo.getChildren(txo.getBody(), TransferExtensions.XML_FRAGMENT);
+        assertNotNull(fragment);
+        assertTrue(fragment.length == 1);
+        final SOAPElement[] threshold = txo.getChildren(fragment[0]);
+        assertNotNull(threshold);
+        assertTrue(threshold.length == 1);
+        assertEquals(NUMERIC_SENSOR_RESOURCE, threshold[0].getNamespaceURI());
+        assertEquals("LowerThresholdNonCritical", threshold[0].getLocalName());
+        assertEquals("100", threshold[0].getTextContent());
+    }
+
     /**
      * Interop Scenario 10 - Eventing
      */
