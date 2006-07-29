@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.9 2006-07-29 05:45:28 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.10 2006-07-29 06:46:45 akhilarora Exp $
  */
 
 package interop._06;
@@ -1039,6 +1039,77 @@ public final class InteropTest extends TestBase {
         node = (Node) obj;
         assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
+    }
+    
+    /**
+     * Interop Scenario 8.1 - Invoke ClearLog on an instance of RecordLog class
+     */
+    public void testInvoke() throws Exception {
+
+        final String RECORD_LOG_RESOURCE = 
+            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog";
+    
+        final String CLEAR_RECORD_LOG_ACTION = 
+            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLog";
+    
+        final Management mgmt = new Management();
+        mgmt.setAction(CLEAR_RECORD_LOG_ACTION);
+        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI(RECORD_LOG_RESOURCE);
+        
+        final Set<SelectorType> selectors = new HashSet<SelectorType>();
+        
+        final SelectorType selector1 = new SelectorType();
+        selector1.setName("InstanceID");
+        selector1.getContent().add("IPMI:IPMI Controller 32 SEL Log");
+        selectors.add(selector1);
+        
+        mgmt.setSelectors(selectors);
+        
+        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
+        mgmt.setTimeout(timeout);
+        
+        final BigInteger envSize = new BigInteger("153600");
+        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+        maxEnvSize.setValue(envSize);
+        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+        mgmt.setMaxEnvelopeSize(maxEnvSize);
+        
+        final Locale locale = Management.FACTORY.createLocale();
+        locale.setLang(XML.DEFAULT_LANG);
+        locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
+        mgmt.setLocale(locale);
+        
+        final QName INPUT = new QName(RECORD_LOG_RESOURCE, "ClearLog_INPUT", "p");
+        mgmt.getBody().addBodyElement(INPUT);
+        
+        log(mgmt);
+        final Addressing response = HttpClient.sendRequest(mgmt);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final String CLEAR_RECORD_LOG_RESPONSE = 
+            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLogResponse";
+        
+        final QName OUTPUT = new QName(RECORD_LOG_RESOURCE, "ClearLog_OUTPUT", "p");
+        final QName RETURN_VALUE = new QName(RECORD_LOG_RESOURCE, "ReturnValue", "p");
+        
+        assertEquals(CLEAR_RECORD_LOG_RESPONSE, response.getAction());
+        final Node output = response.getBody().getFirstChild();
+        assertNotNull(output);
+        assertEquals(OUTPUT.getNamespaceURI(), output.getNamespaceURI());
+        assertEquals(OUTPUT.getLocalPart(), output.getLocalName());
+
+        final Node retvalue = output.getFirstChild();
+        assertNotNull(retvalue);
+        assertEquals(RETURN_VALUE.getNamespaceURI(), retvalue.getNamespaceURI());
+        assertEquals(RETURN_VALUE.getLocalPart(), retvalue.getLocalName());
+        assertEquals("0", retvalue.getTextContent());
     }
     
     /**
