@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.8 2006-07-28 22:55:24 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.9 2006-07-29 05:45:28 akhilarora Exp $
  */
 
 package interop._06;
@@ -31,6 +31,7 @@ import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
@@ -97,6 +98,27 @@ public final class InteropTest extends TestBase {
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite(InteropTest.class);
         return suite;
+    }
+    
+    /**
+     * Interop Scenario 6.1 - Identify
+     */
+    public void testIdentify() throws Exception {
+        final Identify identify = new Identify();
+        identify.setIdentify();
+
+        final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
+        log(response);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+
+        final Identify id = new Identify(response);
+        final SOAPElement idr = id.getIdentifyResponse();
+        assertNotNull(idr);
+        assertNotNull(id.getChildren(idr, Identify.PRODUCT_VENDOR));
+        assertNotNull(id.getChildren(idr, Identify.PRODUCT_VERSION));
+        assertNotNull(id.getChildren(idr, Identify.PROTOCOL_VERSION));
     }
     
     /**
@@ -798,7 +820,7 @@ public final class InteropTest extends TestBase {
         mgmt.setLocale(locale);
         
         final EnumerationExtensions ei = new EnumerationExtensions(mgmt);
-        ei.setEnumerate(null, null, null, 
+        ei.setEnumerate(null, null, null,
                 EnumerationExtensions.Mode.EnumerateObjectAndEPR,
                 false, -1);
         
@@ -851,7 +873,7 @@ public final class InteropTest extends TestBase {
         // assertNotNull(pr.getEndOfSequence());
         // there should be no context if we were at the end of enumeration
         // assertNull(ect);
-
+        
         ItemListType ilt = pr.getItems();
         assertNotNull(ilt);
         List<Object> il = ilt.getAny();
@@ -1099,8 +1121,8 @@ public final class InteropTest extends TestBase {
         assertTrue(item.length == 1);
         assertEquals(NUMERIC_SENSOR_RESOURCE, item[0].getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, item[0].getLocalName());
-
-        final QName lowerThresholdName = new QName(NUMERIC_SENSOR_RESOURCE, 
+        
+        final QName lowerThresholdName = new QName(NUMERIC_SENSOR_RESOURCE,
                 "LowerThresholdNonCritical", "p");
         final SOAPElement[] lowerThreshold = to.getChildren(item[0], lowerThresholdName);
         assertNotNull(lowerThreshold);
@@ -1166,7 +1188,7 @@ public final class InteropTest extends TestBase {
         assertNotNull(context);
         
         // pull an event
-
+        
         mgmt = new Management();
         mgmt.setAction(Enumeration.PULL_ACTION_URI);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -1225,17 +1247,17 @@ public final class InteropTest extends TestBase {
         // TODO
         /*
         unsub.setIdentifier(identifier);
-        
+         
         log(mgmt);
         response = HttpClient.sendRequest(mgmt);
         log(response);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
-        
+         
         Eventing unsubo = new Eventing(response);
         assertEquals(Eventing.UNSUBSCRIBE_RESPONSE_URI, unsubo.getAction());
         assertNull(unsubo.getBody().getFirstChild());
-        */
+         */
     }
 }
