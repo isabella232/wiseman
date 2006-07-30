@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.15 2006-07-26 03:25:08 pmonday Exp $
+ * $Id: EventingSupport.java,v 1.16 2006-07-30 07:44:47 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -41,8 +41,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
@@ -77,8 +76,8 @@ public final class EventingSupport extends BaseSupport {
     
     // the EventingExtensions.PULL_DELIVERY_MODE is handled by EnumerationSupport
     public static Object subscribe(final Eventing request, final Eventing response,
-            final NamespaceMap... namespaces)
-            throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
+        final NamespaceMap... namespaces)
+        throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         final Subscribe subscribe = request.getSubscribe();
         final FilterType filterType = subscribe.getFilter();
@@ -128,30 +127,33 @@ public final class EventingSupport extends BaseSupport {
         EventingContext ctx = null;
         try {
             ctx = new EventingContext(
-                    initExpiration(subscribe.getExpires()),
-                    filterExpression,
-                    namespaces == null ? null : namespaces[0],
-                    notifyTo);
+                initExpiration(subscribe.getExpires()),
+                filterExpression,
+                namespaces == null ? null : namespaces[0],
+                notifyTo);
         } catch (XPathExpressionException xpx) {
             throw new EventSourceUnableToProcessFault("Unable to compile XPath: " +
-                    "\"" + filterExpression + "\"");
+                "\"" + filterExpression + "\"");
         }
-        final UUID context = initContext(ctx);
         
-        final ObjectFactory aof = new ObjectFactory();
-        final ReferenceParametersType refParams = aof.createReferenceParametersType();
+        final UUID context = initContext(ctx);
+        response.setSubscribeResponse(
+            createSubscriptionManager(request, response, context),
+            ctx.getExpiration());
+        return context;
+    }
+    
+    public static EndpointReferenceType createSubscriptionManager(
+        final Addressing request, final Addressing response,
+        final Object context) throws SOAPException, JAXBException {
+        final ReferencePropertiesType refp = Addressing.FACTORY.createReferencePropertiesType();
         final Document doc = response.newDocument();
         final Element identifier = doc.createElementNS(Eventing.IDENTIFIER.getNamespaceURI(),
-                Eventing.IDENTIFIER.getPrefix() + ":" + Eventing.IDENTIFIER.getLocalPart());
+            Eventing.IDENTIFIER.getPrefix() + ":" + Eventing.IDENTIFIER.getLocalPart());
         identifier.setTextContent(context.toString());
         doc.appendChild(identifier);
-        refParams.getAny().add(doc.getDocumentElement());
-        final EndpointReferenceType subMgrEPR =
-                Addressing.createEndpointReference(request.getTo(),
-                null, refParams, null, null);
-        response.setSubscribeResponse(subMgrEPR, ctx.getExpiration());
-        
-        return context;
+        refp.getAny().add(doc.getDocumentElement());
+        return Addressing.createEndpointReference(request.getTo(), refp, null, null, null);
     }
     
     public static void unsubscribe(final Eventing request, final Eventing response)
@@ -175,7 +177,7 @@ public final class EventingSupport extends BaseSupport {
              * updated WS-Management specification
              */
             throw new InvalidMessageFault("Subscription with Identifier: " +
-                    identifier + " not found");
+                identifier + " not found");
         }
         
         response.setIdentifier(identifier);
@@ -183,8 +185,8 @@ public final class EventingSupport extends BaseSupport {
     
     // TODO: avoid blocking the sender - use a thread pool to send notifications
     public static boolean sendEvent(final Object context, final Addressing msg,
-            final NamespaceMap nsMap)
-            throws SOAPException, JAXBException, IOException, XPathExpressionException {
+        final NamespaceMap nsMap)
+        throws SOAPException, JAXBException, IOException, XPathExpressionException {
         
         assert datatypeFactory != null : UNINITIALIZED;
         
@@ -211,7 +213,7 @@ public final class EventingSupport extends BaseSupport {
         }
         
         final EndpointReferenceType notifyTo = ctx.getNotifyTo();
-        final ReferenceParametersType refp = notifyTo.getReferenceParameters();
+        final ReferencePropertiesType refp = notifyTo.getReferenceProperties();
         if (refp != null) {
             msg.addHeaders(refp);
         }

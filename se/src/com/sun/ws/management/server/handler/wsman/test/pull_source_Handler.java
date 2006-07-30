@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.11 2006-07-26 04:20:16 pmonday Exp $
+ * $Id: pull_source_Handler.java,v 1.12 2006-07-30 07:44:48 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -116,6 +116,9 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
                 throw new DeliveryModeRequestedUnavailableFault(
                         EventingSupport.getSupportedDeliveryModes());
             }
+        } else if (Eventing.UNSUBSCRIBE_ACTION_URI.equals(action)) {
+            response.setAction(Eventing.UNSUBSCRIBE_RESPONSE_URI);
+            EnumerationSupport.release(enuRequest, enuResponse);
         } else if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);

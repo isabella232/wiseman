@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.12 2006-07-30 06:21:40 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.13 2006-07-30 07:44:49 akhilarora Exp $
  */
 
 package interop._06;
@@ -1348,11 +1348,13 @@ public final class InteropTest extends TestBase {
         final SubscribeResponse sr = eo.getSubscribeResponse();
         assertNotNull(sr);
         assertNotNull(sr.getExpires());
-        // TODO - is a SubscriptionManager and Identifier needed in Pull mode?
-        // final EndpointReferenceType sm = sr.getSubscriptionManager();
-        // assertNotNull(sm);
-        // assertNotNull(sm.getAddress());
-        // assertNotNull(sm.getReferenceProperties().getAny().get(0));
+        final EndpointReferenceType sm = sr.getSubscriptionManager();
+        assertNotNull(sm);
+        assertNotNull(sm.getAddress());
+        final Object identifierElement = sm.getReferenceProperties().getAny().get(0);
+        assertNotNull(identifierElement);
+        final String identifier = ((JAXBElement<String>) identifierElement).getValue();
+        assertNotNull(identifier);
         Object context = null;
         final Object obj = sr.getAny().get(0);
         if (obj instanceof Element) {
@@ -1420,8 +1422,6 @@ public final class InteropTest extends TestBase {
         
         Eventing unsub = new Eventing(mgmt);
         unsub.setUnsubscribe();
-        // TODO
-        /*
         unsub.setIdentifier(identifier);
          
         log(mgmt);
@@ -1434,6 +1434,5 @@ public final class InteropTest extends TestBase {
         Eventing unsubo = new Eventing(response);
         assertEquals(Eventing.UNSUBSCRIBE_RESPONSE_URI, unsubo.getAction());
         assertNull(unsubo.getBody().getFirstChild());
-         */
     }
 }

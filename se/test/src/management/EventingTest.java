@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.10 2006-07-24 13:14:58 pmonday Exp $
+ * $Id: EventingTest.java,v 1.11 2006-07-30 07:44:49 akhilarora Exp $
  */
 
 package management;
@@ -210,7 +210,7 @@ public class EventingTest extends TestBase {
         final SubscribeResponse subr = response.getSubscribeResponse();
         final EndpointReferenceType mgr = subr.getSubscriptionManager();
         assertEquals(DESTINATION, mgr.getAddress().getValue());
-        final Object identifier = mgr.getReferenceParameters().getAny().get(0);
+        final Object identifier = mgr.getReferenceProperties().getAny().get(0);
         assertNotNull(identifier);
         final String expires2 = subr.getExpires();
         assertNotNull(expires2);
@@ -240,10 +240,10 @@ public class EventingTest extends TestBase {
         final SubscribeResponse subr = response.getSubscribeResponse();
         final EndpointReferenceType mgr = subr.getSubscriptionManager();
         assertEquals(DESTINATION, mgr.getAddress().getValue());
-        final Object identifierElement = mgr.getReferenceParameters().getAny().get(0);
+        final Object identifierElement = mgr.getReferenceProperties().getAny().get(0);
         assertNotNull(identifierElement);
         final String identifier = ((JAXBElement<String>) identifierElement).getValue();
-
+        
         // now send an unsubscribe request using the identifier
         evt.setAction(Eventing.UNSUBSCRIBE_ACTION_URI);
         evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -328,7 +328,7 @@ public class EventingTest extends TestBase {
         final String detail = ((Element) fault.getDetail().getAny().get(0)).getTextContent();
         assertNotNull(detail);
     }
-
+    
     public void testEventFiltering() throws Exception {
         final Eventing evt = new Eventing();
         evt.setAction(Eventing.SUBSCRIBE_ACTION_URI);
@@ -360,7 +360,7 @@ public class EventingTest extends TestBase {
         final SubscribeResponse subr = response.getSubscribeResponse();
         final EndpointReferenceType mgr = subr.getSubscriptionManager();
         assertEquals(DESTINATION, mgr.getAddress().getValue());
-        final Object identifier = mgr.getReferenceParameters().getAny().get(0);
+        final Object identifier = mgr.getReferenceProperties().getAny().get(0);
         assertNotNull(identifier);
         final String expires2 = subr.getExpires();
         assertNotNull(expires2);
