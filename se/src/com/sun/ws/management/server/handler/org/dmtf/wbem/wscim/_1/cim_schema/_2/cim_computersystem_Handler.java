@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_computersystem_Handler.java,v 1.2 2006-07-27 18:59:48 akhilarora Exp $
+ * $Id: cim_computersystem_Handler.java,v 1.3 2006-07-30 06:21:39 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -29,9 +29,12 @@ import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XPath;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.xml.soap.SOAPHeaderElement;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -45,7 +48,20 @@ public class cim_computersystem_Handler implements Handler {
             response.setAction(Transfer.GET_RESPONSE_URI);
             
             Document resourceDoc = null;
-            final String resourceDocName = "Get.xml";
+            String noPrefix = "";
+            final Set<SelectorType> selectors = request.getSelectors();
+            if (selectors != null) {
+                Iterator<SelectorType> si = selectors.iterator();
+                while (si.hasNext()) {
+                    final SelectorType st = si.next();
+                    if ("NoPrefix".equals(st.getName()) &&
+                        "true".equalsIgnoreCase(st.getContent().get(0).toString())) {
+                        noPrefix = "_NoPrefix";
+                        break;
+                    }
+                }
+            }
+            final String resourceDocName = "Get" + noPrefix + ".xml";
             final InputStream is = load(context.getServletConfig().getServletContext(), resourceDocName);
             if (is == null) {
                 throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");

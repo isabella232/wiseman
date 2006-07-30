@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <!-- xmlns="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem" -->
+<CIM_ComputerSystem 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:cim="http://schemas.dmtf.org/wbem/wsman/1/base">
+    <Caption>BMC 32</Caption>
+    <CreationClassName>ComputerSystem</CreationClassName>
+    <Dedicated>14</Dedicated>
+    <Description>BMC 32 - IPMI v1.5 - fw v0.30.0.0.0.0</Description>
+    <ElementName>IPMI Controller 32</ElementName>
+    <EnabledDefault>2</EnabledDefault>
+    <EnabledState>5</EnabledState>
+    <HealthState xsi:nil="true"/>
+    <IdentifyingDescriptions>Wiseman-https://wiseman.dev.java.net</IdentifyingDescriptions>
+    <InstallDate xsi:nil="true"/>
+    <Name>IPMI Controller 32</Name>
+    <NameFormat>Other</NameFormat>
+    <OtherEnabledState xsi:nil="true"/>
+    <OtherIdentifyingInfo>0-0</OtherIdentifyingInfo>
+    <PrimaryOwnerContact xsi:nil="true"/>
+    <PrimaryOwnerName xsi:nil="true"/>
+    <RequestedState>12</RequestedState>
+    <ResetCapability xsi:nil="true"/>
+    <Roles>Hardware Management Controller</Roles>
+    <Status xsi:nil="true"/>
+    <TimeOfLastStateChange xsi:nil="true"/>
+</CIM_ComputerSystem>

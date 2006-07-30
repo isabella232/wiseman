@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.9 2006-07-29 20:13:02 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.10 2006-07-30 06:21:40 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
@@ -36,6 +36,7 @@ import com.sun.ws.management.xml.XPath;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,6 +73,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         int count = 2;
         String address;
         String resourceURI;
+        String noPrefix = "";
     }
     
     public void handle(final String action, final String resource,
@@ -84,10 +86,23 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             nsMap = new NamespaceMap(map);
         }
         
+        String noPrefix = "";
+        final Set<SelectorType> selectors = request.getSelectors();
+        if (selectors != null) {
+            Iterator<SelectorType> si = selectors.iterator();
+            while (si.hasNext()) {
+                final SelectorType st = si.next();
+                if ("NoPrefix".equals(st.getName()) &&
+                    "true".equalsIgnoreCase(st.getContent().get(0).toString())) {
+                    noPrefix = "_NoPrefix";
+                    break;
+                }
+            }
+        }
+        
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.setAction(Transfer.GET_RESPONSE_URI);
             
-            final Set<SelectorType> selectors = request.getSelectors();
             if (selectors.size() < SELECTOR_KEYS.length) {
                 throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
             }
@@ -112,7 +127,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
                 }
                 
                 Document resourceDoc = null;
-                final String resourceDocName = "Pull_0.xml";
+                final String resourceDocName = "Pull" + noPrefix + "_0.xml";
                 final InputStream is = load(hcontext.getServletConfig().getServletContext(), resourceDocName);
                 if (is == null) {
                     throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
@@ -127,7 +142,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
                 /*
                 final List<Node> content = XPath.filter(resourceDoc, expression, nsMap);
                 txo.setFragmentPutResponse(hdr, nodeContent, expression, content);
-                */
+                 */
                 
                 response.getHeader().addChildElement(hdr);
                 
@@ -153,6 +168,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             context.hcontext = hcontext;
             context.address = hcontext.getHttpServletRequest().getRequestURL().toString();
             context.resourceURI = resource;
+            context.noPrefix = noPrefix;
             EnumerationSupport.enumerate(ereq, eres, this, context);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             final Enumeration ereq = new Enumeration(request);
@@ -180,7 +196,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             Element root = null;
             if (includeItem) {
                 Document resourceDoc = null;
-                final String resourceDocName = "Pull" + "_" + start + ".xml";
+                final String resourceDocName = "Pull" + ctx.noPrefix + "_" + start + ".xml";
                 final InputStream is = load(ctx.hcontext.getServletConfig().getServletContext(), resourceDocName);
                 if (is == null) {
                     throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");

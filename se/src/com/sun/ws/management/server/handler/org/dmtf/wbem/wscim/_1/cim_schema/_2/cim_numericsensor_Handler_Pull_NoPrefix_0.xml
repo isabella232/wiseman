@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <!-- xmlns="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" -->
+<CIM_NumericSensor 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:cim="http://schemas.dmtf.org/wbem/wsman/1/base">
+    <Accuracy>0</Accuracy>
+    <Availability xsi:nil="true"/>
+    <BaseUnits>2</BaseUnits>
+    <Caption>Temperature(10.0.32)</Caption>
+    <CreationClassName>NumericSensor</CreationClassName>
+    <CurrentReading>190</CurrentReading>
+    <CurrentState>OK</CurrentState>
+    <Description>PCI-X Slot Temp(10.0.32):Temperature for Other 1</Description>
+    <DeviceID>10.0.32</DeviceID>
+    <ElementName>PCI-X Slot Temp(10.0.32)</ElementName>
+    <EnabledDefault>2</EnabledDefault>
+    <EnabledState>5</EnabledState>
+    <ErrorCleared xsi:nil="true"/>
+    <ErrorDescription xsi:nil="true"/>
+    <HealthState xsi:nil="true"/>
+    <Hysteresis>0</Hysteresis>
+    <InstallDate xsi:nil="true"/>
+    <IsLinear>true</IsLinear>
+    <LastErrorCode xsi:nil="true"/>
+    <LowerThresholdCritical>-550</LowerThresholdCritical>
+    <LowerThresholdFatal>-550</LowerThresholdFatal>
+    <LowerThresholdNonCritical>40</LowerThresholdNonCritical>
+    <MaxQuiesceTime xsi:nil="true"/>
+    <MaxReadable>2000</MaxReadable>
+    <MinReadable>-550</MinReadable>
+    <Name>PCI-X Slot Temp(10.0.32)</Name>
+    <NominalReading>300</NominalReading>
+    <NormalMax>350</NormalMax>
+    <NormalMin>250</NormalMin>
+    <OtherEnabledState xsi:nil="true"/>
+    <OtherSensorTypeDescription xsi:nil="true"/>
+    <PollingInterval xsi:nil="true"/>
+    <PossibleStates>OK</PossibleStates>
+    <PossibleStates>N/A</PossibleStates>
+    <PossibleStates>at or below lower non-critical threshold</PossibleStates>
+    <PossibleStates>at or below lower critical threshold</PossibleStates>
+    <PossibleStates>at or below lower non-recoverable threshold</PossibleStates>
+    <PossibleStates>at or above upper non-critical threshold</PossibleStates>
+    <PossibleStates>at or above upper critical threshold</PossibleStates>
+    <PossibleStates>at or above upper non-recoverable threshold</PossibleStates>
+    <PowerManagementSupported xsi:nil="true"/>
+    <PowerOnHours xsi:nil="true"/>
+    <RateUnits>0</RateUnits>
+    <RequestedState>12</RequestedState>
+    <Resolution>0</Resolution>
+    <SensorType>2</SensorType>
+    <Status xsi:nil="true"/>
+    <StatusInfo xsi:nil="true"/>
+    <SystemCreationClassName>ComputerSystem</SystemCreationClassName>
+    <SystemName>IPMI Controller 32</SystemName>
+    <TimeOfLastStateChange xsi:nil="true"/>
+    <Tolerance xsi:nil="true"/>
+    <TotalPowerOnHours xsi:nil="true"/>
+    <UnitModifier>-1</UnitModifier>
+    <UpperThresholdCritical>550</UpperThresholdCritical>
+    <UpperThresholdFatal>-550</UpperThresholdFatal>
+    <UpperThresholdNonCritical>450</UpperThresholdNonCritical>
+</CIM_NumericSensor>

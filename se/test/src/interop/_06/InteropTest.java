@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.11 2006-07-29 20:13:03 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.12 2006-07-30 06:21:40 akhilarora Exp $
  */
 
 package interop._06;
@@ -404,6 +404,12 @@ public final class InteropTest extends TestBase {
         selector2.setName("Name");
         selector2.getContent().add("IPMI Controller 32");
         selectors.add(selector2);
+
+        // special selector to disable the use of namespace prefixes in returned doc
+        final SelectorType selector3 = new SelectorType();
+        selector3.setName("NoPrefix");
+        selector3.getContent().add("true");
+        selectors.add(selector3);
         
         mgmt.setSelectors(selectors);
         
@@ -422,8 +428,8 @@ public final class InteropTest extends TestBase {
         mgmt.setLocale(locale);
         
         final TransferExtensions txi = new TransferExtensions(mgmt);
-        // XPath expression that work - /p:CIM_ComputerSystem/p:Roles and //p:Roles
-        txi.setFragmentHeader("/p:CIM_ComputerSystem/p:Roles", null);
+        // XPath expression with prefixes that work - /p:CIM_ComputerSystem/p:Roles and //p:Roles
+        txi.setFragmentHeader("/CIM_ComputerSystem/Roles", null);
         
         log(mgmt);
         final Addressing response = HttpClient.sendRequest(mgmt);
@@ -443,7 +449,8 @@ public final class InteropTest extends TestBase {
         final SOAPElement[] roles = txo.getChildren(fragment[0]);
         assertNotNull(roles);
         assertTrue(roles.length == 1);
-        assertEquals(COMPUTER_SYSTEM_RESOURCE, roles[0].getNamespaceURI());
+        // there will not be a namespace uri if we add the special NoPrefix selector above
+        // assertEquals(COMPUTER_SYSTEM_RESOURCE, roles[0].getNamespaceURI());
         assertEquals("Roles", roles[0].getLocalName());
         assertEquals("Hardware Management Controller", roles[0].getTextContent());
     }
@@ -941,10 +948,18 @@ public final class InteropTest extends TestBase {
         locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
         mgmt.setLocale(locale);
         
+        final Set<SelectorType> selectors = new HashSet<SelectorType>();
+        // special selector to disable the use of namespace prefixes in returned doc
+        final SelectorType selector = new SelectorType();
+        selector.setName("NoPrefix");
+        selector.getContent().add("true");
+        selectors.add(selector);
+        mgmt.setSelectors(selectors);
+        
         final Enumeration ei = new Enumeration(mgmt);
         final FilterType filter = new FilterType();
         // TODO: correct filter expression
-        filter.getContent().add("//p:SensorType/text()=\"2\"");
+        filter.getContent().add("/CIM_NumericSensor/SensorType/text()=\"2\"");
         ei.setEnumerate(null, null, filter);
         
         log(mgmt);
@@ -1005,7 +1020,8 @@ public final class InteropTest extends TestBase {
         Object obj = il.get(0);
         assertTrue(obj instanceof Node);
         Node node = (Node) obj;
-        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        // there will not be a namespace uri if we add the special NoPrefix selector above
+        // assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
         
         // second pull request
@@ -1039,7 +1055,8 @@ public final class InteropTest extends TestBase {
         obj = il.get(0);
         assertTrue(obj instanceof Node);
         node = (Node) obj;
-        assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
+        // there will not be a namespace uri if we add the special NoPrefix selector above
+        // assertEquals(NUMERIC_SENSOR_RESOURCE, node.getNamespaceURI());
         assertEquals(CIM_NUMERIC_SENSOR, node.getLocalName());
     }
     
