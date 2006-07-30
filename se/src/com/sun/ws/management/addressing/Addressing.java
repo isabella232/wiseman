@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.10 2006-07-24 13:14:58 pmonday Exp $
+ * $Id: Addressing.java,v 1.11 2006-07-30 07:36:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -156,18 +156,32 @@ public class Addressing extends SOAP {
         if (params == null) {
             return;
         }
+        addHeaders(params.getAny());
+    }
+    
+    public void addHeaders(final ReferencePropertiesType props) throws JAXBException {
+        if (props == null) {
+            return;
+        }
+        addHeaders(props.getAny());
+    }
+    
+    private void addHeaders(final List<Object> anyList) throws JAXBException {
+        if (anyList == null) {
+            return;
+        }
         
         final Node header = getHeader();
-        for (final Object param : params.getAny()) {
+        for (final Object any : anyList) {
             // cannot simply use the following - we get a JAXB unable to marshal exception
-            // getXmlBinding().marshal(param, getHeader());
-            if (param instanceof Node) {
-                final Node node = (Node) param;
+            // getXmlBinding().marshal(any, getHeader());
+            if (any instanceof Node) {
+                final Node node = (Node) any;
                 // TODO: can be a performance hog if the node is deeply nested
                 header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
             } else {
-                throw new RuntimeException("ReferenceParam " + param.toString() +
-                        " of class " + param.getClass() + " is being ignored");
+                throw new RuntimeException("RefP " + any.toString() +
+                        " of class " + any.getClass() + " is being ignored");
             }
         }
     }

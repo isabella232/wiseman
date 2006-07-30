@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.32 2006-07-28 22:55:23 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.33 2006-07-30 07:36:13 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,6 +27,7 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.enumeration.TimedOutFault;
+import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
@@ -62,6 +63,7 @@ import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
@@ -112,9 +114,9 @@ public final class EnumerationSupport extends BaseSupport {
      * the request is syntactically-invalid or is in the past.
      */
     public static void enumerate(final Enumeration request, final Enumeration response,
-            final EnumerationIterator enumIterator, final Object clientContext,
-            final NamespaceMap... namespaces)
-            throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
+        final EnumerationIterator enumIterator, final Object clientContext,
+        final NamespaceMap... namespaces)
+        throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         assert datatypeFactory != null : UNINITIALIZED;
         assert defaultExpiration != null : UNINITIALIZED;
@@ -163,13 +165,13 @@ public final class EnumerationSupport extends BaseSupport {
                     final Class<Object> type = jaxbElement.getDeclaredType();
                     final Object value = jaxbElement.getValue();
                     if (type.equals(EnumerationModeType.class) &&
-                            EnumerationExtensions.ENUMERATION_MODE.equals(name)) {
+                        EnumerationExtensions.ENUMERATION_MODE.equals(name)) {
                         enumerationMode = (EnumerationModeType) value;
                     } else if (type.equals(AttributableEmpty.class) &&
-                            EnumerationExtensions.OPTIMIZE_ENUMERATION.equals(name)) {
+                        EnumerationExtensions.OPTIMIZE_ENUMERATION.equals(name)) {
                         optimize = true;
                     } else if (type.equals(AttributablePositiveInteger.class) &&
-                            EnumerationExtensions.MAX_ELEMENTS.equals(name)) {
+                        EnumerationExtensions.MAX_ELEMENTS.equals(name)) {
                         maxElements = ((AttributablePositiveInteger) value).getValue().intValue();
                     }
                 }
@@ -188,17 +190,17 @@ public final class EnumerationSupport extends BaseSupport {
         EnumerationContext ctx = null;
         try {
             ctx = new EnumerationContext(
-                    expiration,
-                    filterExpression,
-                    enumerationMode,
-                    nsMap,
-                    clientContext,
-                    enumIterator,
-                    optimize,
-                    maxElements);
+                expiration,
+                filterExpression,
+                enumerationMode,
+                nsMap,
+                clientContext,
+                enumIterator,
+                optimize,
+                maxElements);
         } catch (XPathExpressionException xpx) {
             throw new CannotProcessFilterFault("Unable to compile XPath: " +
-                    "\"" + filterExpression + "\"");
+                "\"" + filterExpression + "\"");
         }
         
         if (maxElements <= 0) {
@@ -211,14 +213,17 @@ public final class EnumerationSupport extends BaseSupport {
         if (enumerate == null) {
             // this is a pull event mode subscribe request
             final EventingExtensions evtx = new EventingExtensions(response);
-            evtx.setSubscribeResponse(null, ctx.getExpiration(), context.toString());
+            evtx.setSubscribeResponse(
+                EventingSupport.createSubscriptionManager(request, response, context),
+                ctx.getExpiration(),
+                context.toString());
         } else {
             if (optimize) {
                 final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
                 final boolean more = doPull(request, response, context, ctx, null, passed);
                 final EnumerationExtensions enx = new EnumerationExtensions(response);
                 enx.setEnumerateResponse(context.toString(), ctx.getExpiration(),
-                        passed, enumerationMode, more);
+                    passed, enumerationMode, more);
             } else {
                 // place an item count estimate if one was requested
                 insertTotalItemCountEstimate(request, response, enumIterator, clientContext);
@@ -304,9 +309,9 @@ public final class EnumerationSupport extends BaseSupport {
     }
     
     private static boolean doPull(final Enumeration request, final Enumeration response,
-            final UUID context, final EnumerationContext ctx, final Duration maxTimeout,
-            final List<EnumerationItem> passed)
-            throws SOAPException, JAXBException, FaultException {
+        final UUID context, final EnumerationContext ctx, final Duration maxTimeout,
+        final List<EnumerationItem> passed)
+        throws SOAPException, JAXBException, FaultException {
         
         final Object clientContext = ctx.getClientContext();
         final EnumerationIterator iterator = ctx.getIterator();
@@ -337,7 +342,7 @@ public final class EnumerationSupport extends BaseSupport {
         }
         if (!includeItem && !includeEPR) {
             throw new InternalErrorFault("Must include one or both of Item & EPR for mode " +
-                    mode == null ? "null" : mode.value());
+                mode == null ? "null" : mode.value());
         }
         
         final SOAPEnvelope env = response.getEnvelope();
@@ -347,7 +352,7 @@ public final class EnumerationSupport extends BaseSupport {
         boolean more = false;
         boolean full = false;
         while ((full = passed.size() < ctx.getCount()) &&
-                (more = iterator.hasNext(clientContext, ctx.getCursor()))) {
+            (more = iterator.hasNext(clientContext, ctx.getCursor()))) {
             
             final TimerTask ttask = new TimerTask() {
                 public void run() {
@@ -360,11 +365,11 @@ public final class EnumerationSupport extends BaseSupport {
             timeoutTimer.schedule(ttask, timeout);
             
             final List<EnumerationItem> items = iterator.next(db,
-                    clientContext,
-                    includeItem,
-                    includeEPR,
-                    ctx.getCursor(),
-                    ctx.getCount() - passed.size());
+                clientContext,
+                includeItem,
+                includeEPR,
+                ctx.getCursor(),
+                ctx.getCount() - passed.size());
             if (items == null) {
                 throw new TimedOutFault();
             }
@@ -393,7 +398,7 @@ public final class EnumerationSupport extends BaseSupport {
                         }
                     } catch (XPathException xpx) {
                         throw new CannotProcessFilterFault("Error evaluating XPath: " +
-                                xpx.getMessage());
+                            xpx.getMessage());
                     }
                 }
             }
@@ -438,6 +443,13 @@ public final class EnumerationSupport extends BaseSupport {
         
         final Release release = request.getRelease();
         if (release == null) {
+            // this might be a pull-mode unsubscribe request
+            final Eventing evt = new Eventing(request);
+            final Unsubscribe unsub = evt.getUnsubscribe();
+            if (unsub != null) {
+                EventingSupport.unsubscribe(evt, new Eventing(response));
+                return;
+            }
             throw new InvalidEnumerationContextFault();
         }
         final EnumerationContextType contextType = release.getEnumerationContext();
@@ -462,7 +474,7 @@ public final class EnumerationSupport extends BaseSupport {
      * @param selectorMaps Selectors used to identify the resource. Optional.
      */
     public static EndpointReferenceType createEndpointReference(final String address,
-            final String resource, final Map<String, String>... selectorMaps) {
+        final String resource, final Map<String, String>... selectorMaps) {
         
         final ReferenceParametersType refp = Addressing.FACTORY.createReferenceParametersType();
         
@@ -507,9 +519,9 @@ public final class EnumerationSupport extends BaseSupport {
     }
     
     private static void insertTotalItemCountEstimate(final Enumeration request,
-            final Enumeration response, final EnumerationIterator iterator,
-            final Object clientContext)
-            throws SOAPException, JAXBException {
+        final Enumeration response, final EnumerationIterator iterator,
+        final Object clientContext)
+        throws SOAPException, JAXBException {
         // place an item count estimate if one was requested
         final EnumerationExtensions enx = new EnumerationExtensions(request);
         try {
