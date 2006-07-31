@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.10 2006-07-30 06:21:40 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.1 2006-07-31 20:49:12 akhilarora Exp $
  */
 
-package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
+package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
 
 import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.InternalErrorFault;
@@ -54,7 +54,6 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
     
-    private static final String NS_URI = "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
     private static final String NS_PREFIX = "p";
     
     private static String[] SELECTOR_KEYS = {
@@ -82,7 +81,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         
         if (nsMap == null) {
             final Map<String, String> map = new HashMap<String, String>();
-            map.put(NS_PREFIX, NS_URI);
+            map.put(NS_PREFIX, resource);
             nsMap = new NamespaceMap(map);
         }
         
@@ -213,7 +212,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             if (includeEPR) {
                 final Map<String, String> selectors = new HashMap<String, String>();
                 for (final String selector : SELECTOR_KEYS) {
-                    selectors.put(selector, root.getElementsByTagNameNS(NS_URI, selector).item(0).getTextContent());
+                    selectors.put(selector, root.getElementsByTagNameNS(ctx.resourceURI, selector).item(0).getTextContent());
                 }
                 epr = EnumerationSupport.createEndpointReference(
                     ctx.address,

@@ -1,6 +1,6 @@
 <p:CIM_NumericSensor 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xmlns:p="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" 
+    xmlns:p="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" 
     xmlns:cim="http://schemas.dmtf.org/wbem/wsman/1/base" 
     xml:lang="en-US">
     <p:Accuracy>0</p:Accuracy>

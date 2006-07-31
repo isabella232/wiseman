@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <p:CIM_NumericSensor 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xmlns:p="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" 
+    xmlns:p="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" 
     xmlns:cim="http://schemas.dmtf.org/wbem/wsman/1/base">
     <p:Accuracy>0</p:Accuracy>
     <p:Availability xsi:nil="true"/>
     <p:BaseUnits>2</p:BaseUnits>
-    <p:Caption>Temperature(10.0.32)</p:Caption>
+    <p:Caption>Temperature(11.0.32)</p:Caption>
     <p:CreationClassName>NumericSensor</p:CreationClassName>
-    <p:CurrentReading>190</p:CurrentReading>
+    <p:CurrentReading>210</p:CurrentReading>
     <p:CurrentState>OK</p:CurrentState>
-    <p:Description>PCI-X Slot Temp(10.0.32):Temperature for Other 1</p:Description>
-    <p:DeviceID>10.0.32</p:DeviceID>
-    <p:ElementName>PCI-X Slot Temp(10.0.32)</p:ElementName>
+    <p:Description>SCSI-Gbit Temp(11.0.32):Temperature for Other 2</p:Description>
+    <p:DeviceID>11.0.32</p:DeviceID>
+    <p:ElementName>SCSI-Gbit Temp(11.0.32)</p:ElementName>
     <p:EnabledDefault>2</p:EnabledDefault>
     <p:EnabledState>5</p:EnabledState>
     <p:ErrorCleared xsi:nil="true"/>
@@ -28,7 +28,7 @@
     <p:MaxQuiesceTime xsi:nil="true"/>
     <p:MaxReadable>2000</p:MaxReadable>
     <p:MinReadable>-550</p:MinReadable>
-    <p:Name>PCI-X Slot Temp(10.0.32)</p:Name>
+    <p:Name>SCSI-Gbit Temp(11.0.32)</p:Name>
     <p:NominalReading>300</p:NominalReading>
     <p:NormalMax>350</p:NormalMax>
     <p:NormalMin>250</p:NormalMin>

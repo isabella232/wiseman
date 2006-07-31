@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_recordlog_Handler.java,v 1.1 2006-07-29 06:46:45 akhilarora Exp $
+ * $Id: cim_recordlog_Handler.java,v 1.1 2006-07-31 20:49:14 akhilarora Exp $
  */
 
-package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
+package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
@@ -31,11 +31,8 @@ public class cim_recordlog_Handler implements Handler {
             final HandlerContext context,
             final Management request, final Management response) throws Exception {
         
-        final String CLEAR_RECORD_LOG_ACTION =
-                "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLog";
-        
-        final String CLEAR_RECORD_LOG_RESPONSE =
-                "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLogResponse";
+        final String CLEAR_RECORD_LOG_ACTION = resource + "/ClearLog";
+        final String CLEAR_RECORD_LOG_RESPONSE = resource + "/ClearLogResponse";
         
         if (CLEAR_RECORD_LOG_ACTION.equals(action)) {
             response.setAction(CLEAR_RECORD_LOG_RESPONSE);

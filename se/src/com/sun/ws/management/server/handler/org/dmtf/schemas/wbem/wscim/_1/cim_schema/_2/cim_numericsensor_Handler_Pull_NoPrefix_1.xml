@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-    <!-- xmlns="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" -->
+    <!-- xmlns="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor" -->
 <CIM_NumericSensor 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
     xmlns:cim="http://schemas.dmtf.org/wbem/wsman/1/base">

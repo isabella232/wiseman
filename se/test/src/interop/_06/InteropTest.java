@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.13 2006-07-30 07:44:49 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.14 2006-07-31 20:49:24 akhilarora Exp $
  */
 
 package interop._06;
@@ -74,10 +74,10 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 public final class InteropTest extends TestBase {
     
     private static final String COMPUTER_SYSTEM_RESOURCE =
-            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem";
+            "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem";
     
     private static final String NUMERIC_SENSOR_RESOURCE =
-            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
+            "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
     
     private static final String TIMEOUT_RESOURCE = "wsman:test/timeout";
     private static final String PULL_SOURCE_RESOURCE = "wsman:test/pull_source";
@@ -176,7 +176,7 @@ public final class InteropTest extends TestBase {
     }
     
     /**
-     * Interop Scenario 6.3 - GET failure with invalide resource URI
+     * Interop Scenario 6.3 - GET failure with invalid resource URI
      */
     public void testGetFail() throws Exception {
         
@@ -237,7 +237,7 @@ public final class InteropTest extends TestBase {
     }
     
     /**
-     * Interop Scenario 6.4 - Get failure with maxenvelopesize exceeded error
+     * Interop Scenario 6.4 - Get failure with MaxEnvelopeSize exceeded error
      */
     public void testGetFailWithMaxEnvelopSizeExceeded() throws Exception {
         
@@ -1066,10 +1066,10 @@ public final class InteropTest extends TestBase {
     public void testInvoke() throws Exception {
 
         final String RECORD_LOG_RESOURCE = 
-            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog";
+            "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog";
     
         final String CLEAR_RECORD_LOG_ACTION = 
-            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLog";
+            "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLog";
     
         final Management mgmt = new Management();
         mgmt.setAction(CLEAR_RECORD_LOG_ACTION);
@@ -1113,7 +1113,7 @@ public final class InteropTest extends TestBase {
         }
         
         final String CLEAR_RECORD_LOG_RESPONSE = 
-            "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLogResponse";
+            "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLogResponse";
         
         final QName OUTPUT = new QName(RECORD_LOG_RESOURCE, "ClearLog_OUTPUT", "p");
         final QName RETURN_VALUE = new QName(RECORD_LOG_RESOURCE, "ReturnValue", "p");

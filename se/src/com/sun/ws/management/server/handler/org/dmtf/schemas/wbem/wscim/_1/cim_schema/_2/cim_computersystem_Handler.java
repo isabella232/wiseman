@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_computersystem_Handler.java,v 1.3 2006-07-30 06:21:39 akhilarora Exp $
+ * $Id: cim_computersystem_Handler.java,v 1.1 2006-07-31 20:49:10 akhilarora Exp $
  */
 
-package com.sun.ws.management.server.handler.org.dmtf.wbem.wscim._1.cim_schema._2;
+package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
 
 import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.InternalErrorFault;
