@@ -69,6 +69,11 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	     loggerXfer.setLevel(Level.FINE);
 	     Logger loggerEnum = Logger.getLogger(EnumerationResourceImpl.class.getName());
 	     loggerEnum.setLevel(Level.FINE);
+	     
+		if(System.getenv("wsman.dest")!=null){
+			destination=System.getenv("wsman.dest");
+		}
+		System.out.println("Wiseman client test against "+destination);
 		
 	}
 	public static String destination = "http://localhost:8080/wsman/";
@@ -101,7 +106,6 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 
 		// Initalize section 7 Variables to default values
 		resourceURINumericSensor="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/cim_numericsensor";
-
 	}
 
 	protected void tearDown() throws Exception {
