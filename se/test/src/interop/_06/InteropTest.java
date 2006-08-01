@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.15 2006-07-31 23:36:25 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.16 2006-08-01 00:07:56 akhilarora Exp $
  */
 
 package interop._06;
@@ -73,10 +73,10 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 public final class InteropTest extends TestBase {
     
     private static final String COMPUTER_SYSTEM_RESOURCE =
-            "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem";
+        "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem";
     
     private static final String NUMERIC_SENSOR_RESOURCE =
-            "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
+        "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
     
     private static final String TIMEOUT_RESOURCE = "wsman:test/timeout";
     private static final String PULL_SOURCE_RESOURCE = "wsman:test/pull_source";
@@ -107,13 +107,13 @@ public final class InteropTest extends TestBase {
     public void testIdentify() throws Exception {
         final Identify identify = new Identify();
         identify.setIdentify();
-
+        
         final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
         log(response);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
-
+        
         final Identify id = new Identify(response);
         final SOAPElement idr = id.getIdentifyResponse();
         assertNotNull(idr);
@@ -399,7 +399,7 @@ public final class InteropTest extends TestBase {
         selector2.setName("Name");
         selector2.getContent().add("IPMI Controller 32");
         selectors.add(selector2);
-
+        
         // special selector to disable the use of namespace prefixes in returned doc
         final SelectorType selector3 = new SelectorType();
         selector3.setName("NoPrefix");
@@ -809,8 +809,8 @@ public final class InteropTest extends TestBase {
         
         final EnumerationExtensions ei = new EnumerationExtensions(mgmt);
         ei.setEnumerate(null, null, null,
-                EnumerationExtensions.Mode.EnumerateObjectAndEPR,
-                false, -1);
+            EnumerationExtensions.Mode.EnumerateObjectAndEPR,
+            false, -1);
         
         log(mgmt);
         Addressing response = HttpClient.sendRequest(mgmt);
@@ -862,33 +862,27 @@ public final class InteropTest extends TestBase {
         assertNotNull(ilt);
         List<Object> il = ilt.getAny();
         assertNotNull(il);
-        // there should be two items - a sensor and its EPR
-        assertTrue(il.size() == 2);
-        
-        // the first item is a sensor
-        Object obj = il.get(0);
-        assertTrue(obj instanceof Node);
-        Node node = (Node) obj;
-        assertNotNull(node);
-        
-        // the second item should be the EPR
-        obj = il.get(1);
-        assertTrue(obj instanceof JAXBElement);
-        JAXBElement jelt = (JAXBElement) obj;
-        final EndpointReferenceType epr = (EndpointReferenceType) jelt.getValue();
-        assertNotNull(epr);
-        assertEquals(DESTINATION, epr.getAddress().getValue());
-        for (final Object refp : epr.getReferenceParameters().getAny()) {
-            if (refp instanceof JAXBElement) {
-                JAXBElement jref = (JAXBElement) refp;
-                if (AttributableURI.class.equals(jref.getDeclaredType())) {
-                    assertEquals(Management.RESOURCE_URI, jref.getName());
-                    assertEquals(NUMERIC_SENSOR_RESOURCE, ((AttributableURI) jref.getValue()).getValue());
-                } else if (SelectorSetType.class.equals(jref.getDeclaredType())) {
-                    final List<SelectorType> ss = ((SelectorSetType) jref.getValue()).getSelector();
-                    assertTrue(ss.size() > 0);
-                    for (final SelectorType sel : ss) {
-                        // System.out.println(sel.getName() + ": " + sel.getContent());
+        List<EnumerationItem> itemList = EnumerationExtensions.unbindItems(il);
+        assertTrue(itemList.size() > 0);
+        final EnumerationItem eni = itemList.get(0);
+        assertNotNull(eni);
+        assertNotNull(eni.getItem());
+        final EndpointReferenceType epr = eni.getEndpointReference();
+        if (epr != null) {
+            // epr might be null if enum mode is not supported
+            assertEquals(DESTINATION, epr.getAddress().getValue());
+            for (final Object refp : epr.getReferenceParameters().getAny()) {
+                if (refp instanceof JAXBElement) {
+                    JAXBElement jref = (JAXBElement) refp;
+                    if (AttributableURI.class.equals(jref.getDeclaredType())) {
+                        assertEquals(Management.RESOURCE_URI, jref.getName());
+                        assertEquals(NUMERIC_SENSOR_RESOURCE, ((AttributableURI) jref.getValue()).getValue());
+                    } else if (SelectorSetType.class.equals(jref.getDeclaredType())) {
+                        final List<SelectorType> ss = ((SelectorSetType) jref.getValue()).getSelector();
+                        assertTrue(ss.size() > 0);
+                        for (final SelectorType sel : ss) {
+                            // System.out.println(sel.getName() + ": " + sel.getContent());
+                        }
                     }
                 }
             }
@@ -1034,13 +1028,13 @@ public final class InteropTest extends TestBase {
      * Interop Scenario 8.1 - Invoke ClearLog on an instance of RecordLog class
      */
     public void testInvoke() throws Exception {
-
-        final String RECORD_LOG_RESOURCE = 
+        
+        final String RECORD_LOG_RESOURCE =
             "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog";
-    
-        final String CLEAR_RECORD_LOG_ACTION = 
+        
+        final String CLEAR_RECORD_LOG_ACTION =
             "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLog";
-    
+        
         final Management mgmt = new Management();
         mgmt.setAction(CLEAR_RECORD_LOG_ACTION);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -1082,7 +1076,7 @@ public final class InteropTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        final String CLEAR_RECORD_LOG_RESPONSE = 
+        final String CLEAR_RECORD_LOG_RESPONSE =
             "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_RecordLog/ClearLogResponse";
         
         final QName OUTPUT = new QName(RECORD_LOG_RESOURCE, "ClearLog_OUTPUT", "p");
@@ -1092,7 +1086,7 @@ public final class InteropTest extends TestBase {
         final Node output = response.getBody().getFirstChild();
         assertNotNull(output);
         assertEquals(OUTPUT.getLocalPart(), output.getLocalName());
-
+        
         final Node retvalue = output.getFirstChild();
         assertNotNull(retvalue);
         assertEquals(RETURN_VALUE.getLocalPart(), retvalue.getLocalName());
@@ -1180,7 +1174,7 @@ public final class InteropTest extends TestBase {
         assertNotNull(item[0]);
         
         final QName lowerThresholdName = new QName(NUMERIC_SENSOR_RESOURCE,
-                "LowerThresholdNonCritical", "p");
+            "LowerThresholdNonCritical", "p");
         final SOAPElement[] lowerThreshold = to.getChildren(item[0], lowerThresholdName);
         assertNotNull(lowerThreshold);
         assertTrue(lowerThreshold.length == 1);
@@ -1243,13 +1237,13 @@ public final class InteropTest extends TestBase {
         
         final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
         final JAXBElement<MixedDataType> xmlFragment = Management.FACTORY.createXmlFragment(mixedDataType);
-        Element lowerThresholdNonCriticalElement = 
-            mgmt.getBody().getOwnerDocument().createElementNS(NUMERIC_SENSOR_RESOURCE, 
+        Element lowerThresholdNonCriticalElement =
+            mgmt.getBody().getOwnerDocument().createElementNS(NUMERIC_SENSOR_RESOURCE,
             "p:LowerThresholdNonCritical");
         lowerThresholdNonCriticalElement.setTextContent("100");
         mixedDataType.getContent().add(lowerThresholdNonCriticalElement);
         mgmt.getXmlBinding().marshal(xmlFragment, mgmt.getBody());
-
+        
         log(mgmt);
         final Addressing response = HttpClient.sendRequest(mgmt);
         log(response);
@@ -1271,7 +1265,7 @@ public final class InteropTest extends TestBase {
         assertEquals("LowerThresholdNonCritical", threshold[0].getLocalName());
         assertEquals("100", threshold[0].getTextContent());
     }
-
+    
     /**
      * Interop Scenario 10 - Eventing
      */
@@ -1388,14 +1382,14 @@ public final class InteropTest extends TestBase {
         Eventing unsub = new Eventing(mgmt);
         unsub.setUnsubscribe();
         unsub.setIdentifier(identifier);
-         
+        
         log(mgmt);
         response = HttpClient.sendRequest(mgmt);
         log(response);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
-         
+        
         Eventing unsubo = new Eventing(response);
         assertEquals(Eventing.UNSUBSCRIBE_RESPONSE_URI, unsubo.getAction());
         assertNull(unsubo.getBody().getFirstChild());
