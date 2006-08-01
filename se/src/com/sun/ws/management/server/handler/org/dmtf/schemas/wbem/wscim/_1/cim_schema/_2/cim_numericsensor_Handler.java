@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.1 2006-07-31 20:49:12 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.2 2006-08-01 01:32:02 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
@@ -105,6 +105,19 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             if (selectors.size() < SELECTOR_KEYS.length) {
                 throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
             }
+            
+            Document resourceDoc = null;
+            final String resourceDocName = "Pull" + noPrefix + "_0.xml";
+            final InputStream is = load(hcontext.getServletConfig().getServletContext(), resourceDocName);
+            if (is == null) {
+                throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
+            }
+            try {
+                resourceDoc = response.getDocumentBuilder().parse(is);
+            } catch (Exception ex) {
+                throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
+            }
+            response.getBody().addDocument(resourceDoc);
         } else if (Transfer.PUT_ACTION_URI.equals(action)) {
             response.setAction(Transfer.PUT_RESPONSE_URI);
             final TransferExtensions txi = new TransferExtensions(request);
