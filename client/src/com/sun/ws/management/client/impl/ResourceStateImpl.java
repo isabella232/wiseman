@@ -172,12 +172,18 @@ public class ResourceStateImpl implements ResourceState  {
 		return getValueText(name,stateDocument.getFirstChild());
 	}
 	public String getValueText(QName name,Node context) throws XPathExpressionException, NoMatchFoundException {
+		if(name==null||context==null){
+			throw new NoMatchFoundException("QName or Node was null.");			
+		}
 		NodeList nodes = context.getChildNodes();
 		Node matchedNode=null;
 		for(int index=0;index<nodes.getLength();index++){
 			Node node = nodes.item(index);
 			String localPart = node.getLocalName();
 			String namespaceUri = node.getNamespaceURI();
+			if(namespaceUri==null)
+				throw new NoMatchFoundException("QName Namespace was null.");			
+				
 			if(namespaceUri.equals(name.getNamespaceURI()))
 				if(localPart.equals(name.getLocalPart())){
 					matchedNode=node;
