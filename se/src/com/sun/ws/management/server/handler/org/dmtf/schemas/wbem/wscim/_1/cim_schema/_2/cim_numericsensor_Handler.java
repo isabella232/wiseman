@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.2 2006-08-01 01:32:02 akhilarora Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.3 2006-08-04 03:43:12 akhilarora Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
@@ -205,21 +205,18 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         final List<EnumerationItem> items = new ArrayList(returnCount);
         for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
             
-            Element root = null;
-            if (includeItem) {
-                Document resourceDoc = null;
-                final String resourceDocName = "Pull" + ctx.noPrefix + "_" + start + ".xml";
-                final InputStream is = load(ctx.hcontext.getServletConfig().getServletContext(), resourceDocName);
-                if (is == null) {
-                    throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
-                }
-                try {
-                    resourceDoc = db.parse(is);
-                } catch (Exception ex) {
-                    throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
-                }
-                root = resourceDoc.getDocumentElement();
+            Document resourceDoc = null;
+            final String resourceDocName = "Pull" + ctx.noPrefix + "_" + start + ".xml";
+            final InputStream is = load(ctx.hcontext.getServletConfig().getServletContext(), resourceDocName);
+            if (is == null) {
+                throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
             }
+            try {
+                resourceDoc = db.parse(is);
+            } catch (Exception ex) {
+                throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
+            }
+            final Element root = resourceDoc.getDocumentElement();
             
             EndpointReferenceType epr = null;
             if (includeEPR) {
