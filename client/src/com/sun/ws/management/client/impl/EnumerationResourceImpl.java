@@ -96,7 +96,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(String[] filters, String dialect, boolean useEprs,boolean useObjects) throws SOAPException,JAXBException, IOException, FaultException, DatatypeConfigurationException {
+	public EnumerationCtx enumerate(String[] filters, String dialect, boolean useEprs,boolean useObjects,String timeout) throws SOAPException,JAXBException, IOException, FaultException, DatatypeConfigurationException {
 		String enumerationContextId = "";
 		//TODO: add argument for user to supply EPR:ReplyTo, right now assume anonymous.
 		
@@ -135,14 +135,23 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
         if(filters!=null){
 	        filterType.setDialect(XPath.NS_URI);
 	        filterType.getContent().add(filter);
-	        enu.setEnumerate(endTo, factory.newDuration(getMessageTimeout()).toString(),
+	        String timeoutValue=null;
+	        enu.setEnumerate(endTo, timeoutValue,
                     filter == null ? null : filterType,enumerationMode.toBinding());
         }else{
         	JAXBElement<EnumerationModeType> modeBinding = null;
         	if(enumerationMode!=null)
         		modeBinding=enumerationMode.toBinding();
-        	enu.setEnumerate(null, factory.newDuration(getMessageTimeout()).toString(),
+	   if(timeout!=null){
+	        	timeout=factory.newDuration(getMessageTimeout()).toString();
+       	enu.setEnumerate(null, factory.newDuration(timeout).toString(),
                          null,modeBinding);//,
+	   } else {
+       	//timeout=factory.newDuration(getMessageTimeout()).toString();
+       	enu.setEnumerate(null, null,
+                         null,modeBinding);//,
+		   
+	   }
         }
         
         final Management mgmt = new Management(enu);

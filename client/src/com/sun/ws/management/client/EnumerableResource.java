@@ -31,7 +31,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws DatatypeConfigurationException
 	 */
 	public abstract EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs,boolean useObjects) throws SOAPException, JAXBException, IOException,
+			boolean useEprs,boolean useObjects,String timeout) throws SOAPException, JAXBException, IOException,
 			FaultException, DatatypeConfigurationException;
 	
 	/**
