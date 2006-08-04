@@ -123,7 +123,7 @@ public class TrafficClientApp extends javax.swing.JFrame {
 			EnumerableResource enumResource = (EnumerableResource) resources[0];
 			String[] filters=null;
 			boolean useEprs=true;
-			 EnumerationCtx context = enumResource.enumerate(filters,Resource.XPATH_DIALECT,useEprs,false);
+			 EnumerationCtx context = enumResource.enumerate(filters,Resource.XPATH_DIALECT,useEprs,false,null);
 			int timeout = 30000;
 			int numberOfRecords=5;
 			
