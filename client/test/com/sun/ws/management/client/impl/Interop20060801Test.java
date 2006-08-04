@@ -1,40 +1,19 @@
 package com.sun.ws.management.client.impl;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathExpressionException;
-
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import util.WsManBaseTestSupport;
 
-import com.hp.examples.ws.wsman.user.ObjectFactory;
-import com.hp.examples.ws.wsman.user.UserType;
-import com.sun.ws.management.Management;
 import com.sun.ws.management.client.EnumerationCtx;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
@@ -42,10 +21,6 @@ import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.ServerIdentity;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
-import com.sun.ws.management.client.impl.EnumerationResourceImpl;
-import com.sun.ws.management.client.impl.TransferableResourceImpl;
-import com.sun.ws.management.transfer.InvalidRepresentationFault;
-import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
@@ -56,7 +31,10 @@ import com.sun.ws.management.xml.XmlBinding;
 public class Interop20060801Test extends WsManBaseTestSupport {
 
 	private static final QName LOWER_THRESHOLD_NON_CRITICAL = new QName("http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor","LowerThresholdNonCritical");
-
+    private static Logger log = Logger.getLogger(Interop20060801Test.class.getName());
+    private static String vaildatedSelectorCreationClassName = "ComputerSystem";
+    private static String vaildatedSelectorName = "IPMI Controller 32";
+    private static boolean validated=true;
 	public Interop20060801Test(){
 
 		Handler[] handlers =
@@ -70,10 +48,59 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	     Logger loggerEnum = Logger.getLogger(EnumerationResourceImpl.class.getName());
 	     loggerEnum.setLevel(Level.FINE);
 	     
-		if(System.getenv("wsman.dest")!=null){
-			destination=System.getenv("wsman.dest");
+		if(System.getProperty("wsman.dest")!=null){
+			destination=System.getProperty("wsman.dest");
 		}
-		System.out.println("Wiseman client test against "+destination);
+		if(!validated)
+			log.info("Wiseman client test against "+destination);
+		try {
+			validateSelectors();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			log.severe(e.getMessage());
+		}
+	}
+	
+	/**
+	 * Attempt an enumeration on 
+	 * @throws DatatypeConfigurationException 
+	 * @throws FaultException 
+	 * @throws IOException 
+	 * @throws JAXBException 
+	 * @throws SOAPException 
+	 * @throws NoMatchFoundException 
+	 * @throws XPathExpressionException 
+	 *
+	 */
+	private void validateSelectors(){
+		// Enumerate ComputerSystem and search for a valid value for selectorCreationClassName 
+		// and selectorName
+		if(validated)
+			return;
+		log.info("*** An inital enumeration is being performed to verify your selectors.");
+		validated=true;
+		try {
+		HashMap<String, String> selectors = null;
+		Resource[] numericSensorEnumSet = ResourceFactory.find(destination, resourceURIComputerSystem, operationTimeout, selectors);
+		assertTrue(numericSensorEnumSet.length>0);
+		Resource numericSensorEnum = numericSensorEnumSet[0];
+		numericSensorEnum.setMaxEnvelopeSize(-1);
+		numericSensorEnum.setMessageTimeout(operationTimeout);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false,null);
+		ResourceState pullResult = numericSensorEnum.pull(contextA, 10000, 1, -1);
+		String ccN=pullResult.getValueText("//*[local-name()=\"CreationClassName\"]");
+		String N=pullResult.getValueText("//*[local-name()=\"Name\"]");
+		if(ccN!=null){
+			vaildatedSelectorCreationClassName=ccN;
+		}
+		if(N!=null){
+			vaildatedSelectorName=N;
+		}
+		log.info("*** It has been determined that CreationClassName="+ccN+" and Name="+N+" is valid on your system.");
+		} catch (Throwable e){
+			log.severe(e.getMessage());
+		}
+		log.info("Validate Selectors has completed.");
 		
 	}
 	public static String destination = "http://localhost:8080/wsman/";
@@ -85,7 +112,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	XmlBinding binding = null;
 
 	// Section 6 Variables
-	private String resourceURIComputerSystem;
+	private String resourceURIComputerSystem="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem";
 	private int maxEnvelopeSize;
 	private String selectorCreationClassName;
 	private String selectorName;
@@ -98,14 +125,14 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		super.setUp();
 
 		// Initalize section 6 Variables to default values
-		resourceURIComputerSystem = "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem";
+		resourceURIComputerSystem = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ComputerSystem";
 		maxEnvelopeSize = 153600;
-		selectorCreationClassName = "ComputerSystem";
-		selectorName = "IPMI Controller 32";
+		selectorCreationClassName = vaildatedSelectorCreationClassName;
+		selectorName = vaildatedSelectorName;
 		operationTimeout = 60000;
 
 		// Initalize section 7 Variables to default values
-		resourceURINumericSensor="http://www.dmtf.org/wbem/wscim/1/cim-schema/2/cim_numericsensor";
+		resourceURINumericSensor="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor";
 	}
 
 	protected void tearDown() throws Exception {
@@ -123,16 +150,16 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 *
 	 */
 	public void testIdentify() throws SOAPException, IOException, JAXBException, XPathExpressionException, NoMatchFoundException{
-		System.out.println("_________________________________________________________________________");
-		System.out.println("6.1 Identify");
+		log.info("_________________________________________________________________________");
+		log.info("6.1 Identify");
 		ServerIdentity serverInfo = ResourceFactory.getIdentity(destination);
-		System.out.println(serverInfo);
+		log.info(""+serverInfo);
 		assertNotNull(serverInfo);
 		assertNotNull(serverInfo.getProductVendor());
 		assertNotNull(serverInfo.getProductVersion());
 		assertNotNull(serverInfo.getProtocolVersion());
-		assertNotNull(serverInfo.getSpecVersion());
-		assertNotNull(serverInfo.getBuildId());
+		//assertNotNull(serverInfo.getSpecVersion());
+		//assertNotNull(serverInfo.getBuildId());
 		assertEquals(serverInfo.getProtocolVersion(),"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
 	}
 	
@@ -149,10 +176,10 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 * @throws SOAPException 
 	 */
 	public void testGetInstance() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
-		System.out.println("_________________________________________________________________________");
-		System.out.println("6.2 Get Instance of CIM_ComputerSystem");
+		log.info("_________________________________________________________________________");
+		log.info("6.2 Get Instance of CIM_ComputerSystem");
 		ResourceState systemState = getComputerSystemState(resourceURIComputerSystem,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
-		System.out.println("PASS");
+		log.info("PASS");
 
 		// TODO Verify Actual Values
 		
@@ -170,13 +197,13 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 * @throws SOAPException 
 	 */
 	public void testGetInstanceBadURI() throws SOAPException, JAXBException, IOException, DatatypeConfigurationException{
-		System.out.println("_________________________________________________________________________");
-		System.out.println("6.3 GET failure with invalid resource URI");
+		log.info("_________________________________________________________________________");
+		log.info("6.3 GET failure with invalid resource URI");
 		resourceURIComputerSystem = "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/cim_computersyste";
 		try {
 			ResourceState systemState = getComputerSystemState(resourceURIComputerSystem,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
 		} catch (FaultException e) {
-			System.out.println("PASS");
+			log.info("PASS");
 			return;
 		}
 		fail("This test is expected to Fault and did not.");
@@ -192,13 +219,13 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 * @throws SOAPException 
 	 */
 	public void testGetInstanceFailEnvelopeSize() throws SOAPException, JAXBException, IOException, DatatypeConfigurationException{
-		System.out.println("_________________________________________________________________________");
-		System.out.println("6.4 Get failure with maxenvelopesize exceeded error");
+		log.info("_________________________________________________________________________");
+		log.info("6.4 Get failure with maxenvelopesize exceeded error");
 		int maxEnvelopeSize=8;
 		try {
 			ResourceState systemState = getComputerSystemState(resourceURIComputerSystem,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
 		} catch (FaultException e) {
-			System.out.println("PASS");
+			log.info("PASS");
 			return;
 		}
 		fail("This test is expected to Fault and did not.");
@@ -215,13 +242,13 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 * @throws SOAPException 
 	 */
 	public void testGetInstanceMissingSelector() throws SOAPException, JAXBException, IOException, DatatypeConfigurationException{
-		System.out.println("_________________________________________________________________________");
-		System.out.println("6.5 Get failure with invalid selectors");
+		log.info("_________________________________________________________________________");
+		log.info("6.5 Get failure with invalid selectors");
 		String selectorName=null;
 		try {
-			ResourceState systemState = getComputerSystemState(resourceURIComputerSystem,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
+			ResourceState systemState = getComputerSystemState(resourceURINumericSensor,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
 		} catch (FaultException e) {
-			System.out.println("PASS");
+			log.info("PASS");
 			return;
 		}
 		fail("This test is expected to Fault and did not.");
@@ -234,13 +261,15 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 * time specified in the OperationTimeout in the request.
 	 */
 	public void testGetInstanceTimeoutExceeded() throws SOAPException, JAXBException, IOException, DatatypeConfigurationException{
-		System.out.println("_________________________________________________________________________");
-		System.out.println("6.6	Get failure with operational timeout ");
-		int operationTimeout=1;
+		log.info("_________________________________________________________________________");
+		log.info("6.6	Get failure with operational timeout ");
+		int operationTimeout=3;
 		try {
+			//Microsoft
+			//resourceURIComputerSystem="wsman:microsoft.test/testresource/get/timeout";
 			ResourceState systemState = getComputerSystemState(resourceURIComputerSystem,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
 		} catch (FaultException e) {
-			System.out.println("PASS");
+			log.info("PASS");
 			return;
 		}
 		fail("This test is expected to Fault and did not.");	
@@ -275,16 +304,20 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 * @throws XPathExpressionException 
 	 */
 	public void testEnumerateInstances() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException, XPathExpressionException {
-		System.out.println("_________________________________________________________________________");
-		System.out.println("7.1	Enumerate instances of CIM_NumericSensor");
+		log.info("_________________________________________________________________________");
+		log.info("7.1	Enumerate instances of CIM_NumericSensor");
 		QName END_OF_SEQUENCE = new QName("http://schemas.xmlsoap.org/ws/2004/09/enumeration","EndOfSequence");
 		HashMap<String, String> selectors = null;
+		
+		// for Intel openwsman
+		//resourceURINumericSensor="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/OMC_InitdService";
+		
 		Resource[] numericSensorEnumSet = ResourceFactory.find(destination, resourceURINumericSensor, operationTimeout, selectors);
 		assertTrue(numericSensorEnumSet.length>0);
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(maxEnvelopeSize);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false,null);
 		int maxElements = 1;
 		int maxCharacters = -1;
 		boolean moreResults = true;
@@ -303,8 +336,8 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		} catch (FaultException e){
 			fail("A fault occured during iteration: "+e.getMessage());
 		}
-		assertTrue(passcount<50);
-		System.out.println("PASS");
+		assertTrue(passcount<200);
+		log.info("PASS");
 	}
 	
 	/**
@@ -337,16 +370,21 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 */
 	public void testEnumerateFailureBadContext() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException, XPathExpressionException{
 		String contextBogas="uuid:bogas-context-0000-00000-0000";
-		System.out.println("_________________________________________________________________________");
-		System.out.println("7.3	Enumerate Failure");
+		log.info("_________________________________________________________________________");
+		log.info("7.3	Enumerate Failure");
 		QName END_OF_SEQUENCE = new QName("http://schemas.xmlsoap.org/ws/2004/09/enumeration","EndOfSequence");
 		HashMap<String, String> selectors = null;
+		
+		// for Intel openwsman
+		//resourceURINumericSensor="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/OMC_InitdService";
+
+		
 		Resource[] numericSensorEnumSet = ResourceFactory.find(destination, resourceURINumericSensor, operationTimeout, selectors);
 		assertTrue(numericSensorEnumSet.length>0);
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(maxEnvelopeSize);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false,null);
 		int maxElements = 1;
 		int maxCharacters = -1;
 		boolean moreResults = true;
@@ -378,7 +416,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 			fail("A fault occured during iteration: "+e.getMessage());
 		}
 		assertTrue(passcount<50);
-		System.out.println("PASS");
+		log.info("PASS");
 	}
 
 	/**
@@ -424,8 +462,8 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	 * @throws NoMatchFoundException 
 	 */	
 	public void testPutThreshhold() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException, XPathExpressionException, NoMatchFoundException{
-		System.out.println("_________________________________________________________________________");
-		System.out.println("9.1	Change Threshold on an instance of CIM_NumericSensor");
+		log.info("_________________________________________________________________________");
+		log.info("9.1	Change Threshold on an instance of CIM_NumericSensor");
 		
 //		<w:Selector Name="CreationClassName">CIM_NumericSensor</w:Selector>
 //		<w:Selector Name="DeviceID">81.0.32</w:Selector>
@@ -434,20 +472,30 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 
 		HashMap<String, String> selectors1 = new HashMap<String,String>();
 		selectors1.put("CreationClassName", "CIM_NumericSensor");
-		selectors1.put("DeviceID", "81.0.32");
+		selectors1.put("DeviceID", "10.0.32");
 		selectors1.put("SystemCreationClassName", "ComputerSystem");
 		selectors1.put("SystemName", "IPMI Controller 32");
 
-		Resource[] resources = ResourceFactory.find(destination, "http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor", operationTimeout, selectors1);
+		// Microsoft
+//		selectors1.put("CreationClassName", "NumericSensor");
+//		selectors1.put("DeviceID", "23.0.32");
+//		selectors1.put("SystemCreationClassName", "ComputerSystem");
+//		selectors1.put("SystemName", "IPMI Controller 33");
+//		resourceURINumericSensor="http://schemas.microsoft.com/wbem/wsman/1/wmi/root/hardware/NumericSensor";
+		
+		
+		Resource[] resources = ResourceFactory.find(destination, resourceURINumericSensor, operationTimeout, selectors1);
 		assertTrue(resources.length>0);
 		Resource compSysResource = resources[0];
+		compSysResource.setMaxEnvelopeSize(32000);
 		ResourceState sensorState = compSysResource.get();
-		String xPathExpression = "//*[local-name()='LowerThresholdNonCritical']";
+		String xPathExpression = "//*[local-name()=\"LowerThresholdNonCritical\"]";
 		sensorState.setFieldValues(xPathExpression, "50");
 		ResourceState newState = compSysResource.put(sensorState);
-		assertEquals("50",sensorState.getValueText(xPathExpression));
+		assertEquals("50",newState.getValueText(xPathExpression));
+		ResourceState finalState = compSysResource.get();
 		
-		System.out.println("PASS");
+		log.info("PASS");
 
 	}
 
@@ -465,14 +513,52 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	//TODO Optional
 	private ResourceState getComputerSystemState(String resourceURI,String selectorCreationClassName,String selectorName,int maxEnvelopeSize,int operationTimeout) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
 		HashMap<String, String> selectors = new HashMap<String,String>();
-		selectors.put("CreationClassName", selectorCreationClassName);
 		if(selectorName!=null)
 			selectors.put("Name", selectorName);
+		selectors.put("CreationClassName", selectorCreationClassName);
+		selectors.put("LUN", "0");
+		// Must be in for symlabs to pass timeout test
+		//selectors.put("timeout", "timeout");
 		Resource[] computerSystemResources = ResourceFactory.find(destination, resourceURI, operationTimeout, selectors);
 		assertTrue(computerSystemResources.length>0);
 		Resource computerSystemResource = computerSystemResources[0];
 		computerSystemResource.setMaxEnvelopeSize(maxEnvelopeSize);
 		return computerSystemResource.get();
 	}
+	public static void main(String[] args) {
+		 junit.textui.TestRunner.run(Interop20060801Test.class);
+	}
 	
+//	public void testPutThreshholdOpenWSMan() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException, XPathExpressionException, NoMatchFoundException{
+//		log.info("_________________________________________________________________________");
+//		log.info("9.1	Change Threshold on an instance of CIM_NumericSensor");
+//		
+//
+//		HashMap<String, String> selectors1 = new HashMap<String,String>();
+////		selectors1.put("CreationClassName", "CIM_NumericSensor");
+////		selectors1.put("DeviceID", "10.0.32");
+////		selectors1.put("SystemCreationClassName", "ComputerSystem");
+////		selectors1.put("SystemName", "IPMI Controller 32");
+//
+//		// openwsman
+//		selectors1.put("InstanceID", "omc:timezone");
+//		resourceURINumericSensor="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/OMC_TimeZoneSettingData";
+//		
+//		//resourceURINumericSensor="";
+//		
+//		Resource[] resources = ResourceFactory.find(destination, resourceURINumericSensor, operationTimeout, selectors1);
+//		assertTrue(resources.length>0);
+//		Resource compSysResource = resources[0];
+//		compSysResource.setMaxEnvelopeSize(32000);
+//		ResourceState sensorState = compSysResource.get();
+//		String xPathExpression = "//*[local-name()=\"TimeZone\"]";
+//		sensorState.setFieldValues(xPathExpression, "US/Pacific");
+//		ResourceState newState = compSysResource.put(sensorState);
+//		ResourceState finalState = compSysResource.get();
+//		assertEquals("US/Pacific",finalState.getValueText(xPathExpression));
+//		
+//		log.info("PASS");
+//
+//	}
+
 }
