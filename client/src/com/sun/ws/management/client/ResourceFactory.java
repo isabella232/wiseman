@@ -31,6 +31,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.impl.EnumerationResourceImpl;
+import com.sun.ws.management.client.impl.JAXBResourceImpl;
 import com.sun.ws.management.client.impl.ResourceImpl;
 import com.sun.ws.management.client.impl.ServerIdentityImpl;
 import com.sun.ws.management.client.impl.TransferableResourceImpl;
@@ -161,9 +162,10 @@ public class ResourceFactory {
 			}else{
 			   returnedResourceUri = resourceURI;
 			}
-			return  new EnumerationResourceImpl(destination,returnedResourceUri,timeoutInMilliseconds,populateSelectorSet( createResponse));
-//			return (EnumerableResource) new TransferableResourceImpl(destination,returnedResourceUri,timeoutInMilliseconds,populateSelectorSet( createResponse));
-//			return new TransferableResourceImpl(destination,returnedResourceUri,timeoutInMilliseconds,populateSelectorSet( createResponse));
+			EnumerationResourceImpl resource = new EnumerationResourceImpl(destination,returnedResourceUri,populateSelectorSet( createResponse));
+			resource.setMessageTimeout(timeoutInMilliseconds);
+			return resource;
+
 		}
 		
 			
@@ -300,9 +302,11 @@ public class ResourceFactory {
 			} else {
 				returnedResourceUri = resourceURI;
 			}
-			return new ResourceImpl(destination,
-					returnedResourceUri, timeoutInMilliseconds,
+			ResourceImpl resource = new ResourceImpl(destination,
+					returnedResourceUri,
 					populateSelectorSet(resCreated));
+			resource.setMessageTimeout(timeoutInMilliseconds);
+			return resource ;
 		}
 
 	}
@@ -397,7 +401,8 @@ public class ResourceFactory {
 		Resource[] resourceList = null;
 			resourceList = new Resource[1];
 			// lazy instantiation
-			Resource enumerationResource = new ResourceImpl(destination, resourceURI, timeout,selectors);
+			Resource enumerationResource = new ResourceImpl(destination, resourceURI,selectors);
+			enumerationResource.setMessageTimeout(timeout);
 			resourceList[0] = enumerationResource;
 
 			return resourceList;
@@ -456,6 +461,35 @@ public class ResourceFactory {
         identify.setIdentify();
         final Addressing response = HttpClient.sendRequest(identify.getMessage(), destination);
         return new ServerIdentityImpl(response.getBody().extractContentAsDocument());
+	}
+
+	public static JAXBResource createJAXB(String destination, String resourceURI,
+			long timeoutInMilliseconds, Object content, String specVersion,XmlBinding binding)
+	throws SOAPException, JAXBException, IOException, FaultException,
+	DatatypeConfigurationException {
+		
+		// Actually create this object on the server
+		Document domContent = Management.newDocument();
+		if(content != null) {
+			binding.marshal(content, domContent);
+		}
+
+		Resource resource=create( destination, resourceURI,
+				timeoutInMilliseconds,  domContent, specVersion);
+		
+		// now construct a JAXBResourceImpl to talk with it
+		JAXBResource jaxbResource=new JAXBResourceImpl(resource.getDestination(),resource.getResourceUri(),resource.getSelectorSet(),binding);
+		return jaxbResource ;
+		
+	}
+	
+	public static JAXBResource createJAXB(String destination, String resourceURI,
+			long timeoutInMilliseconds, Object content,String specVersion, final String... packageNames)
+	throws SOAPException, JAXBException, IOException, FaultException,
+	DatatypeConfigurationException {
+		
+		return createJAXB( destination,  resourceURI,
+				 timeoutInMilliseconds,  content,  specVersion, new XmlBinding(null,packageNames));
 	}
 
 }

@@ -30,7 +30,6 @@ import com.sun.ws.management.xml.XmlBinding;
  */
 public class Interop20060801Test extends WsManBaseTestSupport {
 
-	private static final QName LOWER_THRESHOLD_NON_CRITICAL = new QName("http://www.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor","LowerThresholdNonCritical");
     private static Logger log = Logger.getLogger(Interop20060801Test.class.getName());
     private static String vaildatedSelectorCreationClassName = "ComputerSystem";
     private static String vaildatedSelectorName = "IPMI Controller 32";
@@ -86,7 +85,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(-1);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false,null);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
 		ResourceState pullResult = numericSensorEnum.pull(contextA, 10000, 1, -1);
 		String ccN=pullResult.getValueText("//*[local-name()=\"CreationClassName\"]");
 		String N=pullResult.getValueText("//*[local-name()=\"Name\"]");
@@ -317,7 +316,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(maxEnvelopeSize);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false,null);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
 		int maxElements = 1;
 		int maxCharacters = -1;
 		boolean moreResults = true;
@@ -384,7 +383,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(maxEnvelopeSize);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false,null);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
 		int maxElements = 1;
 		int maxCharacters = -1;
 		boolean moreResults = true;

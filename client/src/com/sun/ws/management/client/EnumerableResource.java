@@ -31,7 +31,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws DatatypeConfigurationException
 	 */
 	public abstract EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs,boolean useObjects,String timeout) throws SOAPException, JAXBException, IOException,
+			boolean useEprs,boolean useObjects) throws SOAPException, JAXBException, IOException,
 			FaultException, DatatypeConfigurationException;
 	
 	/**
@@ -57,7 +57,7 @@ public interface EnumerableResource extends TransferableResource {
 	public abstract Resource[] pullResources(EnumerationCtx enumerationContext,
 			int maxTime, int maxElements, int maxCharacters, String endpointUrl)
 			throws SOAPException, JAXBException, IOException, FaultException,
-			DatatypeConfigurationException;
+			DatatypeConfigurationException, XPathExpressionException, NoMatchFoundException;
 
 	/**
 	 * Requests a list of eprs or objects. If you request EPRs or some fragment

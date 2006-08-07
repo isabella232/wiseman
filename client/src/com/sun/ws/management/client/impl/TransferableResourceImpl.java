@@ -43,7 +43,6 @@ import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.TransferableResource;
 import com.sun.ws.management.client.exceptions.FaultException;
@@ -64,26 +63,91 @@ public class TransferableResourceImpl implements TransferableResource {
 	        new QName("Dialect");
     
     //Attributes
+	/**
+	 * The Resource URI that should be use to refer to this resource when calls are made to it.
+	 */
 	protected String resourceURI=null; 			//Specific resource access details
+	/**
+	 * The URL as a string for the HTTP transport target for this transfer resource.
+	 */
 	protected String destination = null;		//Specific host and port access details
-	protected long messageTimeout = 30000; 	//Message timeout before reaping
+	/**
+	 * The default timeout for all transfer operations
+	 */
+	protected long messageTimeout = 30000; 		//Message timeout before reaping
 
-	//private EndpointReferenceType resourceEpr = null; //stores ordered selector values
+	/**
+	 * This represents the selector set used to identify this resource. If it is null
+	 * there will be no selector set encoded into your requests.
+	 */
 	protected SelectorSetType selectorSet = null;
+	/**
+	 * Used to indicate the max size of a response to any transfer request made by this resource. If it is -1
+	 * then it will not appear in your requests.
+	 */
 	protected long  maxEnvelopeSize=-1;
 	
-	public TransferableResourceImpl(){};
-	
-	public TransferableResourceImpl(String destination, String resourceURI,long timeout,SelectorSetType selectors) throws SOAPException, JAXBException{
+    private String replyTo=Addressing.ANONYMOUS_ENDPOINT_URI;
+
+    /**
+	 * A Transferable resource is package local. It is not intended to be constructed by anything 
+	 * besides its factory and its unit tests. Please to not make it public.
+	 * @param destination A URL the represents the endpoint of this operation.
+	 * @param resourceURI a resource URI to refere to this type of resource.
+	 * @param timeout the default timeout to be used in operations.
+	 * @param selectors a set of selectors to use to identify this resource uniquely.
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 */
+	TransferableResourceImpl(String destination, String resourceURI,SelectorSetType selectors) throws SOAPException, JAXBException{
 		setDestination(destination);
-		setResourceURI(resourceURI);
-		messageTimeout=timeout;
+		setResourceUri(resourceURI);
 		this.selectorSet=selectors;
 		
 		initJAXB();
-
 	}
 
+	/** This constructor is intended to allow atransfereable resource to be constructed as part
+	 * of an EPR enumeration. It is expected that the provided epr contains all the required selectors 
+	 * for this resource to be located.
+	 * @param eprElement
+	 * @param endpointUrl
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 */
+	@SuppressWarnings("unchecked")
+	TransferableResourceImpl(Element eprElement, String endpointUrl) throws SOAPException, JAXBException {
+		initJAXB();
+		XmlBinding binding=new XmlBinding(null);
+		EndpointReferenceType epr = null;
+		epr = ((JAXBElement<EndpointReferenceType>)binding.unmarshal(eprElement)).getValue();
+		
+		// Determine callers return address. If anonymous, then use calling ERP's address
+		this.destination=epr.getAddress().getValue();
+		if(destination.equals("http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous"))
+			if(endpointUrl!=null)
+				this.destination=endpointUrl;
+		
+		// Repack ref params as separate resource URI and Selectors
+		List<Object> refParams = epr.getReferenceParameters().getAny();
+		for (Object param : refParams) {
+			Object testType= ((JAXBElement)param).getValue();
+			if(testType instanceof AttributableURI){
+				AttributableURI rUri = (AttributableURI)testType;
+				setResourceUri(rUri.getValue());				
+			}
+			if(testType instanceof SelectorSetType){
+				this.selectorSet=(SelectorSetType)testType;
+			}
+		}
+	}
+
+	
+	/**
+	 * If the client is the first part of wiseman to be used in this VM then this operation makes sure it has been properly initalized before any transfer is attempted.
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 */
 	private void initJAXB() throws SOAPException, JAXBException {
 		//initialize JAXB bindings
 		Message.initialize();
@@ -94,41 +158,6 @@ public class TransferableResourceImpl implements TransferableResource {
 		}
 	}
 
-	public TransferableResourceImpl(Element eprElement, String endpointUrl) throws SOAPException, JAXBException {
-		initJAXB();
-		XmlBinding binding=null;
-		try {
-			binding=new XmlBinding(null);
-		} catch (JAXBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		EndpointReferenceType epr = null;
-		try {
-			epr = ((JAXBElement<EndpointReferenceType>)binding.unmarshal(eprElement)).getValue();
-		} catch (JAXBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		// Determine callers return address. If anonymous, then use calling ERP's address
-		this.destination=epr.getAddress().getValue();
-		if(destination.equals("http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous"))
-			if(endpointUrl!=null)
-				this.destination=endpointUrl;
-		
-		List<Object> refParams = epr.getReferenceParameters().getAny();
-		for (Object param : refParams) {
-			Object testType= ((JAXBElement)param).getValue();
-			if(testType instanceof AttributableURI){
-				AttributableURI rUri = (AttributableURI)testType;
-				setResourceURI(rUri.getValue());				
-			}
-			if(testType instanceof SelectorSetType){
-				this.selectorSet=(SelectorSetType)testType;
-			}
-		}
-	}
 
 
 	/* (non-Javadoc)
@@ -146,31 +175,13 @@ public class TransferableResourceImpl implements TransferableResource {
 			JAXBException, IOException, FaultException, 
 			DatatypeConfigurationException, AccessDeniedFault {
 		
-		//required: host, resourceUri
-		if((destination == null)|(resourceURI ==null)){
-			String msg="Host Address and ResourceURI cannot be null.";
-			throw new IllegalArgumentException(msg);
-		}
-		
-        //Build the document
-        final Transfer xf = new Transfer();
-        xf.setAction(Transfer.DELETE_ACTION_URI);
-        xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); //Replying to creator
-        xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        final Management mgmt = new Management(xf);
-        mgmt.setTo(destination);
-        mgmt.setResourceURI(resourceURI);
-        final Duration timeout = 
-        	DatatypeFactory.newInstance().newDuration(messageTimeout);
-        mgmt.setTimeout(timeout);
-        
-        //populate attribute details
-        setMessageTimeout(messageTimeout);
-                
-	    //DONE: if xpathExpression is not null then generate fragment GET 
+		//Build the document
+		final Transfer xf = setTransferProperties(Transfer.DELETE_ACTION_URI);		
+		final Management mgmt = setManagementProperties(xf);
+                           
+	    // If xpathExpression is not null then generate fragment GET 
 	    if((fragmentRequest!=null)&&(fragmentRequest.trim().length()>0)){
-	    	//DONE: add the Fragement Header
+	    	// Add the Fragement Header
 	    	setFragmentHeader(fragmentRequest,fragmentDialect,mgmt);
 	    }
         
@@ -186,11 +197,13 @@ public class TransferableResourceImpl implements TransferableResource {
         }
                 
         log.fine("REQUEST:\n"+mgmt+"\n");
+        
         //Send the request
         final Addressing response = HttpClient.sendRequest(mgmt);
 
         //Check for fault during message generation
         if (response.getBody().hasFault()) {
+            log.severe("FAULT:\n"+response+"\n");
             SOAPFault fault = response.getBody().getFault();
             throw new FaultException(fault.getFaultString());
         }
@@ -201,8 +214,8 @@ public class TransferableResourceImpl implements TransferableResource {
 	}
 
 
+	// TODO obiwan314 We need to get this done
 	public Object[] invoke(QName action, Map<QName, String> parameters) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -215,6 +228,7 @@ public class TransferableResourceImpl implements TransferableResource {
 			DatatypeConfigurationException {
 		return put(content,null,null);
 	}
+	
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.TransferableResource#put(org.w3c.dom.Document, java.lang.String, java.lang.String)
 	 */
@@ -222,86 +236,36 @@ public class TransferableResourceImpl implements TransferableResource {
 			JAXBException, IOException, FaultException, 
 			DatatypeConfigurationException {
 		
-		//required: host, resourceUri
-		if((destination == null)|(resourceURI ==null)){
-			String msg="Host Address and ResourceURI cannot be null.";
-			throw new IllegalArgumentException(msg);
-		}
-		
-		//Populate attributes
-		setResourceURI(resourceURI);
-		setDestination(destination);
-				
 		//Build the document
-		final Transfer xf = new Transfer();
-		xf.setAction(Transfer.PUT_ACTION_URI);
-		xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); //Replying to creator
-		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+		final Transfer xf = setTransferProperties(Transfer.PUT_ACTION_URI);		
+		final Management mgmt = setManagementProperties(xf);
 		
-		final Management mgmt = new Management(xf);
-		mgmt.setTo(destination);
-		mgmt.setResourceURI(resourceURI);
-		final Duration timeout = DatatypeFactory.newInstance().newDuration(messageTimeout);
-		mgmt.setTimeout(timeout);
-		
-		//populate attribute details
-		setMessageTimeout(messageTimeout);
-
-	    //DONE: if xpathExpression is not null then generate fragment GET
-//		MixedDataType xmlFrag = null;
-//		JAXBElement<MixedDataType> fragment = null;
+	    // If xpathExpression is not null then generate fragment GET
 		
 	    if((fragmentExpression!=null)&&(fragmentExpression.trim().length()>0)){
-	    	//DONE: add the Fragement Header
-	    	setFragmentHeader(fragmentExpression,fragmentDialect,mgmt);
-	    	
-//	    	  if(content!=null){
-//	    		  MixedDataType type = (new ObjectFactory()).createMixedDataType();
-//	    		  type.getContent().add(content);
-////	    		  JAXBElement<MixedDataType> frag = (new ObjectFactory()).createXmlFragment(type);
-//	    		  fragment = (new ObjectFactory()).createXmlFragment(type);
-//	    	  }
+	    	// Add the Fragement Header
+	    	setFragmentHeader(fragmentExpression,fragmentDialect,mgmt);	    	
 	    }
 
-		//add the potential new content
-		//Add the payload: plug the content passed in into the document
+		// Add the potential new content
+		// Add the payload: plug the content passed in into the document
 		if(content !=null){
-			//DONE: wrap the content value passed in wsman:XmlFragment node
+			// Wrap the content value passed in wsman:XmlFragment node
 			// Now take the created DOM and append it to the SOAP body
 			if(fragmentExpression!=null){
-				Document newContent =mgmt.newDocument();
+				Document newContent =Message.newDocument();
 
-//				String[] pkgList={
-//				 "org.dmtf.schemas.wbem.wsman._1.wsman",
-//				 "org.xmlsoap.schemas.ws._2005._06.management"};
-//				mgmt.getXmlBinding().marshal(fragment, newContent);
-//				new XmlBinding(null, 
-//				new XmlBinding(pkgList).marshal(fragment, newContent);
-//###################				
-//		        final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
-//		        mixedDataType.getContent().add(content);
-//		        //create the XmlFragmentElement
-//		        final JAXBElement<MixedDataType> xmlFragment = 
-//		                Management.FACTORY.createXmlFragment(mixedDataType);
-////		        
-////		        //add the Fragment header passed in to the response
-////		        fragmentHeader.setTextContent(xpathExp);
-////		        response.getHeader().addChildElement(fragmentHeader);
-//		        
-//		        //add payload to the body
-//		        new Addressing().getXmlBinding().marshal(xmlFragment, mgmt.getBody());
-				
-//###################
 			    // Insert the root element node
 				Element element = 
 					newContent.createElementNS("http://schemas.dmtf.org/wbem/1/wsman.xsd","wsman:XmlFragment");
 				element.setTextContent(xmlToString(content));
 				newContent.appendChild(element);
-//###################				
+
 				mgmt.getBody().addDocument(newContent);
 				
-			}else{ //NON-FRAGMENT request processing.
-			mgmt.getBody().addDocument(content);
+			}else { 
+				//NON-FRAGMENT request processing.
+				mgmt.getBody().addDocument(content);
 			}
 		}
 		
@@ -330,15 +294,8 @@ public class TransferableResourceImpl implements TransferableResource {
 		
 		//parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors
-		//SOAPBody body = response.getBody();
         SOAPBody body = response.getBody();
         
-        // Make sure you get the nevelope NameSpaces
-//        Iterator iter = response.getEnvelope().getNamespacePrefixes();
-//        while(iter.hasNext()){
-//        	String ns = (String)iter.next();
-//        	body.addNamespaceDeclaration(ns,response.getEnvelope().getNamespaceURI(ns));
-//        }
        try {
         Document bodyDoc = body.extractContentAsDocument();
 		return new ResourceStateImpl(bodyDoc);
@@ -347,8 +304,50 @@ public class TransferableResourceImpl implements TransferableResource {
        }
 	}
 
+	/* (non-Javadoc)
+	 * @see com.sun.ws.management.client.Resource#put(com.sun.ws.management.client.ResourceState)
+	 */
+	public ResourceState put(ResourceState newState) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
+		return put(newState.getDocument()); 
+	}
+
+	protected Transfer setTransferProperties(String action) throws JAXBException, SOAPException {
+		//required: host, resourceUri
+		if((destination == null)|(resourceURI ==null)){
+			String msg="Host Address and ResourceURI cannot be null.";
+			throw new IllegalArgumentException(msg);
+		}
+
+		Transfer xf=new Transfer();
+		xf.setAction(action);
+		xf.setReplyTo(replyTo); //Replying to creator
+		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+		return xf;
+	}
+
 
 	
+	protected Management setManagementProperties(Addressing xf) throws SOAPException, JAXBException, DatatypeConfigurationException {
+		final Management mgmt = new Management(xf);
+		mgmt.setTo(destination);
+		mgmt.setResourceURI(resourceURI);
+		
+		if(messageTimeout>0){
+			final Duration timeout = DatatypeFactory.newInstance().newDuration(messageTimeout);
+			mgmt.setTimeout(timeout);
+		}
+		
+        if(maxEnvelopeSize>0){
+        	MaxEnvelopeSizeType size = TransferableResource.managementFactory.createMaxEnvelopeSizeType();
+        	BigInteger bi = new BigInteger(""+maxEnvelopeSize);
+        	size.setValue(bi);
+        	mgmt.setMaxEnvelopeSize(size);
+        }
+
+		return mgmt;
+		
+	}
+
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.TransferableResource#get()
 	 */
@@ -365,41 +364,14 @@ public class TransferableResourceImpl implements TransferableResource {
 	public ResourceState get(String xpathExpression,String dialect) throws SOAPException, 
 			JAXBException, IOException, FaultException, 
 			DatatypeConfigurationException {
-		
-		//required: host, resourceUri
-		if((destination == null)||(resourceURI ==null)){
-			String msg="Host Address and ResourceURI cannot be null.";
-			throw new IllegalArgumentException(msg);
-		}
-		
-		//initialize JAXB bindings
-        if(new Addressing().getXmlBinding()==null){
-        	SOAP.setXmlBinding(new XmlBinding(null));
-        }
+				
+		//Build the document
+		final Transfer xf = setTransferProperties(Transfer.GET_ACTION_URI);		
+		final Management mgmt = setManagementProperties(xf);
         
-        //Build the document
-        final Transfer xf = new Transfer();
-        xf.setAction(Transfer.GET_ACTION_URI);
-        xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); //Replying to creator
-        xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        final Management mgmt = new Management(xf);
-        mgmt.setTo(destination);
-        mgmt.setResourceURI(resourceURI);
-        final Duration timeout = DatatypeFactory.newInstance().newDuration(messageTimeout);
-        mgmt.setTimeout(timeout);
-        if(maxEnvelopeSize!=-1){
-        	MaxEnvelopeSizeType size = TransferableResource.managementFactory.createMaxEnvelopeSizeType();
-        	BigInteger bi = new BigInteger(""+maxEnvelopeSize);
-        	size.setValue(bi);
-        	mgmt.setMaxEnvelopeSize(size);
-        }
-        
-        //populate attribute details
-        setMessageTimeout(messageTimeout);
-                
-	    //DONE: if xpathExpression is not null then generate fragment GET 
+	    // If xpathExpression is not null then generate fragment GET 
 	    if((xpathExpression!=null)&&(xpathExpression.trim().length()>0)){
-	    	//DONE: add the Fragement Header
+	    	// Add the Fragement Header
 	    	setFragmentHeader(xpathExpression,dialect,mgmt);
 	    }
 	    
@@ -420,7 +392,7 @@ public class TransferableResourceImpl implements TransferableResource {
 
         //Check for fault during message generation
         if (response.getBody().hasFault()) {
-        	log.severe("RESPONSE:\n"+response+"\n");
+        	log.severe("FAULT:\n"+response+"\n");
             SOAPFault fault = response.getBody().getFault();
             throw new FaultException(fault.getFaultString());
         }
@@ -432,12 +404,6 @@ public class TransferableResourceImpl implements TransferableResource {
         // Iterate through the create response to obtain the selectors
         SOAPBody body = response.getBody();
      
-        // Make sure you get the nevelope NameSpaces
-//        Iterator iter = response.getEnvelope().getNamespacePrefixes();
-//        while(iter.hasNext()){
-//        	String ns = (String)iter.next();
-//        	body.addNamespaceDeclaration(ns,response.getEnvelope().getNamespaceURI(ns));
-//        }
         Document bodyDoc = body.extractContentAsDocument();
 		return new ResourceStateImpl(bodyDoc);
 	}
@@ -456,9 +422,6 @@ public class TransferableResourceImpl implements TransferableResource {
 		return this.destination;
 	}
 
-	public long defaultTimeout() {
-		return this.messageTimeout;
-	}
 
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.TransferableResource#getMessageTimeout()
@@ -486,20 +449,7 @@ public class TransferableResourceImpl implements TransferableResource {
 	}
 
 
-	/**
-	 * @param resourceURI The resourceURI to set.
-	 */
-	public void setResourceURI(String resourceURI) {
-		this.resourceURI = resourceURI;
-	}
 
-
-	/* (non-Javadoc)
-	 * @see com.sun.ws.management.client.Resource#put(com.sun.ws.management.client.ResourceState)
-	 */
-	public ResourceState put(ResourceState newState) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
-		return put(newState.getDocument()); 
-	}
 
 	@Override
 	public String toString() {
@@ -521,17 +471,13 @@ public class TransferableResourceImpl implements TransferableResource {
     public void setFragmentHeader(final String expression, final String dialect,
     		Management mgmt) throws SOAPException, JAXBException {
 
-        // remove existing, if any
-//        removeChildren(mgmt.getHeader(), FRAGMENT_TRANSFER);
         
         final DialectableMixedDataType dialectableMixedDataType = 
                 Management.FACTORY.createDialectableMixedDataType();
         if (dialect != null) {
-//            if (!XPath.isSupportedDialect(dialect)) {
-//                throw new FragmentDialectNotSupportedFault(XPath.SUPPORTED_FILTER_DIALECTS);
-//            }
             dialectableMixedDataType.setDialect(dialect);
         }
+
         dialectableMixedDataType.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, 
                 Boolean.TRUE.toString());
         
@@ -562,14 +508,14 @@ public class TransferableResourceImpl implements TransferableResource {
         return null;
     }
     
-	   public static SelectorType getSelectorByName(String name,Set<SelectorType> selectorSet){
-	    	for (SelectorType selectorType : selectorSet) {
-	    		if(selectorType.getName().equals(name)){
-	    			return selectorType;
-	    		}
-			}
-			return null;
+   protected static SelectorType getSelectorByName(String name,Set<SelectorType> selectorSet){
+    	for (SelectorType selectorType : selectorSet) {
+    		if(selectorType.getName().equals(name)){
+    			return selectorType;
+    		}
 		}
+		return null;
+	}
 
 	public void setMaxEnvelopeSize(long i) {
 		
@@ -579,5 +525,21 @@ public class TransferableResourceImpl implements TransferableResource {
 	public long getMaxEnvelopeSize() {
 		return maxEnvelopeSize;
 	}
+
+	public String getReplyTo() {
+		return replyTo;
+	}
+
+	public void setReplyTo(String replyTo) {
+		this.replyTo = replyTo;
+	}
+
+	/**
+	 * @param resourceURI The resourceURI to set.
+	 */
+	public void setResourceUri(String resourceURI) {
+		this.resourceURI = resourceURI;
+	}
+
 
 }

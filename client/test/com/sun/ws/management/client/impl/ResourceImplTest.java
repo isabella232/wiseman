@@ -759,8 +759,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 	       className = className.replace('.', '/');
 	       className = className + ".class";
 	      java.net.URL classUrl =
-	        new EnumerationResourceImpl().getClass().getResource(className);
-	      if (classUrl != null) {
+	        EnumerationResourceImpl.class.getResource(className);
+	      if(classUrl != null) {
 	        System.out.println("\nClass '" + className +
 	          "' found in \n'" + classUrl.getFile() + "'");
 	      } else {

@@ -14,7 +14,7 @@ import com.sun.ws.management.client.exceptions.FaultException;
 
 /**
  * An abstract representation of a WSManagement resource that focuses on 
- * those operation of WS-Transfer. 
+ *  WS-Transfer. Provides the basis for implementation of enumeration. 
  * 
  * @author wire
  * @author spinder
@@ -129,14 +129,20 @@ public interface TransferableResource {
 			DatatypeConfigurationException;
 
 	public abstract String getResourceUri();
+	public abstract void setResourceUri(String uri);
 
 	public abstract String getDestination();
+	public abstract void setDestination(String destination);
 
 	public abstract long getMessageTimeout();
 	public abstract void setMessageTimeout(long i);
 	
 	public abstract void setMaxEnvelopeSize(long i);
 	public abstract long getMaxEnvelopeSize();
+	
+	public abstract String getReplyTo();
+	public abstract void setReplyTo(String replyTo);
+
 
 
 }
