@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.4 2006-07-28 22:55:23 akhilarora Exp $
+ * $Id: EnumerationExtensions.java,v 1.5 2006-08-08 15:46:50 pmonday Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -60,7 +60,7 @@ public class EnumerationExtensions extends Enumeration {
     
     public static final QName ITEMS =
             new QName(Management.NS_URI, "Items", Management.NS_PREFIX);
-    
+
     public static final QName END_OF_SEQUENCE =
             new QName(Management.NS_URI, "EndOfSequence", Management.NS_PREFIX);
     
@@ -128,6 +128,12 @@ public class EnumerationExtensions extends Enumeration {
         final AnyListType anyListType = Management.FACTORY.createAnyListType();
         final List<Object> any = anyListType.getAny();
         for (final EnumerationItem ee : items) {
+            /*
+             * TODO: Add wrapper for <item> if EnumerationMode is ObjectAndEPR
+             * per R5.7-2 of the specification.  Waiting on fix to DMTF
+             * schema and subsequent JAXB generated source to include the
+             * wsman:Item element
+             */
             if (mode == null || EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
                 any.add(ee.getItem());
             }
@@ -210,7 +216,10 @@ public class EnumerationExtensions extends Enumeration {
         final JAXBElement<AttributableNonNegativeInteger> countElement =
                 Management.FACTORY.createTotalItemsCountEstimate(count);
         if (itemCount == null) {
-            // TODO: does not work yet - bug in JAXB 2.0 FCS?
+            /*
+             * TODO: does not work yet - bug in JAXB 2.0 FCS, see Issue 217 in JAXB
+             * https://jaxb.dev.java.net/issues/show_bug.cgi?id=217
+             */
             countElement.setNil(true);
         } else {
             count.setValue(itemCount);
