@@ -340,11 +340,7 @@ public class UserHandler extends TransferSupport {
 				tempUser.setState(userModelObject.getState());
 				tempUser.setZip(userModelObject.getZip());
 				tempUser.setAge(userModelObject.getAge());
-//				try {
-					binding.marshal(userFactory.createUser(tempUser), responseDoc );
-//				} catch (JAXBException e) {
-//					throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
-//				}
+		 		 binding.marshal(userFactory.createUser(tempUser), responseDoc );
 				
 				//DONE: extract Body contents
 				 Object resultOb = null;
@@ -358,20 +354,20 @@ public class UserHandler extends TransferSupport {
 				}
 				//DONE: act on the XPath isolated entity
 				String nodeAsString = xmlToString(nod).trim(); 
-				String stNode = "<ns9:state";String stEndNode = "</ns9:state>";
-				String stAmpNode = "&lt;ns9:state";String stAmpEndNode = "&lt;/ns9:state&gt;";
-//				System.out.println("stNode:"+xmlToString(nod)+":");
-				if(nodeAsString.indexOf(stNode)>-1){
+				if(nodeAsString.indexOf(":state")>-1){
+				   //extract the node content to do the update with.	
 				   String newValue = xmlToString(userChildNode);
-//				   System.out.println("newValue:"+newValue);
-				   int end =newValue.indexOf(stAmpEndNode);
-//				   System.out.println("end:"+end);
-				    int begin =newValue.indexOf(stAmpNode);
-//				   System.out.println("beginFirst:"+begin);
-				    begin =newValue.indexOf("&gt;",begin)+4;
-//				   System.out.println("begin:"+begin);
+				   int begin =newValue.indexOf(":state")+":state".length();
+				   begin=newValue.indexOf("&gt;",begin)+"&gt;".length();
+				   	if(begin==-1){
+					  begin=newValue.indexOf(">",begin)+1;  
+				    }
+				   int end =newValue.indexOf("&lt;",begin);
+				    if(end==-1){
+				      end = newValue.indexOf(">",begin);
+				    }
+				    
 				   String extracted = newValue.substring(begin,end);
-//				   System.out.println("Extracted:"+extracted);
 				   userModelObject.setState(extracted);
 				   tempUser.setState(extracted);
 				   //Now extract the changed value 
@@ -396,7 +392,8 @@ public class UserHandler extends TransferSupport {
 		        new Addressing().getXmlBinding().marshal(xmlFragment, response.getBody());
 //		        System.out.println("Resp:"+response);
 
-		} else{ //ELSE Process NON-FRAGMENT requests
+		} 
+		else{ //ELSE Process NON-FRAGMENT requests
 //			  response.getBody().addDocument(responseDoc);
 
 		UserType user=null;
