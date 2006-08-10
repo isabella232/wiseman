@@ -131,7 +131,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 			filterType.getContent().add(filter);
 			String timeoutValue = null;
 			enu.setEnumerate(endTo, timeoutValue, filter == null ? null
-					: filterType, enumerationMode.toBinding());
+					: filterType, enumerationMode==null ? null : enumerationMode.toBinding());
 		} else {
 			JAXBElement<EnumerationModeType> modeBinding = null;
 			if (enumerationMode != null)
