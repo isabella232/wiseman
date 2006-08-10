@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.40 2006-07-26 21:50:26 obiwan314 Exp $
+ $Id: build.xml,v 1.41 2006-08-10 19:01:23 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -204,6 +204,7 @@
           <include name="com/hp/**" />
           <include name="framework/models/**" />
         </classes>
+      <includesfile name="framework/models/users.store"/>  	
       <lib dir="${dist.dir}">
         <include name="${lib.filename}" />
       </lib>
@@ -353,6 +354,11 @@
     <copy todir="${test.build.classes.dir}">
       <fileset dir="${test.src.dir}">
         <include name="**/*.xml" />
+      </fileset>
+    </copy>
+    <copy todir="${test.build.classes.dir}">
+      <fileset dir="${test.src.dir}">
+        <include name="**/*.store" />
       </fileset>
     </copy>
   </target>
