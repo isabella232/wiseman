@@ -23,16 +23,19 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import util.WsManBaseTestSupport;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.client.EnumerationCtx;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.ServerIdentity;
+import com.sun.ws.management.client.TransferableResource;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.client.impl.EnumerationResourceImpl;
@@ -524,68 +527,69 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		created.delete();
 	}
 
-//	public void testFragmentPut() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
-//		// Now create an instance and test it's contents
-//		String dest = ResourceImplTest.destUrl;
-//		String resource = ResourceImplTest.resourceUri;
-//		long timeoutInMilliseconds = ResourceImplTest.timeoutInMilliseconds;
-//		Document content = null;
-//
-//		// now build Create XML body contents.
-//		String fName = "Fragment";
-//		String lName = "Put";
-//		String state = "NJ";
-//		String stateUpdated = "New Jersey";
-//		String address = "6000 Irwin Drive";
-////		String addressModified = address + "FragmentPut";
-//
-//		UserType user = userFactory.createUserType();
-//		user.setLastname(lName);
-//		user.setFirstname(fName);
-//		user.setAddress(address);
-//		user.setCity("Mount Laurel");
-//		user.setState(state);
-//		user.setZip("08054");
-//		user.setAge(16);
-//		content = Management.newDocument();
-//
-//		JAXBElement<UserType> userElement = userFactory.createUser(user);
-//		try {
-//			binding.marshal(userElement, content);
-//		} catch (JAXBException e1) {
-//			fail(e1.getMessage());
-//		}
+	public void testFragmentPut() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
+		// Now create an instance and test it's contents
+		String dest = ResourceImplTest.destUrl;
+		String resource = ResourceImplTest.resourceUri;
+		long timeoutInMilliseconds = ResourceImplTest.timeoutInMilliseconds;
+		Document content = null;
+
+		// now build Create XML body contents.
+		String fName = "Fragment";
+		String lName = "Put";
+		String state = "NJ";
+		String stateUpdated = "New Jersey";
+		String address = "6000 Irwin Drive";
+//		String addressModified = address + "FragmentPut";
+
+		UserType user = userFactory.createUserType();
+		user.setLastname(lName);
+		user.setFirstname(fName);
+		user.setAddress(address);
+		user.setCity("Mount Laurel");
+		user.setState(state);
+		user.setZip("08054");
+		user.setAge(16);
+		content = Management.newDocument();
+
+		JAXBElement<UserType> userElement = userFactory.createUser(user);
+		try {
+			binding.marshal(userElement, content);
+		} catch (JAXBException e1) {
+			fail(e1.getMessage());
+		}
 //		TransferableResource created =(TransferableResource) ResourceFactory.create(dest, resource,
-//				timeoutInMilliseconds, content,ResourceFactory.LATEST);
-//
-//		//DONE: create fragment request to update state field only.
-//		String fragmentRequest = "//*[local-name()='state']";
-//		  content = Management.newDocument();
-//		    // Insert the root element node
-//		    Element element =
-//		    	content.createElementNS("http://examples.hp.com/ws/wsman/user","ns9:state");
-//		    element.setTextContent(stateUpdated);
-//		    content.appendChild(element);
-//		    created.put(content,
-//		    		fragmentRequest,
-//					XPath.NS_URI);
-//
-//		ResourceState retrieved = created.get();
-//
-//		assertNotNull("Retrieved resource is NULL.", retrieved);
-//		Document payLoad = retrieved.getDocument();
-//
-//		Element node = payLoad.getDocumentElement();
-//		user = userFactory.createUserType();
-//		// Init the user by transfering the fields from
-//		Node userChildNode = node;
-//		JAXBElement<UserType> ob = (JAXBElement<UserType>) binding
-//				.unmarshal(userChildNode);
-//		user = (UserType) ob.getValue();
-//
-//		assertEquals("Values not equal.", stateUpdated, user.getState());
-//
-//	}
+		TransferableResource created =(TransferableResource) ResourceFactory.create(dest, resource,
+				timeoutInMilliseconds, content,ResourceFactory.LATEST);
+
+		//DONE: create fragment request to update state field only.
+		String fragmentRequest = "//*[local-name()='state']";
+		  content = Management.newDocument();
+		    // Insert the root element node
+		    Element element =
+		    	content.createElementNS("http://examples.hp.com/ws/wsman/user","ns9:state");
+		    element.setTextContent(stateUpdated);
+		    content.appendChild(element);
+		    created.put(content,
+		    		fragmentRequest,
+					XPath.NS_URI);
+
+		ResourceState retrieved = created.get();
+
+		assertNotNull("Retrieved resource is NULL.", retrieved);
+		Document payLoad = retrieved.getDocument();
+
+		Element node = payLoad.getDocumentElement();
+		user = userFactory.createUserType();
+		// Init the user by transfering the fields from
+		Node userChildNode = node;
+		JAXBElement<UserType> ob = (JAXBElement<UserType>) binding
+				.unmarshal(userChildNode);
+		user = (UserType) ob.getValue();
+
+		assertEquals("Values not equal.", stateUpdated, user.getState());
+
+	}
 
 
 	public void testFind() throws SOAPException, JAXBException, IOException,
@@ -605,105 +609,99 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	}
 
-//	 public void testTest(){
-//		 loadUsersFromFile();
-//	 }
-//	
-//	 public void testEnumeration() throws SOAPException, JAXBException,
-//		 IOException, FaultException, DatatypeConfigurationException{
-////		 String resourceUri = "wsman:hp/employee";
-//		 String resourceUri = "wsman:auth/userenum";
-////		 String className ="com.sun.ws.management.server.ReflectiveRequestDispatcher";
-////		 locateClass(className);
-////		 className ="com.sun.tools.xjc.reader.Util";
-////		 locateClass(className);
-//		 //test that Find works to retrieve the Enumeration instance.
-//		 Resource[] enumerableResources = ResourceFactory.find(
-//		 ResourceImplTest.destUrl,
-////		 ResourceImplTest.resourceUri,
-//		 resourceUri,
-//		 ResourceImplTest.timeoutInMilliseconds,
-//		 null);
-//		 
-//		 assertEquals("Expected one resource.",1,enumerableResources.length);
-//		 Resource retrieved = enumerableResources[0];
-//		 assertTrue(retrieved instanceof EnumerationResourceImpl);
-//		
-//		 //Build the filters
-//		 // String xpathFilter = "/employee[@mail='simeon.pinder@hp.com']";
-//		 String xpathFilter = "/employee[@sn='kramer']";
-//		 String[] filters = new String[]{xpathFilter};
-//		 String enumContext = retrieved.enumerate(filters,XPath.NS_URI,false);
-//		 assertNotNull("Enum context retrieval problem.",enumContext);
-//		 assertTrue("Context id is empty.",(enumContext.trim().length()>0));
-//		
-//		 //DONE: now test the pull mechanism
-//		 int maxTime =1000*60*15;
-//		 int maxElements = 5;
-//		 int maxChar = 20000; //random limit. NOT currently enforced.
-//		 // Object[] retrievedValues = retrieved.pull(enumContext,maxTime,
-//		 ResourceState retrievedValues = retrieved.pull(enumContext,maxTime,
-//		 maxElements,maxChar);
-//		 //Navigate down to retrieve Items children
-//		 //Document Children
-//		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
-//		 //PullResponse node
-//		 Node child = rootChildren.item(0);
-//		 //Items node
-//		 NodeList children = child.getChildNodes().item(1).getChildNodes();
-//		
-//		 for(int i=0;i<children.getLength();i++){
-//		 Node node = children.item(i);
-//		 if(node.getNodeName().indexOf("EnumerationContext")>-1){
-//		 //ignore
-//		 System.out.println("This line mattered!!!");
-//		 }else{
-//		 UserType user = null;
-//		 XmlBinding empBinding = new XmlBinding("com.hp.examples.ws.wsman.user");
-//		 JAXBElement<UserType> ob =
-//		 (JAXBElement<UserType>)empBinding.unmarshal(node);
-//		 user=(UserType)ob.getValue();
-//		 System.out.println("F:"+user.getFirstname());
-//		 System.out.println("L:"+user.getLastname());
-//		 }
-//		 }
-////		 EmployeeType user = null;
-////		 XmlBinding empBinding = new XmlBinding("com.hp.examples.ws.wsman.emp");
-////		 JAXBElement<EmployeeType> ob =
-////		 (JAXBElement<EmployeeType>)empBinding.unmarshal(node);
-////		 user=(EmployeeType)ob.getValue();
-////		 System.out.println("F:"+user.getFirstname());
-////		 System.out.println("L:"+user.getLastname());
-////		 }
-////		 }
-//		
-//		 retrievedValues = retrieved.pull(enumContext,maxTime,
-//		 maxElements,maxChar);
-//		 assertNotNull("No pull results obtained.",retrievedValues);
-//		
-//		 //Now do a find again to make sure that correct context is retrieved.
-//		 Resource[] enumResources = ResourceFactory.find(
-//		 ResourceImplTest.destUrl,
-//		 resourceUri,
-//		 ResourceImplTest.timeoutInMilliseconds,
-//		 null);
-//		 Resource retEnumRes = enumResources[0];
-//		 retrievedValues = retEnumRes.pull(enumContext,maxTime,
-//		 maxElements,maxChar);
-//		
-//		 //TODO: test release
-//		 retrieved.release(enumContext);
-//		
-//		 retrieved.enumerate(filters,XPath.NS_URI,false);
-//		 // try{
-//		 // retrieved.pull(enumContext,maxTime,
-//		 // maxElements,maxChar);
-//		 // fail("Should be no such context.");
-//		 // }catch(InvalidEnumerationContextFault iecf){
-//		 // assertTrue(true);
-//		 // }
-//	
-//	 }
+	 public void testEnumeration() throws SOAPException, JAXBException,
+	 IOException, FaultException, DatatypeConfigurationException{
+	 
+		 //define enumeration handler url
+		 String resourceUri = "wsman:auth/userenum";
+	
+		 SelectorSetType selectors = null;
+		 //test that Find works to retrieve the Enumeration instance.
+		 Resource[] enumerableResources = ResourceFactory.find(
+		 ResourceImplTest.destUrl,
+		 resourceUri,
+		 ResourceImplTest.timeoutInMilliseconds,
+		 selectors);
+		 
+		 assertEquals("Expected one resource.",1,enumerableResources.length);
+		 Resource retrieved = enumerableResources[0];
+		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		
+		 //Build the filters
+		 String testName = "James";
+		 String xpathFilter = "//user[firstname='"+testName+"']";
+		 String[] filters = new String[]{xpathFilter};
+		 //Retrieve the Enumeration context.
+		 EnumerationCtx enumContext = retrieved.enumerate(filters,XPath.NS_URI,false,false);
+		  assertNotNull("Enum context retrieval problem.",enumContext);
+		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
+		
+		 //DONE: now test the pull mechanism
+		 int maxTime =1000*60*15;
+		 int maxElements = 5;
+		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 
+		 ResourceState retrievedValues = retrieved.pull(enumContext,maxTime,
+				 maxElements,maxChar);
+		 //Navigate down to retrieve Items children
+		 	//Document Children
+		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
+		  //PullResponse node
+		 assertNotNull("No root node for PullResponse.",rootChildren);
+		 	Node child = rootChildren.item(0);
+		 	String toString = xmlToString(child);
+		 //Items node
+		 assertNotNull("No child node for PullResponse found.",child);
+		 //Check number of enumerated values returned.
+		 NodeList children = child.getChildNodes().item(1).getChildNodes();
+		 assertEquals("Incorrect number of elements returned!",
+				 maxElements, children.getLength());
+		 
+		 //DONE: iterate through to make sure that 
+		 for(int i=0;i<children.getLength();i++){
+			 Node node = children.item(i);
+			 if(node.getNodeName().indexOf("EnumerationContext")>-1){
+				 //ignore
+			 }else{
+				 UserType user = null;
+				 String[] pkgList = {"com.hp.examples.ws.wsman.user"};
+				 XmlBinding empBinding = new XmlBinding(null,pkgList);
+				 JAXBElement<UserType> ob =
+					 (JAXBElement<UserType>)empBinding.unmarshal(node);
+				 user=(UserType)ob.getValue();
+				 assertTrue(user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
+			 }
+		 }
+		 
+		 //Execute another pull. We know the data set users.store so another
+		 //   pull is valid.
+		 retrievedValues = retrieved.pull(enumContext,maxTime,
+				 maxElements,maxChar);
+		  assertNotNull("No pull results obtained.",retrievedValues);
+		
+		 //Now do a find again to make sure that correct context is retrieved.
+		 Resource[] enumResources = ResourceFactory.find(
+				 ResourceImplTest.destUrl,
+				 resourceUri,
+				 ResourceImplTest.timeoutInMilliseconds,
+				 selectors);
+		 //Only resource retrieved should be the enumerable resource
+		 Resource retEnumRes = enumResources[0];
+		 retrievedValues = retEnumRes.pull(enumContext,maxTime,
+		 maxElements,maxChar);
+		
+		 //DONE: test release
+		 retrieved.release(enumContext);
+		 try{
+			 retrievedValues = retEnumRes.pull(enumContext,maxTime,
+					 maxElements,maxChar);
+			 fail("This context should have been destroyed.");
+		 }catch(FaultException ex){
+			 //Do nothing, should fail.
+		 }
+	 }
+	
+
 
 	public static String xmlToString(Node node) {
 		try {
@@ -770,58 +768,4 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 	      }
 	}
 	
-//	private static final String div = "################# User Type Divider ################";
-//	public void loadUsersFromFile(){
-//		String userStoreSource="com/hp/management/wsman/test/models/users.store";
-//		InputStream is 
-//		  =EnumerationUserHandler.class.getClassLoader().getResourceAsStream(userStoreSource);
-//		//TODO: cycle through input stream and load the UserType instances
-//		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-//		String line = "";
-//		String lineInBuffer = "";
-//		ArrayList allUsers = new ArrayList();
-//	  try{	
-//		while((line=br.readLine())!=null){
-//			if((line.indexOf(div)==-1)&&(line.trim().length()>0)){
-//				// create a new user class and add it to the list
-//				UserModelObject userObject = new UserModelObject();
-//				line = line.trim();
-//				System.out.println("line:"+line);
-//				Document newDocument = Management.newDocument();
-//				Node node =newDocument.createTextNode(line);
-//					newDocument.adoptNode(node);
-//				System.out.println("node:"+node+" "+node.getNodeType()+" "+node.getNodeValue());
-//				System.out.println("nodeName "+node.getNodeName()+" "+node.getTextContent());
-//				System.out.println("toString() "+node.toString());
-//				System.out.println("NodeAsString:"+xmlToString(node.getFirstChild())+":");
-//				System.out.println("NodeAsString:"+xmlToString(node.getLastChild())+":");
-//			    System.out.println("NodeCnt:"+node.getChildNodes().getLength());
-//				System.out.println("NodeAsString:"+xmlToString(node.getChildNodes().item(1))+":");
-//			    // Insert the root element node
-////			    Element element =
-////			    	content.createElementNS("http://examples.hp.com/ws/wsman/user","ns9:state");
-////			    element.setTextContent(stateUpdated);
-////			    content.appendChild(element);
-////			    created.put(content,
-////			    		fragmentRequest,
-////						XPath.NS_URI);
-////				//Normal processing to create a new UserObject
-////				Node userChildNode = body.getFirstChild();
-//				UserType user=null;
-//				try {
-//					JAXBElement<UserType> ob = (JAXBElement<UserType>)binding.unmarshal(node);
-////					JAXBElement<UserType> ob = (JAXBElement<UserType>)binding.unmarshal(newDocument);
-//					user=(UserType)ob.getValue();
-//					
-//				} catch (JAXBException e) {
-//					System.out.println("e:"+e.getMessage());
-//					throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
-//				}
-//
-//			}
-//		}//end of while
-//	  }catch(Exception ex){
-//		  System.out.println("ex:"+ex.getMessage());
-//	  }
-//	}
 }
