@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.33 2006-07-30 07:36:13 akhilarora Exp $
+ * $Id: EnumerationSupport.java,v 1.34 2006-08-17 18:40:10 akhilarora Exp $
  */
 
 package com.sun.ws.management.server;
@@ -524,9 +524,6 @@ public final class EnumerationSupport extends BaseSupport {
         throws SOAPException, JAXBException {
         // place an item count estimate if one was requested
         final EnumerationExtensions enx = new EnumerationExtensions(request);
-        try {
-            enx.prettyPrint(System.out);
-        } catch (Exception ignore) {}
         if (enx.getRequestTotalItemsCountEstimate() != null) {
             final EnumerationExtensions rx = new EnumerationExtensions(response);
             final int estimate = iterator.estimateTotalItems(clientContext);
