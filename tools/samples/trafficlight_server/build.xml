@@ -1,8 +1,7 @@
-<project name="user" default="generate" basedir=".">
+<project name="user" default="war" basedir=".">
         
-        <!-- Make sure to call to the super-properties file first. -->
         <property file="project.properties"/>
-	  <property file="${user.home}/.ant.properties"/>
+        <property file="${user.home}/.ant.properties"/>
 
 
 		  <path id="jaxb.compile.classpath">
@@ -18,16 +17,11 @@
           </path>
 
           <path id="compile.classpath">
-            <path refid="jaxb.compile.classpath" />
-            <path refid="jaxrpc.compile.classpath" />
             <fileset dir="${lib.dir}">
               <include name="**/*.jar"/>
             </fileset>
-            <path path="${classes.dir}" />        
-            <fileset dir="${wiseman.root}/dist">
-              <include name="**/*.jar"/>
-            </fileset>
-          </path>
+          	
+           </path>
         
         <!--  =================================================  -->
         <!--   "init" - initializes props and dirs for targets   -->
@@ -43,6 +37,7 @@
            </condition>
             <mkdir dir="${dist.dir}" />           
            <mkdir dir="${classes.dir}" />
+            <mkdir dir="${classes.dir}_model" />
            <mkdir dir="${gensrc.dir}" />
          </target>
 
@@ -50,17 +45,22 @@
          <!--  ==========================================================  -->
          <!--   "compile" - Compiles source files in src and gensrc dirs   -->
          <!--  ==========================================================  -->   
-         <target name="compile" depends="init" description="Compiles source files in src and gensrc directories.">
-             <!-- javac destdir="${classes.dir}"
+         <target name="compile" depends="init,generate" description="Compiles source files in src and gensrc directories.">
+              <javac destdir="${classes.dir}_model"
                    debug="${debug}">
               <classpath refid="compile.classpath" />       
-              <src path="${gensrc.dir}" />
-            </javac -->
-            
-            <javac destdir="${classes.dir}"
+              <src path="model/${src.dir}" />           
+            </javac>
+
+            <copy todir="${classes.dir}_model">
+              <fileset dir="model/${src.dir}" includes="**/*.gif,**/*.properties"/>      
+       		</copy>
+
+            	<javac destdir="${classes.dir}"
                    debug="${debug}">
               <classpath refid="compile.classpath" />       
-              <src path="${src.dir}" />           
+              <classpath path="${classes.dir}_model"/>
+            		<src path="${src.dir}" />           
             </javac>
          	
             <copy todir="${classes.dir}">
@@ -73,9 +73,9 @@
          <!--   "jar" - Compiles source files in src and gensrc dirs and Jars them  -->
          <!--  ===================================================================  -->  
          <target name="jar" depends="compile" description="Compiles source and creates the jar: ${jar.file}" >
-            <jar destfile="${jar.file}" update="true">
-                <fileset dir="${classes.dir}"/>
-            </jar>
+            <jar destfile="${dist.dir}/traffic_model.jar" update="true">
+                <fileset dir="${classes.dir}_model"/>
+            </jar>         	
          </target>
 
          <!--  ===================================================================  -->
@@ -108,16 +108,31 @@
 	            path="${war.context.path}" war="${basedir}/${dist.dir}/${war.filename}" update="true" />
 	  </target>
 
-	  <target name="war" depends="compile">
+	  <target name="war" depends="jar">
 	    <war destfile="${dist.dir}/${war.filename}"
 	         webxml="${wiseman.root}/etc/web.xml"
 	         index="true">
 	      <classes dir="${classes.dir}">
-	        <include name="com/sun/ws/management/server/handler/**" />
 	        <include name="**" />
 	      </classes>
-	      <lib dir="${wiseman.root}/${dist.dir}">
-	        <include name="wiseman.jar" />
+	    	
+	      <lib dir="${lib.dir}">
+	        <include  name="wiseman.jar" />
+	        <include  name="velocity-1.4.jar" />
+	        <include  name="velocity-dep-1.4.jar" />
+	      </lib>	    	
+	      <lib dir="${lib.dir}">
+	        <include  name="activation.jar" />
+	        <include  name="jsr173_1.0_api.jar" />
+	        <include  name="jaxb-api.jar" />
+	        <include  name="jaxb-impl.jar" />
+	      </lib>
+	      <lib dir="${lib.dir}">
+	        <include  name="saaj-api.jar" />
+	        <include  name="saaj-impl.jar" />
+	      </lib>
+	      <lib dir="${dist.dir}">
+	        <include name="traffic_model.jar" />
 	      </lib>
 	      <metainf dir="${wiseman.root}/etc">
 	        <include name="context.xml" />
@@ -140,23 +155,23 @@
          <!--  ===================================================================  -->          
          <target name="clean" description="Deletes the directories ${classes.dir} and ${gensrc.dir}  **NOTE: leaves ${jar.file}">
            <delete dir="${classes.dir}"/>
+            <delete dir="${classes.dir}_model"/>
             <delete dir="${gensrc.dir}"/>
+            <delete dir="velocity.log"/>
          </target>              
 
     <!--  ===================================================================  -->
     <!--   "genwsdl" - Generates WSDL from State XSD                           -->
     <!--  ===================================================================  -->          
     <target name="genwsdl" description="Generates WSDL from State XSD">
+        <mkdir dir="wsdl" />           
    	   <taskdef name="xsd2wsdl" classname="com.sun.ws.management.tools.Xsd2WsdlTask">
        	<!-- classpath refid="compile.classpath" / -->
    	   	<classpath>
    		    <fileset dir="../../lib">
-   		      <include name="**/*.jar"/>
+   		      <include name="*.jar"/>
    		    </fileset>
-   		    <fileset dir="../../dist">
-   		      <include name="**/*.jar"/>
-   		    </fileset>
-   	   	</classpath>
+    	   	</classpath>
       </taskdef>
       <!-- mkdir dir="${user.output.dir}"/ -->
       <xsd2wsdl xsdFile="${user.xsd.file}" />
@@ -165,15 +180,11 @@
 	<!--  ===================================================================  -->
          <!--   "generate" - Generates Java Classes from WSDL                       -->
          <!--  ===================================================================  -->          
-         <target name="generate" description="Generates Java Classes from WSDL">
+         <target name="generate" depends="genwsdl" description="Generates Java Classes from WSDL">
            <taskdef 
                name="wsdl2wsman" 
                classname="com.sun.ws.management.tools.Wsdl2WsmanTask" >
-            <classpath>
-                <fileset dir="../../lib" includes="*.jar" />
-                <fileset dir="../../dist" includes="*.jar" />
-                <fileset dir="${jaxb.lib.dir}" includes="*.jar"/>
-            </classpath>
+      	      <classpath refid="compile.classpath" />
 
            </taskdef>
            <mkdir dir="${user.output.dir}"/>
