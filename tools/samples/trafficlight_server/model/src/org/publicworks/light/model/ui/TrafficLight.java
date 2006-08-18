@@ -1,4 +1,4 @@
-package com.sun.traffic.light.ui;
+package org.publicworks.light.model.ui;
 import java.awt.BorderLayout;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;

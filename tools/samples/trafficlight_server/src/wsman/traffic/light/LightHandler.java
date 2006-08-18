@@ -9,13 +9,13 @@ import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
+import org.publicworks.light.model.TrafficLightModel;
+import org.publicworks.light.model.ui.TrafficLight;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.sun.traffic.light.model.TrafficLightModel;
 import com.sun.traffic.light.types.ObjectFactory;
 import com.sun.traffic.light.types.TrafficLightType;
-import com.sun.traffic.light.ui.TrafficLight;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;

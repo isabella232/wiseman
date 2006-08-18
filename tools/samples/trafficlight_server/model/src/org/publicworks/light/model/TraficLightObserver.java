@@ -1,4 +1,4 @@
-package com.sun.traffic.light.model;
+package org.publicworks.light.model;
 
 import java.util.Observable;
 

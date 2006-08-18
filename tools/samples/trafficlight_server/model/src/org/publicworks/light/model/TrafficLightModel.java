@@ -1,10 +1,11 @@
-package com.sun.traffic.light.model;
+package org.publicworks.light.model;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 
-import com.sun.traffic.light.ui.TrafficLight;
+import org.publicworks.light.model.ui.TrafficLight;
+
 
 public class TrafficLightModel extends Observable {
     private static Map<String,TrafficLight> lights=new HashMap<String,TrafficLight>();

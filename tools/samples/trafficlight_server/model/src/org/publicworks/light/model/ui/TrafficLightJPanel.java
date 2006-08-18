@@ -1,4 +1,4 @@
-package com.sun.traffic.light.ui;
+package org.publicworks.light.model.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
@@ -14,6 +14,10 @@ import javax.swing.WindowConstants;
  * which light picture should be shown.
 */
 public class TrafficLightJPanel extends javax.swing.JPanel {
+	private static final String GREEN_TRAFICLIGHT_GIF = "org/publicworks/light/model/ui/images/trafic_green.gif";
+	private static final String YELLOW_TRAFICLIGHT_GIF = "org/publicworks/light/model/ui/images/trafic_yellow.gif";
+	private static final String RED_TRAFICLIGHT_GIF = "org/publicworks/light/model/ui/images/trafic_red.gif";
+	private static final String DARK_TRAFICLIGHT_GIF = "org/publicworks/light/model/ui/images/trafic.gif";
 	private JLabel traffic;
 	private JLabel trafficYellow;
 	private JLabel trafficGreen;
@@ -45,14 +49,14 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 			{
 				traffic = new JLabel();
 				this.add(traffic, BorderLayout.CENTER);
-				traffic.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic.gif")));
+				traffic.setIcon(new ImageIcon(getClass().getClassLoader().getResource(DARK_TRAFICLIGHT_GIF)));
 				traffic.setPreferredSize(new java.awt.Dimension(68, 130));
 				traffic.setSize(68, 130);
 			}
 			{
 				trafficRed = new JLabel();
 				this.add(trafficRed, BorderLayout.CENTER);
-				trafficRed.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic_red.gif")));
+				trafficRed.setIcon(new ImageIcon(getClass().getClassLoader().getResource(RED_TRAFICLIGHT_GIF)));
 				trafficRed.setVisible(false);
 				trafficRed.setPreferredSize(new java.awt.Dimension(68, 130));
 				trafficRed.setSize(68, 130);
@@ -60,7 +64,7 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 			{
 				trafficYellow = new JLabel();
 				this.add(trafficYellow, BorderLayout.CENTER);
-				trafficYellow.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic_yellow.gif")));
+				trafficYellow.setIcon(new ImageIcon(getClass().getClassLoader().getResource(YELLOW_TRAFICLIGHT_GIF)));
 				trafficYellow.setVisible(false);
 				trafficYellow.setPreferredSize(new java.awt.Dimension(68, 130));
 				trafficYellow.setSize(68, 130);
@@ -68,7 +72,7 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 			{
 				trafficGreen = new JLabel();
 				this.add(trafficGreen, BorderLayout.CENTER);
-				trafficGreen.setIcon(new ImageIcon(getClass().getClassLoader().getResource("com/sun/traffic/light/ui/images/trafic_green.gif")));
+				trafficGreen.setIcon(new ImageIcon(getClass().getClassLoader().getResource(GREEN_TRAFICLIGHT_GIF)));
 				trafficGreen.setVisible(false);
 				trafficGreen.setPreferredSize(new java.awt.Dimension(68, 130));
 				trafficGreen.setSize(68, 130);

@@ -5,7 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.sun.traffic.light.model.TrafficLightModel;
+import org.publicworks.light.model.TrafficLightModel;
+
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.enumeration.EnumerationHandler;

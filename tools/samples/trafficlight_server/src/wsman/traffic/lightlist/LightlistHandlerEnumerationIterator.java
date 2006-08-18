@@ -12,13 +12,13 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilder;
 
+import org.publicworks.light.model.ui.TrafficLight;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import wsman.traffic.light.LightHandler;
 
 import com.sun.traffic.light.types.TrafficLightType;
-import com.sun.traffic.light.ui.TrafficLight;
 import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
