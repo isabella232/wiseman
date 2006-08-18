@@ -7,6 +7,7 @@
 	<classpathentry kind="src" path="client/test"/>
 	<classpathentry kind="src" path="client/samples/trafficlight_client/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
+	<classpathentry kind="src" path="tools/samples/trafficlight_server/model/src"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/activation.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/javax.servlet.jar"/>
