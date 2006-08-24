@@ -10,7 +10,6 @@
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/activation.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/javax.servlet.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jaxb-api.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jaxb-impl.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxb/jaxb-xjc.jar"/>
@@ -22,6 +21,7 @@
 	<classpathentry exported="true" kind="lib" path="tools/lib/velocity-dep-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/velocity-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/ant.jar"/>
+	<classpathentry kind="lib" path="se/lib/servlet-api.jar"/>
 	<classpathentry kind="src" path="se/gen-src"/>
 	<classpathentry exported="true" kind="var" path="ECLIPSE_HOME/plugins/org.junit_3.8.1/junit.jar"/>
 	<classpathentry kind="output" path="ebin"/>
