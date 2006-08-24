@@ -56,7 +56,7 @@ public class TrafficClientApp extends javax.swing.JFrame {
 	private JButton jButtonEnum;
 
 	
-	private static final String TRAFFIC_NS_URI = "http://hp.com/traffic/light/types";
+	private static final String TRAFFIC_NS_URI = "http://sun.com/traffic/light/types";
     private static final String TRAFFIC_NS_PREFIX = "tl";
 
     public static final String PROPERTY_NAME_LOCALNAME = "name";
@@ -69,9 +69,9 @@ public class TrafficClientApp extends javax.swing.JFrame {
     public static final QName PROPERTY_X = new QName(TRAFFIC_NS_URI,PROPERTY_X_LOCALNAME,TRAFFIC_NS_PREFIX);
     public static final QName PROPERTY_Y = new QName(TRAFFIC_NS_URI,PROPERTY_Y_LOCALNAME,TRAFFIC_NS_PREFIX);
 
-	public static final String RESOURCE_URI="wsman:traffic/light";
-	public static final String RESOURCEFACTORY_URI="wsman:traffic/lightfactory";
-	public static final String RESOURCELIST_URI="wsman:traffic/lightlist";
+	public static final String RESOURCE_URI="wsman:traffic/resource";
+	public static final String RESOURCEFACTORY_URI="wsman:traffic/factory";
+	public static final String RESOURCELIST_URI="wsman:traffic/list";
 
 	
 	/**
