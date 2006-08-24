@@ -6,18 +6,9 @@
 	  
 
 	  <path id="compile.classpath">
-	    <path path="${build.classes.dir}" />
 	    <fileset dir="${lib.dir}">
 	      <include name="**/*.jar"/>
 	    </fileset>
-	    <fileset dir="../../${dist.dir}">
-	      <include name="*.jar"/>
-	    </fileset>
-	    <fileset dir="${wiseman.root}/${dist.dir}">
-	      <include name="*.jar"/>
-	    </fileset>
-	  	
-	  	
 	  </path>
 	
 	<target name="init">
@@ -39,7 +30,7 @@
 	        <attribute name="Implementation-Version" value="1.0" />
 	        <attribute name="Sealed" value="false" />
 	      	<attribute name="Main-Class" value="com.sun.ws.management.traffic.client.TrafficClientApp" />
-	      	<attribute name="Class-Path" value="../wiseman-client.jar ../wiseman.jar lib/jaxb/activation.jar lib/jaxb/jaxb-api.jar lib/jaxb/jaxb-impl.jar lib/jaxb/jsr173_1.0_api.jar lib/jaxrpc/saaj-api.jar lib/jaxrpc/saaj-impl.jar" />
+	      	<attribute name="Class-Path" value="lib/wiseman-client.jar lib/wiseman.jar lib/activation.jar lib/jaxb-api.jar lib/jaxb-impl.jar lib/jsr173_1.0_api.jar lib/saaj-api.jar lib/saaj-impl.jar" />
 	      </manifest>
 	        <!-- fileset dir="${src.dir}/**/*.gif"/ -->
 	        <fileset dir="${build.classes.dir}"/>
