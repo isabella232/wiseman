@@ -508,15 +508,6 @@ public class TransferableResourceImpl implements TransferableResource {
         return null;
     }
     
-   protected static SelectorType getSelectorByName(String name,Set<SelectorType> selectorSet){
-    	for (SelectorType selectorType : selectorSet) {
-    		if(selectorType.getName().equals(name)){
-    			return selectorType;
-    		}
-		}
-		return null;
-	}
-
 	public void setMaxEnvelopeSize(long i) {
 		
 		maxEnvelopeSize=i;
