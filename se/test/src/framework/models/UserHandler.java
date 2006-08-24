@@ -38,6 +38,7 @@ import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.framework.Utilities;
 import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
