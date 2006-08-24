@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.5 2006-08-18 15:34:16 obiwan314 Exp $
+ $Id: build.xml,v 1.6 2006-08-24 14:20:47 obiwan314 Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
@@ -111,6 +111,7 @@
   	<!-- Get the samples for tooling -->
   	<copy todir="${dist.dir}">
   	  <fileset dir="tools">
+	    <include name="samples/**/*.gif" />
 	    <include name="samples/**/*.java" />
 	    <include name="samples/**/*.xsd" />
 	    <include name="samples/**/*.xml" />
