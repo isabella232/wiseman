@@ -19,11 +19,16 @@
 *#
 package ${wisemanPackage};
 
-import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.framework.handlers.DelegatingHandler;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.xml.XmlBinding;
+import com.sun.ws.management.InternalErrorFault;
 
 import java.util.logging.Logger;
+
+import javax.xml.bind.JAXBException;
 
 import ${delegateClassName};
 
@@ -36,17 +41,18 @@ import ${delegateClassName};
 public class ${handlerName} extends DelegatingHandler
 {
     //Log for logging messages
-    private Logger m_log = Logger.getLogger(${handlerName}.class.getName());
+    @SuppressWarnings("unused")
+    private Logger log = Logger.getLogger(${handlerName}.class.getName());
 
-    private static ${delegateName} m_delegate;
+    private static ${delegateName} delegate;
     static
     {
-        m_delegate = new ${delegateName}();
+        delegate = new ${delegateName}();
     }
 
     public ${handlerName}()
     {
-        super(m_delegate);
+        super(delegate);
     } 
 
 #if(${hasCustomOpNames})
@@ -55,22 +61,22 @@ public class ${handlerName} extends DelegatingHandler
     * to wsa:Action uri for SPEC Action URIs
     */
     @Override
-    public void handle(String action, String resourceURI, HttpServletRequest httpRequest, Management request, Management response) throws Exception
+    public void handle(String action, String resourceURI, HandlerContext context, Management request, Management response) throws Exception
     {
 #foreach( $key in ${overriddenMethodMap.keySet()} )
         if ("$key".equals(action))
         {
             response.setAction("${overriddenMethodMap.get($key).ResponseURI}");
 #if(${overriddenMethodMap.get($key).isEnumMethod})            
-            m_delegate.${overriddenMethodMap.get($key).OverriddenOpName}(new Enumeration(request), new Enumeration(response));   
+            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(new Enumeration(request), new Enumeration(response));   
 #else
-            m_delegate.${overriddenMethodMap.get($key).OverriddenOpName}(resourceURI, request, response);     
+            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(resourceURI, request, response);     
 #end
             return;
         }
 
 #end
-        super.handle(action, resourceURI, httpRequest, request, response);//be sure to call to super to ensure all operations are handled.
+        super.handle(action, resourceURI, context, request, response);//be sure to call to super to ensure all operations are handled.
     }
 #end
 
@@ -84,7 +90,7 @@ public class ${handlerName} extends DelegatingHandler
         if ("$key".equals(action))
         {
             response.setAction("${customOperationMap.get($key).ResponseURI}");
-            m_delegate.${customOperationMap.get($key).OperationName}(resourceURI, request, response);
+            delegate.${customOperationMap.get($key).OperationName}(resourceURI, request, response);
             return true;
         }
 

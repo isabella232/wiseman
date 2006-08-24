@@ -10,7 +10,8 @@
 package ${package};
 
 import com.sun.ws.management.server.EnumerationIterator;
-import org.w3c.dom.Element;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.NamespaceMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import java.util.logging.Logger;
@@ -28,10 +29,21 @@ import java.util.List;
 public class ${enumerationIteratorName} implements EnumerationIterator
 {
     //Log for logging messages
-    private Logger m_log = Logger.getLogger(${enumerationIteratorName}.class.getName());
-
+    private Logger log = Logger.getLogger(${enumerationIteratorName}.class.getName());
     private boolean m_cancelled = false;
+    public static final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory addressingFactory = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
+    public static final org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory managementFactory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
     
+ 	private static XmlBinding binding;
+	private static final String RESOURCE_JAXB_PACKAGE = "${firstJaxBPackage}";
+	{
+		try {
+			binding = new XmlBinding(null,RESOURCE_JAXB_PACKAGE);
+		} catch (JAXBException e) {
+			throw new InternalErrorFault(e.getMessage());
+		}
+	}
+
     /**
      * Supply the next few elements of the iteration. This is invoked to
      * satisfy a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
@@ -66,9 +78,8 @@ public class ${enumerationIteratorName} implements EnumerationIterator
      * returned in the
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */    
-    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
-            final boolean includeItem, final boolean includeEPR,
-            final int startPos, final int count){
+    public List<EnumerationItem> next(final DocumentBuilder db, final Object context, final boolean includeItem,
+     final boolean includeEPR, final int startPos, int count){
         return null;
     }
     /**
@@ -104,6 +115,11 @@ public class ${enumerationIteratorName} implements EnumerationIterator
         m_cancelled = true;
     }
     
+    public boolean isCancelled(){
+    	return m_cancelled;
+    }
+    
+    
     /**
      * Estimate the number of elements available.
      *
@@ -130,5 +146,8 @@ public class ${enumerationIteratorName} implements EnumerationIterator
     public NamespaceMap getNamespaces(){
     	return null;
     }
-        
+    public boolean isCancelled() {
+		return m_cancelled;
+	}
+    
 }

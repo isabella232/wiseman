@@ -39,10 +39,10 @@ import javax.xml.parsers.DocumentBuilder;
 public class ${delegateName} extends EnumerationHandler
 {    
     //Log for logging messages
-    private Logger m_log = Logger.getLogger(${delegateName}.class.getName());
+    private Logger log = Logger.getLogger(${delegateName}.class.getName());
 
     //the namespace map should be populated to handle filter requests
-    private Map<String, String> m_namespaces = null;
+    private Map<String, String> namespaces = null;
     
     private Object m_clientContext;//TODO initialize this
 
@@ -51,7 +51,7 @@ public class ${delegateName} extends EnumerationHandler
         super(new ${enumerationIteratorName}());
 
 
-        setNamespaces(m_namespaces);
+        setNamespaces(namespaces);
         /**
          * TODO set the client context object
          * The clientContext is the dataset used in the Enumeration.

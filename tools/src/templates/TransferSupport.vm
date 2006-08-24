@@ -18,9 +18,13 @@ package ${package};
 
 import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.xml.XmlBinding;
+import com.sun.ws.management.InternalErrorFault;
 
 import java.util.logging.Logger;
 import java.util.Map;
+
+import javax.xml.bind.JAXBException;
 
 /**
  * ${delegateName} deligate is responsible for processing WS-Transfer actions.
@@ -29,7 +33,21 @@ import java.util.Map;
 public class ${delegateName} extends TransferSupport
 {
     //Log for logging messages
-    private Logger m_log = Logger.getLogger(${delegateName}.class.getName());
+    private Logger log = Logger.getLogger(${delegateName}.class.getName());
+
+	private static XmlBinding binding;
+	private static final String RESOURCE_JAXB_PACKAGE = "${firstJaxBPackage}";
+	{
+		try {
+			binding = new XmlBinding(null,RESOURCE_JAXB_PACKAGE);
+		} catch (JAXBException e) {
+			throw new InternalErrorFault(e.getMessage());
+		}
+	}
+	private static final ${firstJaxBPackage}.ObjectFactory resourceFactory = new ${firstJaxBPackage}.ObjectFactory();
+    public static final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory addressingFactory = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
+    public static final org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory managementFactory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
+
 
 #if(!${hasCustomOpNames})
     public void create(Management request, Management response)
