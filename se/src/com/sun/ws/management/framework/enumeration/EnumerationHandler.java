@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationHandler.java,v 1.4 2006-07-24 18:39:02 obiwan314 Exp $
+ * $Id: EnumerationHandler.java,v 1.5 2006-08-24 13:57:28 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.enumeration;
@@ -218,7 +218,8 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
     
     public void setNamespaces(Map<String, String> namespaces)
     {
-        this.namespaces = new NamespaceMap(namespaces);
+    	if(namespaces!=null)
+    		this.namespaces = new NamespaceMap(namespaces);
     }
 
     public void setClientContext(Object clientContext)
