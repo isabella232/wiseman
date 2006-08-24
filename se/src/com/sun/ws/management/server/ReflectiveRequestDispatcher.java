@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.15 2006-07-24 20:22:59 akhilarora Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.16 2006-08-24 13:59:58 obiwan314 Exp $
  */
 
 package com.sun.ws.management.server;
 
 import com.sun.ws.management.AccessDeniedFault;
+import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
 import java.lang.reflect.InvocationTargetException;
@@ -98,6 +99,8 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
                 throw new DestinationUnreachableFault(
                         "Handler not found for resource " + resource,
                         DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI);
+            } catch (Throwable e) {
+            	throw new InternalErrorFault(e.getMessage());
             }
             
             // verify that handlerClass implements the Handler interface
