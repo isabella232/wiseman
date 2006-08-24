@@ -1,6 +1,7 @@
 package com.sun.ws.management.tools;
 
 import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JPackage;
 import com.sun.tools.xjc.*;
 import com.sun.tools.xjc.api.ErrorListener;
 import com.sun.tools.xjc.api.S2JJAXBModel;
@@ -40,7 +41,7 @@ import java.util.*;
  */
 public class Wsdl2WsmanGenerator
 {
-
+	private String packName;
     private boolean m_hasCustomOpNames = false;
     private boolean m_hasCustomOps = false;
     private boolean isEnumeration = false;
@@ -142,12 +143,15 @@ public class Wsdl2WsmanGenerator
             System.exit(0);
         }
 
-        generateHandlers(definition);
-
         if (GEN_JAXB)
         {
             generateSchema(definition);
         }
+        
+        generateHandlers(definition);
+
+
+
 
     }
 
@@ -275,6 +279,7 @@ public class Wsdl2WsmanGenerator
      */
     private void generateSchema(Definition definition)
     {
+    	System.out.println("GENERATING SCHEMA");
         //process each schema block found in wsdl
         if (GEN_AS_SCHEMA)
         {
@@ -341,8 +346,14 @@ public class Wsdl2WsmanGenerator
                     exception.printStackTrace();
                 }
             };
-
-            Model model = ModelLoader.load(options, new JCodeModel(), errorReceiver);
+            JCodeModel cm = new JCodeModel();
+            Model model = ModelLoader.load(options, cm, errorReceiver);
+            //packName=getGenPackName(m_outputDir);
+            Iterator<JPackage> packit = cm.packages();
+            if(packit.hasNext()){
+                packName=packit.next().name();
+            }
+            System.out.println("PACKNAME IS "+packName);
 
             if (model == null)
             {
@@ -376,6 +387,9 @@ public class Wsdl2WsmanGenerator
         try
         {
             jCodeModel.build(m_outputDir);
+            packName=getGenPackName(m_outputDir);
+            System.out.println("PACKNAME IS "+packName);
+			
         }
         catch (IOException e)
         {
@@ -383,7 +397,26 @@ public class Wsdl2WsmanGenerator
         }
     }
 
-    private S2JJAXBModel getJaxbModel(Element element)
+    private String getGenPackName(File dir) {
+    	File currDir = getNextFolder(dir);
+    	String packName="";
+    	while(currDir!=null){
+    		packName=packName+currDir.getName()+".";
+    		currDir = getNextFolder(currDir);
+    	}
+		return packName.substring(packName.length()-1);
+	}
+    
+    private File getNextFolder(File folder){
+    	File[] files = folder.listFiles();
+    	for (File file : files) {
+			if(file.isDirectory())
+				return file;
+		}
+    	return null;
+    }
+
+	private S2JJAXBModel getJaxbModel(Element element)
     {
         SchemaCompiler schemaCompiler = XJC.createSchemaCompiler();
         schemaCompiler.setErrorListener((ErrorListener) new ConsoleErrorReporter(System.out));
@@ -569,6 +602,8 @@ public class Wsdl2WsmanGenerator
 
         VelocityContext context = new VelocityContext();
 
+        context.put("firstJaxBPackage", packName);
+
         //build directories
         File delegatePackageDir = new File(m_outputDir, getDelegatePackageName(resourceUri).replace('.', File.separatorChar));
         delegatePackageDir.mkdirs();
@@ -607,7 +642,7 @@ public class Wsdl2WsmanGenerator
         context.put("hasCustomOps", m_hasCustomOps);
         context.put("overriddenMethodMap", m_overriddenMethodMap);
         context.put("customOperationMap", m_customOperationMap);
-
+        
         File outputFile = new File(delegatePackageDir, delegateName + ".java");
 
         if (isEnumeration)
