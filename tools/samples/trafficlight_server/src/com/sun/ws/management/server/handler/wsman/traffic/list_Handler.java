@@ -5,33 +5,36 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.xml.XmlBinding;
+import com.sun.ws.management.InternalErrorFault;
 
 import java.util.logging.Logger;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.JAXBException;
 
-import wsman.traffic.lightlist.LightlistHandler;
+import wsman.traffic.list.ListHandler;
 
 /**
- * This Handler deligates to the wsman.traffic.lightlist.LightlistHandler class.
+ * This Handler deligates to the wsman.traffic.list.ListHandler class.
  * There is typically nothing to implement in this class.
  *
  * @GENERATED
  */
-public class lightlist_Handler extends DelegatingHandler
+public class list_Handler extends DelegatingHandler
 {
     //Log for logging messages
-    private Logger m_log = Logger.getLogger(lightlist_Handler.class.getName());
+    @SuppressWarnings("unused")
+    private Logger log = Logger.getLogger(list_Handler.class.getName());
 
-    private static LightlistHandler m_delegate;
+    private static ListHandler delegate;
     static
     {
-        m_delegate = new LightlistHandler();
+        delegate = new ListHandler();
     }
 
-    public lightlist_Handler()
+    public list_Handler()
     {
-        super(m_delegate);
+        super(delegate);
     } 
 
    /**
@@ -39,44 +42,51 @@ public class lightlist_Handler extends DelegatingHandler
     * to wsa:Action uri for SPEC Action URIs
     */
     @Override
-	public void handle(String action, String resourceURI,HandlerContext context, Management request, Management response) throws Exception {
-    
+    public void handle(String action, String resourceURI, HandlerContext context, Management request, Management response) throws Exception
+    {
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse");
-            m_delegate.EnumerateOp(new Enumeration(request), new Enumeration(response));   
+            delegate.EnumerateOp(new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Release".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/ReleaseResponse");
-            m_delegate.ReleaseOp(new Enumeration(request), new Enumeration(response));   
+            delegate.ReleaseOp(new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Pull".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/PullResponse");
-            m_delegate.PullOp(new Enumeration(request), new Enumeration(response));   
+            delegate.PullOp(new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatus".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatusResponse");
-            m_delegate.GetStatusOp(new Enumeration(request), new Enumeration(response));   
+            delegate.GetStatusOp(new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Renew".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/RenewResponse");
-            m_delegate.RenewOp(new Enumeration(request), new Enumeration(response));   
+            delegate.RenewOp(new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         super.handle(action, resourceURI, context, request, response);//be sure to call to super to ensure all operations are handled.
     }
 
+    /**
+     * Overridden method to handle custom operations and custom Action URIs
+     */
+    public boolean customDispatch(String action, String resourceURI, Management request, Management response) throws Exception
+    {
+        return false;
+    }
 }
