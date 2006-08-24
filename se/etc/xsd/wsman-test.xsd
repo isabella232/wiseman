@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:my="http://wsman.test/schema" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://wsman.test/schema" elementFormDefault="qualified" blockDefault="#all">
+	<!-- Actual State of Resource -->
+	<xs:complexType name="StateType">
+		<xs:sequence>
+			<xs:element name="isRunning" type="xs:boolean"/>
+			<xs:element name="isInitialized" type="xs:boolean"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Elements of the State Document -->
+	<xs:element name="DesiredState" type="my:StateType"/>
+	<xs:element name="ObservedState" type="my:StateType"/>
+	<!-- The Resource's state document -->
+	<xs:complexType name="MyStateDocument">
+		<xs:sequence>
+			<xs:element ref="my:DesiredState"/>
+			<xs:element ref="my:ObservedState"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Element representing the state document -->
+	<xs:element name="MyStateElement" type="my:MyStateDocument"/>
+	
+	<!-- Custom Element for custom operation-->
+	<xs:element name="CustomElement" type="my:CustomType"/>
+	<xs:element name="CustomResponseElement" type="my:CustomResponseType"/>
+
+	<xs:complexType name="CustomType">
+		<xs:sequence>
+			<xs:element name="hello" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="CustomResponseType">
+	</xs:complexType>
+
+	
+	
+</xs:schema>

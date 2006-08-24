@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://examples.hp.com/ws/wsman/user" elementFormDefault="qualified" blockDefault="#all" xmlns:usr="http://examples.hp.com/ws/wsman/user" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:complexType name="UserType">
+		<xs:sequence>
+			<xs:element name="firstname" type="xs:string"/>
+			<xs:element name="lastname" type="xs:string"/>
+			<xs:element name="address" type="xs:string"/>
+			<xs:element name="city" type="xs:string"/>
+			<xs:element name="state" type="xs:string"/>
+			<xs:element name="zip" type="xs:string"/>
+			<xs:element name="age" type="xs:int" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="user" type="usr:UserType"/>
+</xs:schema>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<xs:schema targetNamespace="http://test.foo" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    elementFormDefault="qualified" 
+    xmlns:tns="http://test.foo">
+    
+    <xs:element name="a">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tns:foo" maxOccurs="2"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="bar" type="xs:string"/>
+    
+    <xs:element name="foo">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tns:bar" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="is">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tns:a"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="this">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tns:is"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+</xs:schema>
