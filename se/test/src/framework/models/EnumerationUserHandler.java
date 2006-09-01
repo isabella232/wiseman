@@ -6,11 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringBufferInputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -22,6 +24,15 @@ import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.w3c.dom.Document;
@@ -38,8 +49,6 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
-//import com.hp.management.wsman.handlerimpl.DefaultHandler;
-//import com.hp.management.wsman.server.enumeration.Enumeratable;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
@@ -50,6 +59,7 @@ import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 import com.sun.ws.management.framework.handlers.DefaultHandler;
 import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.server.handler.wsman.auth.user_Handler;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
@@ -65,7 +75,6 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	
 	//attributes.
 	private static HashMap<String,EnumerationContextContainer> currentEnumerationContexts = null;
-	
 	private static HashSet contextids = new HashSet();
 	private final String UUID_SCHEME="e-ctxt:";
 	public static XmlBinding binding;
@@ -97,22 +106,22 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 		}
 	}
 
-	//TODO: load the users.store from JAR.
+	//DONE: load the users.store from classpath.
 	private void populateGlobalUsersList() throws IOException, JAXBException {
 		String userStoreSource="framework/models/users.store";
 		InputStream is 
 		  =EnumerationUserHandler.class.getClassLoader().getResourceAsStream(userStoreSource);
-		//TODO: cycle through input stream and load the UserType instances
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line = "";
-		String lineInBuffer = "";
-		ArrayList allUsers = new ArrayList();
-		String pkg ="com.hp.examples.ws.wsman.user";
-		JAXBContext ctxt = JAXBContext.newInstance(pkg);
-		Unmarshaller u = ctxt.createUnmarshaller();
+		//DONE: cycle through input stream and load the UserType instances
+		 BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		 String line = "";
+		 String lineInBuffer = "";
+		 ArrayList allUsers = new ArrayList();
+		 String pkg ="com.hp.examples.ws.wsman.user";
+		 JAXBContext ctxt = JAXBContext.newInstance(pkg);
+		 Unmarshaller u = ctxt.createUnmarshaller();
 		
 		while((line=br.readLine())!=null){
-			if((line.indexOf(div)==-1)&&(line.trim().length()>0)){
+			if((line.trim().length()>0)&&(line.indexOf(div)==-1)){
 				// create a new user class and add it to the list
 				UserModelObject userObject = new UserModelObject();
 				line = line.trim();
@@ -162,42 +171,48 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 					filterContent = filterContent.trim();
 				    filterParameters.add(filterContent);	
 				}
-				//TODO: after building up filterParameters, create context and store filterParams
-				enumCtxtTypeResponseObject = new EnumerationContextType();
-				
-				 String ctxId = UUID_SCHEME+UUID.randomUUID().toString();
-				 enumCtxtTypeResponseObject.getContent().add(ctxId);
-				//Now add to EnumeContextInfo container
-				response.setExpires("PT15M");
-				response.setEnumerationContext(enumCtxtTypeResponseObject);
-
-				XmlBinding xmlBinding = enuResponse.getXmlBinding(); 
-			        Document responseDoc = enuResponse.newDocument();
-			        try {
-						xmlBinding.marshal(response, responseDoc );
-					} catch (JAXBException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} 		         
-
-					EnumerateResponse enumResp = new EnumerateResponse();
-					//TODO: Change to user input. Hardcoded to 15 mins for right now.
-					enuResponse.setEnumerateResponse(ctxId,"PT15M");
-					//Now add to EnumeContextInfo container
-					EnumerationContextType cntxtRef = enuResponse.getEnumerateResponse().getEnumerationContext();
-					EnumerationContextContainer container = 
-						new EnumerationContextContainer(ctxId,
-								cntxtRef,
-								filterParameters);
-					//add reference to stored enumeration lists
-					if(!currentEnumerationContexts.containsKey(ctxId)){
-					  currentEnumerationContexts.put(ctxId,container);
-					}
 			}else{//Else no filter content supplied
-				//TODO: select * and prepare to return on pull. 
-				//TODO: allow users to define server side maximum pull count/amount.
+				filterParameters.add("//*"); //return all.
 			}
-		//TODO: figure out what to do with each exception.		
+			//TODO: add processing for RequestTotalItemsCountEstimate
+//			enu
+			
+			//DONE: after building up filterParameters, create context and store filterParams
+			enumCtxtTypeResponseObject = new EnumerationContextType();
+			
+			 String ctxId = UUID_SCHEME+UUID.randomUUID().toString();
+			 enumCtxtTypeResponseObject.getContent().add(ctxId);
+			//Now add to EnumeContextInfo container
+			response.setExpires("PT15M");
+			response.setEnumerationContext(enumCtxtTypeResponseObject);
+
+			XmlBinding xmlBinding = enuResponse.getXmlBinding(); 
+		        Document responseDoc = enuResponse.newDocument();
+		        try {
+					xmlBinding.marshal(response, responseDoc );
+				} catch (JAXBException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} 		         
+
+				EnumerateResponse enumResp = new EnumerateResponse();
+				//TODO: Change to user input. Hardcoded to 15 mins for right now.
+				enuResponse.setEnumerateResponse(ctxId,"PT15M");
+				//Now add to EnumeContextInfo container
+				EnumerationContextType cntxtRef = enuResponse.getEnumerateResponse().getEnumerationContext();
+				EnumerationContextContainer container = null;
+				try {
+					container = new EnumerationContextContainer(ctxId,
+							cntxtRef,
+							filterParameters);
+				} catch (XPathExpressionException e) {
+					e.printStackTrace();
+					throw new InternalErrorFault(e.getMessage()); 
+				}
+				//add reference to stored enumeration lists
+				if(!currentEnumerationContexts.containsKey(ctxId)){
+				  currentEnumerationContexts.put(ctxId,container);
+				}
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new InternalErrorFault(e.getMessage());
@@ -234,11 +249,11 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			 
 		//TODO: figure out what to do with each exception.		
 		} catch (JAXBException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new InternalErrorFault(e.getMessage());
 		} catch (SOAPException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new InternalErrorFault(e.getMessage());
 		} 
 	}
 
@@ -279,14 +294,10 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			 
 			 enuResponse = eCont.processResponse(enuResponse,maxTime,maxElements,maxContentLength);
 			 
-			 
-		//TODO: figure out what to do with each exception.		
 		} catch (JAXBException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new InternalErrorFault(e.getMessage());
 		} catch (SOAPException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new InternalErrorFault(e.getMessage());
 		} 
@@ -298,6 +309,22 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 		
 	}
 	
+	public static String xmlToString(Node node) {
+		try {
+			Source source = new DOMSource(node);
+			StringWriter stringWriter = new StringWriter();
+			Result result = new StreamResult(stringWriter);
+			TransformerFactory factory = TransformerFactory.newInstance();
+			Transformer transformer = factory.newTransformer();
+			transformer.transform(source, result);
+			return stringWriter.getBuffer().toString();
+		} catch (TransformerConfigurationException e) {
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	
 
   class EnumerationContextContainer implements java.util.Enumeration<UserType>{
@@ -307,7 +334,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	
 	public EnumerationContextContainer(String enumContextId,
 			EnumerationContextType context,
-			ArrayList<String> filterValues){
+			ArrayList<String> filterValues) throws XPathExpressionException, JAXBException{
 		this.enumContextId = enumContextId;
 		this.enumerationContext = context;
 		this.filterParametersList = filterValues;
@@ -315,7 +342,9 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 		counter = 0;
 	}
 	
-	public Enumeration processResponse(Enumeration enuResponse, Duration maxTime, int maxElements, int maxContentLength) throws JAXBException, SOAPException {
+	public Enumeration processResponse(Enumeration enuResponse, Duration maxTime, int maxElements, 
+			int maxContentLength) throws JAXBException, SOAPException {
+
 		Enumeration endResponse = null;
 		
 		 //Populate the response object with returned XML data.
@@ -356,41 +385,60 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	private EnumerationContextType enumerationContext = null;
 	private ArrayList<String> filterParametersList = null;
 	private int cnt = 0;
+	private UserType user;
 	
-	public void initializeDataSet(){
+	public void initializeDataSet() throws JAXBException, XPathExpressionException{
 		ArrayList<UserType> matches = new ArrayList<UserType>();
 		String filter = filterParametersList.get(0);
+		
+		//Load the UserType namespaces
+		NamespaceMap nsm = null;
+		nsm = loadUserTypeNamespaces();
+		
 		//extract request and process
 		if((filter!=null)&&(filter.trim().length()>0)){
 			String parameter = "";
-			if(filter.indexOf("firstname")>-1){
-				int start = filter.indexOf("'");
-				int end = filter.indexOf("'",start+1);
-				parameter = filter.substring(start+1,end);
-				if(parameter.trim().length()>-1){
-					for (int i = 0; i < globalUsersList.length; i++) {
-						if(globalUsersList[i].getFirstname().equalsIgnoreCase(parameter)){
-							matches.add(globalUsersList[i]);
-						}
-					}
-				}
+
+			//Process the filtered requests
+			for (int i = 0; i < globalUsersList.length; i++) {
+			 //DONE:convert to XML doc to run xpath filtering on
+			  Document content = Management.newDocument();
+				JAXBElement<UserType> userElement = 
+				   userFactory.createUser(globalUsersList[i]);
+				binding.marshal(userElement, content);
+			 List<Node> result = null;
+			  result=XPath.filter(content, filter, nsm);
+			  if((result!=null)&&(result.size()>0)){//Then add this UserType inst
+				  Node nod = result.get(0);
+				  matches.add(globalUsersList[i]); 
+			  }
 			}
-			if(filter.indexOf("lastname")>-1){
-				int start = filter.indexOf("'");
-				int end = filter.indexOf("'",start+1);
-				parameter = filter.substring(start+1,end);
-				if(parameter.trim().length()>-1){
-					for (int i = 0; i < globalUsersList.length; i++) {
-						if(globalUsersList[i].getLastname().equalsIgnoreCase(parameter)){
-							matches.add(globalUsersList[i]);
-						}
-					}
-				}
-			}
+		}else{//No filtering. 
+			matches = new ArrayList<UserType>(globalUsersList.length);
+			System.arraycopy(globalUsersList, 0, matches, 0, matches.size());
 		}
+		//return all filtered/unfiltered data.
 		dataValues = new UserType[matches.size()];
 		System.arraycopy(matches.toArray(), 0, dataValues, 0, matches.size());
         cnt = 0;
+	}
+
+	/**
+	 * @return
+	 */
+	private NamespaceMap loadUserTypeNamespaces() {
+		NamespaceMap nsm;
+		Map<String,String> ns = new HashMap<String, String>();
+		ns.put("ns2","http://schemas.xmlsoap.org/ws/2004/08/addressing");
+		ns.put("ns3","http://schemas.xmlsoap.org/ws/2004/08/eventing");
+		ns.put("ns4","http://schemas.xmlsoap.org/ws/2004/09/enumeration");
+		ns.put("ns5","http://www.w3.org/2003/05/soap-envelope");
+		ns.put("ns6","http://schemas.xmlsoap.org/ws/2004/09/transfer");
+		ns.put("ns7","http://schemas.xmlsoap.org/ws/2005/06/wsmancat");
+		ns.put("ns8","http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
+		ns.put("ns9","http://examples.hp.com/ws/wsman/user");
+		nsm = new NamespaceMap(ns);
+		return nsm;
 	}
 	
 	/**
