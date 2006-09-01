@@ -628,8 +628,10 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 assertTrue(retrieved instanceof EnumerationResourceImpl);
 		
 		 //Build the filters
-		 String testName = "James";
-		 String xpathFilter = "//user[firstname='"+testName+"']";
+		 String testName = "James";//See users.store for more valid search values
+		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
+//		 String xpathFilter = "/ns9:user/ns9:firstname/text()";
+		 
 		 String[] filters = new String[]{xpathFilter};
 		 //Retrieve the Enumeration context.
 		 EnumerationCtx enumContext = retrieved.enumerate(filters,XPath.NS_URI,false,false);
