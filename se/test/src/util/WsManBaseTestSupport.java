@@ -287,12 +287,7 @@ public class WsManBaseTestSupport extends TestCase {
 			Object resultOb = xpath.evaluate(xPathExpression, stateDocument, XPathConstants.STRING);
 			if(resultOb==null)
 				return null;
-			NodeList nodelist = (NodeList)resultOb;		
-			if(nodelist.getLength()==0)
-				return null;
-			Element element=(Element)nodelist.item(0);
-			String results = element.getTextContent();
-			return results;
+			return (String)resultOb;
 		}
 		/** 
 		 * Returns a list of nodes that match the provided XPath criteria.
