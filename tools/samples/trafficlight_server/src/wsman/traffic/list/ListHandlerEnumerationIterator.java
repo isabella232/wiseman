@@ -124,7 +124,7 @@ public class ListHandlerEnumerationIterator implements EnumerationIterator
      * Return a negative number if an estimate is not available.
      */
     public int estimateTotalItems(final Object context){
-    	return LightEnumerationIteratorImpl.getSize(context);
+    	return LightEnumerationIteratorImpl.estimateTotalItems(context);
     }
     
     /**

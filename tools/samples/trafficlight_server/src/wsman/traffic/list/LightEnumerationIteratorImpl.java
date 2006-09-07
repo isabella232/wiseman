@@ -57,7 +57,7 @@ public class LightEnumerationIteratorImpl {
         return items;
     }
 	
-	public static int getSize(Object context){
+	public static int estimateTotalItems(Object context){
 		Map<String,TrafficLight> lights=(Map<String,TrafficLight>)context;
 		return lights.size();
 	}
