@@ -1,6 +1,7 @@
 package org.publicworks.light.model.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -96,7 +97,8 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 	public void setColor(final String color) {
 		if(traffic==null)
 			return;
-		SwingUtilities.invokeLater(new Runnable(){
+		try{
+		SwingUtilities.invokeAndWait(new Runnable(){
 			public void run() {
 				if(trafficRed==null)
 					return;
@@ -129,6 +131,11 @@ public class TrafficLightJPanel extends javax.swing.JPanel {
 					return;
 				}				
 			}});
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e.getMessage());
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 }
