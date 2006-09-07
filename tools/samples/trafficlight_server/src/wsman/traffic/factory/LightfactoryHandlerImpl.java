@@ -12,9 +12,7 @@ import org.publicworks.light.model.ui.TrafficLight;
 
 import com.sun.traffic.light.types.TrafficLightType;
 import com.sun.ws.management.InternalErrorFault;
-import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
-import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.xml.XmlBinding;
 
 public class LightfactoryHandlerImpl {
@@ -22,16 +20,12 @@ public class LightfactoryHandlerImpl {
 
     /*************************** Implementation  ***********************************/
 	 static HashMap<String, String> createLight(Management request,XmlBinding binding) {
-	    
-			// Create and store a reference to this object in our mini-model
-		 TrafficLight light = TrafficLightModel.getModel().create();
-
-		 if(light==null)
-	    	throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.AMBIGUOUS_SELECTORS);
-
+		 TrafficLight light=null;
 		    // Get JAXB Representation of Soap Body property document
 			if(request.getBody().getFirstChild()!=null){
-		        JAXBElement<TrafficLightType> tlElement;
+
+				// Get inital state
+				JAXBElement<TrafficLightType> tlElement;
 				try {
 					tlElement = (JAXBElement<TrafficLightType>)binding.unmarshal(request.getBody().getFirstChild());
 				} catch (JAXBException e) {
@@ -39,15 +33,20 @@ public class LightfactoryHandlerImpl {
 					throw new InternalErrorFault();
 				}
 				TrafficLightType tlType = tlElement.getValue();
-		
+
+				// Create and store a reference to this object in our mini-model
+				light = TrafficLightModel.getModel().create(tlType.getName());
+				
 				// Transfer values
-				light.setName(tlType.getName());
 				light.setColor(tlType.getColor());
 				light.setX(tlType.getX());
 				light.setY(tlType.getY());
+
 			} else {
+				// Create and store a reference to this object in our mini-model
+				 light = TrafficLightModel.getModel().create(null);
+
 				log.log(Level.INFO,"The body of your request is empty but it is optional." );
-				//throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.MISSING_VALUES);
 			}
 			
 			// Define a selector (in this case name)
