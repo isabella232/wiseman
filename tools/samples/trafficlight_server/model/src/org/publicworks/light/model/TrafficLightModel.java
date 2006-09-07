@@ -12,7 +12,6 @@ public class TrafficLightModel extends Observable {
     private static TrafficLightModel singleton;
 	private TrafficLightModel() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 	
 	public static TrafficLightModel getModel(){
@@ -21,12 +20,20 @@ public class TrafficLightModel extends Observable {
 		return singleton;
 	}
 	
-	public TrafficLight create(){
+	public TrafficLight create(String name){
 		TrafficLight tl = new TrafficLight();
-
-        lights.put(tl.getName(),tl);
         tl.setVisible(true);
-		return tl; 
+
+		if(name!=null){
+			tl.setName(name);
+	       lights.put(name,tl);
+
+		} else {
+			tl.defaultInit();
+		    lights.put(tl.getName(),tl);
+
+		}
+ 		return tl; 
 	};
 	public void destroy(String name){
         lights.remove(name).dispose();
