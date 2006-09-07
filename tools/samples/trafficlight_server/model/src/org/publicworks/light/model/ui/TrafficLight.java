@@ -3,6 +3,7 @@ import java.awt.BorderLayout;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -35,12 +36,14 @@ public class TrafficLight extends javax.swing.JFrame {
 		instance++;		
 		x0=x0+10;
 		y0=y0+10;
-		name="Light"+instance;
-		x=x0;
-		y=y0;
-		color="none";
-		
 
+	}
+
+	public void defaultInit() {
+		setName("Light"+instance);
+		setX(x0);
+		setY(y0);
+		setColor("none");
 	}
 	
 	private void initGUI() {
@@ -78,10 +81,16 @@ public class TrafficLight extends javax.swing.JFrame {
 
 	public void setName(final String name) {
 		this.name = name;
-		SwingUtilities.invokeLater(new Runnable(){
-			public void run() {
-				setTitle(name);
-			}});
+		try {
+			SwingUtilities.invokeAndWait(new Runnable(){
+				public void run() {
+					setTitle(name);
+				}});
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e.getMessage());
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 	public int getX() {
@@ -93,12 +102,17 @@ public class TrafficLight extends javax.swing.JFrame {
 
 	public void setX(final int x) {
 		this.x = x;
-		SwingUtilities.invokeLater(new Runnable(){
+		try {
+		SwingUtilities.invokeAndWait(new Runnable(){
 			public void run() {
-				
 				Point loc = getLocationOnScreen();
 				setLocation(x,loc.y);
 			}});
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e.getMessage());
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 	public int getY() {
@@ -111,19 +125,21 @@ public class TrafficLight extends javax.swing.JFrame {
 
 	public void setY(final int y) {
 		this.y = y;
-		SwingUtilities.invokeLater(new Runnable(){
+		try {
+		SwingUtilities.invokeAndWait(new Runnable(){
 			public void run() {
 				Point loc = getLocationOnScreen();
 				setLocation(loc.x,y);
 			}});
+	} catch (InterruptedException e) {
+		throw new RuntimeException(e.getMessage());
+	} catch (InvocationTargetException e) {
+		throw new RuntimeException(e.getMessage());
+	}
 	}
 	
 	private void rootComponentShown(ComponentEvent evt) {
 		System.out.println("this.componentShown, event=" + evt);
-		setName("Light"+instance);
-		setX(x0);
-		setY(y0);
-		setColor(color);
 
 	}
 
