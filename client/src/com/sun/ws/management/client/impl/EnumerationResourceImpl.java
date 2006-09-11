@@ -65,6 +65,42 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 
 	// attributes
 	// ******************* WS Enumeration *************************************
+	
+	/**
+	 * Starts an enumeration transaction by obtaining an enumeration context.
+	 * This is a ticket which must be used in all future calls to access this
+	 * enumeration.
+	 * 
+	 * @param filters
+	 *            and array of filter expressions to be applied to the
+	 *            enumeration.
+	 * @param dialect
+	 *            The dialect to be used in filter expressions. XPATH_DIALECT
+	 *            can be used for XPath.
+	 * @param useEprs
+	 *            useEprs sets the EnumerateEpr Element causing subsequent pulls
+	 *            to contain erps only
+	 * @param timeout
+	 * 			  Timeout value for the enumerate request in milliseconds
+	 * @return An enumeration context
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public EnumerationCtx enumerate(String[] filters, String dialect,
+			boolean useEprs, boolean useObjects, long timeout)
+			throws SOAPException, JAXBException, IOException, FaultException,
+			DatatypeConfigurationException 
+	{
+		
+		// Set the timeout on the base class
+		this.setMessageTimeout(timeout);
+		return enumerate(filters, dialect, useEprs, useObjects);
+		
+	}
+	
 	/**
 	 * Starts an enumeration transaction by obtaining an enumeration context.
 	 * This is a ticket which must be used in all future calls to access this
@@ -126,19 +162,22 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 		final EndpointReferenceType endTo = Addressing.createEndpointReference(
 				"http://host/endTo", null, null, null, null);
 
+		String timeout = null;
+		if (getMessageTimeout() >0 ) {
+			timeout = factory.newDuration(getMessageTimeout()).toString();
+		}
+
 		if (filters != null) {
 			filterType.setDialect(XPath.NS_URI);
 			filterType.getContent().add(filter);
-			String timeoutValue = null;
-			enu.setEnumerate(endTo, timeoutValue, filter == null ? null
+			enu.setEnumerate(endTo, timeout, filter == null ? null
 					: filterType, enumerationMode==null ? null : enumerationMode.toBinding());
 		} else {
 			JAXBElement<EnumerationModeType> modeBinding = null;
 			if (enumerationMode != null)
 				modeBinding = enumerationMode.toBinding();
 			if (getMessageTimeout() >0 ) {
-				String timeout = factory.newDuration(getMessageTimeout()).toString();
-				enu.setEnumerate(null, factory.newDuration(timeout).toString(),
+				enu.setEnumerate(null, timeout,
 						null, modeBinding);
 			} else {
 				enu.setEnumerate(null, null, null, modeBinding);

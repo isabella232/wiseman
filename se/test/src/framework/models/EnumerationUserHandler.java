@@ -183,7 +183,8 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			 String ctxId = UUID_SCHEME+UUID.randomUUID().toString();
 			 enumCtxtTypeResponseObject.getContent().add(ctxId);
 			//Now add to EnumeContextInfo container
-			response.setExpires("PT15M");
+			 
+			response.setExpires(enumerateRequestObject.getExpires());
 			response.setEnumerationContext(enumCtxtTypeResponseObject);
 
 			XmlBinding xmlBinding = enuResponse.getXmlBinding(); 
@@ -196,8 +197,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				} 		         
 
 				EnumerateResponse enumResp = new EnumerateResponse();
-				//TODO: Change to user input. Hardcoded to 15 mins for right now.
-				enuResponse.setEnumerateResponse(ctxId,"PT15M");
+				enuResponse.setEnumerateResponse(ctxId,enumerateRequestObject.getExpires());
 				//Now add to EnumeContextInfo container
 				EnumerationContextType cntxtRef = enuResponse.getEnumerateResponse().getEnumerationContext();
 				EnumerationContextContainer container = null;
