@@ -102,7 +102,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		log.info("Validate Selectors has completed.");
 		
 	}
-	public static String destination = "http://localhost:8080/wsman/";
+	public static  String destination = "http://localhost:8080/wsman/";
 
 	public static String resourceUri = "wsman:auth/user";
 
@@ -525,7 +525,9 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		return computerSystemResource.get();
 	}
 	public static void main(String[] args) {
-		 junit.textui.TestRunner.run(Interop20060801Test.class);
+		if(args.length>0&&args[0]!=null)
+			destination=args[0];
+		junit.swingui.TestRunner.run(Interop20060801Test.class);
 	}
 	
 //	public void testPutThreshholdOpenWSMan() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException, XPathExpressionException, NoMatchFoundException{
@@ -559,5 +561,6 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 //		log.info("PASS");
 //
 //	}
+	
 
 }
