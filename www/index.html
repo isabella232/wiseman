@@ -2,443 +2,351 @@
 <html>
 <head>
 
-  
   <meta name="keywords" content="sun microsystems, sun, java, solaris, sparc, unix, ws-management, ws-management catalog, ws-addressing, ws-transfer, ws-enumeration, ws-eventing, open-source, open source, web services, web services management, systems management, management using web services, cim, ws-cim, cim mapping, schema, xsd, wsdl, apache license">
 
-  
   <meta name="description" content="A Java implementation of WS-Management">
 
   <style type="text/css">
-    body { font-family: sans-serif }
-    table { width: 100% }
-    td { vertical-align: top }
-    tr.green-head { background-color: #ddffee } 
-    tr.green-row { background-color: #eeffee }
-    tr.blue-head { background-color: #ddeeff } 
-    tr.blue-row { background-color: #eeeeff }
+body { font-family: sans-serif }
+table { width: 100% }
+td { vertical-align: top }
+tr.green-head { background-color: #ddffee } tr.green-row { background-color: #eeffee }
+tr.blue-head { background-color: #ddeeff } tr.blue-row { background-color: #eeeeff }
   </style>
-
-  
   <title>A Java implementation of WS-Management</title>
+
+
 </head>
 
 
 
 <body>
 
-  
 <p>The wiseman project is an implementation of the WS-Management
-  specification for the Java SE platform. The project scope
-  includes the WS-Management specification and its dependent
-  specifications.</p>
+specification for the Java SE platform. The project scope includes the
+WS-Management specification and its dependent specifications.</p>
 
+<p>This is a project in the <a href="http://jwsdp.dev.java.net/index.html">JWSDP</a>
+subcommunity of the Java community on <a href="http://community.java.net/java-ws-xml">Web Services
+and XML</a> at java.net. The project requires <a href="http://java.sun.com/j2se/1.5.0/index.jsp">Java SE 5+</a>
+or above, and is built on <a href="https://jaxb.dev.java.net/">JAXB
+2.0</a> and <a href="https://saaj.dev.java.net/">SAAJ
+1.3</a> (part of the <a href="https://jax-ws.dev.java.net/">JAX-WS</a>
+project). <a href="http://ant.apache.org/">Ant</a>
+scripts for standalone and <a href="http://www.netbeans.org/">Netbeans</a>
+builds are supplied.</p>
 
-  
-<p>This is a project in the <a href="http://jwsdp.dev.java.net/index.html">JWSDP</a> subcommunity of
-  the Java community on <a href="http://community.java.net/java-ws-xml">Web Services and XML</a>
-  at java.net. The project requires <a href="http://java.sun.com/j2se/1.5.0/index.jsp">Java SE 5+</a> or
-  above, and is built on <a href="https://jaxb.dev.java.net/">JAXB
-  2.0</a> and <a href="https://saaj.dev.java.net/">SAAJ 1.3</a>
-  (part of the <a href="https://jax-ws.dev.java.net/">JAX-WS</a>
-  project). <a href="http://ant.apache.org/">Ant</a> scripts for
-  standalone and <a href="http://www.netbeans.org/">Netbeans</a>
-  builds are supplied.</p>
-
-  
-  
 <h3>News</h3>
-The Wiseman project has produced its first binary release! Release 0.5
+
+<p>The Wiseman project has produced its first binary release!
+Release 0.5
 provides good coverage of the DMTF 1.0 Version of the WS Management
 specification. This release features a tutorial on creating and
 exposing resources starting from your schema though generating a Java
 web application. It also contains sample client and server applications.<br>
-<br>
-Wiseman 0.5 can be downloaded <a href="https://wiseman.dev.java.net/files/documents/3436/40769/wiseman_0.5.zip">here</a>.
+
+</p>
+
+<p>Wiseman 0.5 can be downloaded <a href="https://wiseman.dev.java.net/files/documents/3436/40769/wiseman_0.5.zip">here</a>.</p>
+
 <h3>Developer Documentation</h3>
 
-  
-<p>
-  We are starting to add developer documentation to the project.  There is a lot
-  of catching up to do, but as you work with wiseman, please take notes, send
-  emails, and look for useful documentation to add.
-  
-  Also, please start heavily JavaDoc'ing your code going forward.  We would like
-  to have a fully documnted build soon.
-  
-  Go to the <a href="documentation.html">documentation index</a> for more information.
-  </p>
+<p> We are starting to add developer documentation to the
+project. There is a lot of catching up to do, but as you work with
+wiseman, please take notes, send emails, and look for useful
+documentation to add. Also, please start heavily JavaDoc'ing your code
+going forward. We would like to have a fully documnted build soon. Go
+to the <a href="documentation.html">documentation index</a>
+for more information. </p>
 
-  
-  
 <h3>Contributing</h3>
 
-  
-  
-<p>To contribute to the project, please join the project 
-  as an Observer, download, print and sign the 
-  <a href="ContributorAgreement.pdf">Contributor 
-  Agreement</a> and fax it back to Sun at +1 408 404 8042. 
-  Contributions can be accepted once the agreement has been received. 
-  After several high-quality contributions, an Observer may be upgraded to 
-  Developer and granted write access to the repository.</p>
+<p>To contribute to the project, please join the project as an
+Observer, download, print and sign the <a href="ContributorAgreement.pdf">Contributor Agreement</a>
+and fax it back to Sun at +1 408 404 8042. Contributions can be
+accepted once the agreement has been received. After several
+high-quality contributions, an Observer may be upgraded to Developer
+and granted write access to the repository.</p>
 
-  
-  
-<p>The wiseman project requires contributors to jointly assign their 
-  copyright on contributed code. The Sun Contributor Agreement (SCA) gives Sun 
-  and the contributor joint copyright interests in the code: the contributor 
-  retains copyrights while also granting those rights to Sun as the open 
-  source project sponsor. By executing the SCA, contributors protect the 
-  Wiseman code base, enable alternative licensing models, and protect the 
-  flexibility to adapt the project to the changing demands of the community. 
-  In order for the SCA to be effective, the wiseman project must obtain an 
-  assignment for all contributions. Please review the SCA for a complete 
-  understanding of its terms and conditions.</p>
+<p>The wiseman project requires contributors to jointly assign
+their copyright on contributed code. The Sun Contributor Agreement
+(SCA) gives Sun and the contributor joint copyright interests in the
+code: the contributor retains copyrights while also granting those
+rights to Sun as the open source project sponsor. By executing the SCA,
+contributors protect the Wiseman code base, enable alternative
+licensing models, and protect the flexibility to adapt the project to
+the changing demands of the community. In order for the SCA to be
+effective, the wiseman project must obtain an assignment for all
+contributions. Please review the SCA for a complete understanding of
+its terms and conditions.</p>
 
-  
-  
-<p><a href="contributors.html">Here</a> is a list of people who have 
-  contributed to the project.</p>
+<p><a href="contributors.html">Here</a> is a
+list of people who have contributed to the project.</p>
 
-
-  
 <h3>TODO</h3>
 
-
-  
 <table summary="Schedule" border="0" cellpadding="2">
 
-    <tbody>
+  <tbody>
+
     <tr class="green-head">
 
       <th>Milestone</th>
-
 
       <th>Description</th>
 
     </tr>
 
-
     <tr class="green-row">
 
       <td>Documentation</td>
-
 
       <td>Add Javadoc and developer documentation</td>
 
     </tr>
 
-
     <tr class="green-row">
 
       <td>CIM Mapping</td>
-
 
       <td>Mapping CIM MOF to XML Schema and WSDL</td>
 
     </tr>
 
-
     <tr class="green-row">
 
       <td>Catalog</td>
-
 
       <td>Implementation of the WS-Management Catalog</td>
 
     </tr>
 
-
     <tr class="green-row">
 
       <td>Advanced&nbsp;features</td>
 
-
-      <td>Fragment-level Transfer, Acknowledged Events, Hearbeats,
-      etc.</td>
+      <td>Fragment-level Transfer, Acknowledged Events,
+Hearbeats, etc.</td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
-
-  
 <h3>Events</h3>
 
-
-  
 <table summary="Events" border="0" cellpadding="2">
 
-    <tbody>
+  <tbody>
+
     <tr class="blue-head">
 
       <th>Date</th>
-
 
       <th>Event</th>
 
     </tr>
 
-
     <tr class="blue-row">
 
       <td>Jan&nbsp;2005</td>
 
-
       <td>Interop demo at <a href="http://www.dmtf.org">DMTF</a>
       <a href="http://www.dmtf.org/apps/org/workgroup/interop/ws-cim/">WS-CIM</a>
-      face-to-face meeting</td>
+face-to-face meeting</td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>Apr&nbsp;2005</td>
-
 
       <td><a href="http://www.microsoft.com/presspass/exec/steve/default.mspx">Steve
-      Ballmer</a>'s <a href="http://www.microsoft.com/presspass/exec/steve/2005/04-20ManagementSummit.asp">
-      keynote</a> at the <a href="http://www.mms2005.com/ws/default.aspx">Microsoft Management
-      Summit</a>. The WS-Management demo is from :26 to :35 in the
-      Webcast (<a href="http://metahost.savvislive.com/microsoft/20050420/mms_20050420_56_archive.asx">56
-      Kbps</a> | <a href="http://metahost.savvislive.com/microsoft/20050420/mms_20050420_100_archive.asx">
-      100 Kbps</a> | <a href="http://metahost.savvislive.com/microsoft/20050420/mms_20050420_300_archive.asx">
-      300 Kbps</a>)</td>
+Ballmer</a>'s <a href="http://www.microsoft.com/presspass/exec/steve/2005/04-20ManagementSummit.asp">
+keynote</a> at the <a href="http://www.mms2005.com/ws/default.aspx">Microsoft
+Management Summit</a>. The WS-Management demo is from :26 to :35
+in the Webcast (<a href="http://metahost.savvislive.com/microsoft/20050420/mms_20050420_56_archive.asx">56
+Kbps</a> | <a href="http://metahost.savvislive.com/microsoft/20050420/mms_20050420_100_archive.asx">
+100 Kbps</a> | <a href="http://metahost.savvislive.com/microsoft/20050420/mms_20050420_300_archive.asx">
+300 Kbps</a>)</td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>Apr&nbsp;2005</td>
 
-
       <td>Interop demo at <a href="http://www.microsoft.com/whdc/winhec/default.mspx">Microsoft
-      WinHEC</a></td>
+WinHEC</a></td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>May&nbsp;2005</td>
 
-
-      <td><a href="http://msdn.microsoft.com/webservices/community/workshops/mgmtinterop052005.aspx">WS-Management Interop Workshop</a></td>
+      <td><a href="http://msdn.microsoft.com/webservices/community/workshops/mgmtinterop052005.aspx">WS-Management
+Interop Workshop</a></td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>Jun&nbsp;2005</td>
-
 
       <td><a href="http://www.microsoft.com/presspass/exec/steve/default.mspx">Steve
-      Ballmer</a>'s <a href="http://www.microsoft.com/presspass/exec/steve/2005/06-06TechEd.mspx">
-      keynote</a> at <a href="http://www.microsoft.com/events/teched2005/default.mspx">Microsoft
-      TechEd</a>. The WS-Management demo is from 1:14 to 1:23 in
-      the <a href="http://go.microsoft.com/?linkid=3232961">Webcast</a></td>
+Ballmer</a>'s <a href="http://www.microsoft.com/presspass/exec/steve/2005/06-06TechEd.mspx">
+keynote</a> at <a href="http://www.microsoft.com/events/teched2005/default.mspx">Microsoft
+TechEd</a>. The WS-Management demo is from 1:14 to 1:23 in the <a href="http://go.microsoft.com/?linkid=3232961">Webcast</a></td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>Jun&nbsp;2005</td>
 
-
       <td><a href="https://www28.cplan.com/javaone05_93_1/session_details.jsp?isid=270854&amp;ilocation_id=93-1&amp;ilanguage=english">
-      BOF-9854</a> at <a href="http://java.sun.com/javaone/sf/index.jsp">JavaOne</a></td>
+BOF-9854</a> at <a href="http://java.sun.com/javaone/sf/index.jsp">JavaOne</a></td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>Sep&nbsp;2005</td>
 
-
-      <td><a href="http://emwusa.com/agenda_details.html#WedCohen">Enterprise Management World</a></td>
+      <td><a href="http://emwusa.com/agenda_details.html#WedCohen">Enterprise
+Management World</a></td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>Dec&nbsp;2005</td>
 
-
-      <td><a href="http://mandevcon.com">Management Developers Conference</a></td>
+      <td><a href="http://mandevcon.com">Management
+Developers Conference</a></td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>Apr&nbsp;2006</td>
 
-
-      <td><a href="https://www.mms2006.com/content/publichome.aspx">Microsoft Management Summit</a></td>
+      <td><a href="https://www.mms2006.com/content/publichome.aspx">Microsoft
+Management Summit</a></td>
 
     </tr>
-
 
     <tr class="blue-row">
 
       <td>May&nbsp;2006</td>
 
-
       <td><a href="https://www28.cplan.com/javaone06_cv_124_1/session_details.jsp?isid=277269&amp;ilocation_id=124-1&amp;ilanguage=english">
-      BOF-2269</a> at <a href="http://java.sun.com/javaone/sf/index.jsp">JavaOne</a>. <br>
+BOF-2269</a> at <a href="http://java.sun.com/javaone/sf/index.jsp">JavaOne</a>.
+      <br>
 
-      Presentations: <a href="preso/javaone06/WisemanJavaOne06Bof2269.ppt">Sun on the wiseman project</a> | 
-      <a href="preso/javaone06/WSMAN-Intro.ppt">Microsoft on the WS-Management Protocol</a><a> | 
-      </a><a href="preso/javaone06/SAPAndWSM.ppt">SAP on WS-Management, CIM and JMX</a><a></a></td>
+Presentations: <a href="preso/javaone06/WisemanJavaOne06Bof2269.ppt">Sun
+on the wiseman project</a> | <a href="preso/javaone06/WSMAN-Intro.ppt">Microsoft on the
+WS-Management Protocol</a><a> | </a><a href="preso/javaone06/SAPAndWSM.ppt">SAP on WS-Management,
+CIM and JMX</a></td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
-
-  
 <h3>Background Information</h3>
 
+<p>The specifications implemented in the wiseman project include:</p>
 
-  
-<p>The specifications implemented in the wiseman project
-  include:</p>
-
-
-  
 <p><a href="http://www.dmtf.org/standards/wsman">WS-Management,
-  </a><a href="http://www.dmtf.org/standards/published_documents/DSP0226.pdf">DMTF DSP0226</a></p>
+</a><a href="http://www.dmtf.org/standards/published_documents/DSP0226.pdf">DMTF
+DSP0226</a></p>
 
-
-  
 <p>This specification identifies a core set of Web service
-  specifications and usage requirements to expose a common set of
-  operations that are central to all systems management. This
-  comprises the abilities to:</p>
+specifications and usage requirements to expose a common set of
+operations that are central to all systems management. This comprises
+the abilities to:</p>
 
-
-  
 <ul>
 
-    <li>Discover the presence of management resources and navigate
-    between them</li>
+  <li>Discover the presence of management resources and navigate
+between them</li>
 
+  <li>Get, Put, Create, Rename, and Delete individual management
+resources, such as settings and dynamic values</li>
 
-    <li>Get, Put, Create, Rename, and Delete individual management
-    resources, such as settings and dynamic values</li>
+  <li>Enumerate the contents of containers and collections, such
+as large tables and logs</li>
 
+  <li>Subscribe to events emitted by managed resources</li>
 
-    <li>Enumerate the contents of containers and collections, such
-    as large tables and logs</li>
+  <li>Execute specific management methods with strongly typed
+input and output parameters</li>
 
-
-    <li>Subscribe to events emitted by managed resources</li>
-
-
-    <li>Execute specific management methods with strongly typed
-    input and output parameters</li>
-
-  
 </ul>
 
+<p><a href="specs/2005/06/catalog.pdf">WS-Management
+Catalog, 2005/06</a></p>
 
-  
-<p><a href="specs/2005/06/catalog.pdf">WS-Management Catalog,
-  2005/06</a></p>
-
-
-  
 <p>This specification defines a metadata format for the discovery
-  of management functionality of resources, or endpoints. As
-  WS-Management supports the concept of multiple logical endpoints
-  residing at the same network address, this specification defines
-  a construct for a list of available logical endpoints or
-  "resources", their summary forms, compatible actions, schemas,
-  and WSDL representations.</p>
+of management functionality of resources, or endpoints. As
+WS-Management supports the concept of multiple logical endpoints
+residing at the same network address, this specification defines a
+construct for a list of available logical endpoints or "resources",
+their summary forms, compatible actions, schemas, and WSDL
+representations.</p>
 
-
-  
 <p><a href="specs/2004/08/addressing.pdf">WS-Addressing,
-  2004/08</a></p>
+2004/08</a></p>
 
-
-  
 <p>This specification defines a construct to identify/reference a
-  Web service endpoint for access and for addressing messages
-  between endpoints, and it defines a construct of message
-  information headers allowing uniform addressing of messages
-  independent of underlying transport.</p>
+Web service endpoint for access and for addressing messages between
+endpoints, and it defines a construct of message information headers
+allowing uniform addressing of messages independent of underlying
+transport.</p>
 
-
-  
 <p><a href="http://msdn.microsoft.com/ws/2004/09/ws-enumeration/">WS-Enumeration,
-  2004/09</a></p>
+2004/09</a></p>
 
-
-  
 <p>This specification defines a simple SOAP-based protocol for
-  the transfer of large data sets. Enumeration of the data by the
-  consumer is facilitated through a session abstraction, allowing
-  the consumer to request XML element information items from the
-  data source over the span of one or more SOAP messages.</p>
+the transfer of large data sets. Enumeration of the data by the
+consumer is facilitated through a session abstraction, allowing the
+consumer to request XML element information items from the data source
+over the span of one or more SOAP messages.</p>
 
-
-  
 <p><a href="specs/2004/08/eventing.pdf">WS-Eventing,
-  2004/08</a></p>
+2004/08</a></p>
 
-
-  
 <p>This specification defines a protocol for a Web service to
-  register interest with another Web service in order to receive
-  messages about events. The subscriber may manage the subscription
-  by interacting with a Web service designated by the event
-  source.</p>
+register interest with another Web service in order to receive messages
+about events. The subscriber may manage the subscription by interacting
+with a Web service designated by the event source.</p>
 
-
-  
 <p><a href="http://msdn.microsoft.com/ws/2004/09/ws-transfer/">WS-Transfer,
-  2004/09</a></p>
+2004/09</a></p>
 
-
-  
 <p>This specification defines operations using Web services
-  infrastructure for sending and receiving XML representations of a
-  resource and for creating and deleting a resource and its
-  corresponding representation.</p>
+infrastructure for sending and receiving XML representations of a
+resource and for creating and deleting a resource and its corresponding
+representation.</p>
 
-
-  
 <h3>Links</h3>
 
-
-  
 <table summary="Links">
 
-    <tbody>
+  <tbody>
+
     <tr>
 
       <td valign="middle"><a href="http://community.java.net/java-ws-xml"><img src="images/javaxml-duke.gif" alt="Java Web Services and XML" border="0"></a></td>
 
-
       <td valign="middle"><a href="http://www.netbeans.org/downloads/"><img src="http://java.sun.com/images/banners/b5_netbeans_dwnld.gif" alt="download netbeans" border="0"></a></td>
-
 
       <td valign="middle"><a href="http://java.sun.com/javaone/sf/index.jsp"><img src="http://java.sun.com/images/Javaone2005_120_60_v2.gif" alt="JavaOne 2005" border="0"></a></td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
