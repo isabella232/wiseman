@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -50,6 +52,7 @@ import com.sun.ws.management.xml.XmlBinding;
 public class ResourceFactory {
 
 	protected static final String UUID_SCHEME = "uuid:";
+	private static Logger log = Logger.getLogger(ResourceFactory.class.getName());
 
 	public static final String LATEST = "LATEST";
 
@@ -457,10 +460,34 @@ public class ResourceFactory {
 		    }
 
 	public static ServerIdentity getIdentity(String destination) throws SOAPException, IOException, JAXBException{
-        final Identify identify = new Identify();
-        identify.setIdentify();
-        final Addressing response = HttpClient.sendRequest(identify.getMessage(), destination);
-        return new ServerIdentityImpl(response.getBody().extractContentAsDocument());
+        try {
+			return getIdentity(destination, -1);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("getIdentity attempt interrupted.");
+		} catch (TimeoutException e) {
+			throw new RuntimeException("getIdentity attempt exceeded timout.");
+		}
+	}
+	
+
+	public static ServerIdentity getIdentity(final String destination,int timeout) throws SOAPException, IOException, JAXBException, InterruptedException, TimeoutException{
+		
+		IdentifyTask identifyTask = new IdentifyTask(destination);
+		
+         	Thread identifyThread=new Thread(identifyTask);
+        	identifyThread.start();
+        	if(timeout<0)
+        		identifyThread.join();
+        	else
+        		identifyThread.join(timeout);
+        	
+        	if(identifyThread.isAlive()){
+        		String timeoutMessage = "An identify attempt to "+destination+" exceeded timeout interval and has been abandoned";
+				log.severe(timeoutMessage);
+        		throw new TimeoutException(timeoutMessage);
+        	}
+        	
+        return identifyTask.servIdent;
 	}
 
 	public static JAXBResource createJAXB(String destination, String resourceURI,

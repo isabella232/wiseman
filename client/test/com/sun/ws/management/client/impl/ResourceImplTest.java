@@ -2,8 +2,12 @@ package com.sun.ws.management.client.impl;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.InetSocketAddress;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.concurrent.TimeoutException;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -98,6 +102,33 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	}
 
+	/** 
+	 * Tests to see if an identity request will timout
+	 * @throws XPathExpressionException
+	 * @throws NoMatchFoundException
+	 * @throws SOAPException
+	 * @throws IOException
+	 * @throws JAXBException
+	 * @throws InterruptedException 
+	 */
+	public void testIdentityTimeout() throws XPathExpressionException, NoMatchFoundException, SOAPException, IOException, JAXBException, InterruptedException{
+	    // Create a non-blocking server socket and check for connections
+	        ServerSocketChannel ssChannel = ServerSocketChannel.open();
+	        ssChannel.configureBlocking(false);
+	        int port = 10666;
+	        ssChannel.socket().bind(new InetSocketAddress(port));
+	    
+	        SocketChannel sChannel = ssChannel.accept();
+
+	        try {
+	        ServerIdentity serverInfo = ResourceFactory.getIdentity("http://localhost:10666/wsman",500);
+	        } catch (TimeoutException e){
+	        	return;
+	        } 
+	        ssChannel.close();
+	        
+	        fail("A timeout did not occur as expected.");
+	}
 	/*
 	 * Test method for
 	 * 'com.sun.ws.management.client.impl.TransferableResourceImpl.get(Map<String,
