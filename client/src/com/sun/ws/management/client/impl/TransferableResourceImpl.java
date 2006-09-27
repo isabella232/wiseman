@@ -3,6 +3,7 @@ package com.sun.ws.management.client.impl;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -32,6 +33,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
@@ -88,6 +90,8 @@ public class TransferableResourceImpl implements TransferableResource {
 	protected long  maxEnvelopeSize=-1;
 	
     private String replyTo=Addressing.ANONYMOUS_ENDPOINT_URI;
+    
+    protected HashSet<OptionType> optionSet = null; 
 
     /**
 	 * A Transferable resource is package local. It is not intended to be constructed by anything 
@@ -195,6 +199,9 @@ public class TransferableResourceImpl implements TransferableResource {
 			}
         	mgmt.setSelectors(selectors1);
         }
+        
+        // Add any user defined options to the header
+		addOptionSetHeader(mgmt);
                 
         log.fine("REQUEST:\n"+mgmt+"\n");
         
@@ -278,8 +285,11 @@ public class TransferableResourceImpl implements TransferableResource {
 			}
         	mgmt.setSelectors(selectors1);
         }
-                
-		log.fine("REQUEST:\n"+mgmt+"\n");
+        
+        // Add any user defined options to the header
+		addOptionSetHeader(mgmt);
+        
+		log.info("REQUEST:\n"+mgmt+"\n");
 		//Send the request
 		final Addressing response = HttpClient.sendRequest(mgmt);
 		
@@ -290,7 +300,7 @@ public class TransferableResourceImpl implements TransferableResource {
 		}
 		
 		//Process the response to extract useful information.
-		log.fine("RESPONSE:\n"+response+"\n");
+		log.info("RESPONSE:\n"+response+"\n");
 		
 		//parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors
@@ -303,6 +313,34 @@ public class TransferableResourceImpl implements TransferableResource {
     	   return null;
        }
 	}
+
+	
+	/**
+	 * Add any user speicied options to the request header.
+	 * 
+	 * @param mgmt
+	 * @throws JAXBException
+	 * @throws SOAPException
+	 */
+	 protected void addOptionSetHeader(final Management mgmt) throws JAXBException, SOAPException {
+/*		HashSet<OptionType> options1=new HashSet<OptionType>();        
+        if(optionSet!=null){
+        	Set keys = optionSet.keySet();
+        	
+         	for (Iterator iter = keys.iterator(); iter.hasNext();) {
+         		String key = (String)iter.next();
+        		Object value = optionSet.get(key);
+        		OptionType element = new OptionType();
+        		element.setName(key);
+        		element.setValue(value.toString());
+        		
+				options1.add(element);
+			}
+			*/
+         	if (optionSet != null && optionSet.size() > 0){
+         		mgmt.setOptions(optionSet);
+         	}
+ 	}
 
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.Resource#put(com.sun.ws.management.client.ResourceState)
@@ -385,6 +423,9 @@ public class TransferableResourceImpl implements TransferableResource {
 			}
         	mgmt.setSelectors(selectors1);
         }
+        
+        // Add any user defined options to the header
+		addOptionSetHeader(mgmt);
                 
         log.info("REQUEST:\n"+mgmt+"\n");
         //Send the request
@@ -530,6 +571,78 @@ public class TransferableResourceImpl implements TransferableResource {
 	 */
 	public void setResourceUri(String resourceURI) {
 		this.resourceURI = resourceURI;
+	}
+	
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 * @param type option type (default to xsd:String)
+	 */
+	public void addOption(String name, Object value, QName type){
+		addOption(name, value, type, false);
+	}
+
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 * @param mustComply option must comply flag
+	 */
+	
+	public void addOption(String name, Object value, boolean mustComply){
+		addOption(name, value, null, false);
+	}
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 */
+	
+	public void addOption(String name, Object value){
+		addOption(name, value, false);
+	}	
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 * @param type option type (default to xsd:String)
+	 * @param mustComply option must comply flag
+	 */
+	public void addOption(String name, Object value, QName type, boolean mustComply){
+		if (optionSet == null)
+		{
+			optionSet = new HashSet<OptionType>();
+		}
+		
+		OptionType element = new OptionType();
+		element.setName(name);
+		element.setValue(value.toString());
+		if (mustComply)
+		{
+			element.setMustComply(mustComply);
+		}
+		
+		if (type != null) {
+			element.setType(type);
+		}
+		
+		optionSet.add(element);
+	}
+
+	/**
+	 * @return Returns the optionSet.
+	 */
+	public HashSet<OptionType> getOptionSet() {
+		return optionSet;
+	}
+	
+	/**
+	 * Remove all of the current options from the option set
+	 *
+	 */
+	public void resetOptionSet(){
+		optionSet = null;
 	}
 
 

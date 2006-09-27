@@ -188,6 +188,10 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 		final Management mgmt = new Management(enu);
 		mgmt.setTo(getDestination());
 		mgmt.setResourceURI(getResourceUri());
+		
+        // Add any user defined options to the header
+		addOptionSetHeader(mgmt);
+
 
 		// store away request and response for display purposes only
 		reqResList = new ArrayList<String>();
@@ -296,6 +300,9 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 				timeout);
 		final Management mgmt = setManagementProperties(enu);
 		
+	    // Add any user defined options to the header
+		addOptionSetHeader(mgmt);
+		
 		reqResList = new ArrayList<String>();
 		reqResList.add(mgmt.toString());
 		log.info("REQUEST:\n" + mgmt + "\n");
@@ -376,6 +383,10 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 
 		final Management mgmt = setManagementProperties(enu);
 
+	       // Add any user defined options to the header
+		addOptionSetHeader(mgmt);
+		
+		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
 
 		// Check for fault during message generation
@@ -383,6 +394,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault.getFaultString());
 		}
+		log.info("RESPONSE:\n" + response + "\n");
 	}
 
 	/**
@@ -406,6 +418,9 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 
 		final Management mgmt = setManagementProperties(enu);
 
+	       // Add any user defined options to the header
+		addOptionSetHeader(mgmt);
+		
 		final Addressing response = HttpClient.sendRequest(mgmt);
 
 		// Check for fault during message generation

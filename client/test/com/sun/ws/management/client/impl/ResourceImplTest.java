@@ -8,10 +8,13 @@ import java.nio.channels.SocketChannel;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.concurrent.TimeoutException;
+import java.util.HashSet;
 
+import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
@@ -23,6 +26,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -169,6 +173,11 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 				ResourceImplTest.timeoutInMilliseconds, content,
 				ResourceFactory.LATEST);
 
+		resource.addOption("opt1", "value1", new QName(XMLConstants.W3C_XML_SCHEMA_NS_URI, "string"));
+		resource.addOption("opt2", new Integer(7), new QName(XMLConstants.W3C_XML_SCHEMA_NS_URI, "int"), true);
+		resource.addOption("opt3", new Boolean(true));
+		resource.addOption("opt2", new Integer(99), new QName(XMLConstants.W3C_XML_SCHEMA_NS_URI, "int"), true);
+		
 		// pull out Epr and parse for selectors
 		// EndpointReferenceType retrievedEpr = created.getResourceEpr();
 		ResourceState resourceState = resource.get();
@@ -224,6 +233,11 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 				ResourceImplTest.timeoutInMilliseconds,
 				content,ResourceFactory.LATEST);
 
+		
+		resource.addOption("opt1", "value1");
+		resource.addOption("opt2", new Integer(7));
+		resource.addOption("opt3", new Boolean(true));
+		
 		//Now build the XPath expression for fragment GET
 		String xPathReq = "//*[local-name()='age']";
 		//TODO: write test using /text() method as currently fails on the server.
@@ -274,11 +288,20 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		Document stateDocument = Management.newDocument();
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 		binding.marshal(userElement, stateDocument);
+		
+		// setup user options
+		
+		HashSet<OptionType> options = new HashSet<OptionType>();
+		
+		OptionType opt = new OptionType();
+		opt.setName("createOpt");
+		opt.setValue("abcd");
+		options.add(opt);
 
 		Resource newResource = ResourceFactory.create(ResourceImplTest.destUrl,
 				ResourceImplTest.resourceUri,
 				ResourceImplTest.timeoutInMilliseconds, stateDocument,
-				ResourceFactory.LATEST);
+				ResourceFactory.LATEST, options);
 
 		assertEquals("Values not identical.", dest, newResource
 				.getDestination());
@@ -437,6 +460,10 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		selectorSet = created.getSelectorSet();
 		assertNotNull("SelectorSet is null.", selectorSet);
 
+		created.addOption("opt1", "value1");
+		created.addOption("opt2", new Integer(7), true);
+		created.addOption("opt3", new Boolean(true));
+		
 		created.delete();
 		try {
 			created.get();
@@ -484,6 +511,11 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 		String xPathReq = "//*[local-name()='age']";
 		created.delete(xPathReq,null);
+		
+		created.addOption("opt1", "value1");
+		created.addOption("opt2", new Integer(7));
+		created.addOption("opt3", new Boolean(true), true);
+		
 		try {
 			ResourceState res = created.get();
 			assertTrue(true);
@@ -529,6 +561,10 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		}
 		Resource created = ResourceFactory.create(dest, resource,
 				timeoutInMilliseconds, content, ResourceFactory.LATEST);
+		
+		created.addOption("opt1", "value1");
+		created.addOption("opt2", new Integer(7));
+		created.addOption("opt3", new Boolean(true));
 
 		user.setAddress(addressModified);
 
@@ -601,10 +637,16 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		    	content.createElementNS("http://examples.hp.com/ws/wsman/user","ns9:state");
 		    element.setTextContent(stateUpdated);
 		    content.appendChild(element);
+		    
+			created.addOption("opt1", "value1");
+			created.addOption("opt2", new Integer(7));
+			created.addOption("opt3", new Boolean(true));
+			
 		    created.put(content,
 		    		fragmentRequest,
 					XPath.NS_URI);
 
+			
 		ResourceState retrieved = created.get();
 
 		assertNotNull("Retrieved resource is NULL.", retrieved);
@@ -658,6 +700,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 Resource retrieved = enumerableResources[0];
 		 assertTrue(retrieved instanceof EnumerationResourceImpl);
 		
+		 retrieved.addOption("opt1", "value1");
+		 retrieved.addOption("opt2", new Integer(7));
+		 retrieved.addOption("opt3", new Boolean(true));		 
  		 
 		 //Build the filters
 		 String testName = "James";//See users.store for more valid search values

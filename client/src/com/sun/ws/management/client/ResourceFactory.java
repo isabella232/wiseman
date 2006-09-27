@@ -22,6 +22,7 @@ import javax.xml.soap.SOAPFault;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
@@ -52,9 +53,11 @@ import com.sun.ws.management.xml.XmlBinding;
 public class ResourceFactory {
 
 	protected static final String UUID_SCHEME = "uuid:";
-	private static Logger log = Logger.getLogger(ResourceFactory.class.getName());
 
 	public static final String LATEST = "LATEST";
+	
+    private static Logger log = Logger.getLogger(ResourceFactory.class.getName());
+
 
 	/**
 	 * You should never create a factory. Access it statically.
@@ -83,6 +86,32 @@ public class ResourceFactory {
 	 */
 	public static Resource create(String destination, String resourceURI,
 			long timeoutInMilliseconds, Document content, String specVersion)
+			throws SOAPException, JAXBException, IOException, FaultException,
+			DatatypeConfigurationException	{
+				return create(destination, resourceURI,
+						timeoutInMilliseconds, content, specVersion, null);
+	}
+	
+	/**
+	 * Creates a new resource instance from of a resource on the server.
+	 *  
+	 * @param destination A URL for the destination port of this service.
+	 * @param resourceURI A resource URI indicating the type of resource to create 
+	 * @param timeoutInMilliseconds Time to wait before giving up on creation
+	 * @param content a w3c document representing the inital resource state 
+	 * @param specVersion The wsman spec version of the client to create. You can 
+	 * use null or the constant LATEST. 
+	 * @param optionSet set of user defined options to use during the create operation 
+	 * @return A Resource class representing the new resource created on the server. 
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public static Resource create(String destination, String resourceURI,
+			long timeoutInMilliseconds, Document content, String specVersion,
+			HashSet<OptionType> optionSet)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
 
@@ -113,6 +142,11 @@ public class ResourceFactory {
 
 		// populate attribute details
 		// setMessageTimeout(timeoutInMilliseconds);
+		
+		if (optionSet != null)
+		{
+			mgmt.setOptions(optionSet);
+		}
 
 		// Add the payload: plug the content passed in into the document
 		if (content != null) {
@@ -120,7 +154,7 @@ public class ResourceFactory {
 			mgmt.getBody().addDocument(content);
 		}
 
-		// log.fine("REQUEST:\n"+mgmt+"\n");
+		log.info("REQUEST:\n"+mgmt+"\n");
 		// Send the request
 		final Addressing response = HttpClient.sendRequest(mgmt);
 

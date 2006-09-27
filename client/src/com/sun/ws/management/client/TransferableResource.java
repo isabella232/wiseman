@@ -1,12 +1,16 @@
 package com.sun.ws.management.client;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.w3c.dom.Document;
 
 import com.sun.ws.management.AccessDeniedFault;
@@ -142,7 +146,47 @@ public interface TransferableResource {
 	
 	public abstract String getReplyTo();
 	public abstract void setReplyTo(String replyTo);
-
+	
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 */
+	public void addOption(String name, Object value);
+	
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 * @param mustComply option must comply flag
+	 */
+	public void addOption(String name, Object value, boolean mustComply);
+	
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 * @param mustComply option must comply flag
+	 */
+	public void addOption(String name, Object value, QName type, boolean mustComply);
+	
+	/**
+	 * Add an option to the option set
+	 * @param name option name
+	 * @param value option value
+	 * @param mustComply option must comply flag
+	 */
+	public void addOption(String name, Object value, QName type);
+	
+		/**
+	 * @return Returns the optionSet.
+	 */
+	public HashSet<OptionType> getOptionSet(); 
+	/**
+	 * Remove all of the current options from the option set
+	 *
+	 */
+	public void resetOptionSet();
 
 
 }
