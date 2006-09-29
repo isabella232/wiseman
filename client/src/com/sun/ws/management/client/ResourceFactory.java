@@ -199,7 +199,7 @@ public class ResourceFactory {
 			}else{
 			   returnedResourceUri = resourceURI;
 			}
-			EnumerationResourceImpl resource = new EnumerationResourceImpl(destination,returnedResourceUri,populateSelectorSet( createResponse));
+			ResourceImpl resource = new ResourceImpl(destination,returnedResourceUri,populateSelectorSet( createResponse));
 			resource.setMessageTimeout(timeoutInMilliseconds);
 			return resource;
 
@@ -517,7 +517,7 @@ public class ResourceFactory {
         	
         	if(identifyThread.isAlive()){
         		String timeoutMessage = "An identify attempt to "+destination+" exceeded timeout interval and has been abandoned";
-				log.severe(timeoutMessage);
+				log.info(timeoutMessage);
         		throw new TimeoutException(timeoutMessage);
         	}
         	
