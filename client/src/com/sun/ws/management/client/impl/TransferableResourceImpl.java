@@ -220,12 +220,6 @@ public class TransferableResourceImpl implements TransferableResource {
                
 	}
 
-
-	// TODO obiwan314 We need to get this done
-	public Object[] invoke(QName action, Map<QName, String> parameters) {
-		return null;
-	}
-
 	
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.TransferableResource#put(org.w3c.dom.Document)

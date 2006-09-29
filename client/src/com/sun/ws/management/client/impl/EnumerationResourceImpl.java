@@ -39,8 +39,7 @@ import com.sun.ws.management.enumeration.EnumerationExtensions.Mode;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 
-public class EnumerationResourceImpl extends TransferableResourceImpl implements
-		Resource {
+public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	private static final String XPATH_TO_EPRS = "//*[namespace-uri()=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" and local-name()=\"EndpointReference\"]";
 
 	public ArrayList<String> reqResList = new ArrayList<String>();
@@ -437,6 +436,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	public ArrayList getReqResList() {
 		return reqResList;
 	}
+
 
 	/**
 	 * @return Returns the destination.
