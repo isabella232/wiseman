@@ -29,8 +29,10 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
@@ -302,6 +304,24 @@ public class UserHandler extends TransferSupport {
 		return userOb;
 	}
 
+
+	public void customaction(Management request, Management response) {
+		Document responseDoc = Management.newDocument();
+		Element respElement = responseDoc.createElement("response");
+		Element respParam = responseDoc.createElement("param1");
+		respParam.setTextContent("The answer is plastics");
+		responseDoc.appendChild((Node)respElement);
+		respElement.appendChild((Node)respParam);
+		
+		//Text nextNode = responseDoc.createTextNode("The answer is plastics");
+		//respElement.appendChild(nextNode);
+		try {
+			response.getBody().addDocument(responseDoc);
+		} catch (SOAPException e) {
+			throw new InternalErrorFault(e);
+		}
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void put(Management request, Management response) {

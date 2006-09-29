@@ -264,6 +264,39 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	}
 
+
+	public void testInvoke() throws JAXBException, SOAPException, IOException,
+	DatatypeConfigurationException, FaultException {
+		
+		// Now create an instance and test it's contents
+		String dest = ResourceImplTest.destUrl;
+		String resource = ResourceImplTest.resourceUri;
+
+		UserType user = userFactory.createUserType();
+		user.setLastname("Finkle");
+		user.setFirstname("Joe");
+		user.setAddress("6000 Irwin Drive");
+		user.setCity("Mount Laurel");
+		user.setState("NJ");
+		user.setZip("08054");
+		user.setAge(16);
+
+		Document stateDocument = Management.newDocument();
+		JAXBElement<UserType> userElement = userFactory.createUser(user);
+		binding.marshal(userElement, stateDocument);
+		
+		Resource newResource = ResourceFactory.create(ResourceImplTest.destUrl,
+				ResourceImplTest.resourceUri,
+				ResourceImplTest.timeoutInMilliseconds, stateDocument,
+				ResourceFactory.LATEST, null);
+		
+		ResourceState response = newResource.invoke("http://unit.test.org/customaction", stateDocument);
+		assertNotNull(response.getDocument());
+		assertNotNull(response.getDocument().getFirstChild());
+		assertNotNull(response.getDocument().getFirstChild().getFirstChild());
+		assertEquals("The answer is plastics",response.getDocument().getFirstChild().getFirstChild().getTextContent());
+	}
+	
 	/*
 	 * Test method for
 	 * 'com.sun.ws.management.client.impl.TransferableResourceImpl.create(Map<QName,
