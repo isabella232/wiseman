@@ -31,14 +31,11 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
-import com.sun.ws.management.client.impl.EnumerationResourceImpl;
 import com.sun.ws.management.client.impl.JAXBResourceImpl;
 import com.sun.ws.management.client.impl.ResourceImpl;
-import com.sun.ws.management.client.impl.ServerIdentityImpl;
-import com.sun.ws.management.client.impl.TransferableResourceImpl;
-import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
@@ -59,6 +56,13 @@ public class ResourceFactory {
     private static Logger log = Logger.getLogger(ResourceFactory.class.getName());
 
 
+    {
+		try {
+			Message.initialize();
+		} catch (SOAPException e) {
+			log.severe("Failed to initalize wiseman with error: "+e.getMessage());
+		}
+    }
 	/**
 	 * You should never create a factory. Access it statically.
 	 */
