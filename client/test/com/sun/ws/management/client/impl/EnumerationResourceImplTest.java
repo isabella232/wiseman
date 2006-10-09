@@ -75,5 +75,23 @@ public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
 		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
 		enumerationResource.release(ticket);
 	}
+	
+	public void testCustomDialect() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
+		// Obtain an reference to a resource that represents an enum of users
+		Map<String,String> selector=new HashMap<String,String>();
+		selector.put("id", "1234");
+		Resource[] enumerationResources = ResourceFactory.find(destUrl,resourceUri,timeout,selector);
+		assertNotNull(enumerationResources);
+		assertTrue(enumerationResources.length>0);
+		assertNotNull(enumerationResources[0]);
+		Resource enumerationResource = enumerationResources[0];
+		EnumerationCtx ticket = enumerationResource.enumerate(new String[]{"Simpson"}, "UserCustomDialectLastname", true, false);
+		assertNotNull(ticket);
+		ResourceState pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
+		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
+		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
+		enumerationResource.release(ticket);
+
+	}
 
 }

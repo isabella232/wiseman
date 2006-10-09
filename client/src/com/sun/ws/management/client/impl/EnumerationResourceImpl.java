@@ -144,7 +144,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			enumerationMode = EnumerationExtensions.Mode.EnumerateObjectAndEPR;
 		}
 
-		final DatatypeFactory factory = DatatypeFactory.newInstance();
+		//final DatatypeFactory factory = DatatypeFactory.newInstance();
 		final FilterType filterType = Enumeration.FACTORY.createFilterType();
 		final EndpointReferenceType endTo = Addressing.createEndpointReference(
 				"http://host/endTo", null, null, null, null);
@@ -154,7 +154,10 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			for (int i = 0; i < filters.length; i++) {
 				filter += filters[i] + "\n";
 			}
-			filterType.setDialect(XPath.NS_URI);
+			if(dialect==null)
+				filterType.setDialect(XPath.NS_URI);
+			else
+				filterType.setDialect(dialect);
 			filterType.getContent().add(filter);
 			enu.setEnumerate(endTo, null, filter == null ? null
 					: filterType, enumerationMode==null ? null : enumerationMode.toBinding());
