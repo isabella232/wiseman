@@ -1,4 +1,4 @@
-package framework.models;
+ package framework.models;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -161,22 +161,22 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			//parse request object to retrieve filter parameters entered.
 			enumerateRequestObject =enuRequest.getEnumerate();
 			FilterType filter = enumerateRequestObject.getFilter();
-			//filter body is XMLAny
-			List<Object> cont = filter.getContent();
-			
-			if(cont.size()>0){ //Then some value defined for the filter block.
-				for (Iterator iter = cont.iterator(); iter.hasNext();) {
-					//content is just a string.
-					String filterContent = (String) iter.next();
-					filterContent = filterContent.trim();
-				    filterParameters.add(filterContent);	
+			if(filter!=null){
+				//filter body is XMLAny
+				List<Object> cont = filter.getContent();
+				
+				if(cont.size()>0){ //Then some value defined for the filter block.
+					for (Iterator iter = cont.iterator(); iter.hasNext();) {
+						//content is just a string.
+						String filterContent = (String) iter.next();
+						filterContent = filterContent.trim();
+					    filterParameters.add(filterContent);	
+					}
+				}else{//Else no filter content supplied
+					filterParameters.add("//*"); //return all.
 				}
-			}else{//Else no filter content supplied
-				filterParameters.add("//*"); //return all.
+				//TODO: add processing for RequestTotalItemsCountEstimate
 			}
-			//TODO: add processing for RequestTotalItemsCountEstimate
-//			enu
-			
 			//DONE: after building up filterParameters, create context and store filterParams
 			enumCtxtTypeResponseObject = new EnumerationContextType();
 			
@@ -280,9 +280,11 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			Duration maxTime = null;
 			 maxTime = pullRequestObject.getMaxTime();
 			int maxElements = -1;
+			if(pullRequestObject.getMaxElements()!=null)
 			 maxElements = pullRequestObject.getMaxElements().intValue();
 			int maxContentLength = -1;
-			 maxContentLength = pullRequestObject.getMaxCharacters().intValue();
+			if(pullRequestObject.getMaxCharacters()!=null)
+				maxContentLength = pullRequestObject.getMaxCharacters().intValue();
 
 			 //DONE: locate context information
 			 EnumerationContextContainer eCont = 
@@ -351,7 +353,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 		 ArrayList<String> filterList = getFilterParametersList();
 		 
 		 //if filters were supplied....
-		 if(filterList.size()>0){
+		 //if(filterList.size()>0){
 			 
 	        List<EnumerationItem> items = new ArrayList<EnumerationItem>();
 	        int serializedCount = 0;
@@ -377,7 +379,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			  }
 			  //Now stuff every one of the response in?
 			  enuResponse.setPullResponse(items, getEnumContextId(), null, moreToCome);
-		 }		
+		 //}		
 		return endResponse;
 	}
 	
@@ -389,7 +391,9 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	
 	public void initializeDataSet() throws JAXBException, XPathExpressionException{
 		ArrayList<UserType> matches = new ArrayList<UserType>();
-		String filter = filterParametersList.get(0);
+		String filter = null;
+		if(filterParametersList.size()>0)
+			filter=filterParametersList.get(0);
 		
 		//Load the UserType namespaces
 		NamespaceMap nsm = null;
@@ -413,9 +417,13 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				  matches.add(globalUsersList[i]); 
 			  }
 			}
-		}else{//No filtering. 
+		} else {//No filtering. 
 			matches = new ArrayList<UserType>(globalUsersList.length);
-			System.arraycopy(globalUsersList, 0, matches, 0, matches.size());
+			for (int i = 0; i < globalUsersList.length; i++) {
+				
+				matches.add(globalUsersList[i]);	
+			}
+//			System.arraycopy(globalUsersList, 0, matches, 0, globalUsersList.length);
 		}
 		//return all filtered/unfiltered data.
 		dataValues = new UserType[matches.size()];
