@@ -375,6 +375,18 @@ public class TransferableResourceImpl implements TransferableResource {
         	size.setValue(bi);
         	mgmt.setMaxEnvelopeSize(size);
         }
+        
+        //populate the map        
+		HashSet<SelectorType> selectors1=new HashSet<SelectorType>();        
+        if(selectorSet!=null){
+        	List<SelectorType> selectors = selectorSet.getSelector();
+        	for (Iterator iter = selectors.iterator(); iter.hasNext();) {
+				SelectorType element = (SelectorType) iter.next();
+				selectors1.add(element);
+			}
+        	mgmt.setSelectors(selectors1);
+        }
+
 
 		return mgmt;
 		
@@ -402,22 +414,8 @@ public class TransferableResourceImpl implements TransferableResource {
 		final Management mgmt = setManagementProperties(xf);
         
 	    // If xpathExpression is not null then generate fragment GET 
-	    if((xpathExpression!=null)&&(xpathExpression.trim().length()>0)){
-	    	// Add the Fragement Header
-	    	setFragmentHeader(xpathExpression,dialect,mgmt);
-	    }
-	    
-        //populate the map        
-		HashSet<SelectorType> selectors1=new HashSet<SelectorType>();        
-        if(selectorSet!=null){
-        	List<SelectorType> selectors = selectorSet.getSelector();
-        	for (Iterator iter = selectors.iterator(); iter.hasNext();) {
-				SelectorType element = (SelectorType) iter.next();
-				selectors1.add(element);
-			}
-        	mgmt.setSelectors(selectors1);
-        }
-        
+    	setFragmentHeader(xpathExpression,dialect,mgmt);
+	            
         // Add any user defined options to the header
 		addOptionSetHeader(mgmt);
                 
@@ -506,7 +504,9 @@ public class TransferableResourceImpl implements TransferableResource {
     public void setFragmentHeader(final String expression, final String dialect,
     		Management mgmt) throws SOAPException, JAXBException {
 
-        
+	    if((expression==null)||(expression.trim().length()==0))
+	    	return;
+
         final DialectableMixedDataType dialectableMixedDataType = 
                 Management.FACTORY.createDialectableMixedDataType();
         if (dialect != null) {

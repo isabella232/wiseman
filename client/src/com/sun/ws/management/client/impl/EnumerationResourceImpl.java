@@ -36,6 +36,7 @@ import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.EnumerationExtensions.Mode;
+import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 
@@ -125,34 +126,21 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			boolean useEprs, boolean useObjects)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
+		
 		String enumerationContextId = "";
 
-		String filter = "";
-		// process filter if available
-		if (filters != null) {
-			// Filter type is XMLAny so assume String is xml node, and convert
-			// filterArray to
-			// flat filter node list. Server must know how to parse content
-			// either way.
-			for (int i = 0; i < filters.length; i++) {
-				filter += filters[i] + "\n";
-			}
-		}
-
-		// Now generate the request for an EnumCtxId with parameters passed in
-		final Enumeration enu = new Enumeration();
-		enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
-		enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-		enu.setMessageId("uuid:" + UUID.randomUUID().toString());
-
+		final Transfer xf = setTransferProperties(Enumeration.ENUMERATE_ACTION_URI);		
+		final Management mgmt = setManagementProperties(xf);
+		addOptionSetHeader(mgmt);
+		final Enumeration enu = new Enumeration(mgmt);
+		
+		// Enum Mode
 		Mode enumerationMode = null;
 		if (useEprs) {
-			/* EnumerationModeType.valueOf("EnumerateEPR") */
 			enumerationMode = EnumerationExtensions.Mode.EnumerateEPR;
 		}
 
 		if (useEprs && useObjects) {
-			/* EnumerationModeType.valueOf("EnumerateObjectAndEPR") */
 			enumerationMode = EnumerationExtensions.Mode.EnumerateObjectAndEPR;
 		}
 
@@ -160,36 +148,28 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		final FilterType filterType = Enumeration.FACTORY.createFilterType();
 		final EndpointReferenceType endTo = Addressing.createEndpointReference(
 				"http://host/endTo", null, null, null, null);
-
-		String timeout = null;
-		if (getMessageTimeout() >0 ) {
-			timeout = factory.newDuration(getMessageTimeout()).toString();
-		}
-
+		
 		if (filters != null) {
+			String filter = "";
+			for (int i = 0; i < filters.length; i++) {
+				filter += filters[i] + "\n";
+			}
 			filterType.setDialect(XPath.NS_URI);
 			filterType.getContent().add(filter);
-			enu.setEnumerate(endTo, timeout, filter == null ? null
+			enu.setEnumerate(endTo, null, filter == null ? null
 					: filterType, enumerationMode==null ? null : enumerationMode.toBinding());
 		} else {
 			JAXBElement<EnumerationModeType> modeBinding = null;
 			if (enumerationMode != null)
 				modeBinding = enumerationMode.toBinding();
-			if (getMessageTimeout() >0 ) {
-				enu.setEnumerate(null, timeout,
-						null, modeBinding);
-			} else {
+//			if (getMessageTimeout() >0 ) {
+//				enu.setEnumerate(null, timeout,
+//						null, modeBinding);
+//			} else {
 				enu.setEnumerate(null, null, null, modeBinding);
 
-			}
+//			}
 		}
-
-		final Management mgmt = new Management(enu);
-		mgmt.setTo(getDestination());
-		mgmt.setResourceURI(getResourceUri());
-		
-        // Add any user defined options to the header
-		addOptionSetHeader(mgmt);
 
 
 		// store away request and response for display purposes only
