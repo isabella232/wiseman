@@ -44,10 +44,7 @@ public class WsManBaseTestSupport extends TestCase {
         try {
 			Message.initialize();
 
-			if (new Addressing().getXmlBinding() == null)
-			{
-			    SOAP.setXmlBinding(new XmlBinding(null));
-			}
+
 		} catch (Exception e) {
 			fail(e.getMessage());
 		} 
@@ -70,6 +67,7 @@ public class WsManBaseTestSupport extends TestCase {
 
 	        // Add required ws-management values
 	        Management mgmt = new Management(xf);
+	        mgmt.setXmlBinding(xf.getXmlBinding());
 	        mgmt.setTo(destination);
 	        mgmt.setResourceURI(resourceUri);
 	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
@@ -100,6 +98,7 @@ public class WsManBaseTestSupport extends TestCase {
 
 	        // Add required ws-management values
 	        Management mgmt = new Management(xf);
+	        mgmt.setXmlBinding(xf.getXmlBinding());
 	        mgmt.setTo(destination);
 	        mgmt.setResourceURI(resourceUri);
 	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
@@ -130,6 +129,7 @@ public class WsManBaseTestSupport extends TestCase {
 
 	        // Add required ws-management values
 	        Management mgmt = new Management(xf);
+	        mgmt.setXmlBinding(xf.getXmlBinding());
 	        mgmt.setTo(destination);
 	        mgmt.setResourceURI(resourceUri);
 	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
@@ -162,6 +162,7 @@ public class WsManBaseTestSupport extends TestCase {
 
 	        // Build Request Document
 	        Management mgmt = new Management(xf);
+	        mgmt.setXmlBinding(xf.getXmlBinding());
 	        mgmt.setTo(destination);
 	        mgmt.setResourceURI(resourceUri);
 	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
@@ -196,6 +197,8 @@ public class WsManBaseTestSupport extends TestCase {
 	                         filter == null ? null : filterType);
 
 	        final Management mgmt = new Management(enu);
+	        mgmt.setXmlBinding(enu.getXmlBinding());
+
 	        mgmt.setTo(destination);
 	        mgmt.setResourceURI(resourceUri);
 
@@ -239,6 +242,7 @@ public class WsManBaseTestSupport extends TestCase {
 	        enu.setPull(ctx,0,100,factory.newDuration(60000));//maxchars not implemented yet
 
 	        final Management mgmt = new Management(enu);
+	        mgmt.setXmlBinding(enu.getXmlBinding());
 	        mgmt.setTo(destination);
 	        mgmt.setResourceURI(resourceUri);
 
@@ -267,6 +271,7 @@ public class WsManBaseTestSupport extends TestCase {
 	        enu.setRelease(ctx);
 
 	        final Management mgmt = new Management(enu);
+	        mgmt.setXmlBinding(enu.getXmlBinding());
 	        mgmt.setTo(destination);
 	        mgmt.setResourceURI(resourceUri);
 

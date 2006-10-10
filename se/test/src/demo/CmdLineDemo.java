@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.12 2006-07-10 01:41:10 akhilarora Exp $
+ * $Id: CmdLineDemo.java,v 1.13 2006-10-10 19:50:46 nbeers Exp $
  */
 
 package demo;
@@ -99,7 +99,6 @@ public final class CmdLineDemo {
         }
         
         SOAP.initialize();
-        SOAP.setXmlBinding(new XmlBinding(null));
         
         if (IDENTIFY.equals(verb)) {
             final Identify identify = new Identify();

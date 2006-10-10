@@ -125,10 +125,6 @@ public class ResourceFactory {
 			throw new IllegalArgumentException(msg);
 		}
 
-		// initialize JAXB bindings
-		if (new Addressing().getXmlBinding() == null) {
-			SOAP.setXmlBinding(new XmlBinding(null));
-		}
 
 		// Build the document
 		final Transfer xf = new Transfer();
@@ -138,6 +134,7 @@ public class ResourceFactory {
 		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
 
 		final Management mgmt = new Management(xf);
+		mgmt.setXmlBinding(xf.getXmlBinding());
 		mgmt.setTo(destination);
 		mgmt.setResourceURI(resourceURI);
 		final Duration timeout = DatatypeFactory.newInstance().newDuration(
@@ -237,11 +234,7 @@ public class ResourceFactory {
 				throw new IllegalArgumentException(msg);
 			}
 			
-			//initialize JAXB bindings
-			if(new Addressing().getXmlBinding()==null){
-				SOAP.setXmlBinding(new XmlBinding(null));
-			}
-			
+
 			//Build the document
 			final Transfer xf = new Transfer();
 			xf.setAction(Transfer.CREATE_ACTION_URI);
@@ -249,6 +242,7 @@ public class ResourceFactory {
 			xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
 			
 			final Management mgmt = new Management(xf);
+			mgmt.setXmlBinding(xf.getXmlBinding());
 			mgmt.setTo(destination);
 			mgmt.setResourceURI(resourceURI);
 			final Duration timeout = 
@@ -279,7 +273,7 @@ public class ResourceFactory {
 				mgmt.getBody().addDocument(content);				
 			}
 			
-			//log.fine("REQUEST:\n"+mgmt+"\n");
+			log.info("REQUEST:\n"+mgmt+"\n");
 			//Send the request
 			final Addressing response = HttpClient.sendRequest(mgmt);
 			
@@ -290,7 +284,7 @@ public class ResourceFactory {
 			}
 			
 			//Process the response to extract useful information.
-			//log.fine("RESPONSE:\n"+response+"\n");
+			log.info("RESPONSE:\n"+response+"\n");
 			
 			//parse response and retrieve contents.
 			// Iterate through the create response to obtain the selectors

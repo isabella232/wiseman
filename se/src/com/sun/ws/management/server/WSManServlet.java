@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.25 2006-07-20 00:12:00 akhilarora Exp $
+ * $Id: WSManServlet.java,v 1.26 2006-10-10 19:50:47 nbeers Exp $
  */
 
 package com.sun.ws.management.server;
@@ -85,6 +85,7 @@ public class WSManServlet extends HttpServlet {
     private static final ExecutorService pool = Executors.newCachedThreadPool();
     private static final Map<QName, String> extraIdInfo = new HashMap<QName, String>();
     private Map<String, String> properties = null;
+    private Schema schema = null;
     
     public void init() throws ServletException {
         final InputStream isl = WSManServlet.class.getResourceAsStream("/log.properties");
@@ -132,7 +133,7 @@ public class WSManServlet extends HttpServlet {
             throw new ServletException(ex);
         }
         
-        Schema schema = null;
+        
         final SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         final ServletContext context = getServletContext();
         final Set<String> xsdLocSet = context.getResourcePaths("/xsd");
@@ -158,15 +159,7 @@ public class WSManServlet extends HttpServlet {
                 throw new ServletException(ex);
             }
         }
-        
-        try {
-            // schema might be null if no XSDs were found in the war
-            SOAP.setXmlBinding(new XmlBinding(schema));
-        } catch (JAXBException jex) {
-            LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
-            throw new ServletException(jex);
-        }
-        
+
         try {
             BaseSupport.initialize();
             EnumerationSupport.initialize();
@@ -228,7 +221,13 @@ public class WSManServlet extends HttpServlet {
         
         final Management request = new Management(is);
         request.setContentType(contentType);
-        log(request);
+        try {
+            // schema might be null if no XSDs were found in the war
+        	request.setXmlBinding(new XmlBinding(schema));
+        } catch (JAXBException jex) {
+            LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
+            // TODO throw new ServletException(jex);
+        }        log(request);
         
         if (handleIfIdentify(request, os)) {
             return;
@@ -294,11 +293,16 @@ public class WSManServlet extends HttpServlet {
     private boolean handleIfIdentify(final Management msg, final OutputStream os)
     throws SOAPException, JAXBException, IOException {
         final Identify identify = new Identify(msg);
+ 
+       	identify.setXmlBinding(msg.getXmlBinding());
+        log(identify);        
+        
         final SOAPElement id = identify.getIdentify();
         if (id == null) {
             return false;
         }
         final Identify response = new Identify();
+        response.setXmlBinding(msg.getXmlBinding()); // TODO ???
         response.setIdentifyResponse(
                 properties.get("impl.vendor") + " - " + properties.get("impl.url"),
                 properties.get("impl.version"),

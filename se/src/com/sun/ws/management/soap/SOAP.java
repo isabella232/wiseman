@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.12 2006-07-18 18:12:03 akhilarora Exp $
+ * $Id: SOAP.java,v 1.13 2006-10-10 19:50:47 nbeers Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -61,7 +61,7 @@ public abstract class SOAP extends Message {
     public static final String TRUE = "true";
     public static final String FALSE = "false";
     
-    private static XmlBinding binding = null;
+    private XmlBinding binding = null;
     
     public static final ObjectFactory FACTORY = new ObjectFactory();
     
@@ -77,11 +77,20 @@ public abstract class SOAP extends Message {
         super(is);
     }
     
-    public static void setXmlBinding(final XmlBinding bind) {
+    public  void setXmlBinding(final XmlBinding bind) {
         binding = bind;
     }
     
     public XmlBinding getXmlBinding() {
+    	
+    	if (binding == null){
+    		try {
+				binding = new XmlBinding(null);
+			} catch (JAXBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
         return binding;
     }
     
@@ -125,7 +134,7 @@ public abstract class SOAP extends Message {
         if (elements[0] == null) {
             return null;
         }
-        return binding.unmarshal(elements[0]);
+        return getXmlBinding().unmarshal(elements[0]);
     }
     
     protected void removeChildren(final SOAPElement parent) throws SOAPException {

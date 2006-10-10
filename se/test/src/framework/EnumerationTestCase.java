@@ -37,16 +37,6 @@ public class EnumerationTestCase extends WsManBaseTestSupport
 //        {
 //            fail("Can't init wiseman");
 //        }
-    	try {
-		if (new Addressing().getXmlBinding() == null)
-		{
-		    SOAP.setXmlBinding(new XmlBinding(null));
-		}
-    	}
-        catch (Exception e)
-        {
-            fail("Can't init wiseman");
-        } 
 
     }
 

@@ -156,10 +156,6 @@ public class TransferableResourceImpl implements TransferableResource {
 		//initialize JAXB bindings
 		Message.initialize();
 
-		if (new Addressing().getXmlBinding() == null)
-		{
-		    SOAP.setXmlBinding(new XmlBinding(null));
-		}
 	}
 
 
@@ -361,6 +357,7 @@ public class TransferableResourceImpl implements TransferableResource {
 	
 	protected Management setManagementProperties(Addressing xf) throws SOAPException, JAXBException, DatatypeConfigurationException {
 		final Management mgmt = new Management(xf);
+		mgmt.setXmlBinding(xf.getXmlBinding());
 		mgmt.setTo(destination);
 		mgmt.setResourceURI(resourceURI);
 		

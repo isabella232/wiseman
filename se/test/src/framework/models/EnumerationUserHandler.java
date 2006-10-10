@@ -84,9 +84,9 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	
 	public EnumerationUserHandler() {
 		try {
-			if(new Addressing().getXmlBinding()==null){
-	    		SOAP.setXmlBinding(new Addressing().getXmlBinding());
-			}
+//			if(new Addressing().getXmlBinding()==null){
+//	    		SOAP.setXmlBinding(new Addressing().getXmlBinding());
+//			}
 			
 			String[] pkgList ={"com.hp.examples.ws.wsman.user"};
 			binding=new XmlBinding(null,pkgList);
@@ -98,10 +98,11 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			populateGlobalUsersList();
 		} catch (JAXBException e) {
 			throw new InternalErrorFault(e.getMessage());
-		} catch (SOAPException e) {
+		} //catch (SOAPException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
+			//e.printStackTrace();
+		//}
+		catch (IOException e) {
 			throw new InternalErrorFault(e.getMessage());
 		}
 	}

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.19 2006-07-25 16:51:16 pmonday Exp $
+ * $Id: EnumerationTest.java,v 1.20 2006-10-10 19:50:45 nbeers Exp $
  */
 
 package management;
@@ -27,6 +27,8 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
+import com.sun.ws.management.xml.XmlBinding;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -128,6 +130,39 @@ public class EnumerationTest extends TestBase {
         assertEquals(maxChars, p2.getMaxCharacters().intValue());
         assertEquals(maxElements, p2.getMaxElements().intValue());
         assertEquals(duration, p2.getMaxTime());
+    }
+    
+   public void testStaticBindingVisual() throws Exception {
+        
+        final Enumeration enu = new Enumeration();
+        enu.setAction(Enumeration.PULL_ACTION_URI);
+        
+        final String context = "context";
+        final int maxChars = 4096;
+        final int maxElements = 2;
+        final Duration duration = DatatypeFactory.newInstance().newDuration(30000);
+        enu.setPull(context, maxChars, maxElements, duration);
+        
+        enu.prettyPrint(logfile);
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        enu.writeTo(bos);
+        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        
+       
+        final Pull p2 = e2.getPull();
+        assertEquals(context, p2.getEnumerationContext().getContent().get(0));
+        assertEquals(maxChars, p2.getMaxCharacters().intValue());
+        assertEquals(maxElements, p2.getMaxElements().intValue());
+        assertEquals(duration, p2.getMaxTime());
+        
+        final Enumeration e3 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        
+        final Pull p3 = e3.getPull();
+        assertEquals(context, p3.getEnumerationContext().getContent().get(0));
+        assertEquals(maxChars, p3.getMaxCharacters().intValue());
+        assertEquals(maxElements, p3.getMaxElements().intValue());
+        assertEquals(duration, p3.getMaxTime());
     }
     
     public void testPullResponseVisual() throws Exception {
