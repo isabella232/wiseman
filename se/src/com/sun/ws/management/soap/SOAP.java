@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAP.java,v 1.13 2006-10-10 19:50:47 nbeers Exp $
+ * $Id: SOAP.java,v 1.14 2006-10-16 14:47:39 nbeers Exp $
  */
 
 package com.sun.ws.management.soap;
@@ -71,6 +71,7 @@ public abstract class SOAP extends Message {
     
     public SOAP(final SOAP soap) throws SOAPException {
         super(soap);
+        setXmlBinding(soap.getXmlBinding());
     }
     
     public SOAP(final InputStream is) throws SOAPException, IOException {
