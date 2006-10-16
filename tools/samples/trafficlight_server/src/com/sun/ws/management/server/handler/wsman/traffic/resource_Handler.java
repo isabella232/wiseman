@@ -47,21 +47,21 @@ public class resource_Handler extends DelegatingHandler
         if ("http://schemas.xmlsoap.org/ws/2004/09/transfer/Get".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/transfer/GetResponse");
-            delegate.Get(resourceURI, request, response);     
+            delegate.Get(context, request, response);     
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/transfer/Put".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/transfer/PutResponse");
-            delegate.Put(resourceURI, request, response);     
+            delegate.Put(context, request, response);     
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/transfer/DeleteResponse");
-            delegate.Delete(resourceURI, request, response);     
+            delegate.Delete(context, request, response);     
             return;
         }
 
@@ -71,12 +71,12 @@ public class resource_Handler extends DelegatingHandler
     /**
      * Overridden method to handle custom operations and custom Action URIs
      */
-    public boolean customDispatch(String action, String resourceURI, Management request, Management response) throws Exception
+    public boolean customDispatch(String action,HandlerContext context, Management request, Management response) throws Exception
     {
         if ("http://wsman.test/schema/CustomOpResponse".equals(action))
         {
             response.setAction("http://wsman.test/schema/CustomOp");
-            delegate.CustomOp(resourceURI, request, response);
+            delegate.CustomOp(context, request, response);
             return true;
         }
 

@@ -42,6 +42,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.framework.Utilities;
 import com.sun.ws.management.framework.transfer.TransferSupport;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.xml.XmlBinding;
@@ -83,7 +84,7 @@ public class UserHandler extends TransferSupport {
 
 	@SuppressWarnings("unchecked")
 	@Override
-    public void create(Management request, Management response) {
+    public void create(HandlerContext context,Management request, Management response) {
 		// create a new user class and add it to the list
 		UserModelObject userObject = new UserModelObject();
 		
@@ -170,7 +171,7 @@ public class UserHandler extends TransferSupport {
 
 
 	@Override
-	public void get(Management request, Management response) {
+	public void get(HandlerContext context,Management request, Management response) {
 		// Find an existing instance
 
 		UserModelObject userOb = findInstance(request);
@@ -305,7 +306,7 @@ public class UserHandler extends TransferSupport {
 	}
 
 
-	public void customaction(Management request, Management response) {
+	public void customaction(HandlerContext context,Management request, Management response) {
 		Document responseDoc = Management.newDocument();
 		Element respElement = responseDoc.createElement("response");
 		Element respParam = responseDoc.createElement("param1");
@@ -324,7 +325,7 @@ public class UserHandler extends TransferSupport {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void put(Management request, Management response) {
+	public void put(HandlerContext context,Management request, Management response) {
 		// Find an existing instance of this object in the model
 		UserModelObject userModelObject = findInstance(request);
 		
@@ -448,7 +449,7 @@ public class UserHandler extends TransferSupport {
 	}
 	
 	@Override                                         
-	public void delete(Management request, Management response) {
+	public void delete(HandlerContext context,Management request, Management response) {
 		// Find an existing instance
 		UserModelObject searchUser=new UserModelObject();			
 		try {

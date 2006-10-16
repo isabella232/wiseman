@@ -47,35 +47,35 @@ public class list_Handler extends DelegatingHandler
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse");
-            delegate.EnumerateOp(new Enumeration(request), new Enumeration(response));   
+            delegate.EnumerateOp(context,new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Release".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/ReleaseResponse");
-            delegate.ReleaseOp(new Enumeration(request), new Enumeration(response));   
+            delegate.ReleaseOp(context,new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Pull".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/PullResponse");
-            delegate.PullOp(new Enumeration(request), new Enumeration(response));   
+            delegate.PullOp(context,new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatus".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatusResponse");
-            delegate.GetStatusOp(new Enumeration(request), new Enumeration(response));   
+            delegate.GetStatusOp(context,new Enumeration(request), new Enumeration(response));   
             return;
         }
 
         if ("http://schemas.xmlsoap.org/ws/2004/09/enumeration/Renew".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/enumeration/RenewResponse");
-            delegate.RenewOp(new Enumeration(request), new Enumeration(response));   
+            delegate.RenewOp(context,new Enumeration(request), new Enumeration(response));   
             return;
         }
 
@@ -85,7 +85,7 @@ public class list_Handler extends DelegatingHandler
     /**
      * Overridden method to handle custom operations and custom Action URIs
      */
-    public boolean customDispatch(String action, String resourceURI, Management request, Management response) throws Exception
+    public boolean customDispatch(String action,HandlerContext context, Management request, Management response) throws Exception
     {
         return false;
     }

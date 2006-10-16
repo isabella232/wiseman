@@ -68,10 +68,10 @@ public class ${delegateName} extends EnumerationHandler
          ${overriddenMethodMap.get($key).OperationName}( enuRequest, enuResponse);
      }
 #else
-     public void ${overriddenMethodMap.get($key).OverriddenOpName}( String resource, Management request, Management response )
+     public void ${overriddenMethodMap.get($key).OverriddenOpName}( HandlerContext context, Management request, Management response )
      {
          //TODO IMPLEMENT
-         ${overriddenMethodMap.get($key).OperationName}( request, response);
+         ${overriddenMethodMap.get($key).OperationName}( context, request, response);
      }
 #end
 
@@ -79,7 +79,7 @@ public class ${delegateName} extends EnumerationHandler
 
 #if(${hasCustomOps})
 #foreach( $key in ${customOperationMap.keySet()} )
-     public void ${customOperationMap.get($key).OperationName}( String resource, Management request, Management response )
+     public void ${customOperationMap.get($key).OperationName}(HandlerContext context, Management request, Management response )
      {
          //TODO IMPLEMENT CUSTOM OPERATION
      }

@@ -59,6 +59,7 @@ import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 import com.sun.ws.management.framework.handlers.DefaultHandler;
 import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.server.handler.wsman.auth.user_Handler;
 import com.sun.ws.management.soap.SOAP;
@@ -145,7 +146,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	/* (non-Javadoc)
 	 * @see com.hp.management.wsman.handlerimpl.DefaultHandler#enumerate(java.lang.String, com.sun.ws.management.enumeration.Enumeration, com.sun.ws.management.enumeration.Enumeration)
 	 */
-	public void enumerate(Enumeration enuRequest, Enumeration enuResponse) {
+	public void enumerate(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse) {
 
 		//Handle the enumeration request, by retrieving filter if there is any.
 			//Instantiate enumerate response object
@@ -226,7 +227,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	/* (non-Javadoc)
 	 * @see com.hp.management.wsman.server.enumeration.HpEnumerationSupport#release(com.sun.ws.management.enumeration.Enumeration, com.sun.ws.management.enumeration.Enumeration)
 	 */
-	public void release(Enumeration enuRequest, Enumeration enuResponse) {
+	public void release(HandlerContext hcontext,Enumeration enuRequest, Enumeration enuResponse) {
 		Release releaseRequestObject = null;
 		
 		try {
@@ -261,13 +262,13 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	/* (non-Javadoc)
 	 * @see com.hp.management.wsman.server.enumeration.HpEnumerationSupport#renew(com.sun.ws.management.enumeration.Enumeration, com.sun.ws.management.enumeration.Enumeration)
 	 */
-	public void renew(Enumeration arg0, Enumeration arg1) {
+	public void renew(HandlerContext context,Enumeration arg0, Enumeration arg1) {
 		// TODO Auto-generated method stub
 //			super.renew(arg0, arg1);
 	}
 
 
-	public void pull( Enumeration enuRequest, Enumeration enuResponse) {
+	public void pull( HandlerContext hcontext,Enumeration enuRequest, Enumeration enuResponse) {
 
 		Pull pullRequestObject = null;
 		
@@ -307,7 +308,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	}
 
 
-	public void getStatus(Enumeration enuRequest, Enumeration enuResponse) {
+	public void getStatus(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse) {
 		// TODO Auto-generated method stub
 		
 	}

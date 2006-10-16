@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationHandler.java,v 1.5 2006-08-24 13:57:28 obiwan314 Exp $
+ * $Id: EnumerationHandler.java,v 1.6 2006-10-16 14:50:09 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.enumeration;
@@ -37,6 +37,7 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 
 /**
@@ -69,7 +70,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
         this.enumIterator = enumIterator;
     }
 
-    public void release(Enumeration enuRequest, Enumeration enuResponse)
+    public void release(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
     {
         try
         {
@@ -87,7 +88,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
         }
     }
 
-    public void pull(Enumeration enuRequest, Enumeration enuResponse)
+    public void pull(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
     {
         try
         {
@@ -129,7 +130,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
        throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.INVALID_VALUES);
     }
 
-    public void enumerate(Enumeration enuRequest, Enumeration enuResponse) {
+    public void enumerate(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse) {
        EnumerationModeType enuMode = null;
 
        try{
@@ -177,7 +178,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
     }
 
 
-    public void getStatus(Enumeration enuRequest, Enumeration enuResponse)
+    public void getStatus(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
     {
         throw new ActionNotSupportedFault();
         //GetStatusResponse getStatusResponse = Enumeration.FACTORY.createGetStatusResponse();
@@ -211,7 +212,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
         }
     }*/
 
-    public void renew(Enumeration enuRequest, Enumeration enuResponse)
+    public void renew(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
     {
         throw new ActionNotSupportedFault();
     }

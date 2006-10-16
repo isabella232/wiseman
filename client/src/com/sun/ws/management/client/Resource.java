@@ -3,6 +3,7 @@ package com.sun.ws.management.client;
 import java.io.IOException;
 
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
 import org.w3c.dom.Document;
@@ -29,7 +30,7 @@ public interface Resource extends EnumerableResource {
 
 	static final int IGNORE_MAX_CHARS = 0;
 
-	public ResourceState invoke(String action, Document document) throws SOAPException, JAXBException, IOException, FaultException;
+	public ResourceState invoke(String action, Document document) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException;
 
 	
 

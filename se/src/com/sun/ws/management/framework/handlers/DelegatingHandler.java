@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: DelegatingHandler.java,v 1.3 2006-07-24 18:39:01 obiwan314 Exp $
+ * $Id: DelegatingHandler.java,v 1.4 2006-10-16 14:50:09 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.handlers;
@@ -26,6 +26,7 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.enumeration.Enumeratable;
 import com.sun.ws.management.framework.transfer.Transferable;
+import com.sun.ws.management.server.HandlerContext;
 
 /**
  * The Deligating Handler attemps for forward your action request
@@ -45,95 +46,95 @@ public class DelegatingHandler extends DefaultHandler {
 
 
     @Override
-    public void create(String resource, Management request, Management response) {
+    public void create(HandlerContext context, Management request, Management response) {
         if(!(delegate instanceof Transferable)){
             LOG.log(Level.SEVERE,"A call to create on the class "+delegate.getClass().getName()+" failed because it did not implement the Transferable interface.");
-            super.create(resource, request, response);
+            super.create(context, request, response);
         }
         Transferable transferableDeligate = (Transferable)delegate;
-        transferableDeligate.create(request,response);
+        transferableDeligate.create(context,request,response);
 
     }
 
 
     @Override
-    public void delete(String resource, Management request, Management response) {
+    public void delete(HandlerContext context, Management request, Management response) {
         if(!(delegate instanceof Transferable)){
             LOG.log(Level.SEVERE,"A call to delete on the class "+delegate.getClass().getName()+" failed because it did not implement the Transferable interface.");
-            super.delete(resource, request, response);
+            super.delete(context, request, response);
         }
         Transferable transferableDeligate = (Transferable)delegate;
-        transferableDeligate.delete(request,response);
+        transferableDeligate.delete(context,request,response);
     }
     @Override
-    public void get(String resource, Management request, Management response) {
+    public void get(HandlerContext context, Management request, Management response) {
         if(!(delegate instanceof Transferable)){
             LOG.log(Level.SEVERE,"A call to get on the class "+delegate.getClass().getName()+" failed because it did not implement the Transferable interface.");
-            super.get(resource, request, response);
+            super.get(context, request, response);
         }
         Transferable transferableDeligate = (Transferable)delegate;
-        transferableDeligate.get(request,response);
+        transferableDeligate.get(context,request,response);
     }
 
     @Override
-    public void put(String resource, Management request, Management response) {
+    public void put(HandlerContext context, Management request, Management response) {
         if(!(delegate instanceof Transferable)){
             LOG.log(Level.SEVERE,"A call to put on the class "+delegate.getClass().getName()+" failed because it did not implement the Transferable interface.");
-            super.put(resource, request, response);
+            super.put(context, request, response);
         }
         Transferable transferableDeligate = (Transferable)delegate;
-        transferableDeligate.put(request, response);
+        transferableDeligate.put(context,request, response);
     }
 
     @Override
-    public void release(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void release(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
         if(!(delegate instanceof Enumeratable)){
             LOG.log(Level.SEVERE,"A call to put on the class "+delegate.getClass().getName()+" failed because it did not implement the Enumeratable interface.");
-            super.release(resource, enuRequest, enuResponse);
+            super.release(context, enuRequest, enuResponse);
         }
         Enumeratable enumeratableDeligate = (Enumeratable)delegate;
-        enumeratableDeligate.release(enuRequest, enuResponse);
+        enumeratableDeligate.release(context,enuRequest, enuResponse);
     }
 
     @Override
-    public void pull(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void pull(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
         if(!(delegate instanceof Enumeratable)){
             LOG.log(Level.SEVERE,"A call to put on the class "+delegate.getClass().getName()+" failed because it did not implement the Enumeratable interface.");
-            super.release(resource, enuRequest, enuResponse);
+            super.release(context, enuRequest, enuResponse);
         }
         Enumeratable enumeratableDeligate = (Enumeratable)delegate;
-        enumeratableDeligate.pull(enuRequest, enuResponse);
+        enumeratableDeligate.pull(context,enuRequest, enuResponse);
 
     }
 
     @Override
-    public void enumerate(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void enumerate(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
         if(!(delegate instanceof Enumeratable)){
             LOG.log(Level.SEVERE,"A call to put on the class "+delegate.getClass().getName()+" failed because it did not implement the Enumeratable interface.");
-            super.release(resource, enuRequest, enuResponse);
+            super.release(context, enuRequest, enuResponse);
         }
         Enumeratable enumeratableDeligate = (Enumeratable)delegate;
-        enumeratableDeligate.enumerate(enuRequest, enuResponse);
+        enumeratableDeligate.enumerate(context,enuRequest, enuResponse);
     }
 
     @Override
-    public void getStatus(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void getStatus(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
          if(!(delegate instanceof Enumeratable)){
             LOG.log(Level.SEVERE,"A call to put on the class "+delegate.getClass().getName()+" failed because it did not implement the Enumeratable interface.");
-            super.release(resource, enuRequest, enuResponse);
+            super.release(context, enuRequest, enuResponse);
         }
         Enumeratable enumeratableDeligate = (Enumeratable)delegate;
-        enumeratableDeligate.getStatus(enuRequest, enuResponse);
+        enumeratableDeligate.getStatus(context,enuRequest, enuResponse);
     }
 
     @Override
-    public void renew(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void renew(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
         if(!(delegate instanceof Enumeratable)){
             LOG.log(Level.SEVERE,"A call to put on the class "+delegate.getClass().getName()+" failed because it did not implement the Enumeratable interface.");
-            super.release(resource, enuRequest, enuResponse);
+            super.release(context, enuRequest, enuResponse);
         }
         Enumeratable enumeratableDeligate = (Enumeratable)delegate;
-        enumeratableDeligate.renew(enuRequest, enuResponse);
+        enumeratableDeligate.renew(context,enuRequest, enuResponse);
     }
 
     /**
@@ -142,7 +143,7 @@ public class DelegatingHandler extends DefaultHandler {
      * class in lower case.
      */
     @Override
-    public boolean customDispatch(String action, String resource, Management request, Management response) throws Exception {
+    public boolean customDispatch(String action, HandlerContext context, Management request, Management response) throws Exception {
         String[] actionParts = action.split("/");
         if(actionParts.length==0)
             return false;
@@ -150,8 +151,8 @@ public class DelegatingHandler extends DefaultHandler {
         String methodName=actionParts[actionParts.length-1].toLowerCase();
         Method method=null;
         try {
-            method=delegate.getClass().getMethod(methodName,Management.class,Management.class);
-            method.invoke(delegate,request,response);
+            method=delegate.getClass().getMethod(methodName,HandlerContext.class,Management.class,Management.class);
+            method.invoke(delegate,context,request,response);
             return true;
         } catch (Exception e) {
             LOG.log(Level.SEVERE,"A call to a custom method \""+methodName+"\" on the class "+delegate.getClass().getName()+" failed because of this error:"+ e.getMessage());

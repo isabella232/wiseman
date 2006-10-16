@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeratable.java,v 1.3 2006-07-24 18:39:02 obiwan314 Exp $
+ * $Id: Enumeratable.java,v 1.4 2006-10-16 14:50:09 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.enumeration;
 
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.server.HandlerContext;
 
 /**
  *
  */
 public interface Enumeratable {
-    void release(Enumeration enuRequest, Enumeration enuResponse);
+    void release(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse);
 
-    void pull(Enumeration enuRequest, Enumeration enuResponse);
+    void pull(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse);
 
-    void enumerate(Enumeration enuRequest, Enumeration enuResponse);
+    void enumerate(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse);
 
-    void getStatus(Enumeration enuRequest, Enumeration enuResponse);
+    void getStatus(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse);
 
-    void renew(Enumeration enuRequest, Enumeration enuResponse);
+    void renew(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse);
 }

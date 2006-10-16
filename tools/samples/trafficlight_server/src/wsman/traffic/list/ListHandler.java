@@ -3,6 +3,7 @@ package wsman.traffic.list;
 
 import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 import com.sun.ws.management.server.EnumerationIterator;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.Management;
 
@@ -48,9 +49,9 @@ public class ListHandler extends EnumerationHandler
     }
 
 
-     public void EnumerateOp( Enumeration enuRequest, Enumeration enuResponse )
+     public void EnumerateOp(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse )
      {
-         enumerate( enuRequest, enuResponse);
+         enumerate( context,enuRequest, enuResponse);
      }
      
      
@@ -78,24 +79,24 @@ public class ListHandler extends EnumerationHandler
 //	}
 
 
-	public void ReleaseOp( Enumeration enuRequest, Enumeration enuResponse )
+	public void ReleaseOp(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse )
      {
-         release( enuRequest, enuResponse);
+         release( context,enuRequest, enuResponse);
      }
 
-     public void PullOp( Enumeration enuRequest, Enumeration enuResponse )
+     public void PullOp( HandlerContext context,Enumeration enuRequest, Enumeration enuResponse )
      {
-         pull( enuRequest, enuResponse);
+         pull( context,enuRequest, enuResponse);
      }
 
-     public void GetStatusOp( Enumeration enuRequest, Enumeration enuResponse )
+     public void GetStatusOp( HandlerContext context,Enumeration enuRequest, Enumeration enuResponse )
      {
-         getStatus( enuRequest, enuResponse);
+         getStatus(context, enuRequest, enuResponse);
      }
 
-     public void RenewOp( Enumeration enuRequest, Enumeration enuResponse )
+     public void RenewOp( HandlerContext context,Enumeration enuRequest, Enumeration enuResponse )
      {
-         renew( enuRequest, enuResponse);
+         renew(context, enuRequest, enuResponse);
      }
 
 

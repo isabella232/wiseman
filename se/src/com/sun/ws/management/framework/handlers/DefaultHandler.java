@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: DefaultHandler.java,v 1.3 2006-07-24 18:39:01 obiwan314 Exp $
+ * $Id: DefaultHandler.java,v 1.4 2006-10-16 14:50:09 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.handlers;
@@ -45,23 +45,23 @@ public class DefaultHandler implements Handler {
 
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.setAction(Transfer.GET_RESPONSE_URI);
-            get(resourceURI, request, response);
+            get(context, request, response);
             return;
         }
 
         if (Transfer.PUT_ACTION_URI.equals(action)) {
             response.setAction(Transfer.PUT_RESPONSE_URI);
-            put(resourceURI, request, response);
+            put(context, request, response);
             return;
         }
         if (Transfer.DELETE_ACTION_URI.equals(action)) {
             response.setAction(Transfer.DELETE_RESPONSE_URI);
-            delete(resourceURI, request, response);
+            delete(context, request, response);
             return;
         }
         if (Transfer.CREATE_ACTION_URI.equals(action)) {
             response.setAction(Transfer.CREATE_RESPONSE_URI);
-            create(resourceURI, request, response);
+            create(context, request, response);
             return;
         }
 
@@ -69,66 +69,66 @@ public class DefaultHandler implements Handler {
             response.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
             Enumeration enuRequest = new Enumeration(request);
             Enumeration enuResponse = new Enumeration(response);
-            enumerate(resourceURI, enuRequest, enuResponse);
+            enumerate( context, enuRequest, enuResponse);
             return;
         }
         if (Enumeration.PULL_ACTION_URI.equals(action)) {
             response.setAction(Enumeration.PULL_RESPONSE_URI);
             final Enumeration enuRequest = new Enumeration(request);
             final Enumeration enuResponse = new Enumeration(response);
-            pull(resourceURI, enuRequest, enuResponse);
+            pull( context, enuRequest, enuResponse);
             return;
         }
         if (Enumeration.RELEASE_ACTION_URI.equals(action)) {
             response.setAction(Enumeration.RELEASE_RESPONSE_URI);
             final Enumeration enuRequest = new Enumeration(request);
             final Enumeration enuResponse = new Enumeration(response);
-            release(resourceURI, enuRequest, enuResponse);
+            release( context, enuRequest, enuResponse);
             return;
         }
 
-        if(!customDispatch(action, resourceURI, request, response))
+        if(!customDispatch(action, context, request, response))
         throw new ActionNotSupportedFault(action);
 		
 	}
 
-    public void release(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void release(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
         throw new ActionNotSupportedFault(Enumeration.RELEASE_ACTION_URI);
     }
 
-    public void pull(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void pull(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
         throw new ActionNotSupportedFault(Enumeration.PULL_ACTION_URI);
     }
 
-    public void enumerate(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void enumerate(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse) {
         throw new ActionNotSupportedFault(Enumeration.ENUMERATE_ACTION_URI);
     }
 
-    public void getStatus(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void getStatus(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse) {
         throw new ActionNotSupportedFault(Enumeration.GET_STATUS_ACTION_URI);
     }
 
-    public void renew(String resource, Enumeration enuRequest, Enumeration enuResponse) {
+    public void renew(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
         throw new ActionNotSupportedFault(Enumeration.RENEW_ACTION_URI);
     }
 
-    public void get(String resource, Management request, Management response) {
+    public void get(HandlerContext context, Management request, Management response) {
         throw new ActionNotSupportedFault(Transfer.GET_ACTION_URI);
     }
 
-    public void put(String resource, Management request, Management response){
+    public void put(HandlerContext context, Management request, Management response){
         throw new ActionNotSupportedFault(Transfer.PUT_ACTION_URI);
     }
 
-    public void delete(String resource, Management request, Management response){
+    public void delete(HandlerContext context, Management request, Management response){
         throw new ActionNotSupportedFault(Transfer.DELETE_ACTION_URI);
     }
 
-    public void create(String resource, Management request, Management response){
+    public void create(HandlerContext context, Management request, Management response){
         throw new ActionNotSupportedFault(Transfer.CREATE_ACTION_URI);
     }
 
-    public boolean customDispatch(String action, String resource, Management request, Management response) throws Exception {
+    public boolean customDispatch(String action, HandlerContext context, Management request, Management response) throws Exception {
         return false;
     }
 

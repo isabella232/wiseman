@@ -20,6 +20,7 @@ import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.xml.XmlBinding;
 import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.server.HandlerContext;
 
 import java.util.logging.Logger;
 import java.util.Map;
@@ -50,33 +51,33 @@ public class ${delegateName} extends TransferSupport
 
 
 #if(!${hasCustomOpNames})
-    public void create(Management request, Management response)
+    public void create(HandlerContext context, Management request, Management response)
     {
-        super.create(request, response);
+        super.create(context, request, response);
     }
 
-    public void delete(Management request, Management response)
+    public void delete(HandlerContext context,Management request, Management response)
     {
-        super.delete(request, response);
+        super.delete(context, request, response);
     }
 
-    public void get(Management request, Management response)
+    public void get(HandlerContext context, Management request, Management response)
     {
-        super.get(request, response);
+        super.get(context, request, response);
     }
 
-    public void put(Management request)
+    public void put(HandlerContext context,Management request, Management response)
     {
-        super.put(request);
+        super.put(context,request,response);
     }
 #end
 
 #if(${hasCustomOpNames})
 #foreach( $key in ${overriddenMethodMap.keySet()} )
-     public void ${overriddenMethodMap.get($key).OverriddenOpName}( String resource, Management request, Management response )
+     public void ${overriddenMethodMap.get($key).OverriddenOpName}( HandlerContext context, Management request, Management response )
      {
          //TODO IMPLEMENT
-         ${overriddenMethodMap.get($key).OperationName}( request, response);
+         ${overriddenMethodMap.get($key).OperationName}( context, request, response);
      }
 
 #end
@@ -85,7 +86,7 @@ public class ${delegateName} extends TransferSupport
 
 #if(${hasCustomOps})
 #foreach( $key in ${customOperationMap.keySet()} )
-     public void ${customOperationMap.get($key).OperationName}( String resource, Management request, Management response )
+     public void ${customOperationMap.get($key).OperationName}( HandlerContext context, Management request, Management response )
      {
          //TODO IMPLEMENT CUSTOM OPERATION
      }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferSupport.java,v 1.4 2006-07-24 18:39:01 obiwan314 Exp $
+ * $Id: TransferSupport.java,v 1.5 2006-10-16 14:50:08 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.transfer;
@@ -38,6 +38,7 @@ import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -58,19 +59,19 @@ public class TransferSupport implements Transferable {
 		super();
 	}
 
-	public void create(Management request, Management response) {
+	public void create(HandlerContext context,Management request, Management response) {
 		throw new ActionNotSupportedFault();		
 	}
 
-	public void delete(Management request, Management response) {
+	public void delete(HandlerContext context,Management request, Management response) {
 		throw new ActionNotSupportedFault();		
 	}
 
-	public void get(Management request, Management response) {
+	public void get(HandlerContext context,Management request, Management response) {
 		throw new ActionNotSupportedFault();
 	}
 
-	public void put(Management request, Management response) {
+	public void put(HandlerContext context,Management request, Management response) {
 		throw new ActionNotSupportedFault();
 	}
 	

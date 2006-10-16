@@ -47,7 +47,7 @@ public class factory_Handler extends DelegatingHandler
         if ("http://schemas.xmlsoap.org/ws/2004/09/transfer/Create".equals(action))
         {
             response.setAction("http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse");
-            delegate.Create(resourceURI, request, response);     
+            delegate.Create(context, request, response);     
             return;
         }
 
@@ -57,7 +57,7 @@ public class factory_Handler extends DelegatingHandler
     /**
      * Overridden method to handle custom operations and custom Action URIs
      */
-    public boolean customDispatch(String action, String resourceURI, Management request, Management response) throws Exception
+    public boolean customDispatch(String action, HandlerContext context, Management request, Management response) throws Exception
     {
         return false;
     }

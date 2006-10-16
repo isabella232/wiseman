@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Transferable.java,v 1.3 2006-07-24 18:39:01 obiwan314 Exp $
+ * $Id: Transferable.java,v 1.4 2006-10-16 14:50:08 obiwan314 Exp $
  *
  */
 package com.sun.ws.management.framework.transfer;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.soap.SenderFault;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 
 public interface Transferable {
-    public void create(Management request,Management response) throws InvalidRepresentationFault;
-    public void delete(Management request,Management response) throws SenderFault;
-    public void get(Management request, Management response) throws SenderFault;
-    public void put( Management  request, Management response) throws InvalidRepresentationFault, SenderFault;
+    public void create(HandlerContext context,Management request,Management response) throws InvalidRepresentationFault;
+    public void delete(HandlerContext context,Management request,Management response) throws SenderFault;
+    public void get(HandlerContext context,Management request, Management response) throws SenderFault;
+    public void put(HandlerContext context, Management  request, Management response) throws InvalidRepresentationFault, SenderFault;
  
 }
 

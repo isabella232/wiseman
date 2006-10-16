@@ -8,6 +8,7 @@ import javax.xml.bind.JAXBException;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.framework.transfer.TransferSupport;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
@@ -35,24 +36,24 @@ public class ResourceHandler extends TransferSupport
 
 
 
-     public void Get( String resource, Management request, Management response )
+     public void Get( HandlerContext context, Management request, Management response )
      {
      	 LightHandlerImpl.get(request,response,log,binding);
      }
 
-     public void Put( String resource, Management request, Management response )
+     public void Put( HandlerContext context, Management request, Management response )
      {
      	 LightHandlerImpl.put(request,log,binding);
      }
 
-     public void Delete( String resource, Management request, Management response )
+     public void Delete( HandlerContext context, Management request, Management response )
      {
      	 LightHandlerImpl.delete(request,log);
      }
 
 
 
-     public void CustomOp( String resource, Management request, Management response )
+     public void CustomOp( HandlerContext context, Management request, Management response )
      {
          //TODO IMPLEMENT CUSTOM OPERATION
      }

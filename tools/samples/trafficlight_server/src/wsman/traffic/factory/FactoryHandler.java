@@ -3,6 +3,7 @@ package wsman.traffic.factory;
 
 import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.xml.XmlBinding;
 import com.sun.ws.management.InternalErrorFault;
 
@@ -40,7 +41,7 @@ public class FactoryHandler extends TransferSupport
 	// Added this constant
 	private static final String RESOURCE_URI = "wsman:traffic/resource";
 
-     public void Create( String resource, Management request, Management response )
+     public void Create( HandlerContext context, Management request, Management response )
      {
     	// Added an implementation from another class since this code gets re-generated often 
         HashMap<String, String> selectors = LightfactoryHandlerImpl.createLight(request, binding);

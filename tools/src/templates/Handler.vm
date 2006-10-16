@@ -68,9 +68,9 @@ public class ${handlerName} extends DelegatingHandler
         {
             response.setAction("${overriddenMethodMap.get($key).ResponseURI}");
 #if(${overriddenMethodMap.get($key).isEnumMethod})            
-            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(new Enumeration(request), new Enumeration(response));   
+            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context,new Enumeration(request), new Enumeration(response));   
 #else
-            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(resourceURI, request, response);     
+            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context, request, response);     
 #end
             return;
         }
@@ -84,13 +84,13 @@ public class ${handlerName} extends DelegatingHandler
     /**
      * Overridden method to handle custom operations and custom Action URIs
      */
-    public boolean customDispatch(String action, String resourceURI, Management request, Management response) throws Exception
+    public boolean customDispatch(String action, HandlerContext context, Management request, Management response) throws Exception
     {
 #foreach( $key in ${customOperationMap.keySet()} )
         if ("$key".equals(action))
         {
             response.setAction("${customOperationMap.get($key).ResponseURI}");
-            delegate.${customOperationMap.get($key).OperationName}(resourceURI, request, response);
+            delegate.${customOperationMap.get($key).OperationName}(context, request, response);
             return true;
         }
 
