@@ -7,6 +7,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeoutException;
 import java.util.HashSet;
 
@@ -106,6 +107,13 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	}
 
+	public void testIdentityHeaders() throws XPathExpressionException, NoMatchFoundException, SOAPException, IOException, JAXBException{
+//		ServerIdentity serverInfo = ResourceFactory.getIdentity(destUrl,1000,new Entry<String, String>("",""));
+//		
+//		String respose="HTTP/1.0 400 Bad Request";
+	}
+
+	
 	/** 
 	 * Tests to see if an identity request will timout
 	 * @throws XPathExpressionException

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
@@ -501,10 +502,14 @@ public class ResourceFactory {
 		}
 	}
 	
-
 	public static ServerIdentity getIdentity(final String destination,int timeout) throws SOAPException, IOException, JAXBException, InterruptedException, TimeoutException{
+		return getIdentity(destination, timeout,null);
+	}
+	
+	public static ServerIdentity getIdentity(final String destination,int timeout, final
+    		Entry<String, String>... headers) throws SOAPException, IOException, JAXBException, InterruptedException, TimeoutException{
 		
-		IdentifyTask identifyTask = new IdentifyTask(destination);
+		IdentifyTask identifyTask = new IdentifyTask(destination,headers);
 		
          	Thread identifyThread=new Thread(identifyTask);
         	identifyThread.start();

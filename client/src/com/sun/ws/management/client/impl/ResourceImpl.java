@@ -45,14 +45,6 @@ public class ResourceImpl extends EnumerationResourceImpl implements Resource {
 	}
 
 	public ResourceState invoke(String action, Document document) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
-//		Transfer xf=new Transfer();
-//		xf.setAction(action);
-//		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-//		xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); //Replying to creator
-//
-//		final Management mgmt = new Management(xf);
-//		mgmt.setTo(destination);
-//		mgmt.setResourceURI(resourceURI);
 
 		//Build the document
 		final Transfer xf = setTransferProperties(action);		

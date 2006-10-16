@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.14 2006-07-06 21:34:16 obiwan314 Exp $
+ * $Id: HttpClient.java,v 1.15 2006-10-16 20:26:06 obiwan314 Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -121,6 +121,24 @@ public final class HttpClient {
         transfer(http, msg);
         return readResponse(http);
     }
+
+    public static Addressing sendRequest(final SOAPMessage msg, final String destination,Entry<String, String>... headers)
+    throws IOException, SOAPException, JAXBException {
+        
+        log(msg);
+        
+        final HttpURLConnection http = initRequest(destination,
+                ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
+        if (headers != null) {
+            for (Entry<String,String> entry: headers) {
+                http.setRequestProperty(entry.getKey(),entry.getValue());
+            }
+        }
+        
+        transfer(http, msg);
+        return readResponse(http);
+    }
+
     
     public static Addressing sendRequest(final Addressing msg, final
     		Entry<String, String>... headers)
