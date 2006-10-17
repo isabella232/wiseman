@@ -182,7 +182,7 @@ public class ResourceStateImpl implements ResourceState  {
 			String localPart = node.getLocalName();
 			String namespaceUri = node.getNamespaceURI();
 			if(namespaceUri==null)
-				throw new NoMatchFoundException("QName Namespace was null.");			
+				continue;			
 				
 			if(namespaceUri.equals(name.getNamespaceURI()))
 				if(localPart.equals(name.getLocalPart())){
