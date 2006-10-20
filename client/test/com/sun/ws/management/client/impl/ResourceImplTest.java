@@ -752,8 +752,19 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 
 		 String[] filters = new String[]{xpathFilter};
 		 long timeout = 1000000;
+		 
+		 // Add custom user param
+		 Document userDoc = Management.newDocument();
+		 
+		 Element userChildNode = userDoc.createElementNS("http://my.schema", "me:MyParam");
+		 userChildNode.setTextContent("888");
+		 
+		 Element userChildNode2 = userDoc.createElementNS("http://my.schema", "me:MyOtherParam");
+		 userChildNode2.setTextContent("9999");
+		 
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, timeout);
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, timeout, 
+				 new Object[] {userChildNode, userChildNode2});
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		
