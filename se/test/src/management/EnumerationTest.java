@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.20 2006-10-10 19:50:45 nbeers Exp $
+ * $Id: EnumerationTest.java,v 1.21 2006-10-20 14:34:26 nbeers Exp $
  */
 
 package management;
@@ -236,6 +236,7 @@ public class EnumerationTest extends TestBase {
         }
         
         final Enumeration enuResponse = new Enumeration(response);
+        enuResponse.setXmlBinding(enu.getXmlBinding());
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
         
@@ -326,6 +327,7 @@ public class EnumerationTest extends TestBase {
         boolean done = false;
         do {
             final Enumeration pullRequest = new Enumeration();
+            pullRequest.setXmlBinding(enu.getXmlBinding());
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
