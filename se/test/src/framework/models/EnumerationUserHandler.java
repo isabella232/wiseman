@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringBufferInputStream;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
@@ -38,6 +40,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -53,6 +56,7 @@ import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.framework.enumeration.Enumeratable;
 import com.sun.ws.management.framework.enumeration.EnumerationHandler;
@@ -85,9 +89,6 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	
 	public EnumerationUserHandler() {
 		try {
-//			if(new Addressing().getXmlBinding()==null){
-//	    		SOAP.setXmlBinding(new Addressing().getXmlBinding());
-//			}
 			
 			String[] pkgList ={"com.hp.examples.ws.wsman.user"};
 			binding=new XmlBinding(null,pkgList);
@@ -159,6 +160,8 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
     		//filter params.
     	ArrayList<String> filterParameters = new ArrayList();
     	
+    	boolean getItemCount = false;
+    	
 		try {
 			//parse request object to retrieve filter parameters entered.
 			enumerateRequestObject =enuRequest.getEnumerate();
@@ -177,7 +180,15 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				}else{//Else no filter content supplied
 					filterParameters.add("//*"); //return all.
 				}
-				//TODO: add processing for RequestTotalItemsCountEstimate
+				
+				//  Look for getTotalItemsRequest header
+				SOAPElement[] reqHeaders = enuRequest.getHeaders();
+				
+				for (int i = 0; i < reqHeaders.length; i++) {
+					if (reqHeaders[i].getElementQName().equals(EnumerationExtensions.REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE)) {
+						getItemCount = true;
+					}
+				}
 			}
 			//DONE: after building up filterParameters, create context and store filterParams
 			enumCtxtTypeResponseObject = new EnumerationContextType();
@@ -210,6 +221,11 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				} catch (XPathExpressionException e) {
 					e.printStackTrace();
 					throw new InternalErrorFault(e.getMessage()); 
+				}
+				if (getItemCount){
+					Long itemCount = new Long(container.dataValues.length);
+					
+					enuResponse.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.TOTAL_ITEMS_COUNT_ESTIMATE, itemCount.toString()));
 				}
 				//add reference to stored enumeration lists
 				if(!currentEnumerationContexts.containsKey(ctxId)){
@@ -271,6 +287,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	public void pull( HandlerContext hcontext,Enumeration enuRequest, Enumeration enuResponse) {
 
 		Pull pullRequestObject = null;
+		boolean getItemCount = false;
 		
 		try {
 			//parse request object to retrieve filter parameters entered.
@@ -296,7 +313,14 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				 throw new InvalidEnumerationContextFault();
 			 }
 			 
-			 enuResponse = eCont.processResponse(enuResponse,maxTime,maxElements,maxContentLength);
+			SOAPElement[] reqHeaders = enuRequest.getHeaders();
+			for (int i = 0; i < reqHeaders.length; i++) {
+				if (reqHeaders[i].getElementQName().equals(EnumerationExtensions.REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE)) {
+					getItemCount = true;
+				}
+			}
+			
+			enuResponse = eCont.processResponse(enuResponse,maxTime,maxElements,maxContentLength, getItemCount);
 			 
 		} catch (JAXBException e) {
 			e.printStackTrace();
@@ -347,7 +371,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	}
 	
 	public Enumeration processResponse(Enumeration enuResponse, Duration maxTime, int maxElements, 
-			int maxContentLength) throws JAXBException, SOAPException {
+			int maxContentLength, boolean getItemCount) throws JAXBException, SOAPException {
 
 		Enumeration endResponse = null;
 		
@@ -374,6 +398,9 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 					e.printStackTrace();
 					throw new InternalErrorFault(e.getMessage());
 				}
+			}
+			if (getItemCount) {
+				enuResponse.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.TOTAL_ITEMS_COUNT_ESTIMATE, new Long(dataValues.length).toString()));
 			}
 			  boolean moreToCome = true;
 			  if(cnt ==dataValues.length){

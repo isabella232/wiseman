@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.11 2006-07-30 07:36:12 akhilarora Exp $
+ * $Id: Addressing.java,v 1.12 2006-10-27 18:53:17 nbeers Exp $
  */
 
 package com.sun.ws.management.addressing;
 
+import com.sun.ws.management.Management;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import java.io.IOException;
@@ -31,6 +32,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -316,5 +319,27 @@ public class Addressing extends SOAP {
     private EndpointReferenceType getEndpointReference(final QName... qname) throws JAXBException, SOAPException {
         return getEndpointReference(getHeader(), qname);
     }
+    
+    public static ReferencePropertiesType createReferencePropertyType(QName container, String content) {
+    	//test for invalid input.
+    	if((container==null)||(content==null)){
+    		throw new IllegalArgumentException("QName and/or string content cannot be null.");
+    	}
+    	if(content.trim().length()==0){
+    		throw new IllegalArgumentException("Content entered cannot be an empty string.");
+    	}
+    	
+    	//create and populate the reference property and it's value.
+    	final ReferencePropertiesType refProperty = Addressing.FACTORY.createReferencePropertiesType();
+    	final Document document = Management.newDocument();
+    	final Element identifier = document.createElementNS(container.getNamespaceURI(),
+    			container.getPrefix() + ":" + container.getLocalPart());
+    	 identifier.setTextContent(content);
+    	 document.appendChild(identifier);
+    	 refProperty.getAny().add(document.getDocumentElement());
+    	 
+    	return refProperty;
+    }
+
     
 }
