@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<resource-handlers xmlns="http://wiseman.dev.java.net/server/handler/config/1/resource-handler-config.xsd">
+  <resource-handler>
+     <resource-pattern>wsman:traffic/list</resource-pattern>
+     <resource-handler-class>com.sun.ws.management.server.handler.wsman.traffic.listHandler</resource-handler-class>
+  </resource-handler>
+</resource-handlers>

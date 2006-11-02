@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.41 2006-08-10 19:01:23 simeonpinder Exp $
+ $Id: build.xml,v 1.42 2006-11-02 20:46:14 obiwan314 Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -225,6 +225,7 @@
       </metainf>
       <metainf dir="etc">
         <include name="context.xml" />
+        <include name="resource-handler-config.xml" />
       </metainf>
       <webinf dir="etc">
         <include name="sun-web.xml" />
