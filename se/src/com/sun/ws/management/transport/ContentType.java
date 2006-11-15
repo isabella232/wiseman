@@ -22,6 +22,8 @@ public final class ContentType {
     private ContentType() {}
     
     public static ContentType createFromHttpContentType(final String httpContentType) {
+    	if(httpContentType==null)
+    		return null;
         final ContentType contentType = new ContentType();
         boolean foundCharSet = false;
         boolean foundMimeType = false;

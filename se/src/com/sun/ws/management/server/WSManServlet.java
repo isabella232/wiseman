@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.26 2006-10-10 19:50:47 nbeers Exp $
+ * $Id: WSManServlet.java,v 1.27 2006-11-15 15:06:39 obiwan314 Exp $
  */
 
 package com.sun.ws.management.server;
@@ -179,7 +179,7 @@ public class WSManServlet extends HttpServlet {
             final HttpServletResponse resp) throws ServletException, IOException {
         
         final ContentType contentType = ContentType.createFromHttpContentType(req.getContentType());
-        if (!contentType.isAcceptable()) {
+        if (contentType==null||!contentType.isAcceptable()) {
             resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
             return;
         }

@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.15 2006-10-16 20:26:06 obiwan314 Exp $
+ * $Id: HttpClient.java,v 1.16 2006-11-15 15:06:39 obiwan314 Exp $
  */
 
 package com.sun.ws.management.transport;
 
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.Message;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +29,10 @@ import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -43,6 +41,9 @@ import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
+
+import com.sun.ws.management.Message;
+import com.sun.ws.management.addressing.Addressing;
 
 public final class HttpClient {
     
@@ -185,7 +186,7 @@ public final class HttpClient {
         
         final String responseType = http.getContentType();
         final ContentType contentType = ContentType.createFromHttpContentType(responseType);
-        if (!contentType.isAcceptable()) {
+        if (contentType==null||!contentType.isAcceptable()) {
             // dump the first 4k bytes of the response for help in debugging
             if (LOG.isLoggable(Level.INFO)) {
                 final byte[] buffer = new byte[4096];
