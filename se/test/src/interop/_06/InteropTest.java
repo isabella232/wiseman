@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.16 2006-08-01 00:07:56 akhilarora Exp $
+ * $Id: InteropTest.java,v 1.17 2006-12-02 14:51:10 simeonpinder Exp $
  */
 
 package interop._06;
@@ -266,7 +266,8 @@ public final class InteropTest extends TestBase {
         
         final SelectorType selector4 = new SelectorType();
         selector4.setName("SystemName");
-        selector4.getContent().add("IPMI Controller 32");
+//        selector4.getContent().add("IPMI Controller 32");
+        selector4.getContent().add("LARGE_MESSAGE");
         selectors.add(selector4);
         
         mgmt.setSelectors(selectors);
@@ -274,7 +275,8 @@ public final class InteropTest extends TestBase {
         final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
         mgmt.setTimeout(timeout);
         
-        final BigInteger envSize = new BigInteger("100");
+        String bigInteger="8500";
+        final BigInteger envSize = new BigInteger(bigInteger);
         final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
         maxEnvSize.setValue(envSize);
         maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
@@ -284,7 +286,8 @@ public final class InteropTest extends TestBase {
         final Addressing response = HttpClient.sendRequest(mgmt);
         log(response);
         if (!response.getBody().hasFault()) {
-            fail("Accepted a too small MaxEnvelopeSize of " + envSize.toString());
+//        	fail("Accepted a too small MaxEnvelopeSize of " + envSize.toString());
+            fail("MaxEnvelopeSize of " + envSize.toString()+" was not exceeded, but should have been.");
         }
         
         final Fault fault = response.getFault();
