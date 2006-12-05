@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.8 2006-12-05 10:35:23 jfdenise Exp $
+ * $Id: BaseSupport.java,v 1.9 2006-12-05 10:55:54 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -119,6 +119,8 @@ public class BaseSupport {
     protected synchronized static Filter newFilter(String dialect, 
             List content,
             NamespaceMap nsMap) throws Exception {
+        if(dialect == null)
+            dialect = com.sun.ws.management.xml.XPath.NS_URI;
         FilterFactory factory = supportedFilters.get(dialect);
         if(factory == null)
             throw new FilteringRequestedUnavailableFault(null,
