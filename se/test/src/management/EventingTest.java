@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.11 2006-07-30 07:44:49 akhilarora Exp $
+ * $Id: EventingTest.java,v 1.12 2006-12-05 10:35:23 jfdenise Exp $
  */
 
 package management;
@@ -28,6 +28,7 @@ import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
@@ -292,7 +293,21 @@ public class EventingTest extends TestBase {
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
         assertEquals(FilteringRequestedUnavailableFault.FILTERING_REQUESTED_UNAVAILABLE, fault.getCode().getSubcode().getValue());
         assertEquals(FilteringRequestedUnavailableFault.FILTERING_REQUESTED_UNAVAILABLE_REASON, fault.getReason().getText().get(0).getValue());
-        assertEquals(XPath.NS_URI, ((JAXBElement<String>) fault.getDetail().getAny().get(0)).getValue());
+        // Need to cope with multiple filter dialects
+        List dialects = fault.getDetail().getAny();
+        boolean foundXpathDialect = false;
+        for(Object dialect : dialects) {
+            if(dialect instanceof JAXBElement) {
+                JAXBElement elem = (JAXBElement) dialect;
+                Object value = elem.getValue();
+                if(value instanceof String) {
+                    foundXpathDialect = XPath.NS_URI.equals(value);
+                    if(foundXpathDialect) break;
+                }
+                    
+            }
+        }
+        assertTrue("XPath dialect not found", foundXpathDialect);
     }
     
     public void testInvalidFilterExpression() throws Exception {

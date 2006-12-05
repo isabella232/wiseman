@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.21 2006-10-20 14:34:26 nbeers Exp $
+ * $Id: EnumerationTest.java,v 1.22 2006-12-05 10:35:24 jfdenise Exp $
  */
 
 package management;
@@ -21,14 +21,13 @@ package management;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
+import com.sun.ws.management.server.handler.wsman.test.enumeration.filter.custom_filter_Handler;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
-import com.sun.ws.management.xml.XmlBinding;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -132,39 +131,6 @@ public class EnumerationTest extends TestBase {
         assertEquals(duration, p2.getMaxTime());
     }
     
-   public void testStaticBindingVisual() throws Exception {
-        
-        final Enumeration enu = new Enumeration();
-        enu.setAction(Enumeration.PULL_ACTION_URI);
-        
-        final String context = "context";
-        final int maxChars = 4096;
-        final int maxElements = 2;
-        final Duration duration = DatatypeFactory.newInstance().newDuration(30000);
-        enu.setPull(context, maxChars, maxElements, duration);
-        
-        enu.prettyPrint(logfile);
-        
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        enu.writeTo(bos);
-        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
-        
-       
-        final Pull p2 = e2.getPull();
-        assertEquals(context, p2.getEnumerationContext().getContent().get(0));
-        assertEquals(maxChars, p2.getMaxCharacters().intValue());
-        assertEquals(maxElements, p2.getMaxElements().intValue());
-        assertEquals(duration, p2.getMaxTime());
-        
-        final Enumeration e3 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
-        
-        final Pull p3 = e3.getPull();
-        assertEquals(context, p3.getEnumerationContext().getContent().get(0));
-        assertEquals(maxChars, p3.getMaxCharacters().intValue());
-        assertEquals(maxElements, p3.getMaxElements().intValue());
-        assertEquals(duration, p3.getMaxTime());
-    }
-    
     public void testPullResponseVisual() throws Exception {
         
         final Enumeration enu = new Enumeration();
@@ -212,6 +178,8 @@ public class EnumerationTest extends TestBase {
     public void testEnumerate() throws Exception {
         enumerateTest(null);
         enumerateTest("/java:java.specification.version");
+        enumerateTest(null, custom_filter_Handler.TEST_CUSTOM_FILTER, 
+                "wsman:test/enumeration/filter/custom_filter");
     }
         
     public void testRelease() throws Exception {
@@ -236,7 +204,6 @@ public class EnumerationTest extends TestBase {
         }
         
         final Enumeration enuResponse = new Enumeration(response);
-        enuResponse.setXmlBinding(enu.getXmlBinding());
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
         
@@ -281,16 +248,20 @@ public class EnumerationTest extends TestBase {
         assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT_REASON, fault.getReason().getText().get(0).getValue());
     }
     
-    private void enumerateTest(final String filter) throws Exception {
+    private void enumerateTest(String filter) throws Exception {
+        enumerateTest(filter, XPath.NS_URI, "wsman:test/java/system/properties");
+    }
+    
+    private void enumerateTest(final Object filter, 
+            final String dialect, final String RESOURCE) throws Exception {
         
-        final String RESOURCE = "wsman:test/java/system/properties";
         final Enumeration enu = new Enumeration();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         final DatatypeFactory factory = DatatypeFactory.newInstance();
-        final FilterType filterType = Enumeration.FACTORY.createFilterType();
-        filterType.setDialect(XPath.NS_URI);
+        final FilterType filterType = Enumeration.FACTORY.createFilterType(); 
+        filterType.setDialect(dialect);
         filterType.getContent().add(filter);
         enu.setEnumerate(null, factory.newDuration(60000).toString(),
                 filter == null ? null : filterType);
@@ -327,7 +298,6 @@ public class EnumerationTest extends TestBase {
         boolean done = false;
         do {
             final Enumeration pullRequest = new Enumeration();
-            pullRequest.setXmlBinding(enu.getXmlBinding());
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -370,5 +340,4 @@ public class EnumerationTest extends TestBase {
             assertTrue(pe.getValue().intValue() > 0);
         } while (!done);
     }
-   
 }

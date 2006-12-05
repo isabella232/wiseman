@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.6 2006-07-28 22:55:23 akhilarora Exp $
+ * $Id: EnumerationContext.java,v 1.7 2006-12-05 10:35:23 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
 import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.xpath.XPathExpressionException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 
 final class EnumerationContext extends BaseContext {
@@ -35,14 +34,13 @@ final class EnumerationContext extends BaseContext {
     private int cursor = 0;
     
     EnumerationContext(final XMLGregorianCalendar expiration,
-            final String filter,
+            final Filter filter,
             final EnumerationModeType mode,
-            final NamespaceMap namespaces,
             final Object clientContext,
             final EnumerationIterator iterator,
             final boolean optimize,
-            final int maxElements) throws XPathExpressionException {
-        super(expiration, filter, namespaces);
+            final int maxElements) {
+        super(expiration, filter);
         this.clientContext = clientContext;
         this.iterator = iterator;
         this.mode = mode;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_computersystem_Handler.java,v 1.1 2006-07-31 20:49:10 akhilarora Exp $
+ * $Id: cim_computersystem_Handler.java,v 1.2 2006-12-05 10:35:24 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
@@ -22,6 +22,7 @@ import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
+import com.sun.ws.management.server.BaseSupport;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
@@ -75,8 +76,8 @@ public class cim_computersystem_Handler implements Handler {
                 final TransferExtensions txo = new TransferExtensions(response);
                 final String expression = hdr.getTextContent();
                 final String dialect = hdr.getAttributeValue(TransferExtensions.DIALECT);
-                if (!XPath.isSupportedDialect(dialect)) {
-                    throw new FragmentDialectNotSupportedFault(XPath.SUPPORTED_FILTER_DIALECTS);
+                if (!BaseSupport.isSupportedDialect(dialect)) {
+                    throw new FragmentDialectNotSupportedFault(BaseSupport.getSupportedDialects());
                 }
                 final NamespaceMap namespaces = new NamespaceMap(resourceDoc);
                 final List<Node> content = XPath.filter(resourceDoc, expression, namespaces);

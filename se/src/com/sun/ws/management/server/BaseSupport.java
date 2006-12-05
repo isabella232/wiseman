@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.7 2006-07-19 16:09:17 obiwan314 Exp $
+ * $Id: BaseSupport.java,v 1.8 2006-12-05 10:35:23 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.xml.XPath;
+import com.sun.ws.management.xml.XPathFilterFactory;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -37,8 +40,9 @@ import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 
-class BaseSupport {
+public class BaseSupport {
     
     protected static final String UUID_SCHEME = "urn:uuid:";
     protected static final String UNINITIALIZED = "uninitialized";
@@ -62,48 +66,107 @@ class BaseSupport {
         }
     };
     private static final Logger LOG = Logger.getLogger(BaseSupport.class.getName());
-
+    
     private static final int CLEANUP_INTERVAL = 60000;
     private static final Timer cleanupTimer = new Timer(true);
     
+    private static Map<String, FilterFactory> supportedFilters =
+            new HashMap<String, FilterFactory>();
+    
     protected BaseSupport() {}
+    
+    static {
+        FilterFactory xpathFilter = new XPathFilterFactory();
+        supportedFilters.put(com.sun.ws.management.xml.XPath.NS_URI,
+                xpathFilter);
+    }
+    /**
+     * Add a Filtering support for a specific dialect.
+     * @param dialect Filter dialect
+     * @param filterFactory The Filter Factory that creates <code>Filter</code> for requests
+     * relying on the passed dialect.
+     * 
+     * @throws java.lang.Exception If the filter is already supported.
+     */
+    public synchronized static void addSupportedFilterDialect(String dialect,
+            FilterFactory filterFactory) throws Exception {
+        if(supportedFilters.get(dialect) != null)
+            throw new Exception("Dialect " + dialect + " already supported");
+        supportedFilters.put(dialect, filterFactory);
+    }
+    
+    /**
+     * Determines if the passed dialect is a supported dialect
+     * @param dialect The dialect to check for support.
+     * @return true if it is a supported dialect (or if dialect is null == default), else false
+     */
+    public synchronized static boolean isSupportedDialect(final String dialect) {
+        if(dialect == null) return true;
+        return supportedFilters.get(dialect) != null;
+    }
+    
+    /**
+     * Supported dialects, returned as Fault Detail when the dialect
+     * is not supported.
+     * @return An array of supported dialects.
+     */
+    public synchronized static String[] getSupportedDialects() {
+        Set<String> keys =  supportedFilters.keySet();
+        String[] dialects = new String[keys.size()];
+        return keys.toArray(dialects);
+    }
+    
+    protected synchronized static Filter newFilter(String dialect, 
+            List content,
+            NamespaceMap nsMap) throws Exception {
+        FilterFactory factory = supportedFilters.get(dialect);
+        if(factory == null)
+            throw new FilteringRequestedUnavailableFault(null,
+                    getSupportedDialects());
+        return factory.newFilter(content, nsMap);
+    }
+    
+    /**
+     * Eventing Filter initialization
+     */
+    protected static Filter initializeFilter(org.xmlsoap.schemas.ws._2004._08.eventing.FilterType filterType, 
+            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {    
+        if(filterType == null) return null;
+        return initializeFilter(filterType.getDialect(), 
+                filterType.getContent(), nsMap);
+    }
+    
+    /**
+     * Enumeration Filter initialization
+     */
+    protected static Filter initializeFilter(FilterType filterType, 
+            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
+        if(filterType == null) return null;
+        return initializeFilter(filterType.getDialect(), 
+                filterType.getContent(), nsMap);
+    }
+    
+    private static Filter initializeFilter(String dialect, List content,
+            NamespaceMap nsMap)throws CannotProcessFilterFault, 
+            FilteringRequestedUnavailableFault {
+        try {
+            return newFilter(dialect, content, nsMap);
+        }catch(FaultException fex) {
+            throw fex;
+        } catch(Exception ex) {
+            throw new CannotProcessFilterFault(ex.getMessage());
+        }
+    }
     
     public static void initialize() throws DatatypeConfigurationException {
         datatypeFactory = DatatypeFactory.newInstance();
         try{
-        	cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
+            cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
         } catch(java.lang.IllegalStateException e){
-        	// NOTE: the cleanup timer has been throwing this
-        	// exception during unit tests. Re-initalizing it should not
-        	// cause it to fail so this exception is being silenced.
-        	LOG.fine("Base support was re-initalized.");
-        }
-    }
-    
-    protected static String initFilter(final String filterDialect, final List<Object> filterExpressions)
-    throws FaultException {
-        
-        String dialect = filterDialect;
-        if (dialect == null) {
-            // implied value
-            dialect = XPath.NS_URI;
-        } else {
-            if (!XPath.isSupportedDialect(dialect)) {
-                throw new FilteringRequestedUnavailableFault(null,
-                        com.sun.ws.management.xml.XPath.SUPPORTED_FILTER_DIALECTS);
-            }
-        }
-        if (filterExpressions == null) {
-            throw new InvalidMessageFault("Missing a filter expression");
-        }
-        final Object expr = filterExpressions.get(0);
-        if (expr == null) {
-            throw new InvalidMessageFault("Missing filter expression");
-        }
-        if (expr instanceof String) {
-            return (String) expr;
-        } else {
-            throw new InvalidMessageFault("Invalid filter expression type: " + expr);
+            // NOTE: the cleanup timer has been throwing this
+            // exception during unit tests. Re-initalizing it should not
+            // cause it to fail so this exception is being silenced.
+            LOG.fine("Base support was re-initalized.");
         }
     }
     
@@ -161,4 +224,3 @@ class BaseSupport {
     }
 }
 
-    

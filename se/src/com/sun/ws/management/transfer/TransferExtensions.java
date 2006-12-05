@@ -22,6 +22,7 @@ import com.sun.ws.management.AlreadyExistsFault;
 import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.server.BaseSupport;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
@@ -96,8 +97,8 @@ public class TransferExtensions extends Transfer {
         final DialectableMixedDataType dialectableMixedDataType = 
                 Management.FACTORY.createDialectableMixedDataType();
         if (dialect != null) {
-            if (!XPath.isSupportedDialect(dialect)) {
-                throw new FragmentDialectNotSupportedFault(XPath.SUPPORTED_FILTER_DIALECTS);
+            if (!BaseSupport.isSupportedDialect(dialect)) {
+                throw new FragmentDialectNotSupportedFault(BaseSupport.getSupportedDialects());
             }
             dialectableMixedDataType.setDialect(dialect);
         }

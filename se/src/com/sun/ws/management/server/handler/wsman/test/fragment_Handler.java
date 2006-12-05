@@ -23,6 +23,7 @@ import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.server.BaseSupport;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
@@ -86,8 +87,8 @@ public class fragment_Handler extends base_Handler {
         final SOAPHeaderElement fragmentHeader = transExtRequest.getFragmentHeader();
         final String expression = fragmentHeader == null ? null : fragmentHeader.getTextContent();
         final String dialect = fragmentHeader == null ? null : fragmentHeader.getAttributeValue(TransferExtensions.DIALECT);
-        if (!XPath.isSupportedDialect(dialect)) {
-            throw new FragmentDialectNotSupportedFault(XPath.SUPPORTED_FILTER_DIALECTS);
+        if (!BaseSupport.isSupportedDialect(dialect)) {
+            throw new FragmentDialectNotSupportedFault(BaseSupport.getSupportedDialects());
         }
         
         if (Transfer.GET_ACTION_URI.equals(action)) {

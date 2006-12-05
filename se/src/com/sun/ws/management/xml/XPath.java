@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPath.java,v 1.8 2006-07-27 18:59:48 akhilarora Exp $
+ * $Id: XPath.java,v 1.9 2006-12-05 10:35:24 jfdenise Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -34,31 +34,6 @@ public final class XPath {
     public static final String NS_URI = "http://www.w3.org/TR/1999/REC-xpath-19991116";
     
     public static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
-    public static final String[] SUPPORTED_FILTER_DIALECTS = {
-        NS_URI
-    };
-    
-    /**
-     * Determines if the passed-in dialect is a supported dialect
-     *
-     * @param dialect
-     * @return true if it is a supported dialect (or if dialect is null=default), else false
-     */
-    public static boolean isSupportedDialect(final String dialect) {
-        // if dialect is null, then it is default so return true
-        if (dialect == null) {
-            return true;
-        }
-        boolean isSupportedDialect = false;
-        final String[] supportedFilterDialects = SUPPORTED_FILTER_DIALECTS;
-        for (final String supportedFilterDialect : supportedFilterDialects) {
-            if (supportedFilterDialect.equals(dialect)) {
-                isSupportedDialect = true;
-                break;
-            }
-        }
-        return isSupportedDialect;
-    }
     
     /**
      * Filter a set of nodes based on an XPath expression.

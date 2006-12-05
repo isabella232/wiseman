@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.16 2006-07-30 07:44:47 akhilarora Exp $
+ * $Id: EventingSupport.java,v 1.17 2006-12-05 10:35:23 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -24,6 +24,7 @@ import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
 import com.sun.ws.management.eventing.EventSourceUnableToProcessFault;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.HttpClient;
@@ -81,9 +82,14 @@ public final class EventingSupport extends BaseSupport {
         
         final Subscribe subscribe = request.getSubscribe();
         final FilterType filterType = subscribe.getFilter();
-        String filterExpression = null;
-        if (filterType != null) {
-            filterExpression = initFilter(filterType.getDialect(), filterType.getContent());
+        Filter filter = null;
+        try {
+             filter = initializeFilter(filterType, namespaces == null ? null : namespaces[0]);
+        } catch(FilteringRequestedUnavailableFault fex) {
+            throw fex;
+        }
+        catch(Exception ex) {
+            throw new EventSourceUnableToProcessFault(ex.getMessage());
         }
         
         final EndpointReferenceType endTo = subscribe.getEndTo();
@@ -124,17 +130,10 @@ public final class EventingSupport extends BaseSupport {
             throw new InvalidMessageFault("Event destination not specified: missing NotifyTo.Address element");
         }
         
-        EventingContext ctx = null;
-        try {
-            ctx = new EventingContext(
+        EventingContext ctx = new EventingContext(
                 initExpiration(subscribe.getExpires()),
-                filterExpression,
-                namespaces == null ? null : namespaces[0],
+                filter,
                 notifyTo);
-        } catch (XPathExpressionException xpx) {
-            throw new EventSourceUnableToProcessFault("Unable to compile XPath: " +
-                "\"" + filterExpression + "\"");
-        }
         
         final UUID context = initContext(ctx);
         response.setSubscribeResponse(
@@ -186,7 +185,7 @@ public final class EventingSupport extends BaseSupport {
     // TODO: avoid blocking the sender - use a thread pool to send notifications
     public static boolean sendEvent(final Object context, final Addressing msg,
         final NamespaceMap nsMap)
-        throws SOAPException, JAXBException, IOException, XPathExpressionException {
+        throws SOAPException, JAXBException, IOException, XPathExpressionException, Exception {
         
         assert datatypeFactory != null : UNINITIALIZED;
         
@@ -208,8 +207,11 @@ public final class EventingSupport extends BaseSupport {
         
         // the filter is only applied to the first child in soap body
         final Node content = msg.getBody().getFirstChild();
-        if (!ctx.evaluate(content, nsMap)) {
-            return false;
+        try {
+            if (!ctx.evaluate(content, nsMap))
+                return false;
+        }catch(XPathExpressionException ex) {
+            throw ex;
         }
         
         final EndpointReferenceType notifyTo = ctx.getNotifyTo();
