@@ -13,37 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.35 2006-12-05 10:35:23 jfdenise Exp $
+ * $Id: EnumerationSupport.java,v 1.36 2006-12-11 16:23:13 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Management;
-import com.sun.ws.management.InternalErrorFault;
-import com.sun.ws.management.UnsupportedFeatureFault;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.CannotProcessFilterFault;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
-import com.sun.ws.management.enumeration.TimedOutFault;
-import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.eventing.EventingExtensions;
-import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
-import com.sun.ws.management.eventing.InvalidMessageFault;
-import com.sun.ws.management.soap.FaultException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.Map.Entry;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -54,7 +39,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathExpressionException;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
@@ -69,9 +54,24 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
+
+import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.Management;
+import com.sun.ws.management.UnsupportedFeatureFault;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.enumeration.FilteringNotSupportedFault;
+import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
+import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
+import com.sun.ws.management.enumeration.TimedOutFault;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.eventing.InvalidMessageFault;
+import com.sun.ws.management.soap.FaultException;
 
 /**
  * A helper class that encapsulates some of the arcane logic to allow data
@@ -377,6 +377,17 @@ public final class EnumerationSupport extends BaseSupport {
             for (final EnumerationItem ee : items) {
                 // retrieve the document element from the enumeration element
                 final Element item = ee.getItem();
+                
+				// Check if request matches data provided:
+				// data only, EPR only, or data and EPR
+				if ((includeEPR == true) && (ee.getEndpointReference() == null)) {
+					throw new UnsupportedFeatureFault(
+							UnsupportedFeatureFault.Detail.INVALID_VALUES);
+				}
+				if ((includeItem == true) && (item == null)) {
+					throw new UnsupportedFeatureFault(
+							UnsupportedFeatureFault.Detail.INVALID_VALUES);
+				}
                 if (item != null) {
                     // append the Element to the owner document if it has not been done
                     // this is critical for XPath filtering to work
