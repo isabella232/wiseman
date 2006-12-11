@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.17 2006-12-02 14:51:10 simeonpinder Exp $
+ * $Id: InteropTest.java,v 1.18 2006-12-11 16:20:04 denis_rachal Exp $
  */
 
 package interop._06;
@@ -607,7 +607,7 @@ public final class InteropTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        final Enumeration eo = new Enumeration(response);
+        final EnumerationExtensions eo = new EnumerationExtensions(response);
         assertEquals(Enumeration.ENUMERATE_RESPONSE_URI, eo.getAction());
         final EnumerateResponse er = eo.getEnumerateResponse();
         assertNotNull(er);
@@ -625,7 +625,7 @@ public final class InteropTest extends TestBase {
             if (obj instanceof JAXBElement) {
                 EnumerationExtensions.ITEMS.equals(((JAXBElement)obj).getName());
             }
-            final List<EnumerationItem> items = EnumerationExtensions.getItems(er);
+            final List<EnumerationItem> items = eo.getItems();
             assertNotNull(items);
             assertTrue(items.size() == 1);
             Node node = items.get(0).getItem();
@@ -855,7 +855,7 @@ public final class InteropTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        Enumeration po = new Enumeration(response);
+        EnumerationExtensions po = new EnumerationExtensions(response);
         assertEquals(Enumeration.PULL_RESPONSE_URI, po.getAction());
         PullResponse pr = po.getPullResponse();
         assertNotNull(pr);
@@ -865,7 +865,7 @@ public final class InteropTest extends TestBase {
         assertNotNull(ilt);
         List<Object> il = ilt.getAny();
         assertNotNull(il);
-        List<EnumerationItem> itemList = EnumerationExtensions.unbindItems(il);
+        List<EnumerationItem> itemList = po.getItems();
         assertTrue(itemList.size() > 0);
         final EnumerationItem eni = itemList.get(0);
         assertNotNull(eni);

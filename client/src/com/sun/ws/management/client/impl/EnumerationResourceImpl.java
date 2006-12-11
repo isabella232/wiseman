@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -17,7 +16,6 @@ import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.xpath.XPathExpressionException;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -234,7 +232,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			boolean useEprs, boolean useObjects)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
-		return enumerate(filters, dialect, useEprs, useObjects, false, new Object[0]);
+		return enumerate(filters, dialect, useEprs, useObjects, false);
 	}
 	/**
 	 * Starts an enumeration transaction by obtaining an enumeration context.
@@ -298,8 +296,12 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			filterType.getContent().add(filter);
 			
 			if (enumerationMode != null) {
+				ArrayList<Object> anys = new ArrayList<Object>(params.length + 1);
+				anys.add((Object)enumerationMode.toBinding());
+				for (int i = 0; i < params.length; i++)
+					anys.add(params[i]);
 				enu.setEnumerate(endTo, null, filter == null ? null
-					: filterType, enumerationMode.toBinding(), params);
+					: filterType, anys.toArray());
 			} else {
 				enu.setEnumerate(endTo, null, filter == null ? null
 						: filterType, params);
@@ -307,7 +309,11 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			
 		} else {
 			if (enumerationMode != null){
-				enu.setEnumerate(null, null, null, enumerationMode.toBinding(), params);
+				ArrayList<Object> anys = new ArrayList<Object>(params.length + 1);
+				anys.add((Object)enumerationMode.toBinding());
+				for (int i = 0; i < params.length; i++)
+					anys.add(params[i]);
+				enu.setEnumerate(null, null, null, anys.toArray());
 			} else {
 				enu.setEnumerate(null, null, null, params);				
 			}

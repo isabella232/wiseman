@@ -13,33 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.5 2006-08-08 15:46:50 pmonday Exp $
+ * $Id: EnumerationExtensions.java,v 1.6 2006-12-11 16:20:03 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
-import com.sun.ws.management.Management;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.server.EnumerationItem;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPException;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.xml.XmlBinding;
 
 public class EnumerationExtensions extends Enumeration {
     
@@ -60,10 +69,15 @@ public class EnumerationExtensions extends Enumeration {
     
     public static final QName ITEMS =
             new QName(Management.NS_URI, "Items", Management.NS_PREFIX);
-
+    
+    public static final QName ITEM =
+            new QName(Management.NS_URI, "Item", Management.NS_PREFIX);
+    
     public static final QName END_OF_SEQUENCE =
             new QName(Management.NS_URI, "EndOfSequence", Management.NS_PREFIX);
     
+   final static String WSMAN_ITEM = ITEM.getPrefix()+":"+ITEM.getLocalPart();
+
     public enum Mode {
         EnumerateEPR("EnumerateEPR"),
         EnumerateObjectAndEPR("EnumerateObjectAndEPR");
@@ -117,7 +131,7 @@ public class EnumerationExtensions extends Enumeration {
     public void setEnumerateResponse(final Object context, final String expires,
             final List<EnumerationItem> items, final EnumerationModeType mode, final boolean haveMore)
             throws JAXBException, SOAPException {
-        
+
         removeChildren(getBody(), ENUMERATE_RESPONSE);
         final EnumerateResponse response = FACTORY.createEnumerateResponse();
         
@@ -127,6 +141,8 @@ public class EnumerationExtensions extends Enumeration {
         
         final AnyListType anyListType = Management.FACTORY.createAnyListType();
         final List<Object> any = anyListType.getAny();
+        final DocumentBuilder builder = getDocumentBuilder();
+        final XmlBinding binding = getXmlBinding();
         for (final EnumerationItem ee : items) {
             /*
              * TODO: Add wrapper for <item> if EnumerationMode is ObjectAndEPR
@@ -134,12 +150,7 @@ public class EnumerationExtensions extends Enumeration {
              * schema and subsequent JAXB generated source to include the
              * wsman:Item element
              */
-            if (mode == null || EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
-                any.add(ee.getItem());
-            }
-            if (mode != null) {
-                any.add(Addressing.FACTORY.createEndpointReference(ee.getEndpointReference()));
-            }
+            addEnumerationItem(any,ee,mode,builder,binding);
         }
         response.getAny().add(Management.FACTORY.createItems(anyListType));
         
@@ -147,57 +158,109 @@ public class EnumerationExtensions extends Enumeration {
             response.getAny().add(Management.FACTORY.createEndOfSequence(new AttributableEmpty()));
         }
         
-        getXmlBinding().marshal(response, getBody());
+        binding.marshal(response, getBody());
     }
     
-    public static List<EnumerationItem> getItems(final EnumerateResponse response)
+    public List<EnumerationItem> getItems() throws JAXBException, SOAPException {
+		final List<Object> items;
+		final PullResponse pullResponse = getPullResponse();
+		if (pullResponse != null) {
+			final ItemListType list = pullResponse.getItems();
+			if (list == null) {
+				return null;
+			}
+			items = list.getAny();
+		} else {
+			final EnumerateResponse enumerateResponse = getEnumerateResponse();
+			if (enumerateResponse != null) {
+				final Object obj = extract(enumerateResponse.getAny(),
+						AnyListType.class, ITEMS);
+				if (obj instanceof AnyListType) {
+					items = ((AnyListType) obj).getAny();
+				} else {
+					return null;
+				}
+			} else {
+				return null;
+			}
+		}
+		if (items == null) {
+			return null;
+		}
+		final int size = items.size();
+		final List<EnumerationItem> itemList = new ArrayList<EnumerationItem>();
+		for (int i = 0; i < size; i++) {
+			final Object object = items.get(i);
+			itemList.add(unbindItem(object));
+		}
+		return itemList;
+	}
+    
+    public boolean isEndOfSequence()
     throws JAXBException, SOAPException {
-        final Object obj = extract(response.getAny(), AnyListType.class, ITEMS);
-        if (obj instanceof AnyListType) {
-            final AnyListType anyListType = (AnyListType) obj;
-            return unbindItems(anyListType.getAny());
-        }
-        return null;
+    	final Object eos;
+    	final PullResponse pullResponse = getPullResponse();
+    	if (pullResponse != null) {
+    		eos = pullResponse.getEndOfSequence();
+    	} else {
+    		final EnumerateResponse enumerateResponse = getEnumerateResponse();
+    		if (enumerateResponse != null) {
+    			eos = extract(enumerateResponse.getAny(), AttributableEmpty.class, END_OF_SEQUENCE);
+    		} else {
+    			return false;
+    		}
+    	}
+        return null != eos;
     }
     
-    public static boolean isEndOfSequence(final EnumerateResponse response)
-    throws JAXBException, SOAPException {
-        return null != extract(response.getAny(), AttributableEmpty.class, END_OF_SEQUENCE);
-    }
-    
-    public static List<EnumerationItem> unbindItems(final List<Object> items) {
-        final int size = items.size();
-        final List<EnumerationItem> itemList = new ArrayList<EnumerationItem>();
-        // the three possibilities are: EPR only, Item and EPR or Item only
-        for (int i = 0; i < size; i++) {
-            final Object obj = items.get(i);
-            if (obj instanceof JAXBElement) {
-                // EPR only
-                final JAXBElement elt = (JAXBElement) obj;
-                if (EndpointReferenceType.class.equals(elt.getDeclaredType())) {
-                    itemList.add(new EnumerationItem(null,
-                            ((JAXBElement<EndpointReferenceType>) obj).getValue()));
-                }
-            } else if (obj instanceof Element) {
-                // could be item only or item + EPR
-                if ((i+1 < size) && (items.get(i+1) instanceof JAXBElement)) {
-                    // item + EPR
-                    final Object nextObj = items.get(i+1);
-                    final JAXBElement elt = (JAXBElement) nextObj;
-                    if (EndpointReferenceType.class.equals(elt.getDeclaredType())) {
-                        itemList.add(new EnumerationItem((Element) obj,
-                                ((JAXBElement<EndpointReferenceType>) nextObj).getValue()));
-                        // advance past the next object since we've already processed it
-                        i++;
-                    }
-                } else {
-                    // item only
-                    itemList.add(new EnumerationItem((Element) obj, null));
-                }
+    private int getNextElementIndex(NodeList list, int start) {
+        for(int i = start; i < list.getLength(); i++) {
+            Node n = list.item(i);
+            int type = n.getNodeType();
+            if(type == Node.ELEMENT_NODE) {
+                return i;
             }
         }
-        return itemList;
+        return -1;
     }
+    
+    private EnumerationItem unbindItem(Object obj)
+        throws JAXBException {
+        // the three possibilities are: EPR only, Item and EPR or Item only
+        
+        Element item = null;
+        EndpointReferenceType eprt = null;
+        // TODO: FIX THIS WHEN wsman:Item is in xsd !!!!
+        if (obj instanceof JAXBElement &&
+                Addressing.ENDPOINT_REFERENCE.equals(((JAXBElement)obj).getName())) {
+            // EPR only
+            final JAXBElement elt = (JAXBElement) obj;
+            if (EndpointReferenceType.class.equals(elt.getDeclaredType())) {
+                eprt =((JAXBElement<EndpointReferenceType>) obj).getValue();
+            }
+        } else if (obj instanceof Element) {
+            // could be item only or item + EPR
+            final Element elt = (Element)obj;
+            if (ITEM.getLocalPart().equals(elt.getLocalName()) &&
+                    ITEM.getNamespaceURI().equals(elt.getNamespaceURI())) {
+                // item + epr wrapped in wsman:Item
+                final NodeList list = elt.getChildNodes();
+                final int objpos = getNextElementIndex(list,0);
+                if (objpos > -1) item = (Element)list.item(objpos);
+                final int eprpos = getNextElementIndex(list,objpos+1);
+                if (eprpos > -1) {
+                    final JAXBElement<EndpointReferenceType> epr =
+                        (JAXBElement<EndpointReferenceType>)
+                        getXmlBinding().unmarshal(list.item(eprpos));
+                    eprt = epr.getValue();
+                }
+            } else {
+                // item only
+                item = elt;
+            }
+        }
+        return new EnumerationItem(item, eprt);
+   }
     
     public void setRequestTotalItemsCountEstimate() throws JAXBException {
         final AttributableEmpty empty = new AttributableEmpty();

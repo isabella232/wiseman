@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.5 2006-07-28 22:55:24 akhilarora Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.6 2006-12-11 16:20:04 denis_rachal Exp $
  */
 
 package management;
@@ -27,6 +27,7 @@ import com.sun.ws.management.transport.HttpClient;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -218,6 +219,7 @@ public class EnumerationExtensionsTest extends TestBase {
             // Check the response for appropriate EPRs
             final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
             final PullResponse pr = pullResponse.getPullResponse();
+
             // update context for the next pull (if any)
             if (pr.getEnumerationContext() != null) {
                 context = (String) pr.getEnumerationContext().getContent().get(0);
@@ -239,28 +241,41 @@ public class EnumerationExtensionsTest extends TestBase {
              * are in place.  We will <i>not</i> validate that the EPRs are
              * usable
              */
+            /*
             final List<Object> items = pr.getItems().getAny();
             final Iterator<Object> itemsIterator = items.iterator();
             while (itemsIterator.hasNext()) {
                 Object obj = itemsIterator.next();
                 assertNotNull(obj);
-                
-                if (includeObjects) {
-                    // retrieve the next item, which should be an EPR
-                    if (itemsIterator.hasNext()) {
-                        obj = itemsIterator.next();
-                    } else {
-                        fail("EnumerateObjectAndEPR should be in pairs and was not");
-                    }
-                }
-                
-                final JAXBElement<EndpointReferenceType> eprJaxb = (JAXBElement<EndpointReferenceType>) obj;
-                final EndpointReferenceType epr = eprJaxb.getValue();
+                final Element elt = (Element) obj;
+                assertEquals(EnumerationExtensions.ITEM.getNamespaceURI(),elt.getNamespaceURI());
+                assertEquals(EnumerationExtensions.ITEM.getLocalPart(),elt.getLocalName());
+                EnumerationItem item = 
+                        EnumerationExtensions.getItem(obj);
+                final EndpointReferenceType epr = item.getEndpointReference();
                 
                 // validate that the element is an EndpointReference
                 final String address = epr.getAddress().getValue();
                 assertEquals(address, DESTINATION);
             }
+            */
+            List<EnumerationItem> items = pullResponse.getItems();
+            assertNotNull(items);
+            final Iterator<EnumerationItem> itemsIterator = items.iterator();
+            while (itemsIterator.hasNext()) {
+                EnumerationItem item = itemsIterator.next();
+                assertNotNull(item);
+                if (includeObjects)
+                   assertNotNull(item.getItem());
+                else
+                	assertNull(item.getItem());
+                assertNotNull(item.getEndpointReference());
+                final EndpointReferenceType epr = item.getEndpointReference();
+                
+                // validate that the element is an EndpointReference
+                final String address = epr.getAddress().getValue();
+                assertEquals(address, DESTINATION);
+            }            
             
             if (pr.getEndOfSequence() != null) {
                 done = true;
@@ -312,14 +327,14 @@ public class EnumerationExtensionsTest extends TestBase {
             fail(response.getBody().getFault().getFaultString());
         }
         
-        final Enumeration enuResponse = new Enumeration(response);
+        final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
-        for (final EnumerationItem item : EnumerationExtensions.getItems(enr)) {
+        for (final EnumerationItem item : enuResponse.getItems()) {
             assertMode(mode, item);
         }
         
-        boolean done = EnumerationExtensions.isEndOfSequence(enr);
+        boolean done = enuResponse.isEndOfSequence();
         while (!done) {
             final Enumeration pullRequest = new Enumeration();
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
@@ -339,13 +354,13 @@ public class EnumerationExtensionsTest extends TestBase {
                 fail(praddr.getBody().getFault().getFaultString());
             }
             
-            final Enumeration pullResponse = new Enumeration(praddr);
+            final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
             final PullResponse pr = pullResponse.getPullResponse();
             // update context for the next pull (if any)
             if (pr.getEnumerationContext() != null) {
                 context = (String) pr.getEnumerationContext().getContent().get(0);
             }
-            for (final EnumerationItem item : EnumerationExtensions.unbindItems(pr.getItems().getAny())) {
+            for (final EnumerationItem item : pullResponse.getItems()) {
                 assertMode(mode, item);
             }
             if (pr.getEndOfSequence() != null) {

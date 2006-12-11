@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.14 2006-07-25 05:49:42 akhilarora Exp $
+ * $Id: Enumeration.java,v 1.15 2006-12-11 16:20:03 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -29,9 +29,11 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPBody;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -112,7 +114,9 @@ public class Enumeration extends Addressing {
         }
         if (anys != null) {
             for (final Object any : anys) {
-                enu.getAny().add(any);
+            	if (any != null) {
+                   enu.getAny().add(any);
+            	}
             }
         }
         getXmlBinding().marshal(enu, getBody());
@@ -161,6 +165,29 @@ public class Enumeration extends Addressing {
         getXmlBinding().marshal(pull, getBody());
     }
     
+    static void addEnumerationItem(List<Object> itemListAny, 
+            EnumerationItem ee, 
+            EnumerationModeType mode,
+            DocumentBuilder builder,
+            XmlBinding binding) throws JAXBException {
+        if (mode == null) {
+            itemListAny.add(ee.getItem());
+        } else if (EnumerationModeType.ENUMERATE_EPR.equals(mode)) {
+            itemListAny.add(Addressing.FACTORY.createEndpointReference(ee.getEndpointReference()));
+        } else if (EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
+            final Document doc = builder.newDocument();
+            final Element item =
+                    doc.createElementNS(EnumerationExtensions.ITEM.getNamespaceURI(),
+                    EnumerationExtensions.WSMAN_ITEM);
+            final Document epr =  builder.newDocument();
+            binding.marshal(Addressing.FACTORY.
+                    createEndpointReference(ee.getEndpointReference()),epr);
+            item.appendChild(doc.importNode(ee.getItem(),true));
+            item.appendChild(doc.importNode(epr.getDocumentElement(),true));
+            itemListAny.add(item);
+        }
+    }
+    
     public void setPullResponse(final List<EnumerationItem> items, final Object context, final EnumerationModeType mode, final boolean haveMore)
     throws JAXBException, SOAPException {
         
@@ -169,15 +196,12 @@ public class Enumeration extends Addressing {
         
         final ItemListType itemList = FACTORY.createItemListType();
         final List<Object> itemListAny = itemList.getAny();
+        final DocumentBuilder builder = getDocumentBuilder();
+        final XmlBinding binding = getXmlBinding();
         // go through each element in the list and add appropriate item to list
         //  depending on the EnumerationModeType
         for (final EnumerationItem ee : items) {
-            if (mode == null || EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
-                itemListAny.add(ee.getItem());
-            }
-            if (mode != null) {
-                itemListAny.add(Addressing.FACTORY.createEndpointReference(ee.getEndpointReference()));
-            }
+            addEnumerationItem(itemListAny,ee,mode,builder,binding);
         }
         
         response.setItems(itemList);
