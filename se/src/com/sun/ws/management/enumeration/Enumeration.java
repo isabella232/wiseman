@@ -13,27 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.15 2006-12-11 16:20:03 denis_rachal Exp $
+ * $Id: Enumeration.java,v 1.16 2006-12-13 09:11:26 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.xml.XmlBinding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.List;
+
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPException;
-import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -45,6 +41,9 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
+
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.server.EnumerationItem;
 
 public class Enumeration extends Addressing {
     
@@ -122,7 +121,7 @@ public class Enumeration extends Addressing {
         getXmlBinding().marshal(enu, getBody());
     }
     
-    public void setEnumerateResponse(final Object context, final String expires)
+    public void setEnumerateResponse(final Object context, final String expires, final Object... anys)
     throws JAXBException, SOAPException {
         
         removeChildren(getBody(), ENUMERATE_RESPONSE);
@@ -135,7 +134,13 @@ public class Enumeration extends Addressing {
         if (expires != null) {
             response.setExpires(expires.trim());
         }
-        
+        if (anys != null) {
+            for (final Object any : anys) {
+            	if (any != null) {
+            		response.getAny().add(any);
+            	}
+            }
+        }
         getXmlBinding().marshal(response, getBody());
     }
     
@@ -165,46 +170,26 @@ public class Enumeration extends Addressing {
         getXmlBinding().marshal(pull, getBody());
     }
     
-    static void addEnumerationItem(List<Object> itemListAny, 
-            EnumerationItem ee, 
-            EnumerationModeType mode,
-            DocumentBuilder builder,
-            XmlBinding binding) throws JAXBException {
-        if (mode == null) {
-            itemListAny.add(ee.getItem());
-        } else if (EnumerationModeType.ENUMERATE_EPR.equals(mode)) {
-            itemListAny.add(Addressing.FACTORY.createEndpointReference(ee.getEndpointReference()));
-        } else if (EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
-            final Document doc = builder.newDocument();
-            final Element item =
-                    doc.createElementNS(EnumerationExtensions.ITEM.getNamespaceURI(),
-                    EnumerationExtensions.WSMAN_ITEM);
-            final Document epr =  builder.newDocument();
-            binding.marshal(Addressing.FACTORY.
-                    createEndpointReference(ee.getEndpointReference()),epr);
-            item.appendChild(doc.importNode(ee.getItem(),true));
-            item.appendChild(doc.importNode(epr.getDocumentElement(),true));
-            itemListAny.add(item);
-        }
+    public void setPullResponse(final List<EnumerationItem> items, final Object context, final boolean haveMore)
+    throws JAXBException, SOAPException {
+      
+        final ItemListType itemList = FACTORY.createItemListType();
+		final List<Object> itemListAny = itemList.getAny();
+		// go through each element in the list and add appropriate item to list
+		// depending on the EnumerationModeType
+		for (final EnumerationItem ee : items) {
+			itemListAny.add(ee.getItem());
+		}
+		setPullResponse(itemList, context, haveMore);
     }
     
-    public void setPullResponse(final List<EnumerationItem> items, final Object context, final EnumerationModeType mode, final boolean haveMore)
+    protected void setPullResponse(final ItemListType itemList, final Object context, final boolean haveMore)
     throws JAXBException, SOAPException {
         
         removeChildren(getBody(), PULL_RESPONSE);
         final PullResponse response = FACTORY.createPullResponse();
-        
-        final ItemListType itemList = FACTORY.createItemListType();
-        final List<Object> itemListAny = itemList.getAny();
-        final DocumentBuilder builder = getDocumentBuilder();
-        final XmlBinding binding = getXmlBinding();
-        // go through each element in the list and add appropriate item to list
-        //  depending on the EnumerationModeType
-        for (final EnumerationItem ee : items) {
-            addEnumerationItem(itemListAny,ee,mode,builder,binding);
-        }
-        
-        response.setItems(itemList);
+
+		response.setItems(itemList);
         
         if (haveMore) {
             final EnumerationContextType contextType = FACTORY.createEnumerationContextType();
@@ -212,8 +197,7 @@ public class Enumeration extends Addressing {
             response.setEnumerationContext(contextType);
         } else {
             response.setEndOfSequence("");
-        }
-        
+        }       
         getXmlBinding().marshal(response, getBody());
     }
     
@@ -256,5 +240,15 @@ public class Enumeration extends Addressing {
     public EnumerationEnd getEnumerationEnd() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), ENUMERATION_END);
         return value == null ? null : (EnumerationEnd) value;
+    }
+    
+    public boolean isEndOfSequence()
+    throws JAXBException, SOAPException {
+    	Object eos = null;
+    	final PullResponse pullResponse = getPullResponse();
+    	if (pullResponse != null) {
+    		eos = pullResponse.getEndOfSequence();
+    	}
+        return null != eos;
     }
 }

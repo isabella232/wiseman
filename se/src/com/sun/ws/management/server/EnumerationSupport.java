@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.36 2006-12-11 16:23:13 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.37 2006-12-13 09:11:28 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -296,10 +296,11 @@ public final class EnumerationSupport extends BaseSupport {
         
         final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
         final boolean more = doPull(request, response, context, ctx, pull.getMaxTime(), passed);
+        EnumerationExtensions wsmanResponse = new EnumerationExtensions(response);
         if (more) {
-            response.setPullResponse(passed, context.toString(), ctx.getEnumerationMode(), true);
+            wsmanResponse.setPullResponse(passed, context.toString(), true, ctx.getEnumerationMode());
         } else {
-            response.setPullResponse(passed, null, ctx.getEnumerationMode(), false);
+            wsmanResponse.setPullResponse(passed, null, false, ctx.getEnumerationMode());
         }
     }
     

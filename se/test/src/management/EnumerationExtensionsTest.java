@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.6 2006-12-11 16:20:04 denis_rachal Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.7 2006-12-13 09:11:27 denis_rachal Exp $
  */
 
 package management;
 
-import com.sun.ws.management.Management;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.transport.HttpClient;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.w3c.dom.Element;
@@ -41,6 +36,13 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.transport.HttpClient;
 
 /**
  * Unit test for WS-Enumeration extensions in WS-Management
@@ -241,24 +243,6 @@ public class EnumerationExtensionsTest extends TestBase {
              * are in place.  We will <i>not</i> validate that the EPRs are
              * usable
              */
-            /*
-            final List<Object> items = pr.getItems().getAny();
-            final Iterator<Object> itemsIterator = items.iterator();
-            while (itemsIterator.hasNext()) {
-                Object obj = itemsIterator.next();
-                assertNotNull(obj);
-                final Element elt = (Element) obj;
-                assertEquals(EnumerationExtensions.ITEM.getNamespaceURI(),elt.getNamespaceURI());
-                assertEquals(EnumerationExtensions.ITEM.getLocalPart(),elt.getLocalName());
-                EnumerationItem item = 
-                        EnumerationExtensions.getItem(obj);
-                final EndpointReferenceType epr = item.getEndpointReference();
-                
-                // validate that the element is an EndpointReference
-                final String address = epr.getAddress().getValue();
-                assertEquals(address, DESTINATION);
-            }
-            */
             List<EnumerationItem> items = pullResponse.getItems();
             assertNotNull(items);
             final Iterator<EnumerationItem> itemsIterator = items.iterator();

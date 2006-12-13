@@ -13,30 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.22 2006-12-05 10:35:24 jfdenise Exp $
+ * $Id: EnumerationTest.java,v 1.23 2006-12-13 09:11:27 denis_rachal Exp $
  */
 
 package management;
 
-import com.sun.ws.management.Management;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
-import com.sun.ws.management.server.handler.wsman.test.enumeration.filter.custom_filter_Handler;
-import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import javax.xml.bind.JAXBElement;
+
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
@@ -48,6 +38,17 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.handler.wsman.test.enumeration.filter.custom_filter_Handler;
+import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XPath;
 
 /**
  * Unit test for WS-Enumeration
@@ -141,9 +142,8 @@ public class EnumerationTest extends TestBase {
         final Document doc = enu.newDocument();
         final Element itemElement = doc.createElementNS(NS_URI, NS_PREFIX + ":anItem");
         EnumerationItem ee = new EnumerationItem(itemElement, null);
-        // TODO: Add EPR to ctor
         items.add(ee);
-        enu.setPullResponse(items, context, null, true);
+        enu.setPullResponse(items, context, true);
         
         enu.prettyPrint(logfile);
         

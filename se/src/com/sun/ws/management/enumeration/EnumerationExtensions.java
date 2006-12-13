@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.6 2006-12-11 16:20:03 denis_rachal Exp $
+ * $Id: EnumerationExtensions.java,v 1.7 2006-12-13 09:11:26 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -35,6 +35,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -131,34 +132,61 @@ public class EnumerationExtensions extends Enumeration {
     public void setEnumerateResponse(final Object context, final String expires,
             final List<EnumerationItem> items, final EnumerationModeType mode, final boolean haveMore)
             throws JAXBException, SOAPException {
-
-        removeChildren(getBody(), ENUMERATE_RESPONSE);
-        final EnumerateResponse response = FACTORY.createEnumerateResponse();
-        
-        final EnumerationContextType contextType = FACTORY.createEnumerationContextType();
-        contextType.getContent().add(context);
-        response.setEnumerationContext(contextType);
         
         final AnyListType anyListType = Management.FACTORY.createAnyListType();
         final List<Object> any = anyListType.getAny();
         final DocumentBuilder builder = getDocumentBuilder();
         final XmlBinding binding = getXmlBinding();
         for (final EnumerationItem ee : items) {
-            /*
-             * TODO: Add wrapper for <item> if EnumerationMode is ObjectAndEPR
-             * per R5.7-2 of the specification.  Waiting on fix to DMTF
-             * schema and subsequent JAXB generated source to include the
-             * wsman:Item element
-             */
             addEnumerationItem(any,ee,mode,builder,binding);
         }
-        response.getAny().add(Management.FACTORY.createItems(anyListType));
-        
+
+        JAXBElement anyList = Management.FACTORY.createItems(anyListType);
         if (!haveMore) {
-            response.getAny().add(Management.FACTORY.createEndOfSequence(new AttributableEmpty()));
+        	JAXBElement<AttributableEmpty> eos = Management.FACTORY.createEndOfSequence(new AttributableEmpty());
+            super.setEnumerateResponse(context, expires, anyList, eos);
+        } else {
+        	super.setEnumerateResponse(context, expires, anyList);
+        }
+    }
+    
+    private static void addEnumerationItem(List<Object> itemListAny, 
+            EnumerationItem ee, 
+            EnumerationModeType mode,
+            DocumentBuilder builder,
+            XmlBinding binding) throws JAXBException {
+        if (mode == null) {
+            itemListAny.add(ee.getItem());
+        } else if (EnumerationModeType.ENUMERATE_EPR.equals(mode)) {
+            itemListAny.add(Addressing.FACTORY.createEndpointReference(ee.getEndpointReference()));
+        } else if (EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
+            final Document doc = builder.newDocument();
+            final Element item =
+                    doc.createElementNS(EnumerationExtensions.ITEM.getNamespaceURI(),
+                    EnumerationExtensions.WSMAN_ITEM);
+            final Document epr =  builder.newDocument();
+            binding.marshal(Addressing.FACTORY.
+                    createEndpointReference(ee.getEndpointReference()),epr);
+            item.appendChild(doc.importNode(ee.getItem(),true));
+            item.appendChild(doc.importNode(epr.getDocumentElement(),true));
+            itemListAny.add(item);
+        }
+    }
+    
+    public void setPullResponse(final List<EnumerationItem> items, final Object context, final boolean haveMore, EnumerationModeType mode)
+    throws JAXBException, SOAPException {
+    	
+        final ItemListType itemList = FACTORY.createItemListType();
+        final List<Object> itemListAny = itemList.getAny();
+        final DocumentBuilder builder = getDocumentBuilder();
+        final XmlBinding binding = getXmlBinding();
+        // go through each element in the list and add appropriate item to list
+        // depending on the EnumerationModeType
+        for (final EnumerationItem ee : items) {
+        	addEnumerationItem(itemListAny,ee,mode,builder,binding);
         }
         
-        binding.marshal(response, getBody());
+        super.setPullResponse(itemList, context, haveMore);
     }
     
     public List<EnumerationItem> getItems() throws JAXBException, SOAPException {

@@ -407,7 +407,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				 moreToCome = false;
 			  }
 			  //Now stuff every one of the response in?
-			  enuResponse.setPullResponse(items, getEnumContextId(), null, moreToCome);
+			  enuResponse.setPullResponse(items, getEnumContextId(), moreToCome);
 		 //}		
 		return endResponse;
 	}
