@@ -1,5 +1,6 @@
 package com.sun.ws.management.client.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Handler;
@@ -10,10 +11,13 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPFault;
+import javax.xml.soap.SOAPMessage;
 import javax.xml.xpath.XPathExpressionException;
 
 import util.WsManBaseTestSupport;
 
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.EnumerationCtx;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
@@ -21,11 +25,14 @@ import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.ServerIdentity;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
+import com.sun.ws.management.client.support.IdentifySupport;
+import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
  *
- * @author wire
+ * @author wire, simeonpinder, akhil
  *
  */
 public class Interop20060801Test extends WsManBaseTestSupport {
@@ -120,6 +127,9 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	// Section 7 Variables
 	private String resourceURINumericSensor;
 
+    private org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.ObjectFactory identifyFactory 
+		= new org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.ObjectFactory();
+	
 	protected void setUp() throws Exception {
 		super.setUp();
 
@@ -160,6 +170,26 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		//assertNotNull(serverInfo.getSpecVersion());
 		//assertNotNull(serverInfo.getBuildId());
 		assertEquals(serverInfo.getProtocolVersion(),"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
+		
+		//Build Identify request
+		SOAPMessage identifyRequest = IdentifySupport.buildIdentifyRequest();
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		identifyRequest.writeTo(baos);
+//		System.out.println(baos.toString());	
+    	//Send the Identify Request to the right destination
+		String dest ="http://localhost:8080/wsman/";
+        final Addressing identifyResponse = HttpClient.sendRequest(identifyRequest,dest);
+//System.out.println(identifyResponse.toString());	        
+        try {
+			examineForFaults(identifyResponse);
+		  ResourceState identResp = IdentifySupport.retrieveIdentifyResponse(identifyResponse);
+		   String protocolVersion = identResp.getWrappedValueText(Identify.PROTOCOL_VERSION);
+		  assertNotNull("Required field not found.",protocolVersion);
+		  assertTrue("Protocol field contained empty string",(protocolVersion.trim().length()>0));
+		} catch (FaultException e) {
+			e.printStackTrace();
+			fail("Unexpected fault occurred: "+e.getMessage());
+		}
 	}
 	
 	/**
@@ -253,26 +283,26 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		fail("This test is expected to Fault and did not.");
 		
 	}
-
-	/**
-	 * 6.6	Get failure with operational timeout (mandatory)
-	 * In this scenario, the request fails since the service cannot respond in the 
-	 * time specified in the OperationTimeout in the request.
-	 */
-	public void testGetInstanceTimeoutExceeded() throws SOAPException, JAXBException, IOException, DatatypeConfigurationException{
-		log.info("_________________________________________________________________________");
-		log.info("6.6	Get failure with operational timeout ");
-		int operationTimeout=3;
-		try {
-			//Microsoft
-			//resourceURIComputerSystem="wsman:microsoft.test/testresource/get/timeout";
-			ResourceState systemState = getComputerSystemState(resourceURIComputerSystem,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
-		} catch (FaultException e) {
-			log.info("PASS");
-			return;
-		}
-		fail("This test is expected to Fault and did not.");	
-	}
+//THIS test is duplicated in InteropTest.java and maybe out of date as a new interop has occurred since it was created.
+//	/**
+//	 * 6.6	Get failure with operational timeout (mandatory)
+//	 * In this scenario, the request fails since the service cannot respond in the 
+//	 * time specified in the OperationTimeout in the request.
+//	 */
+//	public void testGetInstanceTimeoutExceeded() throws SOAPException, JAXBException, IOException, DatatypeConfigurationException{
+//		log.info("_________________________________________________________________________");
+//		log.info("6.6	Get failure with operational timeout ");
+//		int operationTimeout=3;
+//		try {
+//			//Microsoft
+//			//resourceURIComputerSystem="wsman:microsoft.test/testresource/get/timeout";
+//			ResourceState systemState = getComputerSystemState(resourceURIComputerSystem,selectorCreationClassName,selectorName,maxEnvelopeSize,operationTimeout);
+//		} catch (FaultException e) {
+//			log.info("PASS");
+//			return;
+//		}
+//		fail("This test is expected to Fault and did not.");	
+//	}
 	
 	/**
 	 * 6.7	Fragment Get (optional)
@@ -528,6 +558,21 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		if(args.length>0&&args[0]!=null)
 			destination=args[0];
 		junit.swingui.TestRunner.run(Interop20060801Test.class);
+	}
+	
+	/** Examines the Addressing instance passed in for faults within the SoapBody.
+	 * @param message
+	 * @throws FaultException
+	 */
+	private void examineForFaults(final Addressing message) throws FaultException {
+		if(message==null){
+			String msg="The Addressing instance passed in cannot be null.";
+			throw new IllegalArgumentException(msg);
+		}
+		if (message.getBody().hasFault()) {
+			SOAPFault fault = message.getBody().getFault();
+			throw new FaultException(fault.getFaultString());
+		}
 	}
 	
 //	public void testPutThreshholdOpenWSMan() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException, XPathExpressionException, NoMatchFoundException{

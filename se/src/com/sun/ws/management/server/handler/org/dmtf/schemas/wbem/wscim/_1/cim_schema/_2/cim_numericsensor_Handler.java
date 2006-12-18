@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.5 2006-12-05 10:35:24 jfdenise Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.6 2006-12-18 22:48:52 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
 
+import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.FragmentDialectNotSupportedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
@@ -34,6 +35,8 @@ import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XPath;
+
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +47,7 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPHeaderElement;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
@@ -107,6 +111,20 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
                 throw new InvalidSelectorsFault(InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
             }
             
+            final Set<SelectorType> reqSelectors = request.getSelectors();
+            if (reqSelectors != null) {
+                Iterator<SelectorType> si = reqSelectors.iterator();
+                while (si.hasNext()) {
+                    final SelectorType st = si.next();
+                    if("LARGE_MESSAGE".equals(st.getContent().get(0).toString().trim())){
+                    	noPrefix="_Large";
+                    }
+                    if("PUT_UPDATE".equals(st.getContent().get(0).toString().trim())){
+                    	noPrefix="_Pull_init";
+                    }
+                }
+            }
+            
             Document resourceDoc = null;
             final String resourceDocName = "Pull" + noPrefix + "_0.xml";
             final InputStream is = load(hcontext.getServletConfig().getServletContext(), resourceDocName);
@@ -119,6 +137,43 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
                 throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
             }
             response.getBody().addDocument(resourceDoc);
+            
+            /**Process for return envelope exceeding requested maximum. This logic should not be moved
+             * further up in processing hierarchy as it NEEDS to be handled by the handler implementor
+             * for operations that cause permanent changes to data store(DELETE/PUT/etc..). See spec.
+             */  
+              //Locate the maxEnvelopeSize header
+            SOAPHeaderElement maxEnvelopeSizeHdr = null;
+            for (final SOAPElement se : request.getChildren(request.getHeader(), Management.MAX_ENVELOPE_SIZE)) {
+                if (se instanceof SOAPHeaderElement) {
+                    final SOAPHeaderElement she = (SOAPHeaderElement) se;
+                    maxEnvelopeSizeHdr = she;
+                    if (she.getMustUnderstand()) {
+                    	maxEnvelopeSizeHdr = she;
+                    }
+                }
+            }
+             //evaluate the size of the completed envelope to be returned
+            byte[] byteBag =null;
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+              response.writeTo(baos);
+            byteBag = baos.toByteArray();
+            if((byteBag!=null)&&(maxEnvelopeSizeHdr!=null)){
+            	String maxEvContent = maxEnvelopeSizeHdr.getTextContent();
+            	if(maxEvContent!=null){
+            	  long maxEnvelopeValue = Long.parseLong(maxEvContent.trim());
+            	  String explanation="The WS-Management service could not process the ";
+            	  explanation+="request because the response("+byteBag.length+") is larger than the ";
+            	  explanation+="soap maximum envelope size of "+maxEnvelopeValue+" set for this request.";
+            	  if(byteBag.length>maxEnvelopeValue){
+            		 //Throw fault to that effect.
+            	  EncodingLimitFault limit= new EncodingLimitFault(explanation,
+                              EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED);
+            	  response.setFault(limit);
+            	  }
+            	}
+            }            
+            
         } else if (Transfer.PUT_ACTION_URI.equals(action)) {
             response.setAction(Transfer.PUT_RESPONSE_URI);
             final TransferExtensions txi = new TransferExtensions(request);
