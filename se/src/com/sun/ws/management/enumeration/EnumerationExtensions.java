@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.7 2006-12-13 09:11:26 denis_rachal Exp $
+ * $Id: EnumerationExtensions.java,v 1.8 2006-12-18 20:36:37 nbeers Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -35,6 +35,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -49,6 +50,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XmlBinding;
 
 public class EnumerationExtensions extends Enumeration {
@@ -266,6 +268,13 @@ public class EnumerationExtensions extends Enumeration {
             if (EndpointReferenceType.class.equals(elt.getDeclaredType())) {
                 eprt =((JAXBElement<EndpointReferenceType>) obj).getValue();
             }
+        } else if (obj instanceof JAXBElement &&
+        		TransferExtensions.XML_FRAGMENT.equals(((JAXBElement)obj).getName())) {
+                // XML fragment enumeration
+                MixedDataType elt = (MixedDataType)(((JAXBElement)obj).getValue());
+                item = (Element)((elt.getContent()).get(0));
+                //eprt =((JAXBElement<EndpointReferenceType>) obj).getValue();
+                
         } else if (obj instanceof Element) {
             // could be item only or item + EPR
             final Element elt = (Element)obj;

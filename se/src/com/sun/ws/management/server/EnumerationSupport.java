@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.37 2006-12-13 09:11:28 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.38 2006-12-18 20:36:39 nbeers Exp $
  */
 
 package com.sun.ws.management.server;

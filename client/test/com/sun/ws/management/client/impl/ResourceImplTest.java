@@ -7,7 +7,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.HashSet;
 
@@ -40,6 +40,7 @@ import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.client.EnumerationCtx;
+import com.sun.ws.management.client.EnumerationResourceState;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
 import com.sun.ws.management.client.ResourceState;
@@ -49,6 +50,7 @@ import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.client.impl.EnumerationResourceImpl;
 import com.sun.ws.management.client.impl.TransferableResourceImpl;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
@@ -886,7 +888,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 int maxChar = 20000; //random limit. NOT currently enforced.
 		 
 		 ResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
-				 maxElements,maxChar, true);
+				 maxElements,maxChar, true, null, null);
 		 //Navigate down to retrieve Items children
 		 	//Document Children
 		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
@@ -922,8 +924,314 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 retrieved.release(enumContext);
 
 	 }
+	 
+	 public void testFragmentEnumeration() throws SOAPException, JAXBException,
+	 IOException, FaultException, DatatypeConfigurationException{
+	 
+		 //define enumeration handler url
+		 String resourceUri = "wsman:auth/userenum";
+	
+		 SelectorSetType selectors = null;
+		 //test that Find works to retrieve the Enumeration instance.
+		 Resource[] enumerableResources = ResourceFactory.find(
+		 ResourceImplTest.destUrl,
+		 resourceUri,
+		 ResourceImplTest.timeoutInMilliseconds,
+		 selectors);
+		 
+		 assertEquals("Expected one resource.",1,enumerableResources.length);
+		 Resource retrieved = enumerableResources[0];
+		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		
+		 //Build the filters
+		 String testName = "James";//See users.store for more valid search values
+		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
+		 
+		 String[] filters = new String[]{xpathFilter};
 
-	public static String xmlToString(Node node) {
+		  
+	     //Now build the XPath expression for fragment GET
+		 String xPathReq = "//*[local-name()='age']";
+		
+		 //Retrieve the Enumeration context.
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, false, 
+				 xPathReq, null, false, 0);
+		  assertNotNull("Enum context retrieval problem.",enumContext);
+		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
+		
+		 //DONE: now test the pull mechanism
+		 int maxTime =1000*60*15;
+		 int maxElements = 10;
+		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 
+		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
+				 maxElements,maxChar, xPathReq, null);
+		 //Navigate down to retrieve Items children
+		 	//Document Children
+		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
+		  //PullResponse node
+		 assertNotNull("No root node for PullResponse.",rootChildren);
+		 	Node child = rootChildren.item(0);
+		 //Items node
+		 assertNotNull("No child node for PullResponse found.",child);
+		 //Check number of enumerated values returned.
+		 NodeList children = child.getChildNodes().item(1).getChildNodes();
+		 assertEquals("Incorrect number of elements returned!",
+				 maxElements, children.getLength());
+		 
+		 List <Node> enumList = retrievedValues.getEnumerationItems();
+		 //DONE: iterate through to make sure that only XML Fragment nodes are returned
+		 for(int i=0;i<enumList.size();i++){
+			 Node node = enumList.get(i);
+			 if(node.getNodeName().indexOf("EnumerationContext")>-1){
+				 //ignore
+			 }else {
+				  assertTrue(node.getNodeName().indexOf("XmlFragment")>-1);
+				  
+				  // Now make sure that the right field for the XPATH expression is returned
+				  assertTrue(node.getFirstChild().getNodeName().indexOf("age") > -1);
+			 }
+		 }
+		 
+		
+		 //DONE: test release
+		 retrieved.release(enumContext);
+	 }
+		 
+
+	 public void testEnumerationResourceState() throws SOAPException, JAXBException,
+	 IOException, FaultException, DatatypeConfigurationException{
+	 
+		 //define enumeration handler url
+		 String resourceUri = "wsman:auth/userenum";
+	
+		 SelectorSetType selectors = null;
+		 //test that Find works to retrieve the Enumeration instance.
+		 Resource[] enumerableResources = ResourceFactory.find(
+		 ResourceImplTest.destUrl,
+		 resourceUri,
+		 ResourceImplTest.timeoutInMilliseconds,
+		 selectors);
+		 
+		 assertEquals("Expected one resource.",1,enumerableResources.length);
+		 Resource retrieved = enumerableResources[0];
+		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		
+		 
+		 //Build the filters
+		 String testName = "James";//See users.store for more valid search values
+		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
+//		 String xpathFilter = "/ns9:user/ns9:firstname/text()";
+		 
+		 String[] filters = new String[]{xpathFilter};
+		 long timeout = 1000000;
+		 
+		 
+		 //Retrieve the Enumeration context.
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, timeout);
+		  assertNotNull("Enum context retrieval problem.",enumContext);
+		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
+		
+		 //DONE: now test the pull mechanism
+		 int maxTime =1000*60*15;
+		 int maxElements = 5;
+		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 
+		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
+				 maxElements,maxChar);
+		 //Navigate down to retrieve Items children
+		 	//Document Children
+		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
+		  //PullResponse node
+		 assertNotNull("No root node for PullResponse.",rootChildren);
+         Node child = rootChildren.item(0);
+
+		 //Items node
+		 assertNotNull("No child node for PullResponse found.",child);
+		 //Check number of enumerated values returned.
+		 List<Node> children = retrievedValues.getEnumerationItems();
+		 assertEquals("Incorrect number of elements returned!",
+				 maxElements, children.size());
+		 
+		 //DONE: iterate through to make sure that we retrieved the correct item type and value
+		 for(int i=0;i<children.size();i++){
+			 Node node = children.get(i);
+			 if(node.getNodeName().indexOf("EnumerationContext")>-1){
+				 //ignore
+			 }else{
+				 UserType user = null;
+				 String[] pkgList = {"com.hp.examples.ws.wsman.user"};
+				 XmlBinding empBinding = new XmlBinding(null,pkgList);
+				 JAXBElement<UserType> ob =
+					 (JAXBElement<UserType>)empBinding.unmarshal(node);
+				 user=(UserType)ob.getValue();
+				 assertTrue(user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
+			 }
+		 }
+	
+		 //DONE: test release
+		 retrieved.release(enumContext);
+		 
+	 }
+	 
+	 public void testOptimizedEnumeration() throws SOAPException, JAXBException,
+	 IOException, FaultException, DatatypeConfigurationException{
+	 
+		 //define enumeration handler url
+		 String resourceUri = "wsman:auth/userenum";
+	
+		 SelectorSetType selectors = null;
+		 //test that Find works to retrieve the Enumeration instance.
+		 Resource[] enumerableResources = ResourceFactory.find(
+		 ResourceImplTest.destUrl,
+		 resourceUri,
+		 ResourceImplTest.timeoutInMilliseconds,
+		 selectors); 
+		 
+		 assertEquals("Expected one resource.",1,enumerableResources.length);
+		 Resource retrieved = enumerableResources[0];
+		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		
+		 //Build the filters
+		 String testName = "James";//See users.store for more valid search values
+		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
+		 
+		 String[] filters = new String[]{xpathFilter};
+		 
+ 
+		 //now test the pull mechanism
+		 int maxTime =1000*60*15;
+		 int maxElements = 10;
+		 int maxChar = 20000; //random limit. NOT currently enforced.
+		
+		 //Retrieve the Enumeration context.
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, false, 
+				 null, null, true, maxElements);
+		 assertNotNull("Enum context retrieval problem.",enumContext);
+		 assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
+		
+		 List<EnumerationItem> enumItems = ((EnumerationResourceImpl)retrieved).getEnumItems();
+		 assertNotNull("No items returned in optimized enumeration", enumItems);
+		 assertTrue("Wrong number of optimized enum items returned", enumItems.size() == maxElements);
+		 
+		 //iterate through to make sure that the correct fragment nodes are returned
+		 for(int i=0;i<enumItems.size();i++){
+			 EnumerationItem node = enumItems.get(i);
+			 assertTrue(node.getItem().getNodeName().indexOf("user")>-1);
+			 UserType user = null;
+			 String[] pkgList = {"com.hp.examples.ws.wsman.user"};
+			 XmlBinding empBinding = new XmlBinding(null,pkgList);
+			 JAXBElement<UserType> ob =
+				 (JAXBElement<UserType>)empBinding.unmarshal(node.getItem());
+			 user=(UserType)ob.getValue();
+			 assertTrue(user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
+			 }
+		 
+		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
+				 maxElements,maxChar, null, null);
+		 //Navigate down to retrieve Items children
+		 	//Document Children
+		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
+		  //PullResponse node
+		 assertNotNull("No root node for PullResponse.",rootChildren);
+		 Node child = rootChildren.item(0);
+		 //Items node
+		 assertNotNull("No child node for PullResponse found.",child);
+		 //Check number of enumerated values returned.
+		 NodeList children = child.getChildNodes().item(1).getChildNodes();
+		 assertEquals("Incorrect number of elements returned!",
+				 maxElements, children.getLength());
+		 
+		
+		 //DONE: test release
+		 retrieved.release(enumContext);
+	 }
+		 	 
+	
+	 public void testFragmentOptimizedEnumeration() throws SOAPException, JAXBException,
+	 IOException, FaultException, DatatypeConfigurationException{
+	 
+		 //define enumeration handler url
+		 String resourceUri = "wsman:auth/userenum";
+	
+		 SelectorSetType selectors = null;
+		 //test that Find works to retrieve the Enumeration instance.
+		 Resource[] enumerableResources = ResourceFactory.find(
+		 ResourceImplTest.destUrl,
+		 resourceUri,
+		 ResourceImplTest.timeoutInMilliseconds,
+		 selectors); 
+		 
+		 assertEquals("Expected one resource.",1,enumerableResources.length);
+		 Resource retrieved = enumerableResources[0];
+		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		
+		 //Build the filters
+		 String testName = "James";//See users.store for more valid search values
+		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
+		 
+		 String[] filters = new String[]{xpathFilter};
+		 
+ 
+	     //Now build the XPath expression for fragment GET
+		 String xPathReq = "//*[local-name()='age']";
+		 //now test the pull mechanism
+		 int maxTime =1000*60*15;
+		 int maxElements = 10;
+		 int maxChar = 20000; //random limit. NOT currently enforced.
+		
+		 //Retrieve the Enumeration context.
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, false, 
+				 xPathReq, null, true, maxElements);
+		 assertNotNull("Enum context retrieval problem.",enumContext);
+		 assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
+		
+		 List<EnumerationItem> enumItems = ((EnumerationResourceImpl)retrieved).getEnumItems();
+		 
+		 assertNotNull("No items returned in optimized enumeration", enumItems);
+		 assertTrue("Wrong number of optimized enum items returned", enumItems.size() == maxElements);
+		 
+		 //iterate through to make sure that the correct fragment nodes are returned
+		 for(int i=0;i<enumItems.size();i++){
+			 EnumerationItem node = enumItems.get(i);
+			 assertTrue(node.getItem().getNodeName().indexOf("age")>-1);
+		 }
+		 
+		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
+				 maxElements,maxChar, xPathReq, null);
+		 //Navigate down to retrieve Items children
+		 	//Document Children
+		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
+		  //PullResponse node
+		 assertNotNull("No root node for PullResponse.",rootChildren);
+		 Node child = rootChildren.item(0);
+		 //Items node
+		 assertNotNull("No child node for PullResponse found.",child);
+		 //Check number of enumerated values returned.
+		 NodeList children = child.getChildNodes().item(1).getChildNodes();
+		 assertEquals("Incorrect number of elements returned!",
+				 maxElements, children.getLength());
+		 
+		 List <Node> enumList = retrievedValues.getEnumerationItems();
+		 //iterate through to make sure that only XML Fragment nodes are returned
+		 for(int i=0;i<enumList.size();i++){
+			 Node node = enumList.get(i);
+			 if(node.getNodeName().indexOf("EnumerationContext")>-1){
+				 //ignore
+			 }else {
+				  assertTrue(node.getNodeName().indexOf("XmlFragment")>-1);
+				  
+				  // Now make sure that the right field for the XPATH expression is returned
+				  assertTrue(node.getFirstChild().getNodeName().indexOf("age") > -1);
+			 }
+		 }
+		 
+		
+		 //DONE: test release
+		 retrieved.release(enumContext);
+	 }
+		 	 
+	 public static String xmlToString(Node node) {
 		try {
 			Source source = new DOMSource(node);
 			StringWriter stringWriter = new StringWriter();

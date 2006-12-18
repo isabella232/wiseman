@@ -2,20 +2,26 @@ package com.sun.ws.management.client.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Logger;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -23,10 +29,12 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.EnumerationCtx;
+import com.sun.ws.management.client.EnumerationResourceState;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.FaultException;
@@ -34,6 +42,7 @@ import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.EnumerationExtensions.Mode;
+import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
@@ -44,6 +53,8 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	public ArrayList<String> reqResList = new ArrayList<String>();
 	
 	protected long itemCount = 0;
+	
+	protected List<EnumerationItem> enumItems = null;
 
 //	protected static final String UUID_SCHEME = "uuid:";
 
@@ -132,7 +143,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		
 		// Set the timeout on the base class
 		this.setMessageTimeout(timeout);
-		return enumerate(filters, dialect, useEprs, useObjects, getItemCount);
+		return enumerate(filters, dialect, useEprs, useObjects, getItemCount, null, null, false, 0);
 		
 	}
 	/**
@@ -166,7 +177,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		
 		// Set the timeout on the base class
 		this.setMessageTimeout(timeout);
-		return enumerate(filters, dialect, useEprs, useObjects, false, params);
+		return enumerate(filters, dialect, useEprs, useObjects, false, null, null, false, 0, params);
 		
 	}	
 
@@ -204,7 +215,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		
 		// Set the timeout on the base class
 		this.setMessageTimeout(timeout);
-		return enumerate(filters, dialect, useEprs, useObjects, getItemCount, params);
+		return enumerate(filters, dialect, useEprs, useObjects, getItemCount, null, null, false, 0, params);
 		
 	}	
 	/**
@@ -232,7 +243,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			boolean useEprs, boolean useObjects)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
-		return enumerate(filters, dialect, useEprs, useObjects, false);
+		return enumerate(filters, dialect, useEprs, useObjects, false, null, null, false, 0, new Object[0]);
 	}
 	/**
 	 * Starts an enumeration transaction by obtaining an enumeration context.
@@ -258,7 +269,8 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws DatatypeConfigurationException
 	 */
 	public EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs, boolean useObjects, boolean getItemCount, Object... params)
+			boolean useEprs, boolean useObjects, boolean getItemCount, 
+			String fragmentRequest, String fragmentDialect, boolean optimized, long maxElem, Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
 		
@@ -279,7 +291,19 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			enumerationMode = EnumerationExtensions.Mode.EnumerateObjectAndEPR;
 		}
 
-		//final DatatypeFactory factory = DatatypeFactory.newInstance();
+	    // If xpathExpression is not null then generate fragment GET 
+	    if((fragmentRequest!=null)&&(fragmentRequest.trim().length()>0)){
+	    	// Add the Fragement Header
+	    	setFragmentHeader(fragmentRequest,fragmentDialect,mgmt);
+	    }
+	    
+	    // If this is an optimized enumeration request, add the appropriate headers
+	    if (optimized) {
+	    	mgmt.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.OPTIMIZE_ENUMERATION, "true"));
+	    	mgmt.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.MAX_ELEMENTS, new Long(maxElem).toString()));
+	    }
+	    	
+	    //final DatatypeFactory factory = DatatypeFactory.newInstance();
 		final FilterType filterType = Enumeration.FACTORY.createFilterType();
 		final EndpointReferenceType endTo = Addressing.createEndpointReference(
 				"http://host/endTo", null, null, null, null);
@@ -339,6 +363,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		log.info("RESPONSE:\n" + response + "\n");
 
 		final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
+		
 		reqResList.add(enuResponse.toString());
 		final EnumerateResponse enr = enuResponse.getEnumerateResponse();
 
@@ -347,6 +372,20 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		
 		if (getItemCount) {
 			itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
+		}
+		
+		if (optimized) {
+			enumItems = new ArrayList<EnumerationItem>();
+			
+			// Save the returned values from the optimized enumeration
+			 List <EnumerationItem> items = new ArrayList<EnumerationItem>();
+
+     		 items = enuResponse.getItems();
+			 Iterator iter = items.iterator();
+			 while (iter.hasNext()) {
+				 Object item = iter.next();
+				 enumItems.add((EnumerationItem)item);
+			 }
 		}
 		return new EnumerationCtx(enumerationContextId);
 	}
@@ -420,15 +459,46 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public ResourceState pull(EnumerationCtx enumerationContext, int maxTime,
+	public EnumerationResourceState pull(EnumerationCtx enumerationContext, int maxTime,
 			int maxElements, int maxCharacters) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
 
-		return pull(enumerationContext, maxTime, maxElements, maxCharacters, false);
+		return pull(enumerationContext, maxTime, maxElements, maxCharacters, false, null, null);
 	}
 
 	/**
+	 * Requests a list of erps or objects. If you request EPRs or some fragment
+	 * of the state of an object this version of pull will just return them as a
+	 * resource state and you will have to extract the EPRs yourself. Use
+	 * pullResources for better access to EPRs.
+	 * 
+	 * @param enumerationContext
+	 *            The context created from a previous enumerate call.
+	 * @param maxTime
+	 *            The maxium timeout you are willing to wait for a response
+	 * @param maxElements
+	 *            the maximum number of elements which should be returned
+	 * @param maxCharacters
+	 *            the total size of the characters to be contained in the
+	 *            response
+	 * @return A resource state representing the returned complex type of the
+	 *         pull. Often this state will contain multiple entries from a
+	 *         number of resources.
+	 * 
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public EnumerationResourceState pull(EnumerationCtx enumerationContext, int maxTime,
+			int maxElements, int maxCharacters, String fragmentRequest, String fragmentDialect) throws SOAPException,
+			JAXBException, IOException, FaultException,
+			DatatypeConfigurationException {
+
+		return pull(enumerationContext, maxTime, maxElements, maxCharacters, false, fragmentRequest, fragmentDialect);
+	}	/**
 	 * Requests a list of erps or objects. If you request EPRs or some fragment
 	 * of the state of an object this version of pull will just return them as a
 	 * resource state and you will have to extract the EPRs yourself. Use
@@ -455,8 +525,8 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public ResourceState pull(EnumerationCtx enumerationContext, int maxTime,
-			int maxElements, int maxCharacters, boolean getItemCount) throws SOAPException,
+	public EnumerationResourceState pull(EnumerationCtx enumerationContext, int maxTime,
+			int maxElements, int maxCharacters, boolean getItemCount, String fragmentRequest, String fragmentDialect) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
 
@@ -476,7 +546,13 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			enu.setRequestTotalItemsCountEstimate();
 		}
 		
-		reqResList = new ArrayList<String>();
+	    // If xpathExpression is not null then generate fragment pull 
+	    if((fragmentRequest!=null)&&(fragmentRequest.trim().length()>0)){
+	    	// Add the Fragement Header
+	    	setFragmentHeader(fragmentRequest,fragmentDialect,mgmt);
+	    }
+	    
+	    reqResList = new ArrayList<String>();
 		reqResList.add(mgmt.toString());
 		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
@@ -501,7 +577,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
 		}
 			
-		return new ResourceStateImpl(body.extractContentAsDocument());
+		return new EnumerationResourceStateImpl(body.extractContentAsDocument());
 	}
 	
 	private EnumerationExtensions setEnumerationProperties(String action) throws JAXBException, SOAPException {
@@ -619,7 +695,10 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		return itemCount;
 	}
 
-
+	public List<EnumerationItem> getEnumItems() {
+		return enumItems;
+	}
+	
 	/**
 	 * @return Returns the destination.
 	 */
