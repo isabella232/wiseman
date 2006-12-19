@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.7 2006-12-13 09:11:27 denis_rachal Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.8 2006-12-19 15:25:45 denis_rachal Exp $
  */
 
 package management;
@@ -30,7 +30,6 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
-import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -356,7 +355,7 @@ public class EnumerationExtensionsTest extends TestBase {
     private static void assertMode(final EnumerationExtensions.Mode mode,
             final EnumerationItem item) {
         
-        final Element elt = item.getItem();
+        final Object elt = item.getItem();
         final EndpointReferenceType epr = item.getEndpointReference();
         
         if (mode == null) {

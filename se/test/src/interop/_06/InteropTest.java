@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.18 2006-12-11 16:20:04 denis_rachal Exp $
+ * $Id: InteropTest.java,v 1.19 2006-12-19 15:25:45 denis_rachal Exp $
  */
 
 package interop._06;
@@ -628,7 +628,7 @@ public final class InteropTest extends TestBase {
             final List<EnumerationItem> items = eo.getItems();
             assertNotNull(items);
             assertTrue(items.size() == 1);
-            Node node = items.get(0).getItem();
+            Node node = (Node) items.get(0).getItem();
             assertNotNull(node);
         }
         

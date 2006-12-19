@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.38 2006-12-18 20:36:39 nbeers Exp $
+ * $Id: EnumerationSupport.java,v 1.39 2006-12-19 15:25:46 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -377,7 +377,7 @@ public final class EnumerationSupport extends BaseSupport {
             //
             for (final EnumerationItem ee : items) {
                 // retrieve the document element from the enumeration element
-                final Element item = ee.getItem();
+            	final Object element = ee.getItem();
                 
 				// Check if request matches data provided:
 				// data only, EPR only, or data and EPR
@@ -385,11 +385,20 @@ public final class EnumerationSupport extends BaseSupport {
 					throw new UnsupportedFeatureFault(
 							UnsupportedFeatureFault.Detail.INVALID_VALUES);
 				}
-				if ((includeItem == true) && (item == null)) {
+				if ((includeItem == true) && (element == null)) {
 					throw new UnsupportedFeatureFault(
 							UnsupportedFeatureFault.Detail.INVALID_VALUES);
 				}
-                if (item != null) {
+                if (element != null) {
+                	final Element item;
+
+                	if (element instanceof Element) {
+                		item = (Element)element;
+                	} else {
+                		final Document doc =  db.newDocument();
+                		response.getXmlBinding().marshal(element, doc);
+                		item = doc.getDocumentElement();
+                	}
                     // append the Element to the owner document if it has not been done
                     // this is critical for XPath filtering to work
                     final Document owner = item.getOwnerDocument();

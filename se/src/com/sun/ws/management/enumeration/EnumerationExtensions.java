@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.8 2006-12-18 20:36:37 nbeers Exp $
+ * $Id: EnumerationExtensions.java,v 1.9 2006-12-19 15:25:45 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -42,7 +42,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
@@ -169,9 +168,18 @@ public class EnumerationExtensions extends Enumeration {
             final Document epr =  builder.newDocument();
             binding.marshal(Addressing.FACTORY.
                     createEndpointReference(ee.getEndpointReference()),epr);
-            item.appendChild(doc.importNode(ee.getItem(),true));
-            item.appendChild(doc.importNode(epr.getDocumentElement(),true));
-            itemListAny.add(item);
+        	Object obj = ee.getItem();
+            if (obj instanceof Element) {
+            	// Already an Element. Import it.
+               item.appendChild(doc.importNode((Element)obj, true));
+        	} else {
+        		// Not an Element, so we meed to marshall it to a Document first.
+        		final Document element =  builder.newDocument();
+        		binding.marshal(obj, element);
+        		item.appendChild(doc.importNode(element.getDocumentElement(), true));
+        	}
+            item.appendChild(doc.importNode(epr.getDocumentElement(), true));
+            itemListAny.add(item);;
         }
     }
     
@@ -258,24 +266,26 @@ public class EnumerationExtensions extends Enumeration {
         throws JAXBException {
         // the three possibilities are: EPR only, Item and EPR or Item only
         
-        Element item = null;
+    	Object item = null;
         EndpointReferenceType eprt = null;
-        // TODO: FIX THIS WHEN wsman:Item is in xsd !!!!
-        if (obj instanceof JAXBElement &&
-                Addressing.ENDPOINT_REFERENCE.equals(((JAXBElement)obj).getName())) {
-            // EPR only
-            final JAXBElement elt = (JAXBElement) obj;
-            if (EndpointReferenceType.class.equals(elt.getDeclaredType())) {
-                eprt =((JAXBElement<EndpointReferenceType>) obj).getValue();
-            }
-        } else if (obj instanceof JAXBElement &&
-        		TransferExtensions.XML_FRAGMENT.equals(((JAXBElement)obj).getName())) {
-                // XML fragment enumeration
-                MixedDataType elt = (MixedDataType)(((JAXBElement)obj).getValue());
-                item = (Element)((elt.getContent()).get(0));
-                //eprt =((JAXBElement<EndpointReferenceType>) obj).getValue();
-                
-        } else if (obj instanceof Element) {
+		if (obj instanceof JAXBElement) {			
+			final JAXBElement elt = (JAXBElement) obj;
+			if (EndpointReferenceType.class.equals(elt.getDeclaredType())) {
+				// EPR only
+				eprt = ((JAXBElement<EndpointReferenceType>) obj).getValue();
+			} else {
+				if (elt.getName().equals(ITEM)) {
+					// The WS Management XSD has been fixed.
+					// This is a wsman:item.
+					// TODO: Add support when Object factory exists.
+					return null;
+				} else {
+					// JAXBElement
+					item = elt;
+				}
+			}
+			return new EnumerationItem(item, eprt);
+		} else if (obj instanceof Element) {
             // could be item only or item + EPR
             final Element elt = (Element)obj;
             if (ITEM.getLocalPart().equals(elt.getLocalName()) &&
@@ -295,8 +305,9 @@ public class EnumerationExtensions extends Enumeration {
                 // item only
                 item = elt;
             }
+            return new EnumerationItem(item, eprt);
         }
-        return new EnumerationItem(item, eprt);
+        return new EnumerationItem(obj, null);
    }
     
     public void setRequestTotalItemsCountEstimate() throws JAXBException {

@@ -7,9 +7,9 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import java.util.HashSet;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBElement;
@@ -27,6 +27,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Document;
@@ -48,10 +49,9 @@ import com.sun.ws.management.client.ServerIdentity;
 import com.sun.ws.management.client.TransferableResource;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
-import com.sun.ws.management.client.impl.EnumerationResourceImpl;
-import com.sun.ws.management.client.impl.TransferableResourceImpl;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
+import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -1117,12 +1117,13 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 //iterate through to make sure that the correct fragment nodes are returned
 		 for(int i=0;i<enumItems.size();i++){
 			 EnumerationItem node = enumItems.get(i);
-			 assertTrue(node.getItem().getNodeName().indexOf("user")>-1);
+			 Element item = (Element) node.getItem();
+			 assertTrue(item.getNodeName().indexOf("user")>-1);
 			 UserType user = null;
 			 String[] pkgList = {"com.hp.examples.ws.wsman.user"};
 			 XmlBinding empBinding = new XmlBinding(null,pkgList);
 			 JAXBElement<UserType> ob =
-				 (JAXBElement<UserType>)empBinding.unmarshal(node.getItem());
+				 (JAXBElement<UserType>)empBinding.unmarshal(item);
 			 user=(UserType)ob.getValue();
 			 assertTrue(user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
 			 }
@@ -1191,10 +1192,22 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 assertNotNull("No items returned in optimized enumeration", enumItems);
 		 assertTrue("Wrong number of optimized enum items returned", enumItems.size() == maxElements);
 		 
-		 //iterate through to make sure that the correct fragment nodes are returned
+		 // iterate through to make sure that the correct fragment nodes are returned
 		 for(int i=0;i<enumItems.size();i++){
 			 EnumerationItem node = enumItems.get(i);
-			 assertTrue(node.getItem().getNodeName().indexOf("age")>-1);
+			 Object item = node.getItem();
+			 assertFalse(item == null);
+			 assertTrue(item instanceof JAXBElement);
+			 JAXBElement<MixedDataType> fragment = (JAXBElement<MixedDataType>) item;
+			 assertTrue(fragment.getDeclaredType().equals(MixedDataType.class));
+			 assertTrue(fragment.getName().equals(TransferExtensions.XML_FRAGMENT));
+			 List<Object> fragments = fragment.getValue().getContent();
+			 for (int j = 0; j < fragments.size(); j++) {
+				 Object obj = fragments.get(j);
+				 if (obj instanceof Element) {
+			        assertTrue(((Element)obj).getNodeName().indexOf("age")>-1);
+				 }
+			 }
 		 }
 		 
 		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
@@ -1219,8 +1232,10 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 			 if(node.getNodeName().indexOf("EnumerationContext")>-1){
 				 //ignore
 			 }else {
+				  // Make sure we have the XmlFragment
 				  assertTrue(node.getNodeName().indexOf("XmlFragment")>-1);
-				  
+				  // Now make sure at least one field was returned
+				  assertTrue(node.getFirstChild() != null);
 				  // Now make sure that the right field for the XPATH expression is returned
 				  assertTrue(node.getFirstChild().getNodeName().indexOf("age") > -1);
 			 }
