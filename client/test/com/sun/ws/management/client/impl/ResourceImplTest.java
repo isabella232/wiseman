@@ -1117,14 +1117,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 //iterate through to make sure that the correct fragment nodes are returned
 		 for(int i=0;i<enumItems.size();i++){
 			 EnumerationItem node = enumItems.get(i);
-			 Element item = (Element) node.getItem();
-			 assertTrue(item.getNodeName().indexOf("user")>-1);
-			 UserType user = null;
-			 String[] pkgList = {"com.hp.examples.ws.wsman.user"};
-			 XmlBinding empBinding = new XmlBinding(null,pkgList);
-			 JAXBElement<UserType> ob =
-				 (JAXBElement<UserType>)empBinding.unmarshal(item);
-			 user=(UserType)ob.getValue();
+			 JAXBElement<UserType> item = (JAXBElement<UserType>) node.getItem();
+			 assertTrue(item != null);
+			 UserType user = item.getValue();
 			 assertTrue(user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
 			 }
 		 
