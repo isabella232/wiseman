@@ -1,13 +1,11 @@
  package framework.models;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringBufferInputStream;
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,8 +21,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Result;
@@ -41,20 +37,15 @@ import javax.xml.xpath.XPathFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
-import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
@@ -66,15 +57,10 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.framework.enumeration.Enumeratable;
-import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 import com.sun.ws.management.framework.handlers.DefaultHandler;
-import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
-import com.sun.ws.management.server.handler.wsman.auth.user_Handler;
-import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
@@ -385,7 +371,6 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 					}
 				}
 			}
-			
 			enuResponse = eCont.processResponse(enuResponse,maxTime,maxElements,maxContentLength, getItemCount, xpathExp, fragmentHeader, false);
 			 
 		} catch (JAXBException e) {
@@ -457,38 +442,40 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	        
 			while (this.hasMoreElements()&(serializedCount<maxElements)) {
 				// Create an empty dom document and serialize the usertype object to it
-		        Document responseDoc = Management.newDocument();
 		        try {
 		        	UserType type = this.nextElement();
+		        	JAXBElement<UserType> element = userFactory.createUser(type);
 		        	
-		        	binding.marshal( new JAXBElement(new QName("http://examples.hp.com/ws/wsman/user",
-		        					  "user"), UserType.class, type ),responseDoc);
-					if(fragmentHeader!= null){
-						//DONE: extract Body contents
-						 Object resultOb = null;
-						 Node nod =null;
-						 resultOb = xpath.evaluate(xpathExp, responseDoc, XPathConstants.NODESET);
-						 if(resultOb!=null){
-							NodeList nodelist = (NodeList)resultOb;
+					// TODO: This check is incorrect. It should check the wsman:filter
+		        	//       Enumeration has the filter projection in the wsman:filter
+		        	//       and not the fragmentHeader.
+		        	//       NOTE: This makes it difficult to decide if it is just a filter
+		        	//             or does it also have a projection (fragment transfer case).
+					if (fragmentHeader != null) {
+						// get the fagments and put them into a JAXBElement
+						Document responseDoc = Management.newDocument();
+						binding.marshal(element, responseDoc);
+						Object resultOb = null;
+						// TODO: The filter may be namespace qualified. We need
+						//       to add the namespaces
+						//       and prefixes in the request to the "xpath" object:
+						//       xpath.setNamespaceContext(nsContext);
+						resultOb = xpath.evaluate(xpathExp, responseDoc, XPathConstants.NODESET);
+						if (resultOb != null) {
+							final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+							NodeList nodelist = (NodeList) resultOb;
 							for (int i = 0; i < nodelist.getLength(); i++) {
-								nod = nodelist.item(i);
+								mixedDataType.getContent().add(nodelist.item(i));
 							}
-						 }
-						
-				        final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
-				        mixedDataType.getContent().add(nod);
-				        //create the XmlFragmentElement
-				        final JAXBElement<MixedDataType> xmlFragment = 
-				                Management.FACTORY.createXmlFragment(mixedDataType);
-			        
-				        
-				        //add payload to the body
-				        Element fragElement = responseDoc.createElementNS(xmlFragment.getName().getNamespaceURI(), xmlFragment.getName().getLocalPart());
-				        new Addressing().getXmlBinding().marshal(xmlFragment, fragElement);
-				        items.add(new EnumerationItem(((Element)fragElement.getFirstChild()),null));
-						serializedCount++;
+							// create the XmlFragmentElement
+							final JAXBElement<MixedDataType> xmlFragment = 
+								  Management.FACTORY.createXmlFragment(mixedDataType);
+							// add payload to the body
+							items.add(new EnumerationItem(xmlFragment, null));
+							serializedCount++;
+						}
 					} else {
-						items.add(new EnumerationItem(responseDoc.getDocumentElement(),null));
+						items.add(new EnumerationItem(element, null));
 						serializedCount++;
 					}
 				} catch (Exception e) {
@@ -497,7 +484,8 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				}
 			}
 			if (getItemCount) {
-				enuResponse.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.TOTAL_ITEMS_COUNT_ESTIMATE, new Long(dataValues.length).toString()));
+				enuResponse.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.TOTAL_ITEMS_COUNT_ESTIMATE, 
+						                                                      new Long(dataValues.length).toString()));
 			}
 			  boolean moreToCome = true;
 			  if(cnt ==dataValues.length){
