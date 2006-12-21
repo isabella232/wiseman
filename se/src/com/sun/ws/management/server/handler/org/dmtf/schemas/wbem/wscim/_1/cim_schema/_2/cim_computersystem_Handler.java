@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_computersystem_Handler.java,v 1.2 2006-12-05 10:35:24 jfdenise Exp $
+ * $Id: cim_computersystem_Handler.java,v 1.2.2.1 2006-12-21 08:25:29 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
@@ -63,7 +63,9 @@ public class cim_computersystem_Handler implements Handler {
                 }
             }
             final String resourceDocName = "Get" + noPrefix + ".xml";
-            final InputStream is = load(context.getServletConfig().getServletContext(), resourceDocName);
+            final InputStream is = load((ServletContext) context.
+                            getRequestProperties().
+                            get(HandlerContext.SERVLET_CONTEXT), resourceDocName);
             if (is == null) {
                 throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
             }

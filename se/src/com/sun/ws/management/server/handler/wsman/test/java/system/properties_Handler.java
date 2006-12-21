@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.16 2006-07-26 03:40:24 pmonday Exp $
+ * $Id: properties_Handler.java,v 1.16.2.1 2006-12-21 08:26:01 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -103,8 +103,7 @@ public class properties_Handler implements Handler, EnumerationIterator {
             
             // retrieve the request path for use in EPR construction and store
             //  it in the context for later retrieval
-            final HttpServletRequest servletRequest = hcontext.getHttpServletRequest();
-            final String path = servletRequest.getRequestURL().toString();
+            final String path = hcontext.getURL();
             context.requestPath = path;
             
             // call the server to process the enumerate request
