@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.8 2006-07-19 20:41:58 obiwan314 Exp $
+ * $Id: Management.java,v 1.8.2.1 2006-12-21 08:21:26 jfdenise Exp $
  */
 
 package com.sun.ws.management;
@@ -30,6 +30,7 @@ import javax.xml.bind.UnmarshalException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
@@ -77,6 +78,10 @@ public class Management extends Addressing {
     
     public Management(final InputStream is) throws SOAPException, IOException {
         super(is);
+    }
+    
+    public Management(final SOAPMessage msg) throws SOAPException {
+        super(msg);
     }
     
     // setters

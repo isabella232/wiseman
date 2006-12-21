@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.12 2006-10-27 18:53:17 nbeers Exp $
+ * $Id: Addressing.java,v 1.12.2.1 2006-12-21 08:21:41 jfdenise Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -32,6 +32,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -78,6 +79,10 @@ public class Addressing extends SOAP {
     
     public Addressing(final InputStream is) throws SOAPException, IOException {
         super(is);
+    }
+    
+    public Addressing(final SOAPMessage msg) throws SOAPException {
+        super(msg);
     }
     
     public void validate() throws SOAPException, JAXBException, FaultException {
