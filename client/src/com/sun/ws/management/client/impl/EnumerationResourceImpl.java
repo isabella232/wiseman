@@ -4,33 +4,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
-import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
@@ -305,8 +297,6 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	    }
 	    	
 	    //final DatatypeFactory factory = DatatypeFactory.newInstance();
-		final EndpointReferenceType endTo = Addressing.createEndpointReference(
-				"http://host/endTo", null, null, null, null);
 		
 		if (filters != null) {
 			final DialectableMixedDataType filterType = Management.FACTORY
@@ -321,9 +311,9 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 				filterType.setDialect(dialect);
 			filterType.getContent().add(filter);
 
-			enu.setEnumerate(endTo, getItemCount, false, 0, null, filterType, enumerationMode, params);
+			enu.setEnumerate(null, getItemCount, false, 0, null, filterType, enumerationMode, params);
 		} else {
-			enu.setEnumerate(endTo, getItemCount, false, 0, null, null, enumerationMode, params);
+			enu.setEnumerate(null, getItemCount, false, 0, null, null, enumerationMode, params);
 		}
 
 		// store away request and response for display purposes only
@@ -411,7 +401,6 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		return (Resource[]) ret.toArray(new Resource[] {});
 	}
 
-	// TODO wire must implement EnumerateObjectAndEpr
 	/**
 	 * Requests a list of erps or objects. If you request EPRs or some fragment
 	 * of the state of an object this version of pull will just return them as a
