@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HandlerContext.java,v 1.1 2006-07-11 21:30:30 akhilarora Exp $
+ * $Id: HandlerContext.java,v 1.1.2.1 2006-12-21 08:24:51 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
+import java.security.Principal;
 import java.util.Map;
-import javax.servlet.ServletConfig;
-import javax.servlet.http.HttpServletRequest;
+
 
 public interface HandlerContext {
-    
-    HttpServletRequest getHttpServletRequest();
-    ServletConfig getServletConfig();
-    Map<String, String> getProperties();
+    public static final String JAX_WS_CONTEXT = "com.sun.management.transport.jaxws.context";
+    public static final String SERVLET_CONTEXT = "com.sun.ws.management.transport.servlet.context";
+    public Map<String,?> getRequestProperties();
+    public String getURL();
+    public String getCharEncoding();
+    public String getContentType();
+    public Principal getPrincipal();
+    public Map<String, String> getAgentProperties();
 }

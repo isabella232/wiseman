@@ -13,39 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HandlerContextImpl.java,v 1.1 2006-07-11 21:30:30 akhilarora Exp $
+ * $Id: HandlerContextImpl.java,v 1.1.2.1 2006-12-21 08:24:53 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
+import java.security.Principal;
 import java.util.Map;
 import javax.servlet.ServletConfig;
 import javax.servlet.http.HttpServletRequest;
 
-public final class HandlerContextImpl implements HandlerContext {
-    
-    private final HttpServletRequest request;
-    private final ServletConfig config;
-    private final Map<String, String> properties;
-    
-    HandlerContextImpl(final HttpServletRequest req, 
-            final ServletConfig conf, 
-            final Map<String, String> props) {
-        
-        request = req;
-        config = conf;
-        properties = props;
+final class HandlerContextImpl implements HandlerContext {
+    private String charEncoding;
+    private String contentType;
+    private Principal principal;
+    private Map<String, ?> requestProperties;
+    private Map<String, String> agentProperties;
+    private String url;
+    HandlerContextImpl(final Principal principal, final String contentType, 
+            final String charEncoding, final String url, final Map<String, ?> requestProperties,
+            final Map<String, String> agentProperties) {
+        this.principal = principal;
+        this.contentType = contentType;
+        this.charEncoding = charEncoding;
+        this.requestProperties = requestProperties;
+         this.agentProperties = agentProperties;
+        this.url = url;
     }
     
-    public HttpServletRequest getHttpServletRequest() {
-        return request;
+    public Map<String, String> getAgentProperties() {
+        return agentProperties;
     }
-    
-    public ServletConfig getServletConfig() {
-        return config;
+
+    public String getContentType() {
+        return contentType;
     }
-    
-    public Map<String, String> getProperties() {
-        return properties;
+
+    public Principal getPrincipal() {
+        return principal;
+    }
+
+    public String getCharEncoding() {
+        return charEncoding;
+    }
+
+    public String getURL() {
+        return url;
+    }
+
+    public Map<String, ?> getRequestProperties() {
+        return requestProperties;
     }
 }
