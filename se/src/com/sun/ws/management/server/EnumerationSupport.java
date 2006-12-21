@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.37.2.1 2006-12-21 08:24:17 jfdenise Exp $
+ * $Id: EnumerationSupport.java,v 1.37.2.2 2006-12-21 14:56:01 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -43,6 +43,7 @@ import javax.xml.xpath.XPathException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
@@ -54,6 +55,7 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
@@ -72,6 +74,7 @@ import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
 
 /**
  * A helper class that encapsulates some of the arcane logic to allow data
@@ -143,8 +146,8 @@ public final class EnumerationSupport extends BaseSupport {
         
         if (enumerate == null) {
             // see if this is a pull event mode subscribe request
-            final EventingExtensions evtx = new EventingExtensions(request);
-            final Subscribe subscribe = evtx.getSubscribe();
+            final EventingExtensions evtxRequest = new EventingExtensions(request);
+            final Subscribe subscribe = evtxRequest.getSubscribe();
             if (subscribe == null) {
                 throw new InvalidMessageFault();
             }
@@ -155,7 +158,19 @@ public final class EnumerationSupport extends BaseSupport {
                 throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
         } else {
-            filter = initializeFilter(enumerate.getFilter(), nsMap);
+        	final EnumerationExtensions enxRequest = new EnumerationExtensions(request);
+        	
+        	FilterType enuFilter = enxRequest.getFilter();
+        	DialectableMixedDataType enxFilter = enxRequest.getWsmanFilter();
+        	if ((enuFilter != null) && (enxFilter != null)) {
+        		// Both are not allowed. Throw an exception
+        		throw new CannotProcessFilterFault(SOAP.createFaultDetail("Both wsen:Filter and wsman:Filter were specified in the request. Only one is allowed.", null, null, null));
+        	}
+        	if (enuFilter != null) {
+        		filter = initializeFilter(enuFilter, nsMap);
+        	} else if (enxFilter != null) {
+        		filter = initializeFilter(enxFilter, nsMap);
+        	}
             
             expires = enumerate.getExpires();
             
@@ -220,8 +235,8 @@ public final class EnumerationSupport extends BaseSupport {
                 final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
                 final boolean more = doPull(request, response, context, ctx, null, passed);
                 
-                final EnumerationExtensions enx = new EnumerationExtensions(response);
-                enx.setEnumerateResponse(context.toString(), ctx.getExpiration(),
+                final EnumerationExtensions enxResponse = new EnumerationExtensions(response);
+                enxResponse.setEnumerateResponse(context.toString(), ctx.getExpiration(),
                         passed, enumerationMode, more);
             } else {
                 // place an item count estimate if one was requested
@@ -377,7 +392,7 @@ public final class EnumerationSupport extends BaseSupport {
             //
             for (final EnumerationItem ee : items) {
                 // retrieve the document element from the enumeration element
-                final Element item = ee.getItem();
+            	final Object element = ee.getItem();
                 
 				// Check if request matches data provided:
 				// data only, EPR only, or data and EPR
@@ -385,11 +400,20 @@ public final class EnumerationSupport extends BaseSupport {
 					throw new UnsupportedFeatureFault(
 							UnsupportedFeatureFault.Detail.INVALID_VALUES);
 				}
-				if ((includeItem == true) && (item == null)) {
+				if ((includeItem == true) && (element == null)) {
 					throw new UnsupportedFeatureFault(
 							UnsupportedFeatureFault.Detail.INVALID_VALUES);
 				}
-                if (item != null) {
+                if (element != null) {
+                	final Element item;
+
+                	if (element instanceof Element) {
+                		item = (Element)element;
+                	} else {
+                		final Document doc =  db.newDocument();
+                		response.getXmlBinding().marshal(element, doc);
+                		item = doc.getDocumentElement();
+                	}
                     // append the Element to the owner document if it has not been done
                     // this is critical for XPath filtering to work
                     final Document owner = item.getOwnerDocument();

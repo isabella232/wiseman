@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.9.2.1 2006-12-21 08:24:17 jfdenise Exp $
+ * $Id: BaseSupport.java,v 1.9.2.2 2006-12-21 14:56:01 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.enumeration.CannotProcessFilterFault;
-import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
-import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
-import com.sun.ws.management.eventing.InvalidMessageFault;
-import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.xml.XPath;
-import com.sun.ws.management.xml.XPathFilterFactory;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +33,15 @@ import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
+
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
+import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
+import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
+import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.xml.XPathFilterFactory;
 
 public class BaseSupport {
     
@@ -48,7 +49,7 @@ public class BaseSupport {
     protected static final String UNINITIALIZED = "uninitialized";
     protected static DatatypeFactory datatypeFactory = null;
     
-    private static final Map<UUID, BaseContext> contextMap = new HashMap();
+    private static final Map<UUID, BaseContext> contextMap = new HashMap<UUID, BaseContext>();
     
     protected static final TimerTask ttask = new TimerTask() {
         public void run() {
@@ -158,6 +159,16 @@ public class BaseSupport {
             NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
         if(filterType == null) return null;
         return initializeFilter(filterType.getDialect(),
+                filterType.getContent(), nsMap);
+    }
+    
+    /**
+     * WS Manamgenet Enumeration Filter initialization
+     */
+    protected static Filter initializeFilter(DialectableMixedDataType filterType, 
+            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
+        if(filterType == null) return null;
+        return initializeFilter(filterType.getDialect(), 
                 filterType.getContent(), nsMap);
     }
     

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.23 2006-12-13 09:11:27 denis_rachal Exp $
+ * $Id: EnumerationTest.java,v 1.23.2.1 2006-12-21 14:56:02 jfdenise Exp $
  */
 
 package management;
@@ -42,7 +42,6 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.handler.wsman.test.enumeration.filter.custom_filter_Handler;
@@ -85,8 +84,8 @@ public class EnumerationTest extends TestBase {
         final Enumerate enu2 = e2.getEnumerate();
         assertEquals(expires, enu2.getExpires());
         assertEquals(endTo.getAddress().getValue(), enu2.getEndTo().getAddress().getValue());
-        assertEquals(filter.getDialect(), enu2.getFilter().getDialect());
-        assertEquals(filter.getContent().get(0), enu2.getFilter().getContent().get(0));
+        assertEquals(filter.getDialect(), e2.getFilter().getDialect());
+        assertEquals(filter.getContent().get(0), e2.getFilter().getContent().get(0));
     }
     public void testEnumerateResponseVisual() throws Exception {
         
@@ -266,10 +265,6 @@ public class EnumerationTest extends TestBase {
         enu.setEnumerate(null, factory.newDuration(60000).toString(),
                 filter == null ? null : filterType);
         
-        // request total item count estimates
-        final EnumerationExtensions enqx = new EnumerationExtensions(enu);
-        enqx.setRequestTotalItemsCountEstimate();
-        
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
@@ -290,11 +285,6 @@ public class EnumerationTest extends TestBase {
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
         
-        final EnumerationExtensions erx = new EnumerationExtensions(enuResponse);
-        final AttributableNonNegativeInteger ee = erx.getTotalItemsCountEstimate();
-        assertNotNull(ee);
-        assertTrue(ee.getValue().intValue() > 0);
-        
         boolean done = false;
         do {
             final Enumeration pullRequest = new Enumeration();
@@ -302,10 +292,6 @@ public class EnumerationTest extends TestBase {
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
             pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
-            
-            // request total item count estimates
-            final EnumerationExtensions pqx = new EnumerationExtensions(pullRequest);
-            pqx.setRequestTotalItemsCountEstimate();
             
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION);
@@ -333,11 +319,7 @@ public class EnumerationTest extends TestBase {
             if (pr.getEndOfSequence() != null) {
                 done = true;
             }
-            
-            final EnumerationExtensions prx = new EnumerationExtensions(pullResponse);
-            final AttributableNonNegativeInteger pe = prx.getTotalItemsCountEstimate();
-            assertNotNull(pe);
-            assertTrue(pe.getValue().intValue() > 0);
+
         } while (!done);
     }
 }

@@ -1,13 +1,13 @@
  package framework.models;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringBufferInputStream;
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,7 +23,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPBody;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Result;
@@ -34,20 +34,23 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
@@ -55,17 +58,15 @@ import com.hp.examples.ws.wsman.user.UserType;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.framework.enumeration.Enumeratable;
-import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 import com.sun.ws.management.framework.handlers.DefaultHandler;
-import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
-import com.sun.ws.management.server.handler.wsman.auth.user_Handler;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.xml.XPath;
@@ -87,6 +88,15 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	private static UserType[] globalUsersList = null;
 	private static final String div = "################# User Type Divider ################";
 	
+	//Fragment transfer stuff
+    public static final QName FRAGMENT_TRANSFER =
+        new QName(Management.NS_URI, "FragmentTransfer", Management.NS_PREFIX);
+
+    public static final QName DIALECT =
+        new QName("Dialect");
+	
+    javax.xml.xpath.XPath xpath = null;
+    
 	public EnumerationUserHandler() {
 		try {
 			
@@ -98,6 +108,8 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			}
 			//load global users.store from jar
 			populateGlobalUsersList();
+			xpath = XPathFactory.newInstance().newXPath();
+			
 		} catch (JAXBException e) {
 			throw new InternalErrorFault(e.getMessage());
 		} //catch (SOAPException e) {
@@ -153,50 +165,86 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			//Instantiate enumerate response object
 		EnumerateResponse response = new EnumerateResponse(); 
 		
-			//Enumerate request object 
-    	Enumerate enumerateRequestObject = null;
     		//EnumerationContext for response object
     	EnumerationContextType enumCtxtTypeResponseObject = null;
     		//filter params.
     	ArrayList<String> filterParameters = new ArrayList();
     	
     	boolean getItemCount = false;
+    	boolean optimized = false;
+    	int maxItems = 0;
     	
 		try {
+
 			//parse request object to retrieve filter parameters entered.
-			enumerateRequestObject =enuRequest.getEnumerate();
-			FilterType filter = enumerateRequestObject.getFilter();
-			if(filter!=null){
-				//filter body is XMLAny
-				List<Object> cont = filter.getContent();
-				
-				if(cont.size()>0){ //Then some value defined for the filter block.
-					for (Iterator iter = cont.iterator(); iter.hasNext();) {
-						//content is just a string.
-						String filterContent = (String) iter.next();
-						filterContent = filterContent.trim();
-					    filterParameters.add(filterContent);	
-					}
-				}else{//Else no filter content supplied
-					filterParameters.add("//*"); //return all.
+	    	Enumerate enumerateRequestObject = enuRequest.getEnumerate();
+			String xpathExp = null;
+			SOAPElement fragmentHeader = null;
+        	final EnumerationExtensions enxRequest = new EnumerationExtensions(enuRequest);
+
+        	FilterType enuFilter = enxRequest.getFilter();
+        	DialectableMixedDataType enxFilter = enxRequest.getWsmanFilter();
+        	if ((enuFilter != null) && (enxFilter != null)) {
+        		// Both are not allowed. Throw an exception
+        		throw new CannotProcessFilterFault(SOAP.createFaultDetail("Both wsen:Filter and wsman:Filter were specified in the request. Only one is allowed.", null, null, null));
+        	}
+        	List<Object> cont = null;
+        	if (enuFilter != null) {
+        		cont = enuFilter.getContent();
+        	}
+        	if (enxFilter != null) {
+        		cont = enxFilter.getContent();
+        	}
+
+			if ((cont != null) && (cont.size() > 0)) {
+				// filter body is XMLAny
+				// Then some value defined for the filter block.
+				for (Iterator iter = cont.iterator(); iter.hasNext();) {
+					// content is just a string.
+					String filterContent = (String) iter.next();
+					filterContent = filterContent.trim();
+					filterParameters.add(filterContent);
 				}
-				
-				//  Look for getTotalItemsRequest header
-				SOAPElement[] reqHeaders = enuRequest.getHeaders();
-				
-				for (int i = 0; i < reqHeaders.length; i++) {
-					if (reqHeaders[i].getElementQName().equals(EnumerationExtensions.REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE)) {
-						getItemCount = true;
-					}
-				}
+			} else {// Else no filter content supplied
+				filterParameters.add("//*"); // return all.
 			}
+				
+			//  Look for getTotalItemsRequest header
+			SOAPElement[] reqHeaders = enuRequest.getHeaders();
+			
+			for (int i = 0; i < reqHeaders.length; i++) {
+				if (reqHeaders[i].getElementQName().equals(EnumerationExtensions.REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE)) {
+					getItemCount = true;
+				}
+				// Look for fragment transfer header
+				QName elems = reqHeaders[i].getElementQName();
+				if(elems!=null){
+					if((elems.getLocalPart().equalsIgnoreCase(FRAGMENT_TRANSFER.getLocalPart()))&&
+					   (elems.getPrefix().equalsIgnoreCase(FRAGMENT_TRANSFER.getPrefix()))&&
+					   (elems.getNamespaceURI().equalsIgnoreCase(FRAGMENT_TRANSFER.getNamespaceURI()))
+					   ){
+					  fragmentHeader = reqHeaders[i];
+					  xpathExp = extractFragmentMessage(fragmentHeader);
+					}
+				}
+				
+				// Look for optimized enumeration headers
+				if (reqHeaders[i].getElementQName().equals(EnumerationExtensions.OPTIMIZE_ENUMERATION)) {
+					optimized = true;
+				}
+				if (reqHeaders[i].getElementQName().equals(EnumerationExtensions.MAX_ELEMENTS)) {
+					maxItems = new Integer(reqHeaders[i].getValue()).intValue();
+				}
+				
+			}
+			
 			//DONE: after building up filterParameters, create context and store filterParams
 			enumCtxtTypeResponseObject = new EnumerationContextType();
 			
 			 String ctxId = UUID_SCHEME+UUID.randomUUID().toString();
 			 enumCtxtTypeResponseObject.getContent().add(ctxId);
 			//Now add to EnumeContextInfo container
-			 
+ 
 			response.setExpires(enumerateRequestObject.getExpires());
 			response.setEnumerationContext(enumCtxtTypeResponseObject);
 
@@ -231,6 +279,14 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 				if(!currentEnumerationContexts.containsKey(ctxId)){
 				  currentEnumerationContexts.put(ctxId,container);
 				}
+				
+				
+				// If this an optimized enumeration request, get the first set of enumerated items
+				if (optimized) {
+					enuResponse = currentEnumerationContexts.get(ctxId).processResponse(enuResponse,null,maxItems,
+						-1, getItemCount, xpathExp, fragmentHeader, true);
+				}
+				
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new InternalErrorFault(e.getMessage());
@@ -314,13 +370,25 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			 }
 			 
 			SOAPElement[] reqHeaders = enuRequest.getHeaders();
+			SOAPElement fragmentHeader = null;
+			String xpathExp = null;
 			for (int i = 0; i < reqHeaders.length; i++) {
 				if (reqHeaders[i].getElementQName().equals(EnumerationExtensions.REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE)) {
 					getItemCount = true;
 				}
+				// Look for fragment transfer header
+				QName elems = reqHeaders[i].getElementQName();
+				if(elems!=null){
+					if((elems.getLocalPart().equalsIgnoreCase(FRAGMENT_TRANSFER.getLocalPart()))&&
+					   (elems.getPrefix().equalsIgnoreCase(FRAGMENT_TRANSFER.getPrefix()))&&
+					   (elems.getNamespaceURI().equalsIgnoreCase(FRAGMENT_TRANSFER.getNamespaceURI()))
+					   ){
+					  fragmentHeader = reqHeaders[i];
+					  xpathExp = extractFragmentMessage(fragmentHeader);
+					}
+				}
 			}
-			
-			enuResponse = eCont.processResponse(enuResponse,maxTime,maxElements,maxContentLength, getItemCount);
+			enuResponse = eCont.processResponse(enuResponse,maxTime,maxElements,maxContentLength, getItemCount, xpathExp, fragmentHeader, false);
 			 
 		} catch (JAXBException e) {
 			e.printStackTrace();
@@ -371,7 +439,8 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 	}
 	
 	public Enumeration processResponse(Enumeration enuResponse, Duration maxTime, int maxElements, 
-			int maxContentLength, boolean getItemCount) throws JAXBException, SOAPException {
+			int maxContentLength, boolean getItemCount, String xpathExp, SOAPElement fragmentHeader,
+			boolean isEnumRequest) throws JAXBException, SOAPException {
 
 		Enumeration endResponse = null;
 		
@@ -380,34 +449,85 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 		 
 		 //if filters were supplied....
 		 //if(filterList.size()>0){
-			 
+		 
+		 // Add fragment header if required
+			if (xpathExp != null){
+				enuResponse.getHeader().addChildElement(fragmentHeader);
+			} 
 	        List<EnumerationItem> items = new ArrayList<EnumerationItem>();
 	        int serializedCount = 0;
 	        
 			while (this.hasMoreElements()&(serializedCount<maxElements)) {
 				// Create an empty dom document and serialize the usertype object to it
-		        Document responseDoc = Management.newDocument();
 		        try {
 		        	UserType type = this.nextElement();
-		        	binding.marshal( new JAXBElement(
-		        			  new QName("http://examples.hp.com/ws/wsman/user",
-		        					  "user"), UserType.class, type ),responseDoc);
-					items.add(new EnumerationItem(responseDoc.getDocumentElement(),null));
-					serializedCount++;
+		        	JAXBElement<UserType> element = userFactory.createUser(type);
+		        	
+					// TODO: This check is incorrect. It should check the wsman:filter
+		        	//       Enumeration has the filter projection in the wsman:filter
+		        	//       and not the fragmentHeader.
+		        	//       NOTE: This makes it difficult to decide if it is just a filter
+		        	//             or does it also have a projection (fragment transfer case).
+					if (fragmentHeader != null) {
+						// get the fagments and put them into a JAXBElement
+						Document responseDoc = Management.newDocument();
+						binding.marshal(element, responseDoc);
+						Object resultOb = null;
+						// TODO: The filter may be namespace qualified. We need
+						//       to add the namespaces
+						//       and prefixes in the request to the "xpath" object:
+						//       xpath.setNamespaceContext(nsContext);
+						resultOb = xpath.evaluate(xpathExp, responseDoc, XPathConstants.NODESET);
+						if (resultOb != null) {
+							final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+							NodeList nodelist = (NodeList) resultOb;
+							for (int i = 0; i < nodelist.getLength(); i++) {
+								mixedDataType.getContent().add(nodelist.item(i));
+							}
+							// create the XmlFragmentElement
+							final JAXBElement<MixedDataType> xmlFragment = 
+								  Management.FACTORY.createXmlFragment(mixedDataType);
+							// add payload to the body
+							items.add(new EnumerationItem(xmlFragment, null));
+							serializedCount++;
+						}
+					} else {
+						items.add(new EnumerationItem(element, null));
+						serializedCount++;
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new InternalErrorFault(e.getMessage());
 				}
 			}
 			if (getItemCount) {
-				enuResponse.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.TOTAL_ITEMS_COUNT_ESTIMATE, new Long(dataValues.length).toString()));
+				enuResponse.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.TOTAL_ITEMS_COUNT_ESTIMATE, 
+						                                                      new Long(dataValues.length).toString()));
 			}
 			  boolean moreToCome = true;
 			  if(cnt ==dataValues.length){
 				 moreToCome = false;
 			  }
 			  //Now stuff every one of the response in?
-			  enuResponse.setPullResponse(items, getEnumContextId(), moreToCome);
+			  if (isEnumRequest){
+			        final AnyListType anyListType = Management.FACTORY.createAnyListType();
+			        final List<Object> any = anyListType.getAny();
+			        for (final EnumerationItem ee : items) {
+			        	any.add(ee.getItem());
+			        }
+
+			        JAXBElement anyList = Management.FACTORY.createItems(anyListType);
+			        if (!moreToCome) {
+			        	JAXBElement<AttributableEmpty> eos = Management.FACTORY.createEndOfSequence(new AttributableEmpty());
+			        	enuResponse.setEnumerateResponse(getEnumContextId(), enuResponse.getEnumerateResponse().getExpires(), anyList, eos);
+			        } else {
+			        	enuResponse.setEnumerateResponse(getEnumContextId(), enuResponse.getEnumerateResponse().getExpires(), anyList);
+			        }
+			  } else {
+				  enuResponse.setPullResponse(items, getEnumContextId(), moreToCome);
+				  
+			  }
+			  
 		 //}		
 		return endResponse;
 	}
@@ -529,4 +649,17 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 		return element;	
 	}
   }
+  
+	private String extractFragmentMessage(SOAPElement element){
+		String xpathExp = "";
+		//DONE: populate xpathExp
+		if(element!=null){
+		  NodeList elem = element.getChildNodes();
+		  for (int j = 0; j < elem.getLength(); j++) {
+			Node node = elem.item(j);
+			xpathExp = node.getNodeValue();
+		  }
+		}
+       return xpathExp;
+	}  
 }

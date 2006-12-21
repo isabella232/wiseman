@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.7 2006-12-13 09:11:27 denis_rachal Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.7.2.1 2006-12-21 14:56:02 jfdenise Exp $
  */
 
 package management;
@@ -25,16 +25,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
-import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
-import org.w3c.dom.Element;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
@@ -65,25 +62,25 @@ public class EnumerationExtensionsTest extends TestBase {
         
         final EndpointReferenceType endTo = Addressing.createEndpointReference("http://host/endTo", null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
-        final FilterType filter = Enumeration.FACTORY.createFilterType();
+        final DialectableMixedDataType filter = Management.FACTORY.createDialectableMixedDataType();
         filter.setDialect("http://mydomain/my.filter.dialect");
         filter.getContent().add("my/filter/expression");
         final EnumerationExtensions.Mode mode = EnumerationExtensions.Mode.EnumerateObjectAndEPR;
-        enu.setEnumerate(endTo, expires, filter, mode, true, 2);
+        enu.setEnumerate(endTo, false, true, 2, expires, filter, mode);
         
         enu.prettyPrint(logfile);
         
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
-        final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
         
+        e2.prettyPrint(logfile);
         final Enumerate enu2 = e2.getEnumerate();
         assertEquals(expires, enu2.getExpires());
         assertEquals(endTo.getAddress().getValue(), enu2.getEndTo().getAddress().getValue());
-        assertEquals(filter.getDialect(), enu2.getFilter().getDialect());
-        assertEquals(filter.getContent().get(0), enu2.getFilter().getContent().get(0));
-        final EnumerationExtensions.Mode mode2 = EnumerationExtensions.Mode.fromBinding((JAXBElement<EnumerationModeType>) enu2.getAny().get(0));
-        assertEquals(mode, mode2);
+        assertEquals(filter.getDialect(), e2.getWsmanFilter().getDialect());
+        assertEquals(filter.getContent().get(0), e2.getWsmanFilter().getContent().get(0));
+        assertEquals(mode, e2.getMode());
     }
     
     public void testEnumerateItemCountEstimateVisual() throws Exception {
@@ -91,7 +88,7 @@ public class EnumerationExtensionsTest extends TestBase {
         final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         
-        enu.setEnumerate(null, null, null);
+        enu.setEnumerate(null, false, false, 0, null, null, null);
         
         enu.setRequestTotalItemsCountEstimate();
         
@@ -133,7 +130,7 @@ public class EnumerationExtensionsTest extends TestBase {
         final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
         
-        enu.setEnumerateResponse(null, null);
+        enu.setEnumerateResponse(null, null, null, null, true);
         enu.setTotalItemsCountEstimate(itemCount);
         
         enu.prettyPrint(logfile);
@@ -168,8 +165,8 @@ public class EnumerationExtensionsTest extends TestBase {
                 :
                     EnumerationExtensions.Mode.EnumerateEPR ;
         
-        enu.setEnumerate(null, factory.newDuration(60000).toString(),
-                null, enumerationMode, false, -1);
+        enu.setEnumerate(null, false, false, -1, factory.newDuration(60000).toString(),
+                (DialectableMixedDataType)null, enumerationMode);
         
         // prepare the request
         final Management mgmt = new Management(enu);
@@ -292,8 +289,9 @@ public class EnumerationExtensionsTest extends TestBase {
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         final DatatypeFactory factory = DatatypeFactory.newInstance();
-        enu.setEnumerate(null, factory.newDuration(60000).toString(), null,
-                mode, true, maxElements);
+        enu.setEnumerate(null, true, true, maxElements, 
+        		factory.newDuration(60000).toString(),
+        		null, mode);
         
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);
@@ -318,13 +316,17 @@ public class EnumerationExtensionsTest extends TestBase {
             assertMode(mode, item);
         }
         
+        final AttributableNonNegativeInteger ee = enuResponse.getTotalItemsCountEstimate();
+        assertNotNull(ee);
+        assertTrue(ee.getValue().intValue() > 0);
+        
         boolean done = enuResponse.isEndOfSequence();
         while (!done) {
-            final Enumeration pullRequest = new Enumeration();
+            final EnumerationExtensions pullRequest = new EnumerationExtensions();
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-            pullRequest.setPull(context, 0, 3, factory.newDuration(30000));
+            pullRequest.setPull(context, 0, 3, factory.newDuration(30000), true);
             
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION);
@@ -350,13 +352,17 @@ public class EnumerationExtensionsTest extends TestBase {
             if (pr.getEndOfSequence() != null) {
                 done = true;
             }
+            
+            final AttributableNonNegativeInteger pe = pullResponse.getTotalItemsCountEstimate();
+            assertNotNull(pe);
+            assertTrue(pe.getValue().intValue() > 0);
         }
     }
     
     private static void assertMode(final EnumerationExtensions.Mode mode,
             final EnumerationItem item) {
         
-        final Element elt = item.getItem();
+        final Object elt = item.getItem();
         final EndpointReferenceType epr = item.getEndpointReference();
         
         if (mode == null) {

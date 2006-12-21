@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.16 2006-12-13 09:11:26 denis_rachal Exp $
+ * $Id: Enumeration.java,v 1.16.2.1 2006-12-21 14:56:00 jfdenise Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -23,13 +23,14 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.List;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -44,6 +45,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.EnumerationItem;
+
 
 public class Enumeration extends Addressing {
     
@@ -79,7 +81,8 @@ public class Enumeration extends Addressing {
     public static final QName RELEASE = new QName(NS_URI, "Release", NS_PREFIX);
     public static final QName ENUMERATION_END = new QName(NS_URI, "EnumerationEnd", NS_PREFIX);
     public static final QName SUPPORTED_DIALECT = new QName(NS_URI, "SupportedDialect", NS_PREFIX);
-    public static final QName ENUMERATION_CONTEXT = new QName(NS_URI, "EnumerationContext", NS_PREFIX);
+    public static final QName ENUMERATION_CONTEXT = new QName(NS_URI, "EnumerationContext", NS_PREFIX);   
+    public static final QName FILTER = new QName(NS_URI, "Filter", NS_PREFIX);
     
     public static final ObjectFactory FACTORY = new ObjectFactory();
     
@@ -120,6 +123,7 @@ public class Enumeration extends Addressing {
         }
         getXmlBinding().marshal(enu, getBody());
     }
+ 
     
     public void setEnumerateResponse(final Object context, final String expires, final Object... anys)
     throws JAXBException, SOAPException {
@@ -134,6 +138,10 @@ public class Enumeration extends Addressing {
         if (expires != null) {
             response.setExpires(expires.trim());
         }
+        
+        // Check if we have any items to add to the response
+        // We will have items if this is an optimized enumeration
+        
         if (anys != null) {
             for (final Object any : anys) {
             	if (any != null) {
@@ -197,7 +205,8 @@ public class Enumeration extends Addressing {
             response.setEnumerationContext(contextType);
         } else {
             response.setEndOfSequence("");
-        }       
+        }
+        
         getXmlBinding().marshal(response, getBody());
     }
     
@@ -251,4 +260,13 @@ public class Enumeration extends Addressing {
     	}
         return null != eos;
     }
+    
+	public FilterType getFilter() throws JAXBException, SOAPException {
+		Enumerate enumerate = getEnumerate();
+		
+		if (enumerate == null) {
+			return null;
+		}
+		return enumerate.getFilter();
+	}
 }
