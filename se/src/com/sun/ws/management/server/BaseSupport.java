@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.9 2006-12-05 10:55:54 jfdenise Exp $
+ * $Id: BaseSupport.java,v 1.9.2.1 2006-12-21 08:24:17 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -79,13 +79,26 @@ public class BaseSupport {
         FilterFactory xpathFilter = new XPathFilterFactory();
         supportedFilters.put(com.sun.ws.management.xml.XPath.NS_URI,
                 xpathFilter);
+        try {
+            datatypeFactory = DatatypeFactory.newInstance();
+            // try{
+            cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
+        /*} catch(java.lang.IllegalStateException e){
+            // NOTE: the cleanup timer has been throwing this
+            // exception during unit tests. Re-initalizing it should not
+            // cause it to fail so this exception is being silenced.
+            LOG.fine("Base support was re-initalized.");
+        }*/
+        }catch(Exception ex) {
+            throw new RuntimeException("Fail to initialize BaseSupport " + ex);
+        }
     }
     /**
      * Add a Filtering support for a specific dialect.
      * @param dialect Filter dialect
      * @param filterFactory The Filter Factory that creates <code>Filter</code> for requests
      * relying on the passed dialect.
-     * 
+     *
      * @throws java.lang.Exception If the filter is already supported.
      */
     public synchronized static void addSupportedFilterDialect(String dialect,
@@ -116,7 +129,7 @@ public class BaseSupport {
         return keys.toArray(dialects);
     }
     
-    protected synchronized static Filter newFilter(String dialect, 
+    protected synchronized static Filter newFilter(String dialect,
             List content,
             NamespaceMap nsMap) throws Exception {
         if(dialect == null)
@@ -131,25 +144,25 @@ public class BaseSupport {
     /**
      * Eventing Filter initialization
      */
-    protected static Filter initializeFilter(org.xmlsoap.schemas.ws._2004._08.eventing.FilterType filterType, 
-            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {    
+    protected static Filter initializeFilter(org.xmlsoap.schemas.ws._2004._08.eventing.FilterType filterType,
+            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
         if(filterType == null) return null;
-        return initializeFilter(filterType.getDialect(), 
+        return initializeFilter(filterType.getDialect(),
                 filterType.getContent(), nsMap);
     }
     
     /**
      * Enumeration Filter initialization
      */
-    protected static Filter initializeFilter(FilterType filterType, 
+    protected static Filter initializeFilter(FilterType filterType,
             NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
         if(filterType == null) return null;
-        return initializeFilter(filterType.getDialect(), 
+        return initializeFilter(filterType.getDialect(),
                 filterType.getContent(), nsMap);
     }
     
     private static Filter initializeFilter(String dialect, List content,
-            NamespaceMap nsMap)throws CannotProcessFilterFault, 
+            NamespaceMap nsMap)throws CannotProcessFilterFault,
             FilteringRequestedUnavailableFault {
         try {
             return newFilter(dialect, content, nsMap);
@@ -157,18 +170,6 @@ public class BaseSupport {
             throw fex;
         } catch(Exception ex) {
             throw new CannotProcessFilterFault(ex.getMessage());
-        }
-    }
-    
-    public static void initialize() throws DatatypeConfigurationException {
-        datatypeFactory = DatatypeFactory.newInstance();
-        try{
-            cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
-        } catch(java.lang.IllegalStateException e){
-            // NOTE: the cleanup timer has been throwing this
-            // exception during unit tests. Re-initalizing it should not
-            // cause it to fail so this exception is being silenced.
-            LOG.fine("Base support was re-initalized.");
         }
     }
     

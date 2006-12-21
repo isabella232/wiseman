@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.37 2006-12-13 09:11:28 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.37.2.1 2006-12-21 08:24:17 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -85,6 +85,10 @@ public final class EnumerationSupport extends BaseSupport {
     private static final int DEFAULT_EXPIRATION_MILLIS = 60000;
     private static final long DEFAULT_MAX_TIMEOUT_MILLIS = 300000;
     private static Duration defaultExpiration = null;
+    
+    static {
+        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
+    }
     
     private EnumerationSupport() {}
     
@@ -225,10 +229,6 @@ public final class EnumerationSupport extends BaseSupport {
                 response.setEnumerateResponse(context.toString(), ctx.getExpiration());
             }
         }
-    }
-    
-    public static void initialize() throws DatatypeConfigurationException {
-        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
     }
     
     /**
