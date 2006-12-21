@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Enumeration.java,v 1.17 2006-12-18 20:36:37 nbeers Exp $
+ * $Id: Enumeration.java,v 1.18 2006-12-21 13:03:45 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.server.EnumerationItem;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.List;
+
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
-
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -42,6 +42,9 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
+
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.server.EnumerationItem;
 
 
 public class Enumeration extends Addressing {
@@ -78,7 +81,8 @@ public class Enumeration extends Addressing {
     public static final QName RELEASE = new QName(NS_URI, "Release", NS_PREFIX);
     public static final QName ENUMERATION_END = new QName(NS_URI, "EnumerationEnd", NS_PREFIX);
     public static final QName SUPPORTED_DIALECT = new QName(NS_URI, "SupportedDialect", NS_PREFIX);
-    public static final QName ENUMERATION_CONTEXT = new QName(NS_URI, "EnumerationContext", NS_PREFIX);
+    public static final QName ENUMERATION_CONTEXT = new QName(NS_URI, "EnumerationContext", NS_PREFIX);   
+    public static final QName FILTER = new QName(NS_URI, "Filter", NS_PREFIX);
     
     public static final ObjectFactory FACTORY = new ObjectFactory();
     
@@ -256,4 +260,13 @@ public class Enumeration extends Addressing {
     	}
         return null != eos;
     }
+    
+	public FilterType getFilter() throws JAXBException, SOAPException {
+		Enumerate enumerate = getEnumerate();
+		
+		if (enumerate == null) {
+			return null;
+		}
+		return enumerate.getFilter();
+	}
 }

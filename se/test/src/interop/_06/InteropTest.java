@@ -13,42 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.19 2006-12-19 15:25:45 denis_rachal Exp $
+ * $Id: InteropTest.java,v 1.20 2006-12-21 13:03:46 denis_rachal Exp $
  */
 
 package interop._06;
 
-import com.sun.ws.management.EncodingLimitFault;
-import com.sun.ws.management.InvalidSelectorsFault;
-import com.sun.ws.management.Management;
-import com.sun.ws.management.TimedOutFault;
-import com.sun.ws.management.addressing.DestinationUnreachableFault;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
-import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.eventing.EventingExtensions;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.xml.XML;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPHeaderElement;
+
 import management.TestBase;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
@@ -66,6 +51,25 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
+
+import com.sun.ws.management.EncodingLimitFault;
+import com.sun.ws.management.InvalidSelectorsFault;
+import com.sun.ws.management.Management;
+import com.sun.ws.management.TimedOutFault;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.addressing.DestinationUnreachableFault;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transfer.TransferExtensions;
+import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XML;
 
 /**
  * Unit tests for Interop Scenarios
@@ -598,7 +602,7 @@ public final class InteropTest extends TestBase {
         mgmt.setLocale(locale);
         
         final EnumerationExtensions ei = new EnumerationExtensions(mgmt);
-        ei.setEnumerate(null, null, null, null, true, 1);
+        ei.setEnumerate(null, false, true, 1, null, null, null);
         
         log(mgmt);
         Addressing response = HttpClient.sendRequest(mgmt);
@@ -811,9 +815,8 @@ public final class InteropTest extends TestBase {
         mgmt.setLocale(locale);
         
         final EnumerationExtensions ei = new EnumerationExtensions(mgmt);
-        ei.setEnumerate(null, null, null,
-            EnumerationExtensions.Mode.EnumerateObjectAndEPR,
-            false, -1);
+        ei.setEnumerate(null, false, false, -1, null, null,
+            EnumerationExtensions.Mode.EnumerateObjectAndEPR);
         
         log(mgmt);
         Addressing response = HttpClient.sendRequest(mgmt);

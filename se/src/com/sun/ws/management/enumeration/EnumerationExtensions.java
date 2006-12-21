@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.9 2006-12-19 15:25:45 denis_rachal Exp $
+ * $Id: EnumerationExtensions.java,v 1.10 2006-12-21 13:03:45 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -26,6 +26,8 @@ import java.util.List;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPException;
@@ -34,22 +36,21 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XmlBinding;
 
 public class EnumerationExtensions extends Enumeration {
@@ -78,7 +79,10 @@ public class EnumerationExtensions extends Enumeration {
     public static final QName END_OF_SEQUENCE =
             new QName(Management.NS_URI, "EndOfSequence", Management.NS_PREFIX);
     
-   final static String WSMAN_ITEM = ITEM.getPrefix()+":"+ITEM.getLocalPart();
+    public static final QName FILTER =
+        new QName(Management.NS_URI, "Filter", Management.NS_PREFIX);
+    
+    final static String WSMAN_ITEM = ITEM.getPrefix()+":"+ITEM.getLocalPart();
 
     public enum Mode {
         EnumerateEPR("EnumerateEPR"),
@@ -108,26 +112,50 @@ public class EnumerationExtensions extends Enumeration {
     }
     
     public void setEnumerate(final EndpointReferenceType endTo,
-            final String expires, final FilterType filter, final Mode mode,
-            final boolean optimize, final int maxElements)
-            throws JAXBException, SOAPException {
-        
-        final JAXBElement<EnumerationModeType> modeElement =
-                mode == null ? null : mode.toBinding();
-        if (optimize) {
-            final JAXBElement<AttributableEmpty> optimizedElement =
-                    Management.FACTORY.createOptimizeEnumeration(new AttributableEmpty());
-            JAXBElement<AttributablePositiveInteger> maxElem = null;
+    		                 final boolean requestTotalItemsCountEstimate,
+                             final boolean optimize,
+                             final int maxElements,
+                             final String expires,
+                             final DialectableMixedDataType filter,
+                             final Mode mode,
+                             final Object... anys) throws JAXBException, SOAPException {
+               
+        ArrayList<Object> list = new ArrayList<Object>();
+
+        if (filter != null) {
+        	list.add(Management.FACTORY.createFilter(filter));
+        }
+        if (mode != null) {
+        	list.add(mode.toBinding());
+        }
+        if (optimize == true) {
+        	list.add(Management.FACTORY.createOptimizeEnumeration(new AttributableEmpty()));
+        	
             if (maxElements > 0) {
                 final AttributablePositiveInteger posInt = new AttributablePositiveInteger();
                 posInt.setValue(new BigInteger(Integer.toString(maxElements)));
-                maxElem = Management.FACTORY.createMaxElements(posInt);
+                list.add(Management.FACTORY.createMaxElements(posInt));
             }
-            super.setEnumerate(endTo, expires, filter, modeElement,
-                    optimizedElement, maxElem);
-        } else {
-            super.setEnumerate(endTo, expires, filter, modeElement);
         }
+
+        for (int i = 0; i < anys.length; i++) {
+        	list.add(anys[i]);
+        }
+        super.setEnumerate(endTo, expires, null, list.toArray());
+        if (requestTotalItemsCountEstimate)
+           setRequestTotalItemsCountEstimate();
+    }
+    
+    // context must not be null, the others can be null
+    // context must be either java.lang.String or org.w3c.dom.Element
+    public void setPull(final Object context, final int maxChars,
+            final int maxElements, final Duration maxDuration,
+            final boolean requestTotalItemsCountEstimate)
+            throws JAXBException, SOAPException, DatatypeConfigurationException {
+    	
+    	super.setPull(context, maxChars, maxElements, maxDuration);
+        if (requestTotalItemsCountEstimate)
+            setRequestTotalItemsCountEstimate();
     }
     
     public void setEnumerateResponse(final Object context, final String expires,
@@ -138,17 +166,23 @@ public class EnumerationExtensions extends Enumeration {
         final List<Object> any = anyListType.getAny();
         final DocumentBuilder builder = getDocumentBuilder();
         final XmlBinding binding = getXmlBinding();
-        for (final EnumerationItem ee : items) {
-            addEnumerationItem(any,ee,mode,builder,binding);
-        }
+        if (items != null) {
+			for (final EnumerationItem ee : items) {
+				addEnumerationItem(any, ee, mode, builder, binding);
+			}
 
-        JAXBElement anyList = Management.FACTORY.createItems(anyListType);
-        if (!haveMore) {
-        	JAXBElement<AttributableEmpty> eos = Management.FACTORY.createEndOfSequence(new AttributableEmpty());
-            super.setEnumerateResponse(context, expires, anyList, eos);
-        } else {
-        	super.setEnumerateResponse(context, expires, anyList);
-        }
+			JAXBElement anyList = Management.FACTORY.createItems(anyListType);
+			if (!haveMore) {
+				JAXBElement<AttributableEmpty> eos = Management.FACTORY
+						.createEndOfSequence(new AttributableEmpty());
+				super.setEnumerateResponse(context, expires, anyList, eos);
+			} else {
+				super.setEnumerateResponse(context, expires, anyList);
+			}
+		} else {
+
+			super.setEnumerateResponse(context, expires);
+		}
     }
     
     private static void addEnumerationItem(List<Object> itemListAny, 
@@ -355,4 +389,28 @@ public class EnumerationExtensions extends Enumeration {
         }
         return null;
     }
+
+	public DialectableMixedDataType getWsmanFilter() throws JAXBException, SOAPException {
+		Enumerate enumerate = getEnumerate();
+		
+		if (enumerate == null) {
+			return null;
+		}
+		return (DialectableMixedDataType) extract(enumerate.getAny(), 
+				                                  DialectableMixedDataType.class, 
+				                                  FILTER);
+	}
+	
+
+	public Mode getMode() throws JAXBException, SOAPException {
+		Enumerate enumerate = getEnumerate();
+		
+		if (enumerate == null) {
+			return null;
+		}
+		EnumerationModeType type =  (EnumerationModeType) extract(enumerate.getAny(), 
+				                                                  EnumerationModeType.class, 
+		                                                          ENUMERATION_MODE);
+		return (type == null) ? null : Mode.valueOf(type.value());
+	}
 }

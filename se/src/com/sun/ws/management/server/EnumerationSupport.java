@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.39 2006-12-19 15:25:46 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.40 2006-12-21 13:03:47 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -43,6 +43,7 @@ import javax.xml.xpath.XPathException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
@@ -54,6 +55,7 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
@@ -72,6 +74,7 @@ import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
 
 /**
  * A helper class that encapsulates some of the arcane logic to allow data
@@ -139,8 +142,8 @@ public final class EnumerationSupport extends BaseSupport {
         
         if (enumerate == null) {
             // see if this is a pull event mode subscribe request
-            final EventingExtensions evtx = new EventingExtensions(request);
-            final Subscribe subscribe = evtx.getSubscribe();
+            final EventingExtensions evtxRequest = new EventingExtensions(request);
+            final Subscribe subscribe = evtxRequest.getSubscribe();
             if (subscribe == null) {
                 throw new InvalidMessageFault();
             }
@@ -151,7 +154,19 @@ public final class EnumerationSupport extends BaseSupport {
                 throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
         } else {
-            filter = initializeFilter(enumerate.getFilter(), nsMap);
+        	final EnumerationExtensions enxRequest = new EnumerationExtensions(request);
+        	
+        	FilterType enuFilter = enxRequest.getFilter();
+        	DialectableMixedDataType enxFilter = enxRequest.getWsmanFilter();
+        	if ((enuFilter != null) && (enxFilter != null)) {
+        		// Both are not allowed. Throw an exception
+        		throw new CannotProcessFilterFault(SOAP.createFaultDetail("Both wsen:Filter and wsman:Filter were specified in the request. Only one is allowed.", null, null, null));
+        	}
+        	if (enuFilter != null) {
+        		filter = initializeFilter(enuFilter, nsMap);
+        	} else if (enxFilter != null) {
+        		filter = initializeFilter(enxFilter, nsMap);
+        	}
             
             expires = enumerate.getExpires();
             
@@ -216,8 +231,8 @@ public final class EnumerationSupport extends BaseSupport {
                 final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
                 final boolean more = doPull(request, response, context, ctx, null, passed);
                 
-                final EnumerationExtensions enx = new EnumerationExtensions(response);
-                enx.setEnumerateResponse(context.toString(), ctx.getExpiration(),
+                final EnumerationExtensions enxResponse = new EnumerationExtensions(response);
+                enxResponse.setEnumerateResponse(context.toString(), ctx.getExpiration(),
                         passed, enumerationMode, more);
             } else {
                 // place an item count estimate if one was requested

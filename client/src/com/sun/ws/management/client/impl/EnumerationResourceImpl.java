@@ -21,6 +21,7 @@ import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Element;
@@ -304,48 +305,25 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	    }
 	    	
 	    //final DatatypeFactory factory = DatatypeFactory.newInstance();
-		final FilterType filterType = Enumeration.FACTORY.createFilterType();
 		final EndpointReferenceType endTo = Addressing.createEndpointReference(
 				"http://host/endTo", null, null, null, null);
 		
 		if (filters != null) {
+			final DialectableMixedDataType filterType = Management.FACTORY
+					.createDialectableMixedDataType();
 			String filter = "";
 			for (int i = 0; i < filters.length; i++) {
 				filter += filters[i] + "\n";
 			}
-			if(dialect==null)
+			if (dialect == null)
 				filterType.setDialect(XPath.NS_URI);
 			else
 				filterType.setDialect(dialect);
 			filterType.getContent().add(filter);
-			
-			if (enumerationMode != null) {
-				ArrayList<Object> anys = new ArrayList<Object>(params.length + 1);
-				anys.add((Object)enumerationMode.toBinding());
-				for (int i = 0; i < params.length; i++)
-					anys.add(params[i]);
-				enu.setEnumerate(endTo, null, filter == null ? null
-					: filterType, anys.toArray());
-			} else {
-				enu.setEnumerate(endTo, null, filter == null ? null
-						: filterType, params);
-			}
-			
-		} else {
-			if (enumerationMode != null){
-				ArrayList<Object> anys = new ArrayList<Object>(params.length + 1);
-				anys.add((Object)enumerationMode.toBinding());
-				for (int i = 0; i < params.length; i++)
-					anys.add(params[i]);
-				enu.setEnumerate(null, null, null, anys.toArray());
-			} else {
-				enu.setEnumerate(null, null, null, params);				
-			}
-				
-		}
 
-		if (getItemCount) {
-			enu.setRequestTotalItemsCountEstimate();
+			enu.setEnumerate(endTo, getItemCount, false, 0, null, filterType, enumerationMode, params);
+		} else {
+			enu.setEnumerate(endTo, getItemCount, false, 0, null, null, enumerationMode, params);
 		}
 
 		// store away request and response for display purposes only

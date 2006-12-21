@@ -1,6 +1,8 @@
  package framework.models;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +23,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Result;
@@ -37,10 +40,12 @@ import javax.xml.xpath.XPathFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -53,6 +58,7 @@ import com.hp.examples.ws.wsman.user.UserType;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
@@ -61,6 +67,7 @@ import com.sun.ws.management.framework.handlers.DefaultHandler;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
@@ -158,8 +165,6 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			//Instantiate enumerate response object
 		EnumerateResponse response = new EnumerateResponse(); 
 		
-			//Enumerate request object 
-    	Enumerate enumerateRequestObject = null;
     		//EnumerationContext for response object
     	EnumerationContextType enumCtxtTypeResponseObject = null;
     		//filter params.
@@ -170,26 +175,38 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
     	int maxItems = 0;
     	
 		try {
+
 			//parse request object to retrieve filter parameters entered.
+	    	Enumerate enumerateRequestObject = enuRequest.getEnumerate();
 			String xpathExp = null;
 			SOAPElement fragmentHeader = null;
-			enumerateRequestObject =enuRequest.getEnumerate();
-			FilterType filter = enumerateRequestObject.getFilter();
-			if(filter!=null){
-				//filter body is XMLAny
-				List<Object> cont = filter.getContent();
-				
-				if(cont.size()>0){ //Then some value defined for the filter block.
-					for (Iterator iter = cont.iterator(); iter.hasNext();) {
-						//content is just a string.
-						String filterContent = (String) iter.next();
-						filterContent = filterContent.trim();
-					    filterParameters.add(filterContent);	
-					}
-				}else{//Else no filter content supplied
-					filterParameters.add("//*"); //return all.
-				}
+        	final EnumerationExtensions enxRequest = new EnumerationExtensions(enuRequest);
 
+        	FilterType enuFilter = enxRequest.getFilter();
+        	DialectableMixedDataType enxFilter = enxRequest.getWsmanFilter();
+        	if ((enuFilter != null) && (enxFilter != null)) {
+        		// Both are not allowed. Throw an exception
+        		throw new CannotProcessFilterFault(SOAP.createFaultDetail("Both wsen:Filter and wsman:Filter were specified in the request. Only one is allowed.", null, null, null));
+        	}
+        	List<Object> cont = null;
+        	if (enuFilter != null) {
+        		cont = enuFilter.getContent();
+        	}
+        	if (enxFilter != null) {
+        		cont = enxFilter.getContent();
+        	}
+
+			if ((cont != null) && (cont.size() > 0)) {
+				// filter body is XMLAny
+				// Then some value defined for the filter block.
+				for (Iterator iter = cont.iterator(); iter.hasNext();) {
+					// content is just a string.
+					String filterContent = (String) iter.next();
+					filterContent = filterContent.trim();
+					filterParameters.add(filterContent);
+				}
+			} else {// Else no filter content supplied
+				filterParameters.add("//*"); // return all.
 			}
 				
 			//  Look for getTotalItemsRequest header
@@ -227,7 +244,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 			 String ctxId = UUID_SCHEME+UUID.randomUUID().toString();
 			 enumCtxtTypeResponseObject.getContent().add(ctxId);
 			//Now add to EnumeContextInfo container
-			 
+ 
 			response.setExpires(enumerateRequestObject.getExpires());
 			response.setEnumerationContext(enumCtxtTypeResponseObject);
 
