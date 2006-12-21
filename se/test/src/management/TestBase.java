@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.9 2006-10-10 19:50:45 nbeers Exp $
+ * $Id: TestBase.java,v 1.9.2.1 2006-12-21 08:39:40 jfdenise Exp $
  */
 
 package management;
@@ -46,8 +46,6 @@ public abstract class TestBase extends TestCase {
     protected void setUp() throws java.lang.Exception {
         logfile = new FileOutputStream(getClass().getCanonicalName() + "." +
                 getName() + ".Output.xml");
-
-        SOAP.initialize();
 
         final String basicAuth = System.getProperty("wsman.basicauthentication");
         if ("true".equalsIgnoreCase(basicAuth)) {
