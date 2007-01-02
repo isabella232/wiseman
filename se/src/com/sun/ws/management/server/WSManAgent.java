@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.1.2.1 2006-12-21 08:24:52 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.1.2.2 2007-01-02 16:54:10 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -85,8 +85,10 @@ public abstract class WSManAgent {
     
     private static final Map<QName, String> extraIdInfo = new HashMap<QName, String>();
     private static Map<String, String> properties = null;
-    private static Schema schema = null;
-    
+    // XXX REVISIT, SHOULD BE STATIC BUT CURRENTLY CAN'T Due to openess of JAXBContext
+    private Schema schema;
+    private static Source[] stdSchemas;
+    private String[] customPackages;
     static {
         // NO MORE LOGGING CONFIGURATION
         // THE CODE HAS BEEN REMOVED
@@ -119,15 +121,12 @@ public abstract class WSManAgent {
         extraIdInfo.put(Identify.BUILD_ID, properties.get("build.version"));
         extraIdInfo.put(Identify.SPEC_VERSION, properties.get("spec.version"));
         
-        final SchemaFactory schemaFactory =
-                SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        
         // The returned list of schemas is already sorted
         String schemaNames = properties.get("schemas");
         StringTokenizer t = new StringTokenizer(schemaNames, ";");
         if(LOG.isLoggable(Level.FINE))
             LOG.log(Level.FINE, t.countTokens() + " schemas to load.");
-        final Source[] schemas = new Source[t.countTokens()];
+        stdSchemas = new Source[t.countTokens()];
         int i = 0;
         while(t.hasMoreTokens()) {
             String name = t.nextToken();
@@ -137,20 +136,36 @@ public abstract class WSManAgent {
                     Management.class.getResourceAsStream(SCHEMA_PATH + name);
             if(LOG.isLoggable(Level.FINE))
                 LOG.log(Level.FINE, "Loaded schema " + xsd);
-            schemas[i] = new StreamSource(xsd);
+            stdSchemas[i] = new StreamSource(xsd);
             i++;
-        }
-        
-        try {
-            schema = schemaFactory.newSchema(schemas);
-        } catch (SAXException ex) {
-            LOG.log(Level.SEVERE, "Error setting schemas", ex);
-            throw new RuntimeException("schemaFactory.newSchema failed " + ex);
         }
     }
     
-    protected WSManAgent() {
-        
+    protected WSManAgent() throws SAXException {
+        this(null);
+    }
+    
+    protected WSManAgent(Source[] customSchemas, final String... customPackages) throws SAXException {
+         final SchemaFactory schemaFactory =
+                SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+         Source[] finalSchemas = stdSchemas;
+         if(customSchemas != null) {
+             if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Custom schemas to load " + 
+                        customSchemas.length);
+             finalSchemas = new Source[customSchemas.length + 
+                     stdSchemas.length];
+             System.arraycopy(stdSchemas,0,finalSchemas,0,stdSchemas.length);
+             System.arraycopy(customSchemas,0,finalSchemas,stdSchemas.length,
+                     customSchemas.length);
+         }
+        try {
+            schema = schemaFactory.newSchema(finalSchemas);
+        } catch (SAXException ex) {
+            LOG.log(Level.SEVERE, "Error setting schemas", ex);
+            throw ex;
+        }
+        this.customPackages = customPackages;
     }
     
     /**
@@ -195,8 +210,8 @@ public abstract class WSManAgent {
             // BTW, doing so, we make clear that any rechnology can be used to marsh/unmarsh.
             // Relaying on JAXB becomes an implementation detail.
             
-            // schema might be null if no XSDs were found in the war
-            request.setXmlBinding(new XmlBinding(schema));
+            // schema might be null if no XSDs were found
+            request.setXmlBinding(new XmlBinding(schema, customPackages));
         } catch (JAXBException jex) {
             LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
             // TODO throw new ServletException(jex);

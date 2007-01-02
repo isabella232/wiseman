@@ -36,6 +36,7 @@ import javax.xml.ws.Service;
 import javax.xml.ws.ServiceMode;
 import javax.xml.ws.WebServiceProvider;
 import javax.xml.ws.handler.MessageContext;
+import org.xml.sax.SAXException;
 
 /**
  * JAX-WS Compliant endpoint.
@@ -82,6 +83,8 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
 
             ctx = new HandlerContextImpl(principal, contentType, encoding, url, props,
                     getAgent().getProperties());
+            Message reply = getAgent().handleRequest(request, ctx);
+            return reply.getMessage();
         }catch(Exception ex) {
             try {
                 Management response = new Management();
@@ -92,12 +95,9 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
                 throw new RuntimeException(ex2.getMessage());
             }
         }
-        Message reply = getAgent().handleRequest(request, ctx);
-        
-        return reply.getMessage();
     }
     
-    private synchronized WSManAgent getAgent() {
+    private synchronized WSManAgent getAgent() throws SAXException {
         if(agent == null)
             agent = createWSManAgent();
         return agent;
@@ -113,7 +113,7 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
         return context;
     }
     
-    protected WSManAgent createWSManAgent() {
+    protected WSManAgent createWSManAgent() throws SAXException {
         // It is an extension of WSManAgent to handle Reflective Dispatcher
         return new WSManReflectiveAgent();
     }
