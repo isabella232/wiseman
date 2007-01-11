@@ -1,0 +1,57 @@
+Wiseman on top of JAX-WS 2.0 related informations
+=================================================
+
+Since the 11th of January 2007, WiseMan project is relying on JAX-WS 2.0. If you want to checkout a 
+pre JAX-WS release (this is something that we don't recommend), use the CVS tag "pre_jaxws_10jan2007"
+WSManServlet is still operational. Your current deployed applications should work as they used to do. Be sure to 
+update your JAXB/JAX-RPC dependencies to be JAX-WS 2.0.
+
+New implied setup to make wiseman to build and run
+----------------------------------------------------
+
+1 Checkout cvs co -r jaxws_branch wiseman
+2 Download jaxws ri (you can download them from https://jax-ws.dev.java.net/jax-ws-20-fcs/) and copy all jars located in jaxws-ri/lib in lib/jaxws
+3 Generate JAXB classes by calling "generate-jaxb" ant target
+4 Call lib target to build wiseman.
+5 If you want to run the tests
+   5.1 Copy all the JAXWS jars in shared/lib of your favorite servlet container
+   5.2 Call test or test-jaxws according to the path you want to test.
+
+Main changes
+------------
+
+- Removal of JAXB binaries from CVS. 
+  You will have to copy jaxws jars (you can download them from https://jax-ws.dev.java.net/jax-ws-20-fcs/) in lib/jaxws directory. 
+ (Planing to see how we can integrate the Maven java.net repository to express dependency we have on JAX-WS project.)
+
+- Source code impact. Quite a lot but mainly rework of WsManServlet, introduced new WSManAgent and WSManJAXWSEndpoint.
+  Rework of initialization, removal of various initialization() methods. 
+  New Message construction based on a SOAPMessage. 
+
+
+- Schemas location.They are now located in com.sun.ws.management.resources.schemas. 
+  They can be found as Resource from current ClassLoader. It is no more linked to Servlet. 
+  Custom schemas can still be provided thanks to ServletContext (as before)
+  The schemas have been renamed, the ordering based on name has been replaced by a list in wiseman.properties file.
+
+- JAXB Generation. Removal of the files from the repository. 
+  Generated file should be generated with the release of JAX-WS you selected. 
+  If we let the generated code in the CVS repository, we could ran into future compatibility problems.
+  You have to call "generate-jaxb" manually.
+
+- Build impact. New targets to build and deploy jax-ws compliant war (named wisman-jaxws.war)
+
+- Tests. Removal of the automatic copy of JAXB/SAAJ jar in the tomcat /shared/lib. 
+  This is something that is nice but can easily break existing configuration.
+  All existing tests and interop scenarii can be run with a Servlet based agent or with a JAX-WS one. 
+  Choose your target : "test" or "test-jaxws". The single difference between these 2 targets is deployment of the right war.
+  J2SE deployment. WiseMan JAX-WS Endpoint can be deployed in JAX-WS http server (no more need of Servlet container), 
+  the build targets are currently commented due to Servlet dependency in Tests (If someone wants to rework a little bit handlers, 
+  we could have all tests passing indifferently on top of J2SE or J2EE!!!!). To play with such deployment, uncomment following 
+  ant build targets "deploy-j2se-jaxws" to start the agent side and "test-j2se-jaxws" to start the client side).
+
+- misc: Commented the test.foo package from binding.properties.
+
+- Trace. Removal of logging configuration file loading. Addition of a logging.properties file that is
+  packaged in WEB-INF/classes in order to generate in <catalina-home>/logs a file that contains all wiseman traces. 
+  This is very useful when you are debugging tests. The generated file name is wiseman-<date of the day>.out 
