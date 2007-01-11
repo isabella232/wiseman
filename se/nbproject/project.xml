@@ -90,27 +90,25 @@
                     <ide-action name="debug"/>
                 </context-menu>
             </view>
-            <subprojects>
-                <project>.</project>
-            </subprojects>
+            <subprojects/>
         </general-data>
         <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
             <compilation-unit>
                 <package-root>src</package-root>
-                <classpath mode="compile">build/classes:lib/jaxb/activation.jar:lib/jaxb/jaxb-api.jar:lib/jaxb/jaxb-impl.jar:lib/jaxb/jaxb-xjc.jar:lib/jaxb/jsr173_1.0_api.jar:lib/jaxrpc/saaj-api.jar:lib/jaxrpc/saaj-impl.jar:lib/servlet-api.jar</classpath>
+                <classpath mode="compile">build/classes:lib/servlet-api.jar:lib/jaxws/activation.jar:lib/jaxws/FastInfoset.jar:lib/jaxws/http.jar:lib/jaxws/jaxb-api.jar:lib/jaxws/jaxb-impl.jar:lib/jaxws/jaxb-xjc.jar:lib/jaxws/jaxws-api.jar:lib/jaxws/jaxws-rt.jar:lib/jaxws/jaxws-tools.jar:lib/jaxws/jsr173_api.jar:lib/jaxws/jsr181-api.jar:lib/jaxws/jsr250-api.jar:lib/jaxws/resolver.jar:lib/jaxws/saaj-api.jar:lib/jaxws/saaj-impl.jar:lib/jaxws/sjsxp.jar</classpath>
                 <built-to>build/classes</built-to>
                 <source-level>1.5</source-level>
             </compilation-unit>
             <compilation-unit>
                 <package-root>gen-src</package-root>
-                <classpath mode="compile">build/classes:lib/jaxb/activation.jar:lib/jaxb/jaxb-api.jar:lib/jaxb/jaxb-impl.jar:lib/jaxb/jaxb-xjc.jar:lib/jaxb/jsr173_1.0_api.jar:lib/jaxrpc/saaj-api.jar:lib/jaxrpc/saaj-impl.jar:lib/servlet-api.jar</classpath>
+                <classpath mode="compile">build/classes:lib/servlet-api.jar:lib/jaxws/activation.jar:lib/jaxws/FastInfoset.jar:lib/jaxws/http.jar:lib/jaxws/jaxb-api.jar:lib/jaxws/jaxb-impl.jar:lib/jaxws/jaxb-xjc.jar:lib/jaxws/jaxws-api.jar:lib/jaxws/jaxws-rt.jar:lib/jaxws/jaxws-tools.jar:lib/jaxws/jsr173_api.jar:lib/jaxws/jsr181-api.jar:lib/jaxws/jsr250-api.jar:lib/jaxws/resolver.jar:lib/jaxws/saaj-api.jar:lib/jaxws/saaj-impl.jar:lib/jaxws/sjsxp.jar:lib/servlet-api.jar</classpath>
                 <built-to>build/classes</built-to>
                 <source-level>1.5</source-level>
             </compilation-unit>
             <compilation-unit>
                 <package-root>test/src</package-root>
                 <unit-tests/>
-                <classpath mode="compile">build/classes:lib/jaxb/activation.jar:lib/jaxb/jaxb-api.jar:lib/jaxb/jaxb-impl.jar:lib/jaxb/jaxb-xjc.jar:lib/jaxb/jsr173_1.0_api.jar:lib/jaxrpc/saaj-api.jar:lib/jaxrpc/saaj-impl.jar:test/lib/junit.jar</classpath>
+                <classpath mode="compile">build/classes:lib/servlet-api.jar:lib/jaxws/activation.jar:lib/jaxws/FastInfoset.jar:lib/jaxws/http.jar:lib/jaxws/jaxb-api.jar:lib/jaxws/jaxb-impl.jar:lib/jaxws/jaxb-xjc.jar:lib/jaxws/jaxws-api.jar:lib/jaxws/jaxws-rt.jar:lib/jaxws/jaxws-tools.jar:lib/jaxws/jsr173_api.jar:lib/jaxws/jsr181-api.jar:lib/jaxws/jsr250-api.jar:lib/jaxws/resolver.jar:lib/jaxws/saaj-api.jar:lib/jaxws/saaj-impl.jar:lib/jaxws/sjsxp.jar:test/lib/junit.jar</classpath>
                 <built-to>test/build/classes</built-to>
                 <source-level>1.5</source-level>
             </compilation-unit>

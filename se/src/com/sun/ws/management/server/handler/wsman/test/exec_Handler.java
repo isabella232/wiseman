@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: exec_Handler.java,v 1.10 2006-07-26 04:20:16 pmonday Exp $
+ * $Id: exec_Handler.java,v 1.11 2007-01-11 13:12:53 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -158,8 +158,7 @@ public class exec_Handler implements Handler, EnumerationIterator {
 
             // retrieve the request path for use in EPR construction and store
             //  it in the context for later retrieval
-            final HttpServletRequest servletRequest = context.getHttpServletRequest();
-            final String path = servletRequest.getRequestURL().toString();
+            final String path = context.getURL();
             ctx.requestPath = path;
 
             ctx.results = result.split ("\n");

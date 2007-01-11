@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.6 2006-12-18 22:48:52 simeonpinder Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.7 2007-01-11 13:12:53 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
@@ -127,7 +127,9 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             
             Document resourceDoc = null;
             final String resourceDocName = "Pull" + noPrefix + "_0.xml";
-            final InputStream is = load(hcontext.getServletConfig().getServletContext(), resourceDocName);
+            final InputStream is = load((ServletContext) hcontext.
+                            getRequestProperties().
+                            get(HandlerContext.SERVLET_CONTEXT), resourceDocName);
             if (is == null) {
                 throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
             }
@@ -196,7 +198,9 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
                 
                 Document resourceDoc = null;
                 final String resourceDocName = "Pull" + noPrefix + "_0.xml";
-                final InputStream is = load(hcontext.getServletConfig().getServletContext(), resourceDocName);
+                final InputStream is = load((ServletContext) hcontext.
+                            getRequestProperties().
+                            get(HandlerContext.SERVLET_CONTEXT), resourceDocName);
                 if (is == null) {
                     throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
                 }
@@ -234,7 +238,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             eres.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
             final Context context = new Context();
             context.hcontext = hcontext;
-            context.address = hcontext.getHttpServletRequest().getRequestURL().toString();
+            context.address = hcontext.getURL();
             context.resourceURI = resource;
             context.noPrefix = noPrefix;
             EnumerationSupport.enumerate(ereq, eres, this, context);
@@ -263,7 +267,9 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             
             Document resourceDoc = null;
             final String resourceDocName = "Pull" + ctx.noPrefix + "_" + start + ".xml";
-            final InputStream is = load(ctx.hcontext.getServletConfig().getServletContext(), resourceDocName);
+            final InputStream is = load((ServletContext) ctx.hcontext.
+                            getRequestProperties().
+                            get(HandlerContext.SERVLET_CONTEXT), resourceDocName);
             if (is == null) {
                 throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
             }

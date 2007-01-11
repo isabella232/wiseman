@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: custom_filter_Handler.java,v 1.1 2006-12-05 10:34:43 jfdenise Exp $
+ * $Id: custom_filter_Handler.java,v 1.2 2007-01-11 13:12:56 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.enumeration.filter;
@@ -134,8 +134,7 @@ public class custom_filter_Handler implements Handler, EnumerationIterator {
             
             // retrieve the request path for use in EPR construction and store
             //  it in the context for later retrieval
-            final HttpServletRequest servletRequest = hcontext.getHttpServletRequest();
-            final String path = servletRequest.getRequestURL().toString();
+            final String path = hcontext.getURL();
             context.requestPath = path;
             
             // call the server to process the enumerate request

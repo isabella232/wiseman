@@ -40,14 +40,6 @@ public class WsManBaseTestSupport extends TestCase {
 
 	public WsManBaseTestSupport() {
 		super();
-        // Init Jaxb for wiseman
-        try {
-			Message.initialize();
-
-
-		} catch (Exception e) {
-			fail(e.getMessage());
-		} 
 
 		final String basicAuth = System.getProperty("wsman.basicauthentication");
         if ("true".equalsIgnoreCase(basicAuth)) {

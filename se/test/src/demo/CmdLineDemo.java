@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: CmdLineDemo.java,v 1.13 2006-10-10 19:50:46 nbeers Exp $
+ * $Id: CmdLineDemo.java,v 1.14 2007-01-11 13:12:57 jfdenise Exp $
  */
 
 package demo;
@@ -98,7 +98,6 @@ public final class CmdLineDemo {
             HttpClient.setAuthenticator(new BasicAuthenticator());
         }
         
-        SOAP.initialize();
         
         if (IDENTIFY.equals(verb)) {
             final Identify identify = new Identify();

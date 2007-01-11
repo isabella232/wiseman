@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.12 2006-07-30 07:44:48 akhilarora Exp $
+ * $Id: pull_source_Handler.java,v 1.13 2007-01-11 13:12:53 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -108,8 +108,7 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
                 ctx.cancelled = false;
                 // retrieve the request path for use in EPR construction and store
                 //  it in the context for later retrieval
-                final HttpServletRequest servletRequest = context.getHttpServletRequest();
-                final String path = servletRequest.getRequestURL().toString();
+                final String path = context.getURL();
                 ctx.requestPath = path;
                 EnumerationSupport.enumerate(enuRequest, enuResponse, this, ctx, nsMap);
             } else {
@@ -128,8 +127,7 @@ public class pull_source_Handler implements Handler, EnumerationIterator {
             
             // retrieve the request path for use in EPR construction and store
             //  it in the context for later retrieval
-            final HttpServletRequest servletRequest = context.getHttpServletRequest();
-            final String path = servletRequest.getRequestURL().toString();
+            final String path = context.getURL();
             ctx.requestPath = path;
             
             // call the server to process the enumerate request

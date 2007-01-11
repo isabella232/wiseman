@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.10 2006-07-10 01:41:07 akhilarora Exp $
+ * $Id: Message.java,v 1.11 2007-01-11 13:12:54 jfdenise Exp $
  */
 
 package com.sun.ws.management;
@@ -74,17 +74,19 @@ public abstract class Message {
     private SOAPBody body = null;
     
     static {
-        DEFAULT_SOAP_MIME_HEADER.setHeader("Content-Type", "application/soap+xml");
-    }
-    
-    public static void initialize() throws SOAPException {
-        msgFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
-        docFactory = DocumentBuilderFactory.newInstance();
-        docFactory.setNamespaceAware(true);
+        DEFAULT_SOAP_MIME_HEADER.setHeader("Content-Type", 
+                "application/soap+xml");
         try {
+            msgFactory = MessageFactory.
+                    newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
+            docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setNamespaceAware(true);
+            
             db = docFactory.newDocumentBuilder();
-        } catch (ParserConfigurationException pex) {
-            throw new SOAPException(pex);
+        } catch (Exception pex) {
+            pex.printStackTrace();
+            throw new RuntimeException("Message static Initialization failed "
+                    + pex);
         }
     }
     
@@ -126,6 +128,15 @@ public abstract class Message {
         assert msgFactory != null : UNINITIALIZED;
         contentType = ContentType.DEFAULT_CONTENT_TYPE;
         msg = msgFactory.createMessage(DEFAULT_SOAP_MIME_HEADER, is);
+        init();
+    }
+    
+    public Message(final SOAPMessage message) throws SOAPException {
+        assert msgFactory != null : UNINITIALIZED;
+        String contentT = (String) message.getProperty(SOAPMessage.CHARACTER_SET_ENCODING);
+        contentType = contentT == null ? ContentType.DEFAULT_CONTENT_TYPE : 
+            ContentType.createFromEncoding(contentT);
+        msg = message;
         init();
     }
     
