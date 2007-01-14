@@ -37,7 +37,7 @@ public class UserStore {
 			final Unmarshaller u = ctxt.createUnmarshaller();
 			final HashMap<String, UserType> allUsers = new HashMap<String, UserType>();
 
-			final InputStream is = EnumerationUserHandler.class
+			final InputStream is = UserStore.class
 					.getClassLoader().getResourceAsStream(USER_STORE_FILENAME);
 
 			// Check if InputStream was successfully opened
