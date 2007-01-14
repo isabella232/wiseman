@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.8 2006-05-03 19:35:46 akhilarora Exp $
+ * $Id: EventingExtensionsTest.java,v 1.9 2007-01-14 17:53:12 denis_rachal Exp $
  */
 
 package management;
@@ -23,11 +23,13 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
@@ -124,11 +126,14 @@ public class EventingExtensionsTest extends TestBase {
     }
     
     public void testPullMode() throws Exception {
-        pullModeTest(null);
-        pullModeTest("/log:event3");
+        pullModeTest(null, null);
+        HashMap<String, String> map = new HashMap<String, String>(1);
+        map.put("log", "https://wiseman.dev.java.net/test/events/pull");
+        NamespaceMap filterNsMap = new NamespaceMap(map);
+        pullModeTest("/log:event3", filterNsMap);
     }
     
-    private void pullModeTest(final String filter) throws Exception {
+    private void pullModeTest(final String filter, final NamespaceMap filterNsMap) throws Exception {
         final EventingExtensions evtx = new EventingExtensions();
         evtx.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         evtx.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -139,6 +144,10 @@ public class EventingExtensionsTest extends TestBase {
         filterType.getContent().add(filter);
         evtx.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null,
                 filter == null ? null : filterType);
+        
+        // TODO: Set this in the filter header.
+        if ((filter != null) && (filterNsMap != null))
+        	evtx.addNamespaceDeclarations(filterNsMap.getMap()); 
         
         final Management mgmt = new Management(evtx);
         mgmt.setResourceURI("wsman:test/pull_source");

@@ -138,6 +138,11 @@ public class LightHandlerImpl {
 			return tlType;
 		}
 		
+		public static JAXBElement<TrafficLightType> createLight(TrafficLight light) throws JAXBException {
+			TrafficLightType lightType=createLightType(light);
+			return trafficLightFactory.createTrafficlight(lightType);
+		}
+		
 		public static Element createLightElement(TrafficLight light,XmlBinding binding) throws JAXBException {
 			TrafficLightType lightType=createLightType(light);
 			Document doc = Management.newDocument();

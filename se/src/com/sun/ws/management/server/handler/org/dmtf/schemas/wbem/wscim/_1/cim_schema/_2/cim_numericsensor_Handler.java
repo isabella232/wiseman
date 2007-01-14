@@ -13,10 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.7 2007-01-11 13:12:53 jfdenise Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.8 2007-01-14 17:52:33 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import javax.servlet.ServletContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.soap.SOAPElement;
+import javax.xml.soap.SOAPHeaderElement;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.FragmentDialectNotSupportedFault;
@@ -26,69 +45,24 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.BaseSupport;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
-import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.ws.management.xml.XPath;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.servlet.ServletContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.soap.SOAPElement;
-import javax.xml.soap.SOAPHeaderElement;
-import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-
-public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
-    
-    private static final String NS_PREFIX = "p";
-    
-    private static String[] SELECTOR_KEYS = {
+public class cim_numericsensor_Handler implements Handler {
+        
+    protected static String[] SELECTOR_KEYS = {
         "CreationClassName",
         "DeviceID",
         "SystemCreationClassName",
         "SystemName"
     };
     
-    private NamespaceMap nsMap = null;
-    
-    private static final class Context {
-        HandlerContext hcontext = null;
-        boolean cancelled = false;
-        int index = 0;
-        int count = 2;
-        String address;
-        String resourceURI;
-        String noPrefix = "";
-    }
-    
     public void handle(final String action, final String resource,
         final HandlerContext hcontext,
         final Management request, final Management response) throws Exception {
-        
-        if (nsMap == null) {
-            final Map<String, String> map = new HashMap<String, String>();
-            map.put(NS_PREFIX, resource);
-            nsMap = new NamespaceMap(map);
-        }
         
         String noPrefix = "";
         final Set<SelectorType> selectors = request.getSelectors();
@@ -103,7 +77,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
                 }
             }
         }
-        
+    	
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.setAction(Transfer.GET_RESPONSE_URI);
             
@@ -236,12 +210,14 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
             final Enumeration ereq = new Enumeration(request);
             final Enumeration eres = new Enumeration(response);
             eres.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
-            final Context context = new Context();
-            context.hcontext = hcontext;
-            context.address = hcontext.getURL();
-            context.resourceURI = resource;
-            context.noPrefix = noPrefix;
-            EnumerationSupport.enumerate(ereq, eres, this, context);
+            synchronized (this) {
+            	// Make sure there is an Iterator factory registered for this resource
+            	if (EnumerationSupport.getIteratorFactory(resource) == null) {
+            		EnumerationSupport.registerIteratorFactory(resource,
+            				new cim_numericsensor_IteratorFactory(resource));
+            	}
+            }
+            EnumerationSupport.enumerate(hcontext, ereq, eres);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             final Enumeration ereq = new Enumeration(request);
             final Enumeration eres = new Enumeration(response);
@@ -257,66 +233,7 @@ public class cim_numericsensor_Handler implements Handler, EnumerationIterator {
         }
     }
     
-    public List<EnumerationItem> next(final DocumentBuilder db, final Object context,
-        final boolean includeItem, final boolean includeEPR,
-        final int start, final int count) {
-        final Context ctx = (Context) context;
-        final int returnCount = Math.min(count, ctx.count - start);
-        final List<EnumerationItem> items = new ArrayList(returnCount);
-        for (int i = 0; i < returnCount && !ctx.cancelled; i++) {
-            
-            Document resourceDoc = null;
-            final String resourceDocName = "Pull" + ctx.noPrefix + "_" + start + ".xml";
-            final InputStream is = load((ServletContext) ctx.hcontext.
-                            getRequestProperties().
-                            get(HandlerContext.SERVLET_CONTEXT), resourceDocName);
-            if (is == null) {
-                throw new InternalErrorFault("Failed to load " + resourceDocName + " from war");
-            }
-            try {
-                resourceDoc = db.parse(is);
-            } catch (Exception ex) {
-                throw new InternalErrorFault("Error parsing " + resourceDocName + " from war");
-            }
-            final Element root = resourceDoc.getDocumentElement();
-            
-            EndpointReferenceType epr = null;
-            if (includeEPR) {
-                final Map<String, String> selectors = new HashMap<String, String>();
-                for (final String selector : SELECTOR_KEYS) {
-                    selectors.put(selector, root.getElementsByTagNameNS(ctx.resourceURI, selector).item(0).getTextContent());
-                }
-                epr = EnumerationSupport.createEndpointReference(
-                    ctx.address,
-                    ctx.resourceURI,
-                    selectors);
-            }
-            
-            items.add(new EnumerationItem(root, epr));
-        }
-        return items;
-    }
-    
-    public boolean hasNext(final Object context, final int start) {
-        final Context ctx = (Context) context;
-        return start < ctx.count;
-    }
-    
-    public void cancel(final Object context) {
-        final Context ctx = (Context) context;
-        ctx.cancelled = true;
-    }
-    
-    public int estimateTotalItems(final Object context) {
-        final Context ctx = (Context) context;
-        return ctx.count;
-    }
-    
-    public NamespaceMap getNamespaces() {
-        return nsMap;
-    }
-    
-    private static final InputStream load(final ServletContext context, final String docName) {
+    protected static final InputStream load(final ServletContext context, final String docName) {
         final String xml =
             cim_numericsensor_Handler.class.getPackage().getName().replace('.', '/') +
             "/" +

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.12 2006-12-05 10:35:23 jfdenise Exp $
+ * $Id: EventingTest.java,v 1.13 2007-01-14 17:53:12 denis_rachal Exp $
  */
 
 package management;
@@ -23,11 +23,13 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.EventSourceUnableToProcessFault;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
+import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
@@ -359,6 +361,12 @@ public class EventingTest extends TestBase {
         // filter critical events - the prefix and localName must be exactly the same as in eventing_Handler
         filter.getContent().add("//ev:critical");
         evt.setSubscribe(null, Eventing.PUSH_DELIVERY_MODE, notifyToEPR, expires, filter);
+        
+        // Set the namespaces used in the filter expression
+        HashMap<String, String> map = new HashMap<String, String>(1);
+        map.put("ev", "https://wiseman.dev.java.net/test/events/subscribe");
+        // TODO: Add this to the filter element.
+        evt.addNamespaceDeclarations(map);
         
         final Management mgmt = new Management(evt);
         mgmt.setTo(DESTINATION);

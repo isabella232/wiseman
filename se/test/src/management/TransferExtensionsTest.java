@@ -117,7 +117,7 @@ public class TransferExtensionsTest extends TestBase {
         final SOAPHeaderElement fragmentTransferHeader = transfer.getFragmentHeader();
         
         //simulate the server-side DOM model to be used in request
-        final List<Node> content = new ArrayList<Node>();
+        final List<Object> content = new ArrayList<Object>();
         final Document doc = transfer.newDocument();
         final Element fooElement = doc.createElement("foo");
         final Element barElement = doc.createElement("bar");
@@ -375,7 +375,7 @@ public class TransferExtensionsTest extends TestBase {
         content.add(isElement);
         
         //build simulated request content
-        final List<Node> requestContent = new ArrayList<Node>();
+        final List<Object> requestContent = new ArrayList<Object>();
         final Element requestBarElement = doc.createElement("bar");
         requestBarElement.setTextContent("PUT request value");
         requestContent.add(requestBarElement);
@@ -532,7 +532,7 @@ public class TransferExtensionsTest extends TestBase {
         content.add(isElement);
         
         //simulate the request content whci came off the wire
-        final List<Node> requestContent = new ArrayList<Node>();
+        final List<Object> requestContent = new ArrayList<Object>();
         final Element requestFooElement = doc.createElement("foo");//create a foo with no bar
         requestContent.add(requestFooElement);
 

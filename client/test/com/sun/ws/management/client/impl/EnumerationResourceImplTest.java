@@ -1,7 +1,6 @@
 package com.sun.ws.management.client.impl;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.bind.JAXBException;
@@ -10,38 +9,28 @@ import javax.xml.soap.SOAPException;
 
 import util.WsManBaseTestSupport;
 
-import com.hp.examples.ws.wsman.user.ObjectFactory;
-import com.sun.ws.management.Management;
-import com.sun.ws.management.Message;
 import com.sun.ws.management.client.EnumerationCtx;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.FaultException;
-import com.sun.ws.management.xml.XmlBinding;
-
-import junit.framework.TestCase;
 
 public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
 
-	private XmlBinding binding;
-	private ObjectFactory userFactory;
-	private static String destUrl = "http://localhost:8080/wsman/";
-	private static String resourceUri = "wsman:auth/userenum";
-	private static long timeout=10000;
+	private static final String destUrl = "http://localhost:8080/wsman/";
+	private static final String resourceUri = "wsman:auth/userenum";
+	private static final String USER_CUSTOM_DIALECT = "http://examples.hp.com/ws/wsman/user/filter/custom";
+	private static final long timeout=10000;
+	
 	protected void setUp() throws Exception {
 		super.setUp();
+		/*
 		try {
 			Message.initialize();
 		} catch (SOAPException e) {
 			fail("Can't init wiseman");
 		}
-		try {
-			binding = new XmlBinding(null,"com.hp.examples.ws.wsman.user");
-		} catch (JAXBException e) {
-			fail(e.getMessage());
-		}
-		userFactory = new ObjectFactory();
+		*/
 	}
 
 	protected void tearDown() throws Exception {
@@ -61,14 +50,12 @@ public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
 	public void testEnumerate() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
 		
 		// Obtain an reference to a resource that represents an enum of users
-		Map<String,String> selector=new HashMap<String,String>();
-		selector.put("id", "1234");
-		Resource[] enumerationResources = ResourceFactory.find(destUrl,resourceUri,timeout,selector);
+		Resource[] enumerationResources = ResourceFactory.find(destUrl,resourceUri,timeout,(Map<String,String>)null);
 		assertNotNull(enumerationResources);
 		assertTrue(enumerationResources.length>0);
 		assertNotNull(enumerationResources[0]);
 		Resource enumerationResource = enumerationResources[0];
-		EnumerationCtx ticket = enumerationResource.enumerate(null, null, true, false);
+		EnumerationCtx ticket = enumerationResource.enumerate(null, null, null, true, false);
 		assertNotNull(ticket);
 		ResourceState pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
 		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
@@ -78,18 +65,14 @@ public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
 	
 	public void testCustomDialect() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
 		// Obtain an reference to a resource that represents an enum of users
-		Map<String,String> selector=new HashMap<String,String>();
-		selector.put("id", "1234");
-		Resource[] enumerationResources = ResourceFactory.find(destUrl,resourceUri,timeout,selector);
+		Resource[] enumerationResources = ResourceFactory.find(destUrl,resourceUri,timeout,(Map<String,String>)null);
 		assertNotNull(enumerationResources);
 		assertTrue(enumerationResources.length>0);
 		assertNotNull(enumerationResources[0]);
 		Resource enumerationResource = enumerationResources[0];
-		EnumerationCtx ticket = enumerationResource.enumerate(new String[]{"Simpson"}, "UserCustomDialectLastname", true, false);
+		EnumerationCtx ticket = enumerationResource.enumerate("Simpson", null, USER_CUSTOM_DIALECT, true, false);
 		assertNotNull(ticket);
-		ResourceState pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
-		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
-		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
+		ResourceState pullResult = enumerationResource.pull(ticket, 30000, 4, -1);
 		enumerationResource.release(ticket);
 
 	}

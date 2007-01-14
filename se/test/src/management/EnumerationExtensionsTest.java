@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.9 2006-12-21 13:03:46 denis_rachal Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.10 2007-01-14 17:53:12 denis_rachal Exp $
  */
 
 package management;
@@ -23,12 +23,14 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.xml.datatype.DatatypeFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -265,37 +267,64 @@ public class EnumerationExtensionsTest extends TestBase {
     }
     
     public void testOptimizedEnumeration() throws Exception {
-        // first do the tests with EPRs turned off
-        optimizedEnumerationTest(null, 2);
+    	
+    	final String resource = "wsman:test/java/system/properties";;
+        
+    	// first do the tests with EPRs turned off
+        optimizedEnumerationTest(null, 2, resource, null, null, null);
+        
         // do not specify MaxElements, letting it default to its implied value of 1
-        optimizedEnumerationTest(null, -1);
+        optimizedEnumerationTest(null, -1, resource, null, null, null);
         
         // now repeat the same tests with EPRs turned on
-        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, 2);
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, 2, resource, null, null, null);
+        
         // do not specify MaxElements, letting it default to its implied value of 1
-        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, -1);
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, -1, resource, null, null, null);
         
         // finally, repeat the same tests with only EPRs (no items)
-        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, 2);
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, 2, resource, null, null, null);
+        
         // do not specify MaxElements, letting it default to its implied value of 1
-        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, -1);
+        optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, -1, resource, null, null, null);
     }
     
-    public void optimizedEnumerationTest(final EnumerationExtensions.Mode mode,
-            final int maxElements) throws Exception {
-        final String RESOURCE = "wsman:test/java/system/properties";
+    public void optimizedEnumerationTest(
+    		final EnumerationExtensions.Mode mode,
+            final int maxElements,
+            final String resource,
+    		final String dialect,
+    		final String expression,
+    		final Set<OptionType> options) throws Exception {
+    	
         final EnumerationExtensions enu = new EnumerationExtensions();
+        
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         final DatatypeFactory factory = DatatypeFactory.newInstance();
+        
+        // Process any filter
+        final DialectableMixedDataType filter;
+        if ((expression != null) && (expression.length() > 0)) {
+            filter = Management.FACTORY.createDialectableMixedDataType();
+            if ((dialect != null) && (dialect.length() > 0))
+                filter.setDialect(dialect);
+            filter.getContent().add(expression);
+        } else {
+        	filter = null;
+        }
         enu.setEnumerate(null, true, true, maxElements, 
         		factory.newDuration(60000).toString(),
-        		null, mode);
+        		filter, mode);
         
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI(RESOURCE);
+        mgmt.setResourceURI(resource);
+        
+        // Add any options
+        if (options != null)
+            mgmt.setOptions(options);
         
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
@@ -330,7 +359,7 @@ public class EnumerationExtensionsTest extends TestBase {
             
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION);
-            mp.setResourceURI(RESOURCE);
+            mp.setResourceURI(resource);
             
             mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);

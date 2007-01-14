@@ -32,7 +32,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.Text;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
@@ -48,7 +47,7 @@ import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
- * User deligate is responsible for processing request actions
+ * User delegate is responsible for processing request actions
  * to be performed on users.
  * 
  * TODO
@@ -121,7 +120,10 @@ public class UserHandler extends TransferSupport {
 		 //now retrieve the server specific content to replace based on fragmentExp
 		 String fragBodyUpdate = xmlToString(userChildNode);
 		 //extract content and set that value in the userObject
-		 int contentsIndex = fragBodyUpdate.indexOf("</ns9:age>");
+		 int contentsIndex = fragBodyUpdate.indexOf("</ns8:age>");
+		 if (contentsIndex < 0) {
+			 throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
+		 }
 		 String newValue = fragBodyUpdate.substring(contentsIndex-2,contentsIndex);
 		 userObject.setAge(Integer.valueOf(newValue));
 

@@ -9,6 +9,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import javax.xml.XMLConstants;
@@ -71,6 +72,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 	public static String resourceUri = "wsman:auth/user";
 
 	public static long timeoutInMilliseconds = 9400000;
+	
+	private static final String USER_NS = "http://examples.hp.com/ws/wsman/user";
 
 	XmlBinding binding = null;
 
@@ -105,7 +108,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		assertEquals(serverInfo.getProductVersion(),"0.4");
 		assertEquals(serverInfo.getProtocolVersion(),"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
 		assertEquals(serverInfo.getSpecVersion(),"1.0.0a");
-		assertTrue(serverInfo.getBuildId().startsWith("2006"));
+		// assertTrue(serverInfo.getBuildId().startsWith("2006"));
 
 	}
 
@@ -431,7 +434,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		  stateDocument = Management.newDocument();
 		    // Insert the root element node
 		    Element element =
-		    	stateDocument.createElementNS("http://examples.hp.com/ws/wsman/user","ns9:age");
+		    	stateDocument.createElementNS("http://examples.hp.com/ws/wsman/user","user:age");
 	    int number = 10;
 		    element.setTextContent(""+number);
 		    stateDocument.appendChild(element);
@@ -677,7 +680,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		  content = Management.newDocument();
 		    // Insert the root element node
 		    Element element =
-		    	content.createElementNS("http://examples.hp.com/ws/wsman/user","ns9:state");
+		    	content.createElementNS("http://examples.hp.com/ws/wsman/user","user:state");
 		    element.setTextContent(stateUpdated);
 		    content.appendChild(element);
 		    
@@ -748,11 +751,12 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 retrieved.addOption("opt3", new Boolean(true));		 
  		 
 		 //Build the filters
-		 String testName = "James";//See users.store for more valid search values
-		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
-//		 String xpathFilter = "/ns9:user/ns9:firstname/text()";
+		 final String testName = "James";//See users.store for more valid search values
+		 final String xpathFilter = "/user:user[user:firstname='"+testName+"']";
+//		 String xpathFilter = "/user:user/user:firstname/text()";
+		 final Map<String, String> namespaces = new HashMap<String, String>(1);
+		 namespaces.put("user", USER_NS);
 		 
-		 String[] filters = new String[]{xpathFilter};
 		 long timeout = 1000000;
 		 
 		 // Add custom user param
@@ -765,7 +769,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 userChildNode2.setTextContent("9999");
 		 
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, timeout, 
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, timeout, 
 				 new Object[] {userChildNode, userChildNode2});
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
@@ -773,7 +777,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 //DONE: now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 5;
-		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		 
 		 ResourceState retrievedValues = retrieved.pull(enumContext,maxTime,
 				 maxElements,maxChar);
@@ -803,7 +807,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 				 JAXBElement<UserType> ob =
 					 (JAXBElement<UserType>)empBinding.unmarshal(node);
 				 user=(UserType)ob.getValue();
-				 assertTrue(user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
+				 assertTrue("Filter for user " + testName.trim() + " failed!",
+						    user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
 			 }
 		 }
 		 
@@ -858,11 +863,12 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 retrieved.addOption("opt3", new Boolean(true));		 
  		 
 		 //Build the filters
-		 String testName = "James";//See users.store for more valid search values
-		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
-//		 String xpathFilter = "/ns9:user/ns9:firstname/text()";
-		 
-		 String[] filters = new String[]{xpathFilter};
+		 final String testName = "James";//See users.store for more valid search values
+		 final String xpathFilter = "/user:user[user:firstname='"+testName+"']";
+//		 String xpathFilter = "/user:user/user:firstname/text()";
+		 final Map<String, String> namespaces = new HashMap<String, String>(1);
+		 namespaces.put("user", USER_NS);
+
 		 long timeout = 1000000;
 		 
 		 // Add custom user param
@@ -875,17 +881,18 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 userChildNode2.setTextContent("9999");
 		 
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,
 				 false, timeout, true, new Object[] {userChildNode, userChildNode2});
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		  
-		  assertTrue("Item count <= 0", ((EnumerationResourceImpl)retrieved).getItemCount() > 0);
+		  assertTrue("Item count null", ((EnumerationResourceImpl)retrieved).getItemCount() != null);
+		  assertTrue("Item count <= 0", ((EnumerationResourceImpl)retrieved).getItemCount().longValue() > 0);
 		
 		 //DONE: now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 5;
-		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		 
 		 ResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
 				 maxElements,maxChar, true, null, null);
@@ -944,17 +951,16 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 assertTrue(retrieved instanceof EnumerationResourceImpl);
 		
 		 //Build the filters
-		 String testName = "James";//See users.store for more valid search values
-		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
-		 
-		 String[] filters = new String[]{xpathFilter};
-
+		 final String testName = "James";//See users.store for more valid search values
+		 final String xpathFilter = "/user:user[user:firstname='"+testName+"']/user:age";
+		 final Map<String, String> namespaces = new HashMap<String, String>(1);
+		 namespaces.put("user", USER_NS);
 		  
 	     //Now build the XPath expression for fragment GET
-		 String xPathReq = "//*[local-name()='age']";
+		 String xPathReq = null; // TODO: "//*[local-name()='age']";
 		
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, false, 
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, false, 
 				 xPathReq, null, false, 0);
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
@@ -962,7 +968,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 //DONE: now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 10;
-		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		 
 		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
 				 maxElements,maxChar, xPathReq, null);
@@ -1019,23 +1025,23 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		
 		 
 		 //Build the filters
-		 String testName = "James";//See users.store for more valid search values
-		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
-//		 String xpathFilter = "/ns9:user/ns9:firstname/text()";
-		 
-		 String[] filters = new String[]{xpathFilter};
-		 long timeout = 1000000;
-		 
+		 final String testName = "James";//See users.store for more valid search values
+		 final String xpathFilter = "/user:user[user:firstname='"+testName+"']";
+//		 String xpathFilter = "/user:user/user:firstname/text()";
+		 final Map<String, String> namespaces = new HashMap<String, String>(1);
+		 namespaces.put("user", USER_NS);
+
+		 long timeout = 1000000; 
 		 
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, timeout);
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, timeout);
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		
 		 //DONE: now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 5;
-		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		 
 		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
 				 maxElements,maxChar);
@@ -1093,19 +1099,18 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 assertTrue(retrieved instanceof EnumerationResourceImpl);
 		
 		 //Build the filters
-		 String testName = "James";//See users.store for more valid search values
-		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
-		 
-		 String[] filters = new String[]{xpathFilter};
-		 
+		 final String testName = "James";//See users.store for more valid search values
+		 final String xpathFilter = "/user:user[user:firstname='"+testName+"']";
+		 final Map<String, String> namespaces = new HashMap<String, String>(1);
+		 namespaces.put("user", USER_NS);
  
 		 //now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 10;
-		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, false, 
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, false, 
 				 null, null, true, maxElements);
 		 assertNotNull("Enum context retrieval problem.",enumContext);
 		 assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
@@ -1163,21 +1168,20 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 assertTrue(retrieved instanceof EnumerationResourceImpl);
 		
 		 //Build the filters
-		 String testName = "James";//See users.store for more valid search values
-		 String xpathFilter = "/ns9:user[ns9:firstname='"+testName+"']";
-		 
-		 String[] filters = new String[]{xpathFilter};
-		 
- 
+		 final String testName = "James";//See users.store for more valid search values
+		 final String xpathFilter = "/user:user[user:firstname='"+testName+"']/user:age";
+		 final Map<String, String> namespaces = new HashMap<String, String>(1);
+		 namespaces.put("user", USER_NS);
+
 	     //Now build the XPath expression for fragment GET
-		 String xPathReq = "//*[local-name()='age']";
+		 String xPathReq = null; // TODO: "//*[local-name()='age']";
 		 //now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 10;
-		 int maxChar = 20000; //random limit. NOT currently enforced.
+		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filters,XPath.NS_URI,false,false, false, 
+		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, false, 
 				 xPathReq, null, true, maxElements);
 		 assertNotNull("Enum context retrieval problem.",enumContext);
 		 assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));

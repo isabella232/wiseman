@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.7 2006-08-24 15:43:09 obiwan314 Exp $
+ $Id: build.xml,v 1.8 2007-01-14 17:55:09 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
@@ -60,16 +60,23 @@
   	      <include  name="velocity-dep-1.4.jar" />
    	      <include  name="servlet-api.jar" />
   	    </fileset>	    	
-  	    <fileset dir="se/lib/jaxb">
-  	      <include  name="activation.jar" />
-  	      <include  name="jsr173_1.0_api.jar" />
-  	      <include  name="jaxb-api.jar" />
-  	      <include  name="jaxb-impl.jar" />
-  	      <include  name="jaxb-xjc.jar" />
-  	    </fileset>
-  	    <fileset dir="se/lib/jaxrpc">
-  	      <include  name="saaj-api.jar" />
-  	      <include  name="saaj-impl.jar" />
+  	    <fileset dir="se/lib/jaxws">
+  	    	<include  name="FastInfoset.jar" />
+  	    	<include  name="activation.jar" />
+  	    	<include  name="http.jar" />
+  	    	<include  name="jaxb-api.jar" />
+  	    	<include  name="jaxb-impl.jar" />
+  	    	<include  name="jaxb-xjc.jar" />
+  	    	<include  name="jaxws-api.jar" />
+  	    	<include  name="jaxws-rt.jar" />
+  	    	<include  name="jaxws-tools.jar" />
+  	    	<include  name="jsr173_api.jar" />
+  	    	<include  name="jsr181-api.jar" />
+  	    	<include  name="jsr250-api.jar" />
+  	    	<include  name="resolver.jar" />
+  	    	<include  name="saaj-api.jar" />
+  	    	<include  name="saaj-impl.jar" />
+  	    	<include  name="sjsxp.jar" />
   	    </fileset>
 	</copy>
 

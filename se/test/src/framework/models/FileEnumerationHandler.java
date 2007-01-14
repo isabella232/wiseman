@@ -1,36 +1,30 @@
 package framework.models;
 
-import java.io.File;
-import java.util.HashMap;
-
+import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.framework.enumeration.EnumerationHandler;
+import com.sun.ws.management.server.EnumerationSupport;
 
 
 /**
  * File deligate is responsible for processing enumeration actions.
  *
- * TODO
- * Review use of exceptions
  * @author sjc
  *
  */
-public class FileEnumerationHandler extends EnumerationHandler
-{
-    public static final String NS_URI = "http://files.lookup.com";
-    public static final String NS_PREFIX = "fl";
+public class FileEnumerationHandler extends EnumerationHandler {
+	
+	public static String RESOURCE_URI = "wsman:auth/file";
 
-    public FileEnumerationHandler()
-    {
-        super(new FileEnumerationIterator());
+	static {
+		try {
+			EnumerationSupport.registerIteratorFactory(RESOURCE_URI,
+					new FileIteratorFactory());
+		} catch (Exception e) {
+			throw new InternalErrorFault(e.getMessage());
+		}
+	}
 
-        File dirs = new File(System.getProperty("user.dir"));
-        if(dirs.exists())
-        {
-            setClientContext(dirs.listFiles());
-        }
-        HashMap namespaces = new HashMap();
-        namespaces.put(NS_PREFIX, NS_URI);
-        setNamespaces(namespaces);
-        
-    }
+	public FileEnumerationHandler() {
+		super();
+	}
 }

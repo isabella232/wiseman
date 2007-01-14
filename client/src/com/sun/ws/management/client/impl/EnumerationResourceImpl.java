@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Logger;
@@ -17,6 +18,7 @@ import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.w3c.dom.Element;
@@ -45,7 +47,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 
 	public ArrayList<String> reqResList = new ArrayList<String>();
 	
-	protected long itemCount = 0;
+	protected Long itemCount = null;
 	
 	protected List<EnumerationItem> enumItems = null;
 
@@ -91,15 +93,15 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs, boolean useObjects, long timeout)
+	public EnumerationCtx enumerate(final String filter, final Map<String, String> map, final String dialect,
+			final boolean useEprs, final boolean useObjects, final long timeout)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
 	{
 		
 		// Set the timeout on the base class
 		this.setMessageTimeout(timeout);
-		return enumerate(filters, dialect, useEprs, useObjects);
+		return enumerate(filter, map, dialect, useEprs, useObjects);
 		
 	}
 	
@@ -128,15 +130,15 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs, boolean useObjects, long timeout, boolean getItemCount)
+	public EnumerationCtx enumerate(final String filter, final Map<String, String> map, final String dialect,
+			final boolean useEprs, final boolean useObjects, final long timeout, final boolean getItemCount)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
 	{
 		
 		// Set the timeout on the base class
 		this.setMessageTimeout(timeout);
-		return enumerate(filters, dialect, useEprs, useObjects, getItemCount, null, null, false, 0);
+		return enumerate(filter, map, dialect, useEprs, useObjects, getItemCount, null, null, false, 0);
 		
 	}
 	/**
@@ -162,15 +164,15 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs, boolean useObjects, long timeout, Object... params)
+	public EnumerationCtx enumerate(final String filter, final Map<String, String> map, final String dialect,
+			final boolean useEprs, final boolean useObjects, final long timeout, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
 	{
 		
 		// Set the timeout on the base class
 		this.setMessageTimeout(timeout);
-		return enumerate(filters, dialect, useEprs, useObjects, false, null, null, false, 0, params);
+		return enumerate(filter, map, dialect, useEprs, useObjects, false, null, null, false, 0, params);
 		
 	}	
 
@@ -200,15 +202,15 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs, boolean useObjects, long timeout, boolean getItemCount, Object... params)
+	public EnumerationCtx enumerate(final String filter, final Map<String, String> namespaces, final String dialect,
+			final boolean useEprs, final boolean useObjects, final long timeout, final boolean getItemCount, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
 	{
 		
 		// Set the timeout on the base class
 		this.setMessageTimeout(timeout);
-		return enumerate(filters, dialect, useEprs, useObjects, getItemCount, null, null, false, 0, params);
+		return enumerate(filter, namespaces, dialect, useEprs, useObjects, getItemCount, null, null, false, 0, params);
 		
 	}	
 	/**
@@ -232,11 +234,11 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs, boolean useObjects)
+	public EnumerationCtx enumerate(final String filter, final Map<String, String> namespaces, final String dialect,
+			final boolean useEprs, final boolean useObjects)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
-		return enumerate(filters, dialect, useEprs, useObjects, false, null, null, false, 0, new Object[0]);
+		return enumerate(filter, namespaces, dialect, useEprs, useObjects, false, null, null, false, 0, new Object[0]);
 	}
 	/**
 	 * Starts an enumeration transaction by obtaining an enumeration context.
@@ -261,9 +263,9 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs, boolean useObjects, boolean getItemCount, 
-			String fragmentRequest, String fragmentDialect, boolean optimized, long maxElem, Object... params)
+	public EnumerationCtx enumerate(final String filter, final Map<String, String> namespaces, final String dialect,
+			final boolean useEprs, final boolean useObjects, final boolean getItemCount, 
+			final String fragmentRequest, final String fragmentDialect, final boolean optimized, final long maxElem, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
 		
@@ -289,31 +291,22 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	    	// Add the Fragement Header
 	    	setFragmentHeader(fragmentRequest,fragmentDialect,mgmt);
 	    }
-	    
-	    // If this is an optimized enumeration request, add the appropriate headers
-	    if (optimized) {
-	    	mgmt.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.OPTIMIZE_ENUMERATION, "true"));
-	    	mgmt.addHeaders(Addressing.createReferencePropertyType(EnumerationExtensions.MAX_ELEMENTS, new Long(maxElem).toString()));
-	    }
 	    	
 	    //final DatatypeFactory factory = DatatypeFactory.newInstance();
 		
-		if (filters != null) {
+		if (filter != null) {
 			final DialectableMixedDataType filterType = Management.FACTORY
 					.createDialectableMixedDataType();
-			String filter = "";
-			for (int i = 0; i < filters.length; i++) {
-				filter += filters[i] + "\n";
-			}
 			if (dialect == null)
 				filterType.setDialect(XPath.NS_URI);
 			else
 				filterType.setDialect(dialect);
 			filterType.getContent().add(filter);
 
-			enu.setEnumerate(null, getItemCount, false, 0, null, filterType, enumerationMode, params);
+			enu.setEnumerate(null, getItemCount, optimized, (int)maxElem, null, filterType, enumerationMode, params);
+			enu.setFilterNamespaces(namespaces);
 		} else {
-			enu.setEnumerate(null, getItemCount, false, 0, null, null, enumerationMode, params);
+			enu.setEnumerate(null, getItemCount, optimized, (int)maxElem, null, null, enumerationMode, params);
 		}
 
 		// store away request and response for display purposes only
@@ -326,7 +319,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		if (response.getBody().hasFault()) {
 			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
-			throw new FaultException(fault.getFaultString());
+			throw new FaultException(fault);
 		}
 		log.info("RESPONSE:\n" + response + "\n");
 
@@ -339,21 +332,25 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 				.getContent().get(0);
 		
 		if (getItemCount) {
-			itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
+			if (enuResponse.getTotalItemsCountEstimate() != null)
+			   itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
 		}
 		
 		if (optimized) {
 			enumItems = new ArrayList<EnumerationItem>();
 			
 			// Save the returned values from the optimized enumeration
-			 List <EnumerationItem> items = new ArrayList<EnumerationItem>();
-
-     		 items = enuResponse.getItems();
-			 Iterator iter = items.iterator();
-			 while (iter.hasNext()) {
-				 Object item = iter.next();
-				 enumItems.add((EnumerationItem)item);
-			 }
+			 List <EnumerationItem> items = enuResponse.getItems();
+             if (items == null) {
+            	 // Server side does not support 'optimize'
+            	 // TODO: fetch the data for the caller.
+             } else {
+				Iterator iter = items.iterator();
+				while (iter.hasNext()) {
+					Object item = iter.next();
+					enumItems.add((EnumerationItem) item);
+				}
+			}
 		}
 		return new EnumerationCtx(enumerationContextId);
 	}
@@ -528,7 +525,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		if (response.getBody().hasFault()) {
 			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
-			throw new FaultException(fault.getFaultString());
+			throw new FaultException(fault);
 		}
 
 		log.info("RESPONSE:\n" + response + "\n");
@@ -541,7 +538,10 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		SOAPBody body = response.getBody();
 
 		if (getItemCount) {
-			itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
+			AttributableNonNegativeInteger countElement = enuResponse.getTotalItemsCountEstimate();
+			if (countElement != null) {
+			    itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
+			}
 		}
 			
 		return new EnumerationResourceStateImpl(body.extractContentAsDocument());
@@ -612,7 +612,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
 			SOAPFault fault = response.getBody().getFault();
-			throw new FaultException(fault.getFaultString());
+			throw new FaultException(fault);
 		}
 		log.info("RESPONSE:\n" + response + "\n");
 	}
@@ -646,7 +646,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
 			SOAPFault fault = response.getBody().getFault();
-			throw new FaultException(fault.getFaultString());
+			throw new FaultException(fault);
 		}
 	}
 
@@ -658,7 +658,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		return reqResList;
 	}
 
-	public long getItemCount() {
+	public Long getItemCount() {
 		return itemCount;
 	}
 

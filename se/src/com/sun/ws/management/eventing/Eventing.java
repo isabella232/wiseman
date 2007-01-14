@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.9 2006-07-08 23:48:21 akhilarora Exp $
+ * $Id: Eventing.java,v 1.10 2007-01-14 17:52:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
 
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.xml.XML;
 import java.io.IOException;
 import java.io.InputStream;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -42,6 +42,9 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscriptionEnd;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
+
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.xml.XML;
 
 public class Eventing extends Addressing {
     
@@ -80,6 +83,7 @@ public class Eventing extends Addressing {
     public static final QName SUBSCRIPTION_END = new QName(NS_URI, "SubscriptionEnd", NS_PREFIX);
     public static final QName IDENTIFIER = new QName(NS_URI, "Identifier", NS_PREFIX);
     public static final QName NOTIFY_TO = new QName(NS_URI, "NotifyTo", NS_PREFIX);
+    public static final QName FILTER = new QName(NS_URI, "Filter", NS_PREFIX);
     
     public static final ObjectFactory FACTORY = new ObjectFactory();
     

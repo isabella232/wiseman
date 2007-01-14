@@ -1,8 +1,6 @@
  package framework.models;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,7 +21,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Result;
@@ -45,7 +42,6 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -154,8 +150,7 @@ public class EnumerationUserHandler extends DefaultHandler implements Enumeratab
 		globalUsersList = new UserType[allUsers.size()];
 		System.arraycopy(allUsers.toArray(), 0, globalUsersList, 0, globalUsersList.length);
 	}
-
-
+     
 	/* (non-Javadoc)
 	 * @see com.hp.management.wsman.handlerimpl.DefaultHandler#enumerate(java.lang.String, com.sun.ws.management.enumeration.Enumeration, com.sun.ws.management.enumeration.Enumeration)
 	 */

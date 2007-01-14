@@ -1,6 +1,7 @@
 package com.sun.ws.management.client;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -17,8 +18,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * This is a ticket which must be used in all future calls to access this
 	 * enumeration.
 	 *
-	 * @param filters and array of filter expressions to be applied to the
-	 * enumeration.
+	 * @param filter a filter expression to be applied against the enumeration.
 	 * @param dialect The dialect to be used in filter expressions. XPATH_DIALECT
 	 * can be used for XPath. 
 	 * @param useEprs  useEprs sets the EnumerateEpr Element causing subsequent pulls to
@@ -30,8 +30,10 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract EnumerationCtx enumerate(String[] filters, String dialect,
-			boolean useEprs,boolean useObjects) throws SOAPException, JAXBException, IOException,
+	public abstract EnumerationCtx enumerate(final String filter, 
+			final Map<String, String> namespaces, final String dialect,
+			final boolean useEprs, final boolean useObjects) 
+	throws SOAPException, JAXBException, IOException,
 			FaultException, DatatypeConfigurationException;
 	
 	/**
@@ -54,8 +56,9 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws XPathExpressionException
 	 * @throws NoMatchFoundException
 	 */
-	public abstract Resource[] pullResources(EnumerationCtx enumerationContext,
-			int maxTime, int maxElements, int maxCharacters, String endpointUrl)
+	public abstract Resource[] pullResources(final EnumerationCtx enumerationContext,
+			final int maxTime, final int maxElements, 
+			final int maxCharacters, final String endpointUrl)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException, XPathExpressionException, NoMatchFoundException;
 
@@ -79,9 +82,9 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract ResourceState pull(EnumerationCtx enumerationContext, int maxTime,
-			int maxElements, int maxCharacters) throws SOAPException,
-			JAXBException, IOException, FaultException,
+	public abstract ResourceState pull(final EnumerationCtx enumerationContext,
+			final int maxTime, final int maxElements, final int maxCharacters)
+			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 
 	/**
@@ -95,7 +98,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
-	public abstract void release(EnumerationCtx enumerationContext)
+	public abstract void release(final EnumerationCtx enumerationContext)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 	
@@ -110,7 +113,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
-	public abstract void renew(EnumerationCtx EnumerationCtx) throws SOAPException,
+	public abstract void renew(final EnumerationCtx EnumerationCtx) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 

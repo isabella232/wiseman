@@ -1,22 +1,19 @@
 
 package wsman.traffic.list;
 
+import java.util.logging.Logger;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.soap.SOAPException;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+
+import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.framework.enumeration.EnumerationHandler;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.HandlerContext;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.Management;
-
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.logging.Logger;
-
-import org.publicworks.light.model.TrafficLightModel;
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
-import javax.xml.parsers.DocumentBuilder;
 
 /**
  * ListHandler deligate is responsible for processing enumeration actions.
@@ -28,56 +25,45 @@ public class ListHandler extends EnumerationHandler
     //Log for logging messages
     private Logger log = Logger.getLogger(ListHandler.class.getName());
 
-    //the namespace map should be populated to handle filter requests
-    private Map<String, String> namespaces = null;
-    
-    //private Object m_clientContext;//TODO initialize this
-
     public ListHandler()
     {
-        super(new ListHandlerEnumerationIterator());
-
-
-        setNamespaces(namespaces);
-        /**
-         * TODO set the client context object
-         * The clientContext is the dataset used in the Enumeration.
-         */
-        // All you have to do in this class is set the context to some object
-        // that the Interator knows how to use.
-        setClientContext( TrafficLightModel.getModel().getList());
+        super();
     }
 
-
+	public EnumerationIterator createIterator(final HandlerContext context,
+			final Enumeration enuRequest, final Enumeration enuResponse) throws SOAPException, JAXBException {
+		
+		EnumerationExtensions ext = new EnumerationExtensions(enuRequest);
+		final boolean includeItem;
+        final boolean includeEPR;
+		final EnumerationModeType mode = ext.getModeType();
+		
+		if (mode == null) {
+			includeItem = true;
+			includeEPR = false;
+		} else {
+			final String modeString = mode.value();
+			if (modeString.equals(EnumerationExtensions.Mode.EnumerateEPR
+					.toString())) {
+				includeItem = false;
+				includeEPR = true;
+			} else if (modeString
+					.equals(EnumerationExtensions.Mode.EnumerateObjectAndEPR
+							.toString())) {
+				includeItem = true;
+				includeEPR = true;
+			} else {
+				throw new InternalErrorFault("Unsupported enumeration mode: "
+						+ modeString);
+			}
+		} 
+		return new ListHandlerEnumerationIterator(context.getURL(), includeEPR);
+	}
+	
      public void EnumerateOp(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse )
      {
          enumerate( context,enuRequest, enuResponse);
      }
-     
-     
-     // If you don't implement one of these then all enumeration requests
-     // will return unsupported. We are enumerating EPRs
-     @Override
-	public void enumerateEprs(Enumeration enuRequest, Enumeration enuResponse) {
-		// Do nothing here. We don't require any setup code for EPR enumeration
-    	// Default behavior is to return unsupported.
-		// super.enumerateEprs(enuRequest, enuResponse);
-	}
-
-// Uncomment these to support these other modes
-//	@Override
-//	public void enumerateObjects(Enumeration enuRequest, Enumeration enuResponse) {
-//		//  Auto-generated method stub
-//		super.enumerateObjects(enuRequest, enuResponse);
-//	}
-//
-//
-//	@Override
-//	public void enumerateObjectsAndEprs(Enumeration enuRequest, Enumeration enuResponse) {
-//		//  Auto-generated method stub
-//		super.enumerateObjectsAndEprs(enuRequest, enuResponse);
-//	}
-
 
 	public void ReleaseOp(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse )
      {
@@ -98,8 +84,4 @@ public class ListHandler extends EnumerationHandler
      {
          renew(context, enuRequest, enuResponse);
      }
-
-
-
-
 }

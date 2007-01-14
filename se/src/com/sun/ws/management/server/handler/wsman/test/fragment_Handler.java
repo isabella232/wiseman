@@ -94,14 +94,7 @@ public class fragment_Handler extends base_Handler {
         if (Transfer.GET_ACTION_URI.equals(action)) {
             response.addNamespaceDeclarations(NAMESPACES);
             response.setAction(Transfer.GET_RESPONSE_URI);
-            
-            if (fragmentHeader == null) {
-                // this is a regular transfer: not a fragment transfer, return the entire doc
-                response.getBody().addDocument(doc);
-            } else {
-                transExtResponse.setFragmentGetResponse(fragmentHeader,
-                        XPath.filter(doc.getDocumentElement(), expression, nsMap));
-            }
+            transExtResponse.setFragmentGetResponse(fragmentHeader, doc);
             return;
         }
         
@@ -115,7 +108,7 @@ public class fragment_Handler extends base_Handler {
             } else {
                 final Node xmlFragmentNode = (Node) transExtRequest.getBody().getChildElements().next();
                 final NodeList childNodes = xmlFragmentNode.getChildNodes();
-                final List<Node> nodeContent = new ArrayList<Node>();
+                final List<Object> nodeContent = new ArrayList<Object>();
                 for (int i = 0; i < childNodes.getLength(); i++) {
                     nodeContent.add(childNodes.item(i));
                 }
@@ -153,7 +146,7 @@ public class fragment_Handler extends base_Handler {
             } else {
                 final Node xmlFragmentNode = (Node) transExtRequest.getBody().getChildElements().next();
                 final NodeList childNodes = xmlFragmentNode.getChildNodes();
-                final List<Node> nodeContent = new ArrayList<Node>();
+                final List<Object> nodeContent = new ArrayList<Object>();
                 for (int i = 0; i < childNodes.getLength(); i++) {
                     nodeContent.add(childNodes.item(i));
                 }

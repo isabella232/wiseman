@@ -13,23 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPathFilterFactory.java,v 1.1 2006-12-05 10:34:44 jfdenise Exp $
+ * $Id: XPathFilterFactory.java,v 1.2 2007-01-14 17:52:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.xml;
 
-import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
-import com.sun.ws.management.eventing.InvalidMessageFault;
-import com.sun.ws.management.server.*;
-import com.sun.ws.management.soap.FaultException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
+
 import org.w3c.dom.Node;
-import javax.xml.xpath.XPath;
+import org.w3c.dom.NodeList;
+
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
+import com.sun.ws.management.eventing.InvalidMessageFault;
+import com.sun.ws.management.server.Filter;
+import com.sun.ws.management.server.FilterFactory;
+import com.sun.ws.management.server.NamespaceMap;
+import com.sun.ws.management.soap.FaultException;
 
 /**
  * XPath based Filtering factory
@@ -51,27 +62,30 @@ public class XPathFilterFactory implements FilterFactory {
     }
     
     class XPathEnumerationFilter implements Filter {
-        private String expression;
+        private final String expression;
         private final XPath xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
-        private NamespaceMap initialNamespaceMap;
+        private final XPathExpression filter;
+        private final NamespaceMap initialNamespaceMap;
         private final Map<String, String> aggregateNamespaces = new HashMap<String, String>();
         private NamespaceMap aggregateNamespaceMap = null;
         
         /** Creates a new instance of XPathEnumerationFilter */
         public XPathEnumerationFilter(List filterExpressions, NamespaceMap namespaces)
         throws FaultException, Exception {
-             if (filterExpressions == null) {
-                throw new InvalidMessageFault("Missing a filter expression");
-            }
+            if (filterExpressions == null) {
+				throw new InvalidMessageFault("Missing a filter expression");
+			}
             final Object expr = filterExpressions.get(0);
             if (expr == null) {
                 throw new InvalidMessageFault("Missing filter expression");
             }
             if (expr instanceof String) {
                 expression = (String) expr;
+            } else if (expr instanceof Node) {
+                expression = ((Node)expr).getTextContent();
             } else {
                 throw new InvalidMessageFault("Invalid filter expression type: " +
-                        expr);
+                        expr.getClass().getName());
             }
             
             initialNamespaceMap = namespaces;
@@ -80,28 +94,31 @@ public class XPathFilterFactory implements FilterFactory {
                 aggregateNamespaceMap = new NamespaceMap(aggregateNamespaces);
                 xpath.setNamespaceContext(aggregateNamespaceMap);
             }
-            
+
             // compile the expression just to see if it's valid
             try {
-                xpath.compile(expression);
+                filter = xpath.compile(expression);
             } catch(XPathExpressionException ex) {
                 throw new Exception("Unable to compile XPath expression : "
                         + expression);
             }
         }
         
-        public boolean evaluate(final Node content,
-                final NamespaceMap... ns) throws XPathExpressionException {
-            NamespaceMap aggregateNamespaceMap = null;
-            if (ns != null && ns.length > 0) {
-                for (final NamespaceMap map : ns) {
-                    aggregateNamespaces.putAll(map.getMap());
-                }
-                aggregateNamespaceMap = new NamespaceMap(aggregateNamespaces);
-            }
-            xpath.setNamespaceContext(aggregateNamespaceMap);
-            final XPathExpression filter = xpath.compile(expression);
-            return (Boolean) filter.evaluate(content, XPathConstants.BOOLEAN);
+        public NodeList evaluate(final Node content) throws CannotProcessFilterFault {
+
+            try {
+				return (NodeList) filter.evaluate(content, XPathConstants.NODESET);
+			} catch (XPathExpressionException e) {
+				throw new CannotProcessFilterFault(CannotProcessFilterFault.CANNOT_PROCESS_FILTER_REASON);
+			}
         }
+
+		public String getDialect() {
+			return com.sun.ws.management.xml.XPath.NS_URI;
+		}
+
+		public Object getExpression() {
+			return expression;
+		}
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_computersystem_Handler.java,v 1.3 2007-01-11 13:12:53 jfdenise Exp $
+ * $Id: cim_computersystem_Handler.java,v 1.4 2007-01-14 17:52:33 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
@@ -73,22 +73,8 @@ public class cim_computersystem_Handler implements Handler {
             
             final TransferExtensions txi = new TransferExtensions(request);
             final SOAPHeaderElement hdr = txi.getFragmentHeader();
-            if (hdr != null) {
-                // this is a fragment transfer, return the resource doc fragment requested
-                final TransferExtensions txo = new TransferExtensions(response);
-                final String expression = hdr.getTextContent();
-                final String dialect = hdr.getAttributeValue(TransferExtensions.DIALECT);
-                if (!BaseSupport.isSupportedDialect(dialect)) {
-                    throw new FragmentDialectNotSupportedFault(BaseSupport.getSupportedDialects());
-                }
-                final NamespaceMap namespaces = new NamespaceMap(resourceDoc);
-                final List<Node> content = XPath.filter(resourceDoc, expression, namespaces);
-                txo.setFragmentGetResponse(hdr, content);
-                return;
-            }
-            
-            // this is a regular transfer, return the entire resource Document
-            response.getBody().addDocument(resourceDoc);
+            final TransferExtensions txo = new TransferExtensions(response);
+            txo.setFragmentGetResponse(hdr, resourceDoc);
         } else {
             throw new ActionNotSupportedFault(action);
         }

@@ -15,8 +15,6 @@ import util.WsManBaseTestSupport;
 
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * 

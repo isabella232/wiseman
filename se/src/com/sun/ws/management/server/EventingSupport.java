@@ -13,13 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.17 2006-12-05 10:35:23 jfdenise Exp $
+ * $Id: EventingSupport.java,v 1.18 2007-01-14 17:52:34 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
+import java.io.IOException;
+import java.util.GregorianCalendar;
+import java.util.UUID;
+
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPException;
+import javax.xml.xpath.XPathExpressionException;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
+
+import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
 import com.sun.ws.management.eventing.EventSourceUnableToProcessFault;
 import com.sun.ws.management.eventing.Eventing;
@@ -27,26 +53,8 @@ import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
-import java.io.IOException;
-import java.util.GregorianCalendar;
-import java.util.UUID;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPException;
-import javax.xml.xpath.XPathExpressionException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
-import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 
 /**
  * A helper class that encapsulates some of the arcane logic to manage
@@ -81,10 +89,9 @@ public final class EventingSupport extends BaseSupport {
         throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         final Subscribe subscribe = request.getSubscribe();
-        final FilterType filterType = subscribe.getFilter();
         Filter filter = null;
         try {
-             filter = initializeFilter(filterType, namespaces == null ? null : namespaces[0]);
+             filter = createFilter(request);
         } catch(FilteringRequestedUnavailableFault fex) {
             throw fex;
         }
@@ -208,7 +215,7 @@ public final class EventingSupport extends BaseSupport {
         // the filter is only applied to the first child in soap body
         final Node content = msg.getBody().getFirstChild();
         try {
-            if (!ctx.evaluate(content, nsMap))
+            if (ctx.evaluate(content) == null)
                 return false;
         }catch(XPathExpressionException ex) {
             throw ex;
@@ -224,4 +231,64 @@ public final class EventingSupport extends BaseSupport {
         HttpClient.sendResponse(msg);
         return true;
     }
+    
+    /**
+     * Create a Filter from an Eventing request
+     * 
+     * @return Returns a Filter object if a filter exists in the request, otherwise null.
+     * @throws CannotProcessFilterFault, FilteringRequestedUnavailableFault, InternalErrorFault 
+     */
+    public static Filter createFilter(final Eventing request) 
+                     throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
+    	try {
+			final EventingExtensions evtxRequest = new EventingExtensions(request);
+			final Subscribe subscribe = evtxRequest.getSubscribe();
+			final org.xmlsoap.schemas.ws._2004._08.eventing.FilterType evtFilter = subscribe.getFilter();
+			final DialectableMixedDataType evtxFilter = evtxRequest.getWsmanFilter();
+
+			if ((evtFilter == null) && (evtxFilter == null)) {
+				return null;
+			}
+			if ((evtFilter != null) && (evtxFilter != null)) {
+				// Both are not allowed. Throw an exception
+				throw new CannotProcessFilterFault(
+						SOAP.createFaultDetail(
+										"Both wse:Filter and wsman:Filter were specified in the request. Only one is allowed.",
+										null, null, null));
+			}
+
+			final NamespaceMap nsMap = getNamespaceMap(request);
+			
+			if (evtxFilter != null)
+				return createFilter(evtxFilter.getDialect(), 
+						evtxFilter.getContent(), nsMap);
+			else
+				return createFilter(evtFilter.getDialect(), 
+						evtFilter.getContent(), nsMap);
+		} catch (SOAPException e) {
+			throw new InternalErrorFault(e.getMessage());
+		} catch (JAXBException e) {
+			throw new InternalErrorFault(e.getMessage());
+		}
+    }
+    
+	private static NamespaceMap getNamespaceMap(final Eventing request) {
+        final NamespaceMap nsMap;
+        final SOAPBody body = request.getBody();
+        
+        NodeList wsmanFilter = body.getElementsByTagNameNS(EventingExtensions.FILTER.getNamespaceURI(),
+        		                                           EventingExtensions.FILTER.getLocalPart());
+    	NodeList evtFilter = body.getElementsByTagNameNS(Eventing.FILTER.getNamespaceURI(),
+                                                         Eventing.FILTER.getLocalPart());
+        if ((wsmanFilter != null) && (wsmanFilter.getLength() > 0)) {
+        	nsMap = new NamespaceMap(wsmanFilter.item(0));
+        } else if ((evtFilter != null) && (evtFilter.getLength() > 0)) {
+        	nsMap = new NamespaceMap(evtFilter.item(0));
+        } else {
+        	NodeList evtElement = body.getElementsByTagNameNS(Eventing.SUBSCRIBE.getNamespaceURI(),
+        			                                           Eventing.SUBSCRIBE.getLocalPart());
+            nsMap = new NamespaceMap(evtElement.item(0));
+        }
+        return nsMap;
+	}
 }

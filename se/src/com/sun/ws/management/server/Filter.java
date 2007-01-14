@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Filter.java,v 1.1 2006-12-05 10:34:44 jfdenise Exp $
+ * $Id: Filter.java,v 1.2 2007-01-14 17:52:34 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.sun.ws.management.soap.FaultException;
 
 /**
  * Filtering support interface
@@ -26,13 +29,37 @@ import org.w3c.dom.Node;
  */
 public interface Filter {
     /**
-     * Filter evaluation
+     * Filter evaluation of a Node. The filter expression
+     * is applied against the Node. If the Filter supports
+     * projections, i.e. <code>SELECT Lastname, Age FROM User</code>,
+     * the List returned will contain the selected Nodes, otherwise
+     * the entire Node that matches the filter portion of the
+     * expression, e.g.
+     * <code>WHERE Age = '30'</code>, will be returned.
+     * 
      * @param content A node to apply filter on.
-     * @param ns XML Namespaces Map
-     * @throws java.lang.Exception In case filtering fail.
-     * @return true means that the content is filtered in by this filter. 
-     * false that the content is filtered out by this filter 
+     * @throws FaultException In case filtering encounters an error in processing.
+     * @return a List of Nodes that match the filter. If there
+     * is no match an empty List is returned. 
+     *  
      */
-    public boolean evaluate(final Node content, NamespaceMap... ns) 
-    throws Exception;
+    public NodeList evaluate(final Node content) 
+    throws FaultException;
+    
+    /**
+     * This method returns the dialect associated with this filter, e.g.
+     * the XPath 1.0 dialect URI.
+     * 
+     * @return The dialect associated with this filter.
+     */
+    public String getDialect();
+    
+    /**
+     * This method returns an Object with the expression for this filter.
+     * The object returned is Filter specific. For the default XPath 1.0 filter
+     * the object type will be String.
+     * 
+     * @return the expression object.
+     */
+    public Object getExpression();
 }

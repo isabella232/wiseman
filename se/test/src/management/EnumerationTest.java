@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.24 2006-12-21 13:03:46 denis_rachal Exp $
+ * $Id: EnumerationTest.java,v 1.25 2007-01-14 17:53:13 denis_rachal Exp $
  */
 
 package management;
@@ -21,13 +21,13 @@ package management;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -44,6 +44,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.server.handler.wsman.test.enumeration.filter.custom_filter_Handler;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
@@ -175,10 +176,13 @@ public class EnumerationTest extends TestBase {
     }
     
     public void testEnumerate() throws Exception {
-        enumerateTest(null);
-        enumerateTest("/java:java.specification.version");
-        enumerateTest(null, custom_filter_Handler.TEST_CUSTOM_FILTER, 
-                "wsman:test/enumeration/filter/custom_filter");
+        enumerateTest(null, null);
+        HashMap<String, String> map = new HashMap<String, String>(1);
+        map.put("java", "https://wiseman.dev.java.net/java");
+        NamespaceMap filterNsMap = new NamespaceMap(map);
+        enumerateTest("/java:java.specification.version", filterNsMap);
+        enumerateTest(null, custom_filter_Handler.TEST_CUSTOM_FILTER_DIALECT, 
+                null, "wsman:test/enumeration/filter/custom_filter");
     }
         
     public void testRelease() throws Exception {
@@ -247,12 +251,12 @@ public class EnumerationTest extends TestBase {
         assertEquals(InvalidEnumerationContextFault.INVALID_ENUM_CONTEXT_REASON, fault.getReason().getText().get(0).getValue());
     }
     
-    private void enumerateTest(String filter) throws Exception {
-        enumerateTest(filter, XPath.NS_URI, "wsman:test/java/system/properties");
+    private void enumerateTest(String filter, final NamespaceMap filterNsMap) throws Exception {
+        enumerateTest(filter, XPath.NS_URI, filterNsMap, "wsman:test/java/system/properties");
     }
     
     private void enumerateTest(final Object filter, 
-            final String dialect, final String RESOURCE) throws Exception {
+            final String dialect, final NamespaceMap filterNsMap, final String RESOURCE) throws Exception {
         
         final Enumeration enu = new Enumeration();
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
@@ -264,6 +268,9 @@ public class EnumerationTest extends TestBase {
         filterType.getContent().add(filter);
         enu.setEnumerate(null, factory.newDuration(60000).toString(),
                 filter == null ? null : filterType);
+        // TODO: Set this in the filter header.
+        if ((filter != null) && (filterNsMap != null))
+             enu.addNamespaceDeclarations(filterNsMap.getMap()); 
         
         final Management mgmt = new Management(enu);
         mgmt.setTo(DESTINATION);

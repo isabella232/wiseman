@@ -2,7 +2,7 @@ package com.sun.ws.management.server.handler.wsman.auth;
 
 import com.sun.ws.management.framework.handlers.DelegatingHandler;
 
-import framework.models.EnumerationUserHandler;
+import framework.models.UserEnumerationHandler;
 
 /**
  * This Handler Deligates to The EnumerationUserHandler Class
@@ -11,7 +11,7 @@ import framework.models.EnumerationUserHandler;
  */
 public class userenum_Handler extends DelegatingHandler {
     public userenum_Handler() {
-        super(new EnumerationUserHandler());
+        super(new UserEnumerationHandler());
     }
 }
 

@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: NamespaceMap.java,v 1.5 2006-07-19 22:41:37 akhilarora Exp $
+ * $Id: NamespaceMap.java,v 1.6 2007-01-14 17:52:34 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Message;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.soap.SOAPEnvelope;
+
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+
+import com.sun.ws.management.Message;
 
 public final class NamespaceMap implements NamespaceContext {
     
@@ -54,7 +56,8 @@ public final class NamespaceMap implements NamespaceContext {
         }
     }
     
-    // walk the document tree to extract all namespace declarations,
+    // walk the document tree from this point to the top of the document
+    // to extract all namespace declarations active with this node,
     // combining namespaces from (optional) supplied maps
     public NamespaceMap(final Node node, final NamespaceMap... nsMaps) {
         this(nsMaps);
@@ -88,7 +91,9 @@ public final class NamespaceMap implements NamespaceContext {
         switch (node.getNodeType()) {
             case Node.ATTRIBUTE_NODE:
                 if ("xmlns".equals(prefix) && "http://www.w3.org/2000/xmlns/".equals(uri)) {
-                    namespaces.put(node.getLocalName(), node.getNodeValue());
+                    // Only add it if it does not already exist
+                	if (namespaces.get(node.getLocalName()) == null)
+                        namespaces.put(node.getLocalName(), node.getNodeValue());
                 }
                 break;
                 
@@ -96,12 +101,9 @@ public final class NamespaceMap implements NamespaceContext {
             case Node.DOCUMENT_FRAGMENT_NODE:
             case Node.ELEMENT_NODE:
                 if (prefix != null) {
-                    namespaces.put(prefix, uri);
-                }
-                
-                final NodeList children = node.getChildNodes();
-                for (int i = children.getLength(); i >= 0; i--) {
-                    scanNodeRecursive(children.item(i));
+                	// Only add it if it does not already exist
+                	if (namespaces.get(prefix) == null)
+                        namespaces.put(prefix, uri);
                 }
                 
                 final NamedNodeMap attributes = node.getAttributes();
@@ -110,6 +112,9 @@ public final class NamespaceMap implements NamespaceContext {
                         scanNodeRecursive(attributes.item(i));
                     }
                 }
+                
+                final Node parent = node.getParentNode();
+                scanNodeRecursive(parent);
                 break;
         }
     }

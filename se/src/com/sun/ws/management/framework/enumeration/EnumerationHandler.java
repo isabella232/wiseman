@@ -13,221 +13,108 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationHandler.java,v 1.6 2006-10-16 14:50:09 obiwan314 Exp $
+ * $Id: EnumerationHandler.java,v 1.7 2007-01-14 17:52:37 denis_rachal Exp $
  *
  */
 package com.sun.ws.management.framework.enumeration;
 
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
-
 import com.sun.ws.management.InternalErrorFault;
-import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.transfer.TransferSupport;
-import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.HandlerContext;
-import com.sun.ws.management.server.NamespaceMap;
+import com.sun.ws.management.soap.FaultException;
 
 /**
  *
  */
 public abstract class EnumerationHandler extends TransferSupport implements Enumeratable
 {
-    /**
-     * namespaces A map of namespace prefixes to namespace URIs used in
-     * items to be enumerated. The prefix is the key and the URI is the value in the Map.
-     * The namespaces map is used during filter evaluation.
-     */
-    private NamespaceMap namespaces;
+	private static final Logger LOG = Logger.getLogger(EnumerationHandler.class
+			.getName());
 
-    /**
-     * The implemented Iterator which can traverse the "dataset"
-     */
-    public EnumerationIterator enumIterator = null;
+	protected EnumerationHandler() {
+	}
 
-    /**
-     * The "dataset" which the Enumeration will traverse
-     */
-    private Object clientContext = null;
-
-    //private static final QName GETSTATUS = new QName(Enumeration.NS_URI,"GetStatus",Enumeration.NS_PREFIX);
-    private static final Logger LOG = Logger.getLogger(EnumerationHandler.class.getName());
-
-    protected EnumerationHandler(EnumerationIterator enumIterator)
-    {
-        this.enumIterator = enumIterator;
-    }
-
-    public void release(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
-    {
-        try
-        {
-            EnumerationSupport.release(enuRequest,enuResponse);
-        }
-        catch (SOAPException e)
-        {
-            LOG.log(Level.SEVERE, "",e);
-            throw new InternalErrorFault();
-        }
-        catch (JAXBException e)
-        {
-            LOG.log(Level.SEVERE, "",e);
-            throw new InternalErrorFault();
-        }
-    }
-
-    public void pull(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
-    {
-        try
-        {
-            EnumerationSupport.pull(enuRequest,enuResponse);
-        }
-        catch (SOAPException e)
-        {
-            LOG.log(Level.SEVERE, "",e);
-            throw new InternalErrorFault();
-        }
-        catch (JAXBException e)
-        {
-            LOG.log(Level.SEVERE, "",e);
-            throw new InternalErrorFault();
-        }
-    }
-
-    private EnumerationModeType getEnumerateModeType( Enumeration enuRequest ) throws JAXBException, SOAPException {
-       JAXBElement enumerateModeType = null;
-       List<Object> enuModeList = null;
-
-       enuModeList = enuRequest.getEnumerate().getAny();
-
-       if(enuModeList.size() > 0) {
-          enumerateModeType = (JAXBElement) enuModeList.get(0);
-       }
-
-       return (EnumerationModeType) (enumerateModeType != null ? enumerateModeType.getValue() : null);
-    }
-
-    public void enumerateObjects(Enumeration enuRequest, Enumeration enuResponse){
-    }
-
-    public void enumerateEprs(Enumeration enuRequest, Enumeration enuResponse) {
-       throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.INVALID_VALUES);
-    }
-
-    public void enumerateObjectsAndEprs(Enumeration enuRequest, Enumeration enuResponse) {
-       throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.INVALID_VALUES);
-    }
-
-    public void enumerate(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse) {
-       EnumerationModeType enuMode = null;
-
-       try{
-          enuMode = getEnumerateModeType( enuRequest );
-       }
-       catch( JAXBException e ){
-          LOG.log(Level.SEVERE, "",e);
-          throw new InternalErrorFault();
-       }
-       catch( SOAPException e ){
-          LOG.log(Level.SEVERE, "",e);
-          throw new InternalErrorFault();
-       }
-
-       if(enuMode == EnumerationModeType.ENUMERATE_EPR) {
-          enumerateEprs(enuRequest, enuResponse);
-       }
-       else if(enuMode == EnumerationModeType.ENUMERATE_OBJECT_AND_EPR) {
-          enumerateObjectsAndEprs(enuRequest, enuResponse);
-       }
-       else {
-          enumerateObjects(enuRequest, enuResponse);
-       }
-
-       try
-       {
-          EnumerationSupport.enumerate(enuRequest,enuResponse, enumIterator,
-                                       clientContext, namespaces);
-       }
-       catch (DatatypeConfigurationException e)
-       {
-          LOG.log(Level.SEVERE, "",e);
-          throw new InternalErrorFault();
-       }
-       catch (SOAPException e)
-       {
-          LOG.log(Level.SEVERE, "",e);
-          throw new InternalErrorFault();
-       }
-       catch (JAXBException e)
-       {
-          LOG.log(Level.SEVERE, "",e);
-          throw new InternalErrorFault();
-       }
-    }
-
-
-    public void getStatus(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
-    {
-        throw new ActionNotSupportedFault();
-        //GetStatusResponse getStatusResponse = Enumeration.FACTORY.createGetStatusResponse();
-        //GetStatus getStatusRequest = getGetStatusRequest(enuRequest);
-        //getStatusRequest.getEnumerationContext()
-
-        //com.sun.ws.management.server.EnumerationSupport.
-        //getStatusResponse.setExpires();
-        //Enumeration.FACTORY.
-        //todo need a hook into their BaseSupport...BaseSupport is package scoped and EnumerationSupport is final
-        //todo may need to make a class in the same package to access to some of their methods and the context_map
-    }
-
-    /*private GetStatus getGetStatusRequest(Enumeration enuRequest)
-    {
-        try
-        {
-            HpSOAP soap = new HpSOAP(enuRequest);
-            final Object value = soap.unbind(soap.getBody(), GETSTATUS);
-            return value == null ? null : (GetStatus) value;    //todo does this work????
-        }
-        catch (SOAPException e)
-        {
-            LOG.log(Level.SEVERE, "",e);
-            throw new InternalErrorFault();
-        }
-        catch (JAXBException e)
-        {
-            LOG.log(Level.SEVERE, "",e);
-            throw new InternalErrorFault();
-        }
-    }*/
-
-    public void renew(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse)
-    {
-        throw new ActionNotSupportedFault();
-    }
-    
-    public void setNamespaces(Map<String, String> namespaces)
-    {
-    	if(namespaces!=null)
-    		this.namespaces = new NamespaceMap(namespaces);
-    }
-
-    public void setClientContext(Object clientContext)
-    {
-        this.clientContext = clientContext;
-    }
-    
- 
+	// WS-Enumeration operations follow
 	
+	public void release(HandlerContext context, Enumeration enuRequest,
+			Enumeration enuResponse) {
+
+		try {
+			EnumerationSupport.release(enuRequest, enuResponse);
+		} catch (SOAPException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw new InternalErrorFault(e.getMessage());
+		} catch (JAXBException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw new InternalErrorFault(e.getMessage());
+		} catch (FaultException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw e;
+		} catch (Throwable t) {
+			LOG.log(Level.SEVERE, "", t);
+			throw new InternalErrorFault(t.getMessage());
+		}
+	}
+
+	public void pull(HandlerContext context, Enumeration enuRequest,
+			Enumeration enuResponse) {
+		try {
+			EnumerationSupport.pull(enuRequest, enuResponse);
+		} catch (SOAPException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw new InternalErrorFault(e.getMessage());
+		} catch (JAXBException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw new InternalErrorFault(e.getMessage());
+		} catch (FaultException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw e;
+		} catch (Throwable t) {
+			LOG.log(Level.SEVERE, "", t);
+			throw new InternalErrorFault(t.getMessage());
+		}
+	}
+
+	public void enumerate(HandlerContext context, Enumeration enuRequest,
+			Enumeration enuResponse) {
+
+		try {
+			EnumerationSupport.enumerate(context, enuRequest, enuResponse);
+		} catch (DatatypeConfigurationException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw new InternalErrorFault(e.getMessage());
+		} catch (SOAPException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw new InternalErrorFault(e.getMessage());
+		} catch (JAXBException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw new InternalErrorFault(e.getMessage());
+		} catch (FaultException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw e;
+		} catch (Throwable t) {
+			LOG.log(Level.SEVERE, "", t);
+			throw new InternalErrorFault(t.getMessage());
+		}
+	}
+
+	public void getStatus(HandlerContext context, Enumeration enuRequest,
+			Enumeration enuResponse) {
+		throw new ActionNotSupportedFault();
+	}
+
+	public void renew(HandlerContext context, Enumeration enuRequest,
+			Enumeration enuResponse) {
+		throw new ActionNotSupportedFault();
+	}
 }

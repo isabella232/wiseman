@@ -92,7 +92,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(-1);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, null, null, false,false);
 		ResourceState pullResult = numericSensorEnum.pull(contextA, 10000, 1, -1);
 		String ccN=pullResult.getValueText("//*[local-name()=\"CreationClassName\"]");
 		String N=pullResult.getValueText("//*[local-name()=\"Name\"]");
@@ -346,7 +346,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(maxEnvelopeSize);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, null, null, false,false);
 		int maxElements = 1;
 		int maxCharacters = -1;
 		boolean moreResults = true;
@@ -413,7 +413,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		Resource numericSensorEnum = numericSensorEnumSet[0];
 		numericSensorEnum.setMaxEnvelopeSize(maxEnvelopeSize);
 		numericSensorEnum.setMessageTimeout(operationTimeout);
-		EnumerationCtx contextA = numericSensorEnum.enumerate(null, numericSensorEnum.XPATH_DIALECT, false,false);
+		EnumerationCtx contextA = numericSensorEnum.enumerate(null, null, null, false,false);
 		int maxElements = 1;
 		int maxCharacters = -1;
 		boolean moreResults = true;

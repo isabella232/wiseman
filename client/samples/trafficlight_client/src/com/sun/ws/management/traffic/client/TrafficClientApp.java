@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -121,9 +122,10 @@ public class TrafficClientApp extends javax.swing.JFrame {
 			}
 
 			EnumerableResource enumResource = (EnumerableResource) resources[0];
-			String[] filters=null;
-			boolean useEprs=true;
-			 EnumerationCtx context = enumResource.enumerate(filters,Resource.XPATH_DIALECT,useEprs,false);
+			final String filter=null;
+			final Map<String,String> namespaces = null;
+			final boolean useEprs=true;
+			 EnumerationCtx context = enumResource.enumerate(filter,namespaces,Resource.XPATH_DIALECT,useEprs,false);
 			int timeout = 30000;
 			int numberOfRecords=5;
 			

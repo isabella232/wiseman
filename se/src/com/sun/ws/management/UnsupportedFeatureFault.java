@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: UnsupportedFeatureFault.java,v 1.2 2006-05-01 23:32:20 akhilarora Exp $
+ * $Id: UnsupportedFeatureFault.java,v 1.3 2007-01-14 17:52:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management;
@@ -34,6 +34,7 @@ public class UnsupportedFeatureFault extends SenderFault {
         AUTHORIZATION_MODE("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/AuthorizationMode"),
         ADDRESSING_MODE("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/AddressingMode"),
         ACK("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/Ack"),
+        ENUMERATION_MODE("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/EnumerationMode"),
         OPERATION_TIMEOUT("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/OperationTimeout"),
         LOCALE("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/Locale"),
         EXPIRATION_TIME("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/ExpirationTime"),

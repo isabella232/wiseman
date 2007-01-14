@@ -23,6 +23,7 @@ import javax.xml.soap.SOAPFault;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
@@ -32,7 +33,6 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.impl.JAXBResourceImpl;
@@ -56,7 +56,7 @@ public class ResourceFactory {
 	
     private static Logger log = Logger.getLogger(ResourceFactory.class.getName());
 
-
+    /*
     {
 		try {
 			Message.initialize();
@@ -64,6 +64,7 @@ public class ResourceFactory {
 			log.severe("Failed to initalize wiseman with error: "+e.getMessage());
 		}
     }
+    */
 	/**
 	 * You should never create a factory. Access it statically.
 	 */
@@ -267,25 +268,32 @@ public class ResourceFactory {
 				}
 				mgmt.setSelectors(collection);
 	        }
-	        
-			//Add the payload: plug the content passed in into the document
-			if(content !=null){
-				// Now take the created DOM and append it to the SOAP body
-				mgmt.getBody().addDocument(content);				
-			}
+
+		// Add the payload: plug the content passed in into the document
+		if (content != null) {
+			// Now take the created DOM and wrap it into an Xml Fragment
+			final MixedDataType mixedDataType = Management.FACTORY
+					.createMixedDataType();
+			mixedDataType.getContent().add(content.getDocumentElement());
+			// create the XmlFragmentElement
+			JAXBElement<MixedDataType> fragment = Management.FACTORY
+					.createXmlFragment(mixedDataType);
+			// Add the Fragment to the body
+			xf.getXmlBinding().marshal(fragment, mgmt.getBody());
+		}
 			
 			log.info("REQUEST:\n"+mgmt+"\n");
 			//Send the request
 			final Addressing response = HttpClient.sendRequest(mgmt);
 			
+			//Process the response to extract useful information.
+			log.info("RESPONSE:\n"+response+"\n");
+
 			//Check for fault during message generation
 			if (response.getBody().hasFault()) {
 				SOAPFault fault = response.getBody().getFault();
 				throw new FaultException(fault.getFaultString());
 			}
-			
-			//Process the response to extract useful information.
-			log.info("RESPONSE:\n"+response+"\n");
 			
 			//parse response and retrieve contents.
 			// Iterate through the create response to obtain the selectors

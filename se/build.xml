@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.43 2007-01-11 13:12:54 jfdenise Exp $
+ $Id: build.xml,v 1.44 2007-01-14 17:55:09 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -72,6 +72,8 @@
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_09/transfer/*.java" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="management.xsd" />
             <produces dir="${gen.src.dir}" includes="org/dmtf/schemas/wbem/wsman/_1/wsman/*.java" />
+            <schema dir="${test.dir}/etc/xsd" includes="user.xsd" />
+            <produces dir="${gen.src.dir}" includes="com/hp/examples/ws/wsman/user/*.java" />
             <schema dir="${test.dir}/etc/xsd" includes="6-test-foo.xsd" />
             <produces dir="${gen.src.dir}" includes="foo/test/*.java" />
         </xjc>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.10 2006-12-21 13:03:45 denis_rachal Exp $
+ * $Id: EnumerationExtensions.java,v 1.11 2007-01-14 17:52:32 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -22,7 +22,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -30,6 +33,8 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
@@ -51,6 +56,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
 
 public class EnumerationExtensions extends Enumeration {
@@ -401,8 +407,7 @@ public class EnumerationExtensions extends Enumeration {
 				                                  FILTER);
 	}
 	
-
-	public Mode getMode() throws JAXBException, SOAPException {
+	public EnumerationModeType getModeType() throws JAXBException, SOAPException {
 		Enumerate enumerate = getEnumerate();
 		
 		if (enumerate == null) {
@@ -411,6 +416,57 @@ public class EnumerationExtensions extends Enumeration {
 		EnumerationModeType type =  (EnumerationModeType) extract(enumerate.getAny(), 
 				                                                  EnumerationModeType.class, 
 		                                                          ENUMERATION_MODE);
+		return (type == null) ? null : type;
+	}
+	
+	public Mode getMode() throws JAXBException, SOAPException {
+		Enumerate enumerate = getEnumerate();
+		
+		if (enumerate == null) {
+			return null;
+		}
+		EnumerationModeType type =  getModeType();
 		return (type == null) ? null : Mode.valueOf(type.value());
+	}
+
+	public boolean getOptimize() throws JAXBException, SOAPException {
+		Enumerate enumerate = getEnumerate();
+		
+		if (enumerate == null) {
+			return false;
+		}
+		AttributableEmpty optimize =  (AttributableEmpty) extract(enumerate.getAny(), 
+                                               AttributableEmpty.class, 
+				                               OPTIMIZE_ENUMERATION);
+		return (optimize == null) ? false : true;
+	}
+
+	public int getMaxElements() throws JAXBException, SOAPException {
+		Enumerate enumerate = getEnumerate();
+		
+		if (enumerate == null) {
+			return 1;
+		}
+		AttributablePositiveInteger max =  (AttributablePositiveInteger) extract(enumerate.getAny(), 
+				AttributablePositiveInteger.class, 
+				MAX_ELEMENTS);
+
+		return (max == null) ? 1 : max.getValue().intValue();
+	}
+
+	public void setFilterNamespaces(Map<String, String> namespaces)
+			throws SOAPException {
+		SOAPBody body = getBody();
+
+		// Add the namespaces to the body.
+		if (namespaces != null) {
+			Set<String> prefixes = namespaces.keySet();
+			Iterator prefixIterator = prefixes.iterator();
+			while (prefixIterator.hasNext()) {
+				String prefix = (String) prefixIterator.next();
+				String uri = namespaces.get(prefix);
+				body.addNamespaceDeclaration(prefix, uri);
+			}
+		}
 	}
 }

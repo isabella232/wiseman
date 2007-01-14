@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensions.java,v 1.4 2006-05-01 23:32:22 akhilarora Exp $
+ * $Id: EventingExtensions.java,v 1.5 2007-01-14 17:52:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -24,6 +24,8 @@ import com.sun.ws.management.enumeration.Enumeration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.List;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
@@ -33,10 +35,13 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableAny;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.ConnectionRetryType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
@@ -70,6 +75,7 @@ public class EventingExtensions extends Eventing {
     public static final QName ACTION = new QName(Management.NS_URI, "Action", Management.NS_PREFIX);
     public static final QName ACK_REQUESTED = new QName(Management.NS_URI, "AckRequested", Management.NS_PREFIX);
     public static final QName DROPPED_EVENTS = new QName(Management.NS_URI, "DroppedEvents", Management.NS_PREFIX);
+    public static final QName FILTER = new QName(Management.NS_URI, "Filter", Management.NS_PREFIX);
     
     public static final ObjectFactory FACTORY = new ObjectFactory();
     
@@ -162,5 +168,30 @@ public class EventingExtensions extends Eventing {
         final JAXBElement<EnumerationContextType> contextTypeElement = 
                 new JAXBElement<EnumerationContextType>(Enumeration.ENUMERATION_CONTEXT, EnumerationContextType.class, null, contextType);
         super.setSubscribeResponse(mgr, expires, contextTypeElement);
+    }
+    
+
+	public DialectableMixedDataType getWsmanFilter() throws JAXBException, SOAPException {
+		Subscribe subscribe = getSubscribe();
+		
+		if (subscribe == null) {
+			return null;
+		}
+		return (DialectableMixedDataType) extract(subscribe.getAny(), 
+				                                  DialectableMixedDataType.class, 
+				                                  FILTER);
+	}
+	
+    private static Object extract(final List<Object> anyList, final Class classType, final QName eltName) {
+        for (final Object any : anyList) {
+            if (any instanceof JAXBElement) {
+                final JAXBElement elt = (JAXBElement) any;
+                if ((classType != null && classType.equals(elt.getDeclaredType())) &&
+                        (eltName != null && eltName.equals(elt.getName()))) {
+                    return elt.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

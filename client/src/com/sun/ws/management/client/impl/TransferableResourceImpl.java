@@ -154,7 +154,7 @@ public class TransferableResourceImpl implements TransferableResource {
 	 */
 	private void initJAXB() throws SOAPException, JAXBException {
 		//initialize JAXB bindings
-		Message.initialize();
+		// Message.initialize();
 
 	}
 

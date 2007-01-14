@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.11 2007-01-11 13:12:55 jfdenise Exp $
+ * $Id: BaseSupport.java,v 1.12 2007-01-14 17:52:34 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -26,17 +26,20 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import com.sun.ws.management.Management;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
@@ -49,7 +52,7 @@ public class BaseSupport {
     protected static final String UNINITIALIZED = "uninitialized";
     protected static DatatypeFactory datatypeFactory = null;
     
-    private static final Map<UUID, BaseContext> contextMap = new HashMap<UUID, BaseContext>();
+    public static final Map<UUID, BaseContext> contextMap = new ConcurrentHashMap<UUID, BaseContext>();
     
     protected static final TimerTask ttask = new TimerTask() {
         public void run() {
@@ -60,9 +63,12 @@ public class BaseSupport {
             for (int i = 0; i < keys.length; i++) {
                 final UUID key = keys[i];
                 final BaseContext context = contextMap.get(key);
-                if (context.isExpired(nowXml)) {
-                    contextMap.remove(key);
-                }
+                if (context != null) {
+					if (context.isExpired(nowXml)) {
+						context.setDeleted();
+						contextMap.remove(key);
+					}
+				}
             }
         }
     };
@@ -99,7 +105,7 @@ public class BaseSupport {
      * @param dialect Filter dialect
      * @param filterFactory The Filter Factory that creates <code>Filter</code> for requests
      * relying on the passed dialect.
-     *
+     * 
      * @throws java.lang.Exception If the filter is already supported.
      */
     public synchronized static void addSupportedFilterDialect(String dialect,
@@ -130,7 +136,7 @@ public class BaseSupport {
         return keys.toArray(dialects);
     }
     
-    protected synchronized static Filter newFilter(String dialect,
+    protected synchronized static Filter newFilter(String dialect, 
             List content,
             NamespaceMap nsMap) throws Exception {
         if(dialect == null)
@@ -141,39 +147,9 @@ public class BaseSupport {
                     getSupportedDialects());
         return factory.newFilter(content, nsMap);
     }
-    
-    /**
-     * Eventing Filter initialization
-     */
-    protected static Filter initializeFilter(org.xmlsoap.schemas.ws._2004._08.eventing.FilterType filterType,
-            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
-        if(filterType == null) return null;
-        return initializeFilter(filterType.getDialect(),
-                filterType.getContent(), nsMap);
-    }
-    
-    /**
-     * Enumeration Filter initialization
-     */
-    protected static Filter initializeFilter(FilterType filterType,
-            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
-        if(filterType == null) return null;
-        return initializeFilter(filterType.getDialect(),
-                filterType.getContent(), nsMap);
-    }
-    
-    /**
-     * WS Management Enumeration Filter initialization
-     */
-    protected static Filter initializeFilter(DialectableMixedDataType filterType, 
-            NamespaceMap nsMap)throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
-        if(filterType == null) return null;
-        return initializeFilter(filterType.getDialect(), 
-                filterType.getContent(), nsMap);
-    }
-    
-    private static Filter initializeFilter(String dialect, List content,
-            NamespaceMap nsMap)throws CannotProcessFilterFault,
+        
+    public static Filter createFilter(String dialect, List content,
+            NamespaceMap nsMap)throws CannotProcessFilterFault, 
             FilteringRequestedUnavailableFault {
         try {
             return newFilter(dialect, content, nsMap);
@@ -183,6 +159,44 @@ public class BaseSupport {
             throw new CannotProcessFilterFault(ex.getMessage());
         }
     }
+    
+
+    /**
+     * Create a JAXBElement object that is a wsman:XmlFragment from a list
+     * of XML Nodes.
+     * 
+     * @param nodes Nodes to be inserted into the XmlFragment element.
+     * @return XmlFragment JAXBElement object.
+     */
+	public static JAXBElement<MixedDataType> createXmlFragment(List<Node> nodes) {
+		final MixedDataType mixedDataType = Management.FACTORY
+				.createMixedDataType();
+		for (int j = 0; j < nodes.size(); j++) {
+			mixedDataType.getContent().add(
+					nodes.get(j));
+		}
+		// create the XmlFragmentElement
+		JAXBElement<MixedDataType> fragment = Management.FACTORY
+				.createXmlFragment(mixedDataType);
+		return fragment;
+	}
+	
+    /**
+     * Create a JAXBElement object that is a wsman:XmlFragment from a NodeList
+     * 
+     * @param nodes Nodes to be inserted into the XmlFragment element.
+     * @return XmlFragment JAXBElement object.
+     */
+	public static JAXBElement<MixedDataType> createXmlFragment(NodeList nodes) {
+		final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+		for (int j = 0; j < nodes.getLength(); j++) {
+			mixedDataType.getContent().add(nodes.item(j));
+		}
+		// create the XmlFragmentElement
+		JAXBElement<MixedDataType> fragment = Management.FACTORY
+				.createXmlFragment(mixedDataType);
+		return fragment;
+	}
     
     protected static XMLGregorianCalendar initExpiration(final String expires)
     throws InvalidExpirationTimeFault {
@@ -234,7 +248,11 @@ public class BaseSupport {
     }
     
     protected static BaseContext removeContext(final Object context) {
+    	BaseContext ctx = contextMap.get(context);
+    	if (ctx == null)
+    		return null;
+    	// Set to deleted in case another thread still has a reference to this context.
+    	ctx.setDeleted();
         return contextMap.remove(context);
     }
 }
-
