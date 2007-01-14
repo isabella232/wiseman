@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
@@ -44,6 +45,7 @@ import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
+import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
@@ -86,55 +88,96 @@ public class UserHandler extends TransferSupport {
     public void create(HandlerContext context,Management request, Management response) {
 		// create a new user class and add it to the list
 		UserModelObject userObject = new UserModelObject();
-		
+
 		// Init the user by transfering the fields from
-		// the JAXB user to the 
+		// the JAXB user to the
 		SOAPBody body = request.getBody();
 
-		//Normal processing to create a new UserObject
+		// Normal processing to create a new UserObject
 		Node userChildNode = body.getFirstChild();
-		UserType user=null;
-		
-		//Determine if this is a fragmentRequest
-		  SOAPElement[] allHeaders =null;
-		  String xpathExp ="";
-		  SOAPElement fragmentHeader = null;
-		  Set<SelectorType> selectors = null;
-		  
-		 try{ 
-		  allHeaders= request.getHeaders();
+		UserType user = null;
 
-		  //Locate Fragment header
-		  fragmentHeader =locateFragmentHeader(allHeaders);
-		  //Extract the XPath component
-		  xpathExp = extractFragmentMessage(fragmentHeader);
+		// Determine if this is a fragmentRequest
+		SOAPElement[] allHeaders = null;
+		String xpathExp = "";
+		SOAPElement fragmentHeader = null;
+		Set<SelectorType> selectors = null;
 
-		 }catch(SOAPException sexc){
-			 sexc.printStackTrace();
-		 }
-		 
-	  //Processing for FragmentCreate request
-	  if(fragmentHeader!=null){
-		  //retrieve the userModelObject instance to modify
-		 userObject = findInstance(request);
-		 //now retrieve the server specific content to replace based on fragmentExp
-		 String fragBodyUpdate = xmlToString(userChildNode);
-		 //extract content and set that value in the userObject
-		 int contentsIndex = fragBodyUpdate.indexOf("</ns8:age>");
-		 if (contentsIndex < 0) {
-			 throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
-		 }
-		 String newValue = fragBodyUpdate.substring(contentsIndex-2,contentsIndex);
-		 userObject.setAge(Integer.valueOf(newValue));
+		try {
+			allHeaders = request.getHeaders();
 
-		 //Add the fragment response header
-		 try {
-			response.getHeader().addChildElement(fragmentHeader);
-		} catch (SOAPException e) {
-			e.printStackTrace();
+			// Locate Fragment header
+			fragmentHeader = locateFragmentHeader(allHeaders);
+			// Extract the XPath component
+			xpathExp = extractFragmentMessage(fragmentHeader);
+
+		} catch (SOAPException sexc) {
+			sexc.printStackTrace();
 		}
+		 
+	  // Processing for FragmentCreate request
+	  if (fragmentHeader != null) {
+			// retrieve the userModelObject instance to modify
+			userObject = findInstance(request);
 
-	  }
+			String newValue = null;
+			// now retrieve the server specific content to replace based on
+			// fragmentExp
+			try {
+				TransferExtensions transfer = new TransferExtensions(request);
+
+				JAXBElement<MixedDataType> resource = (JAXBElement<MixedDataType>) transfer
+						.getResource(transfer.XML_FRAGMENT);
+
+				if (resource == null) {
+					throw new InvalidRepresentationFault(
+							InvalidRepresentationFault.Detail.INVALID_VALUES);
+				}
+				List<Object> nodes = resource.getValue().getContent();
+				if (nodes == null) {
+					throw new InvalidRepresentationFault(
+							InvalidRepresentationFault.Detail.INVALID_VALUES);
+				}
+				Iterator iter = nodes.iterator();
+				while (iter.hasNext()) {
+					Object obj = iter.next();
+					if (obj instanceof Element) {
+						Element elem = (Element) obj;
+						if (elem.getLocalName().equals("firstname")) {
+							userObject.setFirstname(elem.getNodeValue());
+						} else if (elem.getLocalName().equals("lastname")) {
+							userObject.setLastname(elem.getNodeValue());
+						} else if (elem.getLocalName().equals("address")) {
+							userObject.setAddress(elem.getNodeValue());
+						} else if (elem.getLocalName().equals("city")) {
+							userObject.setCity(elem.getNodeValue());
+						} else if (elem.getLocalName().equals("state")) {
+							userObject.setState(elem.getNodeValue());
+						} else if (elem.getLocalName().equals("zip")) {
+							userObject.setZip(elem.getNodeValue());
+						} else if (elem.getLocalName().equals("age")) {
+							userObject
+									.setAge(new Integer(elem.getTextContent()));
+						} else {
+							// Don't recognize this element
+						}
+					}
+				}
+			} catch (SOAPException e) {
+				throw new InvalidRepresentationFault(
+						InvalidRepresentationFault.Detail.INVALID_VALUES);
+			} catch (JAXBException e) {
+				throw new InvalidRepresentationFault(
+						InvalidRepresentationFault.Detail.INVALID_VALUES);
+			}
+
+			// Add the fragment response header
+			try {
+				response.getHeader().addChildElement(fragmentHeader);
+			} catch (SOAPException e) {
+				e.printStackTrace();
+			}
+		}
 	  //Processing for regular NON-Fragment request
 	  else{
 		try {
