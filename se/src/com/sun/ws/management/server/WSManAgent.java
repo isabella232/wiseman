@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.2 2007-01-11 13:19:06 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.3 2007-01-15 15:49:11 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -146,19 +146,19 @@ public abstract class WSManAgent {
     }
     
     protected WSManAgent(Source[] customSchemas, final String... customPackages) throws SAXException {
-         final SchemaFactory schemaFactory =
+        final SchemaFactory schemaFactory =
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-         Source[] finalSchemas = stdSchemas;
-         if(customSchemas != null) {
-             if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Custom schemas to load " + 
+        Source[] finalSchemas = stdSchemas;
+        if(customSchemas != null) {
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Custom schemas to load " +
                         customSchemas.length);
-             finalSchemas = new Source[customSchemas.length + 
-                     stdSchemas.length];
-             System.arraycopy(stdSchemas,0,finalSchemas,0,stdSchemas.length);
-             System.arraycopy(customSchemas,0,finalSchemas,stdSchemas.length,
-                     customSchemas.length);
-         }
+            finalSchemas = new Source[customSchemas.length +
+                    stdSchemas.length];
+            System.arraycopy(stdSchemas,0,finalSchemas,0,stdSchemas.length);
+            System.arraycopy(customSchemas,0,finalSchemas,stdSchemas.length,
+                    customSchemas.length);
+        }
         try {
             schema = schemaFactory.newSchema(finalSchemas);
         } catch (SAXException ex) {
@@ -198,7 +198,7 @@ public abstract class WSManAgent {
      */
     public Message handleRequest(final Management request, final HandlerContext context) {
         Addressing response = null;
-       
+        
         try {
             // XXX WARNING, CREATING A JAXBCONTEXT FOR EACH REQUEST IS TOO EXPENSIVE.
             // JAXB team says that you should share as much as you can JAXBContext.
@@ -218,8 +218,8 @@ public abstract class WSManAgent {
         }
         
         try {
-             log(request);
-             
+            log(request);
+            
             Identify identifyResponse = null;
             
             if ((identifyResponse = handleIfIdentify(request)) != null) {
@@ -249,6 +249,9 @@ public abstract class WSManAgent {
             
             fillReturnAddress(request, response);
             response.setContentType(request.getContentType());
+            
+            return handleResponseSize(response, getValidEnvelopeSize(request));
+            
         }catch(Exception ex) {
             try {
                 response = new Management();
@@ -366,6 +369,57 @@ public abstract class WSManAgent {
         response.setTo(Addressing.ANONYMOUS_ENDPOINT_URI);
     }
     
+    private static Message handleResponseSize(final Message response,
+            final long maxEnvelopeSize) throws SOAPException, JAXBException,
+            IOException {
+        
+        if(response instanceof Identify) {
+            return response;
+        }
+        
+        if(!(response instanceof Management))
+            throw new IllegalArgumentException(" Invalid internal response " +
+                    "message " + response);
+        
+        Management mgtResp = (Management) response;
+        return handleResponseSize(mgtResp, null, maxEnvelopeSize, false);
+    }
+    
+    private static Message handleResponseSize(final Management response,
+            final FaultException fex, final long maxEnvelopeSize,
+            boolean responseTooBig) throws SOAPException, JAXBException,
+            IOException {
+        if (fex != null)
+            response.setFault(fex);
+        
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        response.writeTo(baos);
+        final byte[] content = baos.toByteArray();
+        
+        log(response);
+        
+        if (content.length > maxEnvelopeSize) {
+            
+            // although we check earlier that the maxEnvelopeSize is > 8192, we still
+            // need to use the responseTooBig flag to break possible infinite recursion if
+            // the serialization of the EncodingLimitFault happens to exceed 8192 bytes
+            if (responseTooBig) {
+                LOG.warning("MaxEnvelopeSize set too small to send an EncodingLimitFault");
+                // Let's try the underlying stack to send the reply. Best effort
+            } else {
+                if(LOG.isLoggable(Level.FINE))
+                    LOG.log(Level.FINE, "Response actual size is bigger than maxSize.");
+                handleResponseSize(response,
+                        new EncodingLimitFault(Integer.toString(content.length),
+                        EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED), maxEnvelopeSize, true);
+            }
+        }else
+         if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, "Response actual size is smaller than maxSize.");
+        
+        return response;
+    }
+    
     private static void log(final Message msg) throws IOException, SOAPException {
         // expensive serialization ahead, so check first
         if (LOG.isLoggable(Level.FINE)) {
@@ -373,7 +427,7 @@ public abstract class WSManAgent {
             msg.writeTo(baos);
             final byte[] content = baos.toByteArray();
             
-            String encoding = msg.getContentType() == null ? null : 
+            String encoding = msg.getContentType() == null ? null :
                 msg.getContentType().getEncoding();
             
             LOG.fine("Encoding [" + encoding + "]");

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.28 2007-01-11 13:12:55 jfdenise Exp $
+ * $Id: WSManServlet.java,v 1.29 2007-01-15 15:49:12 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -180,22 +180,15 @@ public class WSManServlet extends HttpServlet {
             return;
         }
         
-        if(!(response instanceof Management))
-            throw new IllegalArgumentException(" Invalid internal response " +
-                    "message " + response);
-        
         Management mgtResp = (Management) response;
         
-        sendResponse(mgtResp, os, resp, null, maxEnvelopeSize, false);
+        sendResponse(mgtResp, os, resp, maxEnvelopeSize, false);
     }
     
     private static void sendResponse(final Management response, final OutputStream os,
-            final HttpServletResponse resp, final FaultException fex, final long maxEnvelopeSize,
+            final HttpServletResponse resp, final long maxEnvelopeSize,
             boolean responseTooBig) throws SOAPException, JAXBException,
             IOException {
-        
-        if (fex != null)
-            response.setFault(fex);
         
         resp.setStatus(HttpServletResponse.SC_OK);
         if (response.getBody().hasFault()) {
@@ -212,23 +205,6 @@ public class WSManServlet extends HttpServlet {
         final byte[] content = baos.toByteArray();
         
         log(response);
-        
-        if (content.length > maxEnvelopeSize) {
-            
-            // although we check earlier that the maxEnvelopeSize is > 8192, we still
-            // need to use the responseTooBig flag to break possible infinite recursion if
-            // the serialization of the EncodingLimitFault happens to exceed 8192 bytes
-            if (responseTooBig) {
-                LOG.warning("MaxEnvelopeSize set too small to send an EncodingLimitFault");
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            } else {
-                sendResponse(response, os, resp,
-                        new EncodingLimitFault(Integer.toString(content.length),
-                        EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED), maxEnvelopeSize, true);
-            }
-            return;
-        }
-        
         
         final String dest = response.getTo();
         if (Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
