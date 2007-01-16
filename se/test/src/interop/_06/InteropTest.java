@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.21 2007-01-11 13:12:58 jfdenise Exp $
+ * $Id: InteropTest.java,v 1.22 2007-01-16 11:00:16 denis_rachal Exp $
  */
 
 package interop._06;
@@ -932,8 +932,7 @@ public final class InteropTest extends TestBase {
         
         final Enumeration ei = new Enumeration(mgmt);
         final FilterType filter = new FilterType();
-        // TODO: correct filter expression
-        filter.getContent().add("/CIM_NumericSensor/SensorType/text()=\"2\"");
+        filter.getContent().add("/CIM_NumericSensor[SensorType=2]");
         ei.setEnumerate(null, null, filter);
         
         log(mgmt);
