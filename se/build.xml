@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.44 2007-01-14 17:55:09 denis_rachal Exp $
+ $Id: build.xml,v 1.45 2007-01-16 11:26:48 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -28,6 +28,7 @@
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${build.dir}" />
         <mkdir dir="${build.classes.dir}" />
+    	<mkdir dir="${test.dir}/${gen.src.dir}" />
     </target>
 
     <target name="clean" depends="test-clean, javadoc-clean">
@@ -42,8 +43,11 @@
         </fileset>
     </path>
 
-    <!-- use this target to (re)compile schemas and regenerate the JAXB artifacts -->
-    <target name="generate-jaxb" depends="init">
+    <!-- use this target to (re)compile schemas and regenerate the WS Management JAXB artifacts -->
+    <target name="generate-jaxb" depends="init, generate-wsman-jaxb, generate-test-jaxb"/>
+
+    <!-- use this target to (re)compile schemas and regenerate the WS Management JAXB artifacts -->
+    <target name="generate-wsman-jaxb" depends="init">
         <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
             <classpath refid="jaxws.compile.classpath" />
         </taskdef>
@@ -51,12 +55,8 @@
         <xjc destdir="${gen.src.dir}">
             <!-- uncomment if HTTP proxies are needed for internet access, 
             define them in ${user.home}/.ant.properties -->
-            <!--
-            <arg value="-host" />
-            <arg value="${http.proxy.host}" />
-            <arg value="-port" />
-            <arg value="${http.proxy.port}" />
-            -->
+            <arg value="-httpproxy" />
+            <arg value="${http.proxy}" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="xml.xsd" /> 
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="soap.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/w3/_2003/_05/soap_envelope/*.java" />
@@ -71,14 +71,27 @@
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="transfer.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_09/transfer/*.java" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="management.xsd" />
-            <produces dir="${gen.src.dir}" includes="org/dmtf/schemas/wbem/wsman/_1/wsman/*.java" />
-            <schema dir="${test.dir}/etc/xsd" includes="user.xsd" />
-            <produces dir="${gen.src.dir}" includes="com/hp/examples/ws/wsman/user/*.java" />
-            <schema dir="${test.dir}/etc/xsd" includes="6-test-foo.xsd" />
-            <produces dir="${gen.src.dir}" includes="foo/test/*.java" />
         </xjc>
     </target>
 
+    <!-- use this target to (re)compile schemas and regenerate the test JAXB artifacts -->
+    <target name="generate-test-jaxb" depends="init">
+        <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+            <classpath refid="jaxws.compile.classpath" />
+        </taskdef>
+    
+        <xjc destdir="${test.dir}/${gen.src.dir}">
+            <!-- uncomment if HTTP proxies are needed for internet access, 
+            define it in ${user.home}/.ant.properties -->
+            <arg value="-httpproxy" />
+            <arg value="${http.proxy}" />
+            <schema dir="${test.dir}/etc/xsd" includes="user.xsd" />
+            <produces dir="${test.gen.src.dir}" includes="com/hp/examples/ws/wsman/user/*.java" />
+            <schema dir="${test.dir}/etc/xsd" includes="6-test-foo.xsd" />
+            <produces dir="${test.dir}/${gen.src.dir}" includes="foo/test/*.java" />
+        </xjc>
+    </target>
+	
     <path id="compile.classpath">
         <path refid="jaxws.compile.classpath" />
         <path path="${build.classes.dir}" />
@@ -94,6 +107,7 @@
             <classpath refid="compile.classpath" />
             <src path="${gen.src.dir}" />
             <src path="${src.dir}" />
+        	<exclude name="com/sun/ws/management/server/handler/**" />
         </javac>
         <propertyfile file="${src.dir}/wsman.properties">
             <entry key="build.version" value="${DSTAMP}${TSTAMP}" />
@@ -167,6 +181,8 @@
             index="true">
             <fileset dir="${test.build.classes.dir}">
                 <include name="com/hp/**" />
+            	<include name="com/sun/**" />
+                <include name="foo/test/**" />
                 <include name="framework/models/**" />
                 <include name="util/**" />
                 <include name="transport/**" />
@@ -193,19 +209,16 @@
         <war destfile="${dist.dir}/${war.jaxws.filename}"
             webxml="etc/jaxws/web.xml"
             index="true">
-            <classes dir="${build.classes.dir}">
-                <include name="com/sun/ws/management/server/handler/**" />
-                <include name="com/hp/**" />
-            </classes>
             <classes dir="${test.build.classes.dir}">
                 <include name="com/sun/ws/management/server/handler/**" />
-                <include name="com/hp/**" />
+                <include name="com/hp/examples/**" />
+                <include name="foo/test/**" />
                 <include name="framework/models/**" />
             </classes>
             <classes dir="etc">
                 <include name="logging.properties" />
             </classes>
-            <includesfile name="framework/models/users.store"/>  	
+            <includesfile name="framework/models/users.store.xml"/>  	
             <lib dir="${dist.dir}">
                 <include name="${lib.filename}" />
             </lib>
@@ -250,13 +263,10 @@
         <war destfile="${dist.dir}/${war.filename}"
             webxml="etc/web.xml"
             index="true">
-            <classes dir="${build.classes.dir}">
-                <include name="com/sun/ws/management/server/handler/**" />
-                <include name="com/hp/**" />
-            </classes>
             <classes dir="${test.build.classes.dir}">
                 <include name="com/sun/ws/management/server/handler/**" />
-                <include name="com/hp/**" />
+                <include name="com/hp/examples/**" />
+                <include name="foo/test/**" />
                 <include name="framework/models/**" />
             </classes>
             <classes dir="etc">
@@ -408,6 +418,17 @@
         <javac destdir="${test.build.classes.dir}"
             debug="${debug}">
             <classpath refid="test.compile.classpath" />
+            <src path="${test.dir}/${gen.src.dir}" />
+        </javac>
+        <javac destdir="${test.build.classes.dir}"
+            debug="${debug}">
+            <classpath refid="test.compile.classpath" />
+            <src path="${src.dir}" />
+        	<include name="com/sun/ws/management/server/handler/**" />
+        </javac>
+        <javac destdir="${test.build.classes.dir}"
+            debug="${debug}">
+            <classpath refid="test.compile.classpath" />
             <src path="${test.src.dir}" />
         </javac>
         <copy todir="${test.build.classes.dir}">
@@ -417,7 +438,7 @@
         </copy>
         <copy todir="${test.build.classes.dir}">
             <fileset dir="${test.src.dir}">
-                <include name="**/*.store" />
+                <include name="**/*.store.xml" />
             </fileset>
         </copy>
     </target>
@@ -609,9 +630,7 @@
             <jvmarg value="-Dwsman.basicauthentication=true" />
         </junit>
     </target>
-  
-  
-	
+  	
     <target name="autobuild" depends="clean,deploy,test,javadoc" />
 
 </project>
