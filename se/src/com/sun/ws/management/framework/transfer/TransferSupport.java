@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferSupport.java,v 1.5 2006-10-16 14:50:08 obiwan314 Exp $
+ * $Id: TransferSupport.java,v 1.6 2007-01-17 19:12:36 nbeers Exp $
  *
  */
 package com.sun.ws.management.framework.transfer;
@@ -23,6 +23,8 @@ import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
@@ -30,6 +32,8 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
@@ -54,6 +58,7 @@ public class TransferSupport implements Transferable {
 	public static final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory addressingFactory = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
     public static final ObjectFactory managementFactory = new ObjectFactory();
     public static final org.xmlsoap.schemas.ws._2004._09.transfer.ObjectFactory xferFactory = new  org.xmlsoap.schemas.ws._2004._09.transfer.ObjectFactory();
+	public static final QName FRAGMENT_TRANSFER = new QName(Management.NS_URI, "FragmentTransfer", Management.NS_PREFIX);
 
 	public TransferSupport() {
 		super();
@@ -129,7 +134,39 @@ public class TransferSupport implements Transferable {
 		}
 	}
 
-    public static EndpointReferenceType createEpr(String endpointUrl,String resourceUri, Map<String, String> selectors) throws JAXBException
+    protected SOAPElement locateFragmentHeader(SOAPElement[] allHeaders) {
+		SOAPElement fragmentHeader = null;
+		if(allHeaders!=null){
+		 for (int i = 0; ((fragmentHeader==null) &&(i < allHeaders.length)); i++) {
+			SOAPElement element = allHeaders[i];
+			QName elems = element.getElementQName();
+			if(elems!=null){
+				if((elems.getLocalPart().equalsIgnoreCase(FRAGMENT_TRANSFER.getLocalPart()))&&
+				   (elems.getPrefix().equalsIgnoreCase(FRAGMENT_TRANSFER.getPrefix()))&&
+				   (elems.getNamespaceURI().equalsIgnoreCase(FRAGMENT_TRANSFER.getNamespaceURI()))
+				   ){
+				  fragmentHeader = element;
+				}
+			}
+		 }
+		}
+		return fragmentHeader;
+	}
+
+	protected String extractFragmentMessage(SOAPElement element) {
+		String xpathExp = "";
+		//DONE: populate xpathExp
+		if(element!=null){
+		  NodeList elem = element.getChildNodes();
+		  for (int j = 0; j < elem.getLength(); j++) {
+			Node node = elem.item(j);
+			xpathExp = node.getNodeValue();
+		  }
+		}
+	   return xpathExp;
+	}
+
+	public static EndpointReferenceType createEpr(String endpointUrl,String resourceUri, Map<String, String> selectors) throws JAXBException
     {
         // Get a JAXB Epr
         EndpointReferenceType epr = addressingFactory.createEndpointReferenceType();

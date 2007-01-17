@@ -65,12 +65,7 @@ public class UserHandler extends TransferSupport {
 	private org.xmlsoap.schemas.ws._2004._09.transfer.ObjectFactory xferFactory= new org.xmlsoap.schemas.ws._2004._09.transfer.ObjectFactory();
 	private static String resourceUri= "wsman:auth/user";
 	
-	//Fragment transfer stuff
-    public static final QName FRAGMENT_TRANSFER =
-        new QName(Management.NS_URI, "FragmentTransfer", Management.NS_PREFIX);
-
-    public static final QName DIALECT =
-        new QName("Dialect");
+	public static final QName DIALECT = new QName("Dialect");
     XPath xpath = null;
 	
 	public UserHandler() {
@@ -293,38 +288,6 @@ public class UserHandler extends TransferSupport {
 		}
 	}
 
-	private SOAPElement locateFragmentHeader(SOAPElement[] allHeaders ){
-		SOAPElement fragmentHeader = null;
-		if(allHeaders!=null){
-		 for (int i = 0; ((fragmentHeader==null) &&(i < allHeaders.length)); i++) {
-			SOAPElement element = allHeaders[i];
-			QName elems = element.getElementQName();
-			if(elems!=null){
-				if((elems.getLocalPart().equalsIgnoreCase(FRAGMENT_TRANSFER.getLocalPart()))&&
-				   (elems.getPrefix().equalsIgnoreCase(FRAGMENT_TRANSFER.getPrefix()))&&
-				   (elems.getNamespaceURI().equalsIgnoreCase(FRAGMENT_TRANSFER.getNamespaceURI()))
-				   ){
-				  fragmentHeader = element;
-				}
-			}
-		 }
-		}
-		return fragmentHeader;
-	}
-	
-	private String extractFragmentMessage(SOAPElement element){
-		String xpathExp = "";
-		//DONE: populate xpathExp
-		if(element!=null){
-		  NodeList elem = element.getChildNodes();
-		  for (int j = 0; j < elem.getLength(); j++) {
-			Node node = elem.item(j);
-			xpathExp = node.getNodeValue();
-		  }
-		}
-       return xpathExp;
-	}
-
 	private UserModelObject findInstance(Management request) {
 		UserModelObject searchUser=new UserModelObject();	
 		try {
@@ -496,18 +459,11 @@ public class UserHandler extends TransferSupport {
 	@Override                                         
 	public void delete(HandlerContext context,Management request, Management response) {
 		// Find an existing instance
-		UserModelObject searchUser=new UserModelObject();			
-		try {
-			searchUser.setFirstname(Utilities.getSelectorByName("firstname",request.getSelectors()).getContent().get(0).toString());
-			searchUser.setLastname(Utilities.getSelectorByName("lastname",request.getSelectors()).getContent().get(0).toString());
-		} catch (Exception e) {
-			throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
-		} 
-		
-		if(!users.contains(searchUser))
+		UserModelObject searchUser = findInstance(request);
+
+		if(searchUser == null)
 			throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
 		else{
-//			users.remove(searchUser);
 			try {
 				SOAPElement[] allHeaders = request.getHeaders();
 				String xpathExp ="";
@@ -521,8 +477,7 @@ public class UserHandler extends TransferSupport {
 				//TODO: do delete only the described sub elements.
 				if(fragmentHeader!= null){
 					//Delete that one optional component from searchUser
-//   UserModelObject.class.
-			users.remove(searchUser);
+					users.remove(searchUser);
 
 					UserModelObject withoutAge = new UserModelObject();
 					  withoutAge.setAddress(searchUser.getAddress());
@@ -543,13 +498,6 @@ public class UserHandler extends TransferSupport {
 			} catch (SOAPException e1) {
 				e1.printStackTrace();
 			} 
-//			catch (XPathExpressionException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			} catch (JAXBException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
 
 		}
 
