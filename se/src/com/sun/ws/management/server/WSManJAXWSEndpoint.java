@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManJAXWSEndpoint.java,v 1.2 2007-01-11 13:19:06 jfdenise Exp $
+ * $Id: WSManJAXWSEndpoint.java,v 1.3 2007-01-17 08:47:00 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -92,7 +92,14 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
             ctx = new HandlerContextImpl(principal, contentType, encoding, url, props,
                     getAgent().getProperties());
             Message reply = getAgent().handleRequest(request, ctx);
+            
+            // reply being null means that no reply is to be sent back. 
+            // The reply has been handled asynchronously
+            if(reply == null)
+                return null;
+            
             return reply.getMessage();
+            
         }catch(Exception ex) {
             try {
                 Management response = new Management();

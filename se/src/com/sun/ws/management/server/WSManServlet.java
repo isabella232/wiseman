@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.29 2007-01-15 15:49:12 jfdenise Exp $
+ * $Id: WSManServlet.java,v 1.30 2007-01-17 08:47:00 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -155,8 +155,6 @@ public class WSManServlet extends HttpServlet {
         final Management request = new Management(is);
         request.setContentType(contentType);
         
-        log(request);
-        
         String contentype = req.getContentType();
         final Principal user = req.getUserPrincipal();
         String charEncoding = req.getCharacterEncoding();
@@ -204,31 +202,9 @@ public class WSManServlet extends HttpServlet {
         response.writeTo(baos);
         final byte[] content = baos.toByteArray();
         
-        log(response);
-        
-        final String dest = response.getTo();
-        if (Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
-            os.write(content);
-        } else {
-            final int status = sendAsyncReply(response.getTo(), content, response.getContentType());
-            if (status != HttpURLConnection.HTTP_OK) {
-                throw new IOException("Response to " + dest + " returned " + status);
-            }
-        }
-    }
-    
-    private static int sendAsyncReply(final String to, final byte[] bits, final ContentType contentType)
-    throws IOException, SOAPException, JAXBException {
-        return HttpClient.sendResponse(to, bits, contentType);
-    }
-    
-    private static void log(final Message msg) throws IOException, SOAPException {
-        // expensive serialization ahead, so check first
-        if (LOG.isLoggable(Level.FINE)) {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            msg.writeTo(baos);
-            final byte[] content = baos.toByteArray();
-            LOG.fine(new String(content));
-        }
+        // response being null means that no reply is to be sent back. 
+        // The reply has been handled asynchronously
+        if(response != null)
+             os.write(content);
     }
 }

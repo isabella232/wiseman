@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.3 2007-01-15 15:49:11 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.4 2007-01-17 08:47:00 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,10 +27,13 @@ import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.transport.ContentType;
+import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -218,7 +221,7 @@ public abstract class WSManAgent {
         }
         
         try {
-            log(request);
+            logMessage(LOG, request);
             
             Identify identifyResponse = null;
             
@@ -250,7 +253,7 @@ public abstract class WSManAgent {
             fillReturnAddress(request, response);
             response.setContentType(request.getContentType());
             
-            return handleResponseSize(response, getValidEnvelopeSize(request));
+            Message resp = handleResponse(response, getValidEnvelopeSize(request));
             
         }catch(Exception ex) {
             try {
@@ -369,7 +372,7 @@ public abstract class WSManAgent {
         response.setTo(Addressing.ANONYMOUS_ENDPOINT_URI);
     }
     
-    private static Message handleResponseSize(final Message response,
+    private static Message handleResponse(final Message response,
             final long maxEnvelopeSize) throws SOAPException, JAXBException,
             IOException {
         
@@ -382,10 +385,10 @@ public abstract class WSManAgent {
                     "message " + response);
         
         Management mgtResp = (Management) response;
-        return handleResponseSize(mgtResp, null, maxEnvelopeSize, false);
+        return handleResponse(mgtResp, null, maxEnvelopeSize, false);
     }
     
-    private static Message handleResponseSize(final Management response,
+    private static Message handleResponse(final Management response,
             final FaultException fex, final long maxEnvelopeSize,
             boolean responseTooBig) throws SOAPException, JAXBException,
             IOException {
@@ -396,7 +399,7 @@ public abstract class WSManAgent {
         response.writeTo(baos);
         final byte[] content = baos.toByteArray();
         
-        log(response);
+        logMessage(LOG, response);
         
         if (content.length > maxEnvelopeSize) {
             
@@ -409,7 +412,7 @@ public abstract class WSManAgent {
             } else {
                 if(LOG.isLoggable(Level.FINE))
                     LOG.log(Level.FINE, "Response actual size is bigger than maxSize.");
-                handleResponseSize(response,
+                handleResponse(response,
                         new EncodingLimitFault(Integer.toString(content.length),
                         EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED), maxEnvelopeSize, true);
             }
@@ -417,12 +420,38 @@ public abstract class WSManAgent {
          if(LOG.isLoggable(Level.FINE))
             LOG.log(Level.FINE, "Response actual size is smaller than maxSize.");
         
+        
+        final String dest = response.getTo();
+        if (!Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Non anonymous reply to send to : " + dest);
+            final int status = sendAsyncReply(response.getTo(), content, response.getContentType());
+            if (status != HttpURLConnection.HTTP_OK) {
+                throw new IOException("Response to " + dest + " returned " + status);
+            }
+            return null;
+        }
+        
+        if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, "Anonymous reply to send.");
+        
         return response;
     }
     
-    private static void log(final Message msg) throws IOException, SOAPException {
+    private static int sendAsyncReply(final String to, final byte[] bits, final ContentType contentType)
+    throws IOException, SOAPException, JAXBException {
+        return HttpClient.sendResponse(to, bits, contentType);
+    }
+    
+    static void logMessage(Logger logger, 
+             final Message msg) throws IOException, SOAPException {
         // expensive serialization ahead, so check first
-        if (LOG.isLoggable(Level.FINE)) {
+        if (logger.isLoggable(Level.FINE)) {
+            if(msg == null) {
+                logger.fine("Null message to log. Reply has perhaps been " +
+                        "sent asynchronously");
+                return;
+            }
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
             msg.writeTo(baos);
             final byte[] content = baos.toByteArray();
@@ -430,12 +459,13 @@ public abstract class WSManAgent {
             String encoding = msg.getContentType() == null ? null :
                 msg.getContentType().getEncoding();
             
-            LOG.fine("Encoding [" + encoding + "]");
+            logger.fine("Encoding [" + encoding + "]");
             
             if(encoding == null)
-                LOG.fine(new String(content));
+                logger.fine(new String(content));
             else
-                LOG.fine(new String(content, encoding));
+                logger.fine(new String(content, encoding));
+            
         }
     }
 }
