@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationFilterTest.java,v 1.1 2007-01-14 17:53:12 denis_rachal Exp $
+ * $Id: EnumerationFilterTest.java,v 1.2 2007-01-18 08:43:42 denis_rachal Exp $
  */
 
 package management;
@@ -65,10 +65,14 @@ public class EnumerationFilterTest extends TestBase {
     	filterEnumerationTest(xpath, ".");
     	filterEnumerationTest(xpath, "/user:user");
     	filterEnumerationTest(xpath, "/user:user/*");
+    	// TODO: The following XPath does not really work: "/user:user[last()]"
+    	//       This is because the XPath is run against a single user element and
+    	//       not the entire docuemnt. Therefore the last() returns every element.
+    	//       I do not really know if this is a bug or a feature. ??
     	filterEnumerationTest(xpath, "/user:user[last()]");
     	filterEnumerationTest(xpath, "//user:lastname");
     	filterEnumerationTest(xpath, "./user:firstname|./user:lastname");
-    	// TODO: fails filterEnumerationTest(xpath, "//user:lastname/text()");
+    	filterEnumerationTest(xpath, "/user:user/user:firstname/text()|/user:user/user:lastname/text()");
     	filterEnumerationTest(xpath, "/user:user/user:lastname");
     	filterEnumerationTest(xpath, "/user:user[user:firstname='James']");
     	filterEnumerationTest(xpath, "/user:user[user:firstname='James']/user:lastname|/user:user[user:firstname='James']/user:firstname");
@@ -94,15 +98,15 @@ public class EnumerationFilterTest extends TestBase {
     	
         // first do the tests with EPRs turned off
     	optimizedEnumerationTest(null, max, resource, dialect, expression, null);
-    	// optimizedEnumerationTest(null, max, resource, dialect, expression, handlerFiltered);
+    	optimizedEnumerationTest(null, max, resource, dialect, expression, handlerFiltered);
         
         // now repeat the same tests with EPRs turned on
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, null);
-    	// optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, handlerFiltered);
+    	// TODO: Test Iterator broke optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, handlerFiltered);
     	
         // finally, repeat the same tests with only EPRs (no items)
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, null);
-    	// optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, handlerFiltered);
+    	// TODO: Test Iterator broke optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, handlerFiltered);
     	
     }
     

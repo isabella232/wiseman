@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.12 2007-01-14 17:52:34 denis_rachal Exp $
+ * $Id: BaseSupport.java,v 1.13 2007-01-18 08:43:43 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -38,6 +38,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
@@ -172,8 +173,11 @@ public class BaseSupport {
 		final MixedDataType mixedDataType = Management.FACTORY
 				.createMixedDataType();
 		for (int j = 0; j < nodes.size(); j++) {
-			mixedDataType.getContent().add(
-					nodes.get(j));
+			// Check if it is a text node from text() function
+			if (nodes.get(j) instanceof Text)
+				mixedDataType.getContent().add(nodes.get(j).getTextContent());
+			else 
+			    mixedDataType.getContent().add(nodes.get(j));
 		}
 		// create the XmlFragmentElement
 		JAXBElement<MixedDataType> fragment = Management.FACTORY
@@ -190,7 +194,11 @@ public class BaseSupport {
 	public static JAXBElement<MixedDataType> createXmlFragment(NodeList nodes) {
 		final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
 		for (int j = 0; j < nodes.getLength(); j++) {
-			mixedDataType.getContent().add(nodes.item(j));
+			// Check if it is a text node from text() function
+			if (nodes.item(j) instanceof Text)
+				mixedDataType.getContent().add(nodes.item(j).getTextContent());
+			else 
+			    mixedDataType.getContent().add(nodes.item(j));
 		}
 		// create the XmlFragmentElement
 		JAXBElement<MixedDataType> fragment = Management.FACTORY
