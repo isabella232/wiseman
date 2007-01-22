@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.14 2006-07-21 22:16:51 akhilarora Exp $
+ * $Id: XmlBinding.java,v 1.15 2007-01-22 12:48:58 denis_rachal Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -92,7 +92,11 @@ public final class XmlBinding {
             }
         }
         
-        final String customPackageNames = (String) BINDING_PROPERTIES.get(CUSTOM_PACKAGE_NAMES);
+        // Check System properties first to allow command line override
+        String customPackageNames = System.getProperty(CUSTOM_PACKAGE_NAMES);
+        if (customPackageNames == null || customPackageNames.equals("")) {
+            customPackageNames = (String) BINDING_PROPERTIES.get(CUSTOM_PACKAGE_NAMES);
+        }
         if (customPackageNames != null && !customPackageNames.equals("")) {
             for (final String packageName : customPackageNames.split(",")) {
                 final String pkg = packageName.trim();

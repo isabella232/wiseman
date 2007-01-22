@@ -65,12 +65,6 @@
 	      	</classpath>
 	      	<src path="${test.src.dir}" />
 	    </javac>
-
-		<copy todir="${build.classes.dir}">
-	      <fileset dir="${src.dir}">
-	        <include name="**/*.properties" />
-	      </fileset>
-	    </copy>
 	</target>
 
 	<target name="jar" depends="compile">
@@ -151,17 +145,18 @@
                   <exclude name="**/*Interop*.java"/>
                 </fileset>
              </batchtest>
-            <classpath >
-                  <path refid="compile.classpath" />
-        	    	<path path="${build.classes.dir}" />
-        	    	<path path="${test.build.classes.dir}" />
-              </classpath>
+            <classpath>
+            	<path refid="compile.classpath" />
+        	    <path path="${build.classes.dir}" />
+        	    <path path="${test.build.classes.dir}" />
+            </classpath>
           <formatter usefile="false" type="brief"/>
           <formatter type="xml"/>
           <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
           <jvmarg value="-Dwsman.user=wsman" />
           <jvmarg value="-Dwsman.password=secret" />
           <jvmarg value="-Dwsman.basicauthentication=true" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.custom.packagenames=foo.test,com.hp.examples.ws.wsman.user" />
         </junit>
 
     </target>

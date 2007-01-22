@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.46 2007-01-16 12:33:42 denis_rachal Exp $
+ $Id: build.xml,v 1.47 2007-01-22 12:48:58 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -121,7 +121,7 @@
         </propertyfile>
         <copy todir="${build.classes.dir}">
             <fileset dir="${src.dir}">
-                <include name="**/*.properties" />
+                <include name="wsman.properties" />
             </fileset>
         </copy>
     </target>
@@ -133,9 +133,6 @@
             index="true">
             <fileset dir="${build.classes.dir}">
                 <exclude name="com/sun/ws/management/server/handler/**" />
-            </fileset>
-            <fileset dir="${build.classes.dir}">
-                <include name="wsman.properties" />
             </fileset>
             <fileset dir="${src.dir}">
                 <include name="com/sun/ws/management/resources/**" />
@@ -218,10 +215,12 @@
                 <include name="foo/test/**" />
                 <include name="framework/models/**" />
             </classes>
-            <classes dir="etc">
+        	<classes dir="${test.dir}/etc">
                 <include name="logging.properties" />
             </classes>
-            <includesfile name="framework/models/users.store.xml"/>  	
+            <classes dir="${test.dir}/etc">
+            	<include name="binding.properties" />
+            </classes>  	
             <lib dir="${dist.dir}">
                 <include name="${lib.filename}" />
             </lib>
@@ -272,10 +271,12 @@
                 <include name="foo/test/**" />
                 <include name="framework/models/**" />
             </classes>
-            <classes dir="etc">
+        	<classes dir="${test.dir}/etc">
                 <include name="logging.properties" />
             </classes>
-            <includesfile name="framework/models/users.store"/>  	
+            <classes dir="${test.dir}/etc">
+            	<include name="binding.properties" />
+            </classes> 	
             <lib dir="${dist.dir}">
                 <include name="${lib.filename}" />
             </lib>
@@ -319,6 +320,12 @@
             index="true">
             <classes dir="${test.build.classes.dir}">
                 <include name="server/EventsReceiverServlet.class" />
+            </classes>
+        	<classes dir="${test.dir}/etc">
+                <include name="logging.properties" />
+            </classes>
+            <classes dir="${test.dir}/etc">
+            	<include name="binding.properties" />
             </classes>
             <manifest>
                 <attribute name="Built-By" value="${user.name}" />
