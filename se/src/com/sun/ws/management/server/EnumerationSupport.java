@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.42 2007-01-14 17:52:34 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.43 2007-01-22 15:59:47 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -231,6 +231,9 @@ public final class EnumerationSupport extends BaseSupport {
 					}
 				}
 			}
+		} catch (TimedOutFault e) {
+			// Do not delete the context for timeouts
+			throw e;
 		} catch (FaultException e) {
 			removeContext(ctx);
 			ctx.getIterator().release();
@@ -238,7 +241,7 @@ public final class EnumerationSupport extends BaseSupport {
 		} catch (Throwable t) {
 			removeContext(ctx);
 			ctx.getIterator().release();
-			throw new InternalErrorFault(t.getMessage());
+			throw new InternalErrorFault(t);
 		}
 	}
 
@@ -374,7 +377,7 @@ public final class EnumerationSupport extends BaseSupport {
 			public boolean cancel = false;
 			
 			public void run() {
-				cancel = true;
+				this.cancel = true;
 			}
 		}
 		final Timeout ttask = new Timeout();
@@ -386,11 +389,20 @@ public final class EnumerationSupport extends BaseSupport {
 		while ((passed.size() < maxElements)
 				&& (iterator.hasNext())) {
 			
+			// Check for a timeout
+			if (ttask.cancel == true) {
+				if (passed.size() == 0)
+				    throw new TimedOutFault();
+				else
+					break;
+			}
 			final EnumerationItem ee = iterator.next();
-			if ((ee == null) || (ttask.cancel == true)) {
-				removeContext(context);
-				iterator.release();
-				throw new TimedOutFault();
+
+			if (ee == null) {
+				if (passed.size() == 0)
+					throw new TimedOutFault();
+				else
+					break;
 			}
 
 			// apply filter, if any
