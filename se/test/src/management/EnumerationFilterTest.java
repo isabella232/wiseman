@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationFilterTest.java,v 1.2 2007-01-18 08:43:42 denis_rachal Exp $
+ * $Id: EnumerationFilterTest.java,v 1.3 2007-01-23 06:28:33 denis_rachal Exp $
  */
 
 package management;
@@ -68,7 +68,11 @@ public class EnumerationFilterTest extends TestBase {
     	// TODO: The following XPath does not really work: "/user:user[last()]"
     	//       This is because the XPath is run against a single user element and
     	//       not the entire docuemnt. Therefore the last() returns every element.
-    	//       I do not really know if this is a bug or a feature. ??
+    	//       This is a bug, as the specification shows that you may select 
+    	//       any element from the entire SOAP document, e.g.
+    	//       "/env:Envelope/env:Body/user:user" should be valid. The envelope
+    	//       is the root, which makes several of the following tests wrong.
+    	//       See examples in secion 13.1 of the DMTF DSP0226 specification 1.0.0a
     	filterEnumerationTest(xpath, "/user:user[last()]");
     	filterEnumerationTest(xpath, "//user:lastname");
     	filterEnumerationTest(xpath, "./user:firstname|./user:lastname");
@@ -102,11 +106,11 @@ public class EnumerationFilterTest extends TestBase {
         
         // now repeat the same tests with EPRs turned on
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, null);
-    	// TODO: Test Iterator broke optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, handlerFiltered);
+    	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, handlerFiltered);
     	
         // finally, repeat the same tests with only EPRs (no items)
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, null);
-    	// TODO: Test Iterator broke optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, handlerFiltered);
+    	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, handlerFiltered);
     	
     }
     

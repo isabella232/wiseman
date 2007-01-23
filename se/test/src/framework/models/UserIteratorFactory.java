@@ -4,6 +4,7 @@ package framework.models;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -42,23 +43,59 @@ import com.sun.ws.management.xml.XmlBinding;
  * It handles creation of an iterator for use to access the "user" resources.
  * @see com.sun.ws.management.server.IteratorFactory#newIterator(com.sun.ws.management.server.HandlerContext, com.sun.ws.management.enumeration.Enumeration, javax.xml.parsers.DocumentBuilder, boolean, boolean)
  *
- * @author denis
  */
 public class UserIteratorFactory implements IteratorFactory {
+	
+	private static final ObjectFactory FACTORY = new ObjectFactory();
+	
+	private final String resourceURI;
 
-	/* This creates iterators for the "wsman:auth/user" resource.
-	 * 
-	 * @see com.sun.ws.management.server.IteratorFactory#newIterator(com.sun.ws.management.server.HandlerContext, 
-	 * com.sun.ws.management.enumeration.Enumeration, 
-	 * javax.xml.parsers.DocumentBuilder, boolean, boolean)
-	 */
+	public UserIteratorFactory(String resourceURI) {
+		this.resourceURI = resourceURI;
+	}
+	
+    /**
+     * This creates iterators for the "wsman:auth/user" resource.
+     * 
+     * @param context the HandlerContext
+     * @param request the Enumeration request that this iterator is to fufill
+     * @param db the DocumentBuilder to use for items created by this iterator
+     * @param includeItem if true the requester wants the item returned, otherwise
+     * just the EPR if includeEPR is true
+     * @param includeEPR if true the requestor wants the EPR for each item returned, otherwise
+     * just the item if includeItem is true. If EPRs are not supported by the iterator,
+     * the iterator should throw an UnsupportedFeatureFault.
+     * 
+     * @throws com.sun.ws.management.UnsupportedFeatureFault If EPRs are not supported.
+     * @throws com.sun.ws.management.soap.FaultException If a WS-MAN protocol related exception occurs.
+     * @returns An enumeration iterator for the request
+     */
 	public EnumerationIterator newIterator(HandlerContext context,
 			Enumeration request, DocumentBuilder db, boolean includeItem,
 			boolean includeEPR) throws UnsupportedFeatureFault, FaultException {
+		registerUserFilterDialect();
 		return new UserEnumerationIterator(context, request, db, includeItem, includeEPR);
 	}
 
-	private static final ObjectFactory FACTORY = new ObjectFactory();
+	/** Returns the resourceURI associated with this Factory Iterator.
+	 * 
+	 * @returns string representing the resource URI
+	 */
+	public String getResourceURI() {
+		return resourceURI;
+	}
+	
+    private static void registerUserFilterDialect() {
+
+		if (BaseSupport.isSupportedDialect(UserFilterFactory.DIALECT) == false) {
+			try {
+				BaseSupport.addSupportedFilterDialect(
+						UserFilterFactory.DIALECT, new UserFilterFactory());
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("Exception " + ex);
+			}
+		}
+	}
 	
 	// The Iterator implementation follows
 	
@@ -72,13 +109,11 @@ public class UserIteratorFactory implements IteratorFactory {
 	 */
 	public class UserEnumerationIterator implements EnumerationIterator {
 
-		private static final String RESOURCE_URI = "wsman:auth/user";
 		private static final String PACKAGE = "com.hp.examples.ws.wsman.user";
 		
-		private int cursor = 0;
 		private boolean isFiltered = false;
-		private boolean cancelled = false;
-		private JAXBElement[] usersList = null;
+		private int length = -1;
+		private Iterator<EnumerationItem> usersList;
 
 		private final XmlBinding binding;
 		private final Filter filter;
@@ -87,6 +122,15 @@ public class UserIteratorFactory implements IteratorFactory {
 		private final boolean includeItem;
 		private final boolean includeEPR;
 
+		/**
+		 * Constructor for UserEnumerationIterator
+		 * 
+		 * @param context HandlerContext for authorizing user
+		 * @param request User enumeration request
+		 * @param db DocumentBuilder to use when creating items
+		 * @param includeItem item required
+		 * @param includeEPR epr required
+		 */
 		protected UserEnumerationIterator(final HandlerContext context, 
 				final Enumeration request, 
 				final DocumentBuilder db, 
@@ -94,9 +138,6 @@ public class UserIteratorFactory implements IteratorFactory {
 				final boolean includeEPR) {
 
 			try {
-
-				// Make sure the custom filter dialect is registered
-				UserEnumerationHandler.registerUserFilterDialect();
 				
 				// parse request object to retrieve filter parameters entered.
 				this.filter = EnumerationSupport.createFilter(request);
@@ -136,7 +177,9 @@ public class UserIteratorFactory implements IteratorFactory {
 				}
 				
 				// load global users.store from jar
-				initUsersArray();
+				List<EnumerationItem> list = getUsersList();
+				this.length = list.size();
+				this.usersList = list.iterator();
 				
 			} catch (JAXBException e) {
 				e.printStackTrace();
@@ -147,142 +190,85 @@ public class UserIteratorFactory implements IteratorFactory {
 			}
 		}
 
-		/**
-		 * Supply the next few elements of the iteration. This is invoked to satisfy
-		 * a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
-		 * The operation must return within the
-		 * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}
-		 * specified in the
-		 * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request,
-		 * otherwise {@link #cancel cancel} will be invoked and the current thread
-		 * interrupted. When cancelled, the implementation can return the results
-		 * currently accumulated (in which case no
-		 * {@link com.sun.ws.management.soap.Fault Fault} is generated) or it can
-		 * return {@code null} in which case a
-		 * {@link com.sun.ws.management.enumeration.TimedOutFault TimedOutFault} is
-		 * returned.
-		 * 
-		 * @param db
-		 *            A document builder that can be used to create documents into
-		 *            which the returned items will be placed. Note that each item
-		 *            must be placed as the root element of a new Document for XPath
-		 *            filtering to work properly.
-		 * 
-		 * @param context
-		 *            The client context that was specified to
-		 *            {@link com.sun.ws.management.server.EnumerationSupport#enumerate enumerate}
-		 *            is returned.
-		 * 
-		 * @param includeItem
-		 *            Indicates whether items are desired, as specified by the
-		 *            EnumerationMode in the Enumerate request.
-		 * 
-		 * @param includeEPR
-		 *            Indicates whether EPRs are desired, as specified by the
-		 *            EnumerationMode in the Enumerate request.
-		 * 
-		 * @param startPos
-		 *            The starting position (cursor) for this
-		 *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
-		 *            request.
-		 * 
-		 * @param count
-		 *            The number of items desired in this
-		 *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
-		 *            request.
-		 * 
-		 * @return a List of {@link org.w3c.dom.Element Elements} that will be
-		 *         returned in the
-		 *         {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
-		 */
-
+	    /**
+	     * Supply the next element of the iteration. This is invoked to
+	     * satisfy a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+	     * request. The operation must return within the
+	     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}
+	     * specified in the
+	     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request,
+	     * otherwise {@link #release release} will
+	     * be invoked and the current thread interrupted. When cancelled,
+	     * the implementation can return the result currently
+	     * accumulated (in which case no
+	     * {@link com.sun.ws.management.soap.Fault Fault} is generated) or it can
+	     * return {@code null} in which case a
+	     * {@link com.sun.ws.management.enumeration.TimedOutFault TimedOutFault}
+	     * is returned.
+	     *
+	     * @return an {@link EnumerationElement Elements} that is used to
+	     * construct proper responses for a
+	     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
+	     */
 		public EnumerationItem next() {
-			cancelled = false;
 			if (hasNext() == false) {
 				throw new NoSuchElementException();
 			}
-			
-			JAXBElement item = null;
-			EndpointReferenceType epr = null;
-			
-			// Always return item if filtering is done by caller
-			if ((includeItem) || (isFiltered == false)) {
-				item = usersList[cursor];
-			}
-			if (includeEPR) {
-				Map<String, String> selectorMap = new HashMap<String, String>();
-				UserType user = (UserType) usersList[cursor].getValue();
-
-				selectorMap.put("firstname", user.getFirstname());
-				selectorMap.put("lastname", user.getLastname());
-
-				epr = EnumerationSupport.createEndpointReference(address,
-						RESOURCE_URI, selectorMap);
-			}
-			EnumerationItem ee = new EnumerationItem(item, epr);
-			cursor++;
-			return ee;
+			EnumerationItem result = usersList.next();
+			return result; 
 		}
 
-		/**
-		 * Indicates if there are more elements remaining in the iteration.
-		 * 
-		 * @param context
-		 *            The client context that was specified to
-		 *            {@link com.sun.ws.management.server.EnumerationSupport#enumerate enumerate}
-		 *            is returned.
-		 * 
-		 * @param startPos
-		 *            The starting position (cursor) for this
-		 *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
-		 *            request.
-		 * 
-		 * @return {@code true} if there are more elements in the iteration,
-		 *         {@code false} otherwise.
-		 */
+	    /**
+	     * Indicates if there are more elements remaining in the iteration.
+	     * 
+	     * @return {@code true} if there are more elements in the iteration,
+	     * {@code false} otherwise.
+	     */
 		public boolean hasNext() {
-			return cursor < usersList.length;
+			return usersList.hasNext();
 		}
 
-		/**
-		 * Indicates if the iterator has already been filtered. This indicates that
-		 * further filtering is not required by the framwork.
-		 * 
-		 * @return {@code true} if the iterator has already been filtered,
-		 *         {@code false} otherwise.
-		 */
+	    /**
+	     * Indicates if the iterator has already been filtered.
+	     * This indicates that further filtering is not required
+	     * by the framwork.
+	     * 
+	     * @return {@code true} if the iterator has already been filtered,
+	     * {@code false} otherwise.
+	     */
 		public boolean isFiltered() {
 			return isFiltered;
 		}
 
-		/**
-		 * Invoked when a {@link #next next} call exceeds the
-		 * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}
-		 * specified in the
-		 * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request.
-		 * An implementation is expected to set a flag that causes the
-		 * currently-executing {@link #next next} operation to return gracefully.
-		 * 
-		 * @param context
-		 *            The client context that was specified to
-		 *            {@link com.sun.ws.management.server.EnumerationSupport#enumerate enumerate}
-		 *            is returned.
-		 */
-		public void cancel() {
-			cancelled = true;
-		}
-
+	    /**
+	     * Estimate the total number of elements available.
+	     *
+	     * @return an estimate of the total number of elements available
+	     * in the enumeration.
+	     * Return a negative number if an estimate is not available.
+	     */
 		public int estimateTotalItems() {
-			return usersList.length;
+			return this.length;
+		}
+		
+	    /**
+	     * Release any resources being used by the iterator. Calls
+	     * to other methods of this iterator instance will exhibit
+	     * undefined behaviour, after this method completes.
+	     */
+		public void release() {
+			final ArrayList<EnumerationItem> users = new ArrayList<EnumerationItem>(0);
+			length = 0;
+			usersList = users.iterator();
 		}
 		
 		// Load & filter the users
-		private void initUsersArray() {
+		private List<EnumerationItem> getUsersList() {
 
 			try {
 				
 				final UserType[] allUsers = UserStore.getUsers();
-				final ArrayList<JAXBElement> filteredUsers = new ArrayList<JAXBElement>();
+				final ArrayList<EnumerationItem> filteredUsers = new ArrayList<EnumerationItem>();
 				int i = 0;
 				
 				// The following variable is used to remember if the filter
@@ -290,6 +276,7 @@ public class UserIteratorFactory implements IteratorFactory {
 				// Done for performance.
 				Boolean fragmentCheck = null;
 				for (; i < allUsers.length; i++) {
+					final JAXBElement item;
 					final UserType user = allUsers[i];
 					final JAXBElement<UserType> jaxbUser = FACTORY.createUser(user);
 
@@ -310,33 +297,40 @@ public class UserIteratorFactory implements IteratorFactory {
 							}
 							if (fragmentCheck == false) {
 								// Whole node was selected
-								filteredUsers.add(jaxbUser);
+								item = jaxbUser;
 							} else {
 								// Fragment Transfer. Create the fragment.
 								JAXBElement<MixedDataType> fragment = BaseSupport.createXmlFragment(result);
-								filteredUsers.add(fragment);
+
+                                item = fragment;
 							}
+						} else {
+							item = null;
 						}
 					} else {
 						// EnumerationSupport will do the filtering for us
-						filteredUsers.add(jaxbUser);
+						item = jaxbUser;
+					}
+					if (item != null) {
+						Map<String, String> selectorMap = new HashMap<String, String>();
+
+						selectorMap.put("firstname", jaxbUser.getValue().getFirstname());
+						selectorMap.put("lastname", jaxbUser.getValue().getLastname());
+
+						EndpointReferenceType epr = EnumerationSupport.createEndpointReference(address,
+								resourceURI, selectorMap);
+						filteredUsers.add(new EnumerationItem(item, epr));
 					}
 				}
-				// Create an empty array and then fill it
-				usersList = new JAXBElement[filteredUsers.size()];
-				filteredUsers.toArray(usersList);
+				// Return the filtered list
+				return filteredUsers;
 			} catch (JAXBException e) {
 				throw new InvalidRepresentationFault(
 						InvalidRepresentationFault.Detail.INVALID_VALUES);
 			} catch (Exception e) {
-				// TODO: Fix the exception for Filter.evaluate()
 				throw new InvalidRepresentationFault(
 						InvalidRepresentationFault.Detail.INVALID_VALUES);
 			}
-		}
-		
-		public void release() {
-			usersList = new JAXBElement[0];
 		}
 	}
 }
