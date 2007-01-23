@@ -1,30 +1,10 @@
 package framework.models;
 
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPHeaderElement;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
-import org.w3c.dom.Element;
-
-import com.hp.examples.ws.wsman.user.ObjectFactory;
-import com.hp.examples.ws.wsman.user.UserType;
-import com.sun.ws.management.InternalErrorFault;
-import com.sun.ws.management.InvalidSelectorsFault;
-import com.sun.ws.management.Management;
-import com.sun.ws.management.framework.Utilities;
 import com.sun.ws.management.framework.enumeration.EnumerationHandler;
-import com.sun.ws.management.server.BaseSupport;
-import com.sun.ws.management.server.EnumerationSupport;
-import com.sun.ws.management.server.HandlerContext;
-import com.sun.ws.management.transfer.InvalidRepresentationFault;
-import com.sun.ws.management.transfer.TransferExtensions;
 
 /**
  * Example User delegate is responsible for processing CRUD & enumeration
@@ -35,50 +15,20 @@ import com.sun.ws.management.transfer.TransferExtensions;
  */
 public class UserEnumerationHandler extends EnumerationHandler {
 	
-	private static final Logger LOG = Logger.getLogger(EnumerationHandler.class
-			.getName());
+    // Log for logging messages
+    @SuppressWarnings("unused")
+	private static final Logger LOG = 
+		Logger.getLogger(EnumerationHandler.class.getName());
 	
 	public static String RESOURCE_URI= "wsman:auth/userenum";
 	public static final String NS_URI = "http://examples.hp.com/ws/wsman/user";
 	public static final String NS_PREFIX = "user";
 	
     public static final QName USER = new QName(NS_URI, "user", NS_PREFIX);
-
-	private static Boolean dialectRegistered = false;
-	
-	private ObjectFactory FACTORY = new ObjectFactory();
-	
-	static {
-		try {
-			registerUserFilterDialect();
-			EnumerationSupport.registerIteratorFactory(RESOURCE_URI, new UserIteratorFactory());
-		} catch (Exception e) {
-			throw new InternalErrorFault(e.getMessage());
-		}
-	}
 	 
 	public UserEnumerationHandler() {
 		super();
 	}
-	
-    protected static boolean registerUserFilterDialect() {
-
-    	synchronized (dialectRegistered) {
-    	    if ((dialectRegistered == false)
-					&& (BaseSupport
-							.isSupportedDialect(UserFilterFactory.DIALECT) == false)) {
-				try {
-					BaseSupport.addSupportedFilterDialect(
-							UserFilterFactory.DIALECT, new UserFilterFactory());
-				} catch (Exception ex) {
-					throw new IllegalArgumentException("Exception " + ex);
-				}
-				dialectRegistered = BaseSupport
-						.isSupportedDialect(UserFilterFactory.DIALECT);
-			}
-			return dialectRegistered;
-    	}
-    }
     
 	/* TODO: Implement CRUD operations
 	 * This part is a work in proress.
