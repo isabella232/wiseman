@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.43 2007-01-22 15:59:47 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.44 2007-01-25 15:42:03 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -235,12 +235,16 @@ public final class EnumerationSupport extends BaseSupport {
 			// Do not delete the context for timeouts
 			throw e;
 		} catch (FaultException e) {
-			removeContext(ctx);
-			ctx.getIterator().release();
+			if (ctx.isDeleted() == false) {
+				removeContext(ctx);
+				ctx.getIterator().release();
+			}
 			throw e;
 		} catch (Throwable t) {
-			removeContext(ctx);
-			ctx.getIterator().release();
+			if (ctx.isDeleted() == false) {
+				removeContext(ctx);
+				ctx.getIterator().release();
+			}
 			throw new InternalErrorFault(t);
 		}
 	}
@@ -295,6 +299,9 @@ public final class EnumerationSupport extends BaseSupport {
 
         // Set single thread use of this context
 		synchronized (ctx) {
+			if (ctx.isDeleted()) {
+				throw new InvalidEnumerationContextFault();
+			}
 			final GregorianCalendar now = new GregorianCalendar();
 			final XMLGregorianCalendar nowXml = datatypeFactory
 					.newXMLGregorianCalendar(now);
@@ -386,13 +393,12 @@ public final class EnumerationSupport extends BaseSupport {
 		final Timer timeoutTimer = new Timer(true);
 		timeoutTimer.schedule(ttask, maxTime.getTimeInMillis(new GregorianCalendar()));
 		
-		while ((passed.size() < maxElements)
-				&& (iterator.hasNext())) {
-			
+		while ((passed.size() < maxElements) && (iterator.hasNext())) {
+
 			// Check for a timeout
 			if (ttask.cancel == true) {
 				if (passed.size() == 0)
-				    throw new TimedOutFault();
+					throw new TimedOutFault();
 				else
 					break;
 			}
@@ -429,49 +435,35 @@ public final class EnumerationSupport extends BaseSupport {
 			} else {
 				if (element != null) {
 					final Element item;
-					try {
-						if (element instanceof Element) {
-							item = (Element) element;
-						} else if (element instanceof Document) {
-							item = ((Document) element).getDocumentElement();
-							// append the Element to the owner document if
-							// it has
-							// not been done
-							// this is critical for XPath filtering to work
-							final Document owner = item.getOwnerDocument();
-							if (owner.getDocumentElement() == null) {
-								owner.appendChild(item);
-							}
-						} else {
-							Document doc = Management.newDocument(); // db.newDocument();
+
+					if (element instanceof Element) {
+						item = (Element) element;
+					} else if (element instanceof Document) {
+						item = ((Document) element).getDocumentElement();
+						// append the Element to the owner document
+						// if it has not been done
+						// this is critical for XPath filtering to work
+						final Document owner = item.getOwnerDocument();
+						if (owner.getDocumentElement() == null) {
+							owner.appendChild(item);
+						}
+					} else {
+						Document doc = Management.newDocument();
+						try {
 							response.getXmlBinding().marshal(element, doc);
-							item = doc.getDocumentElement();
+						} catch (Exception e) {
+							removeContext(context);
+							iterator.release();
+							final String explanation = 
+								 "XML Binding marshall failed for object of type: "
+			                     + element.getClass().getName();
+							throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
 						}
-						NodeList result = ctx.evaluate(item);
-						if ((result != null) && (result.getLength() > 0)) {
-							// Then add this instance
-							if (fragmentCheck == null) {
-								// Only check this one
-								// If 'result' is same as the 'item' then this is not a fragment selection
-								fragmentCheck = new Boolean(result.item(0).equals(item));
-							}
-							if (fragmentCheck == true) {
-								// Whole node was selected
-								passed.add(ee);
-							} else {
-								// Fragment(s) selected
-								JAXBElement<MixedDataType> fragment = createXmlFragment(result);
-								EnumerationItem fragmentItem = new EnumerationItem(
-										fragment, ee.getEndpointReference());
-								passed.add(fragmentItem);
-							}
-							final String nsURI = item.getNamespaceURI();
-							final String nsPrefix = item.getPrefix();
-							if (nsPrefix != null && nsURI != null) {
-								env.addNamespaceDeclaration(nsPrefix, nsURI);
-							}
-						} else {
-						}
+						item = doc.getDocumentElement();
+					}
+					final NodeList result;
+					try {
+						result = ctx.evaluate(item);
 					} catch (XPathException xpx) {
 						removeContext(context);
 						iterator.release();
@@ -482,6 +474,31 @@ public final class EnumerationSupport extends BaseSupport {
 						iterator.release();
 						throw new CannotProcessFilterFault(
 								"Error evaluating Filter: " + ex.getMessage());
+					}
+					if ((result != null) && (result.getLength() > 0)) {
+						// Then add this instance
+						if (fragmentCheck == null) {
+							// Only check this one
+							// If 'result' is same as the 'item' then this is
+							// not a fragment selection
+							fragmentCheck = new Boolean(result.item(0).equals(
+									item));
+						}
+						if (fragmentCheck == true) {
+							// Whole node was selected
+							passed.add(ee);
+						} else {
+							// Fragment(s) selected
+							JAXBElement<MixedDataType> fragment = createXmlFragment(result);
+							EnumerationItem fragmentItem = new EnumerationItem(
+									fragment, ee.getEndpointReference());
+							passed.add(fragmentItem);
+						}
+						final String nsURI = item.getNamespaceURI();
+						final String nsPrefix = item.getPrefix();
+						if (nsPrefix != null && nsURI != null) {
+							env.addNamespaceDeclaration(nsPrefix, nsURI);
+						}
 					}
 				} else {
 					if (EnumerationModeType.ENUMERATE_EPR.equals(mode)) {
@@ -555,6 +572,9 @@ public final class EnumerationSupport extends BaseSupport {
 		
         // Set single thread use of this context
 		synchronized (ctx) {
+			if (ctx.isDeleted()) {
+				throw new InvalidEnumerationContextFault();
+			}
 			final BaseContext rctx = removeContext(context);
 			if (rctx == null) {
 				throw new InvalidEnumerationContextFault();
@@ -650,9 +670,9 @@ public final class EnumerationSupport extends BaseSupport {
 				return createFilter(enuFilter.getDialect(), enuFilter
 						.getContent(), nsMap);
 		} catch (SOAPException e) {
-			throw new InternalErrorFault(e.getMessage());
+			throw new InternalErrorFault(e);
 		} catch (JAXBException e) {
-			throw new InternalErrorFault(e.getMessage());
+			throw new InternalErrorFault(e);
 		}
 	}
 	

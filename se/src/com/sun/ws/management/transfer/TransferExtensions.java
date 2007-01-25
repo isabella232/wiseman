@@ -187,7 +187,15 @@ public class TransferExtensions extends Transfer {
 					item = ((Document)resource).getDocumentElement();
 				} else {
 					final Document content = getDocumentBuilder().newDocument();
-					getXmlBinding().marshal(resource, content);
+					
+					try {
+						getXmlBinding().marshal(resource, content);
+					} catch (Exception e) {
+						final String explanation = 
+							 "XML Binding marshall failed for object of type: "
+		                     + resource.getClass().getName();
+						throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
+					}
                     item = content.getDocumentElement();
 				}
 				// Evaluate & create the XmlFragmentElement
@@ -392,9 +400,16 @@ public class TransferExtensions extends Transfer {
 						owner.appendChild(item);
 					}
 				} else {
-					Document doc = Management.newDocument(); // db.newDocument();
-					getXmlBinding().marshal(resource, doc);
-					item = doc.getDocumentElement();
+					Document content = Management.newDocument(); // db.newDocument();
+					try {
+						getXmlBinding().marshal(resource, content);
+					} catch (Exception e) {
+						final String explanation = 
+							 "XML Binding marshall failed for object of type: "
+		                     + resource.getClass().getName();
+						throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
+					}
+					item = content.getDocumentElement();
 				}
 				NodeList result = filter.evaluate(item);
 				final MixedDataType mixedDataType = Management.FACTORY
