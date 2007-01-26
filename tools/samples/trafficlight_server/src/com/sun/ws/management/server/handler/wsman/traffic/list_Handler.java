@@ -34,7 +34,7 @@ public class list_Handler extends DelegatingHandler
 
     public list_Handler()
     {
-        super(delegate);
+        super(delegate = new ListHandler());
     } 
 
    /**

@@ -22,8 +22,9 @@ import org.xml.sax.InputSource;
 public class Xsd2WsdlTask extends Task {
     private static final String TEMPLATES_PATH = "templates";
     private VelocityContext context = new VelocityContext();
-    String filePath=null;
-    String wsdlFileName=null;
+    private String outputDir = "wsdl";
+    private String filePath=null;
+    private String wsdlFileName=null;
 	private void setResourceName(String resourceName) {
 		context.put("resource_name",resourceName);
 	}
@@ -43,6 +44,11 @@ public class Xsd2WsdlTask extends Task {
 		context.put("xsd_file",xsdFileName);
 	}
 	
+    public void setOutputDir(String output)
+    {
+        this.outputDir = output;
+    }
+    
 	private void setElementName(String elementName){
 		context.put("element_name",elementName);
 		
@@ -64,7 +70,7 @@ public class Xsd2WsdlTask extends Task {
 			}
 			extractXsdInfo(new File(filePath));
 			
-			File outputFile = new File("wsdl", wsdlFileName);
+			File outputFile = new File(outputDir, wsdlFileName);
 	        
 			try {//wsdlFromXsd
 				processTemplate(context, TEMPLATES_PATH + "/WsdlFromXsd.vm", outputFile);

@@ -6,6 +6,7 @@
   Required Velocity Variables: 
     ${package}              - packagename for the class
     ${delegateName}         - simple name of delegate class
+    ${resourceURI}          - resourceURI for this resource
     ${hasCustomOpNames}     - boolean. Determines if a mapping is needed for
                               SPEC Action URIs to custom op names
     ${hasCustomOps}         - boolean. Determines if there are custom operations.
@@ -16,77 +17,62 @@
 *#
 package ${package};
 
-import com.sun.ws.management.framework.enumeration.EnumerationHandler;
-import com.sun.ws.management.server.EnumerationIterator;
+import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.framework.enumeration.EnumerationHandler;
+import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.server.HandlerContext;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
 import java.util.logging.Logger;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
-import javax.xml.parsers.DocumentBuilder;
-
 /**
- * ${delegateName} deligate is responsible for processing enumeration actions.
+ * ${delegateName} delegate is responsible for processing enumeration actions.
  *
  * @GENERATED
  */
-public class ${delegateName} extends EnumerationHandler
-{    
-    //Log for logging messages
-    private Logger log = Logger.getLogger(${delegateName}.class.getName());
+public class ${delegateName} extends EnumerationHandler {
 
-    //the namespace map should be populated to handle filter requests
-    private Map<String, String> namespaces = null;
-    
-    private Object m_clientContext;//TODO initialize this
+    public static final String resourceURI = "${resourceURI}";
+       
+    // Log for logging messages
+    @SuppressWarnings("unused")
+    private final Logger log;
 
-    public ${delegateName}()
-    {
-        super(new ${enumerationIteratorName}());
-
-
-        setNamespaces(namespaces);
-        /**
-         * TODO set the client context object
-         * The clientContext is the dataset used in the Enumeration.
-         */        
-        setClientContext(m_clientContext);
+    public ${delegateName}() {
+        super();
+        
+        // Initialize our member variables
+        log = Logger.getLogger(${delegateName}.class.getName());
+        try {
+            EnumerationSupport.registerIteratorFactory("${resourceURI}",
+                                                       new ${name}IteratorFactory("${resourceURI}"));
+        } catch (Exception e) {
+			throw new InternalErrorFault(e);
+		}
     }
-
 #if(${hasCustomOpNames})
-
 #foreach( $key in ${overriddenMethodMap.keySet()} )
 #if(${overriddenMethodMap.get($key).isEnumMethod})
-     public void ${overriddenMethodMap.get($key).OverriddenOpName}( Enumeration enuRequest, Enumeration enuResponse )
-     {
-         ${overriddenMethodMap.get($key).OperationName}( enuRequest, enuResponse);
-     }
+
+    public void ${overriddenMethodMap.get($key).OverriddenOpName}(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse ) {
+        ${overriddenMethodMap.get($key).OperationName}( context, enuRequest, enuResponse);
+    }    
 #else
-     public void ${overriddenMethodMap.get($key).OverriddenOpName}( HandlerContext context, Management request, Management response )
-     {
-         //TODO IMPLEMENT
-         ${overriddenMethodMap.get($key).OperationName}( context, request, response);
-     }
-#end
 
+    public void ${overriddenMethodMap.get($key).OverriddenOpName}(HandlerContext context, Management request, Management response ) {
+        //TODO IMPLEMENT
+        ${overriddenMethodMap.get($key).OperationName}( context, request, response);
+    }   
 #end
-
+#end
 #if(${hasCustomOps})
 #foreach( $key in ${customOperationMap.keySet()} )
-     public void ${customOperationMap.get($key).OperationName}(HandlerContext context, Management request, Management response )
-     {
-         //TODO IMPLEMENT CUSTOM OPERATION
-     }
 
+    public void ${customOperationMap.get($key).OperationName}(HandlerContext context, Management request, Management response ) {
+        //TODO IMPLEMENT CUSTOM OPERATION
+    }
 #end
-
 #end
-
 #end
 }

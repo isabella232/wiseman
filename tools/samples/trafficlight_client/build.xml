@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="trafficlight_client" default="dist" basedir=".">
+
+	<property file="project.properties"/>
+	<property file="${user.home}/.ant.properties"/>
+
+	<setproxy proxyhost="${http.proxyHost}" 
+	          proxyport="${http.proxyPort}" 
+	          nonproxyhosts="${http.nonProxyHosts}"/>
+
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="jaxb.compile.classpath">
+		<fileset dir="${extern.lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!--  =================================================  -->
+	<!--   "init" - initializes props and dirs for targets   -->
+	<!--  =================================================  -->
+	<target name="init">
+		<mkdir dir="${basedir}/${dist.dir}" />
+		<mkdir dir="${basedir}/${classes.dir}" />
+	</target>
+
+	<!--  ===================================================================  -->
+	<!--   "jar" - Compiles source files in src dir and Jar them               -->
+	<!--  ===================================================================  -->
+	<target name="jar" depends="compile">
+		<jar destfile="${basedir}/${dist.dir}/${client.jar.file}">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Built-At" value="${DSTAMP}" />
+				<attribute name="Specification-Title" value="WS-Management" />
+				<attribute name="Specification-Version" value="06/2005" />
+				<attribute name="Implementation-Title" value="Traffic Client" />
+				<attribute name="Implementation-Version" value="1.0" />
+				<attribute name="Sealed" value="false" />
+				<attribute name="Main-Class" value="com.sun.ws.management.traffic.client.TrafficClientApp" />
+				<attribute name="Class-Path" value="lib/wiseman-client.jar lib/wiseman.jar lib/jaxws/activation.jar lib/jaxws/jaxb-api.jar lib/jaxws/jaxb-impl.jar lib/jaxws/jsr173_api.jar lib/jaxws/jsr181-api.jar lib/jaxws/jsr250-api.jar lib/jaxws/saaj-api.jar lib/jaxws/saaj-impl.jar" />
+			</manifest>
+			<fileset dir="${basedir}/${classes.dir}"/>
+		</jar>
+	</target>
+
+	<!--  ==========================================================  -->
+	<!--   "compile" - Compiles source files in src dir               -->
+	<!--  ==========================================================  -->
+	<target name="compile" depends="init">
+		<javac destdir="${basedir}/${classes.dir}"
+	           debug="${debug}">
+			<classpath refid="compile.classpath" />
+
+			<src path="${basedir}/${src.dir}" />
+		</javac>
+		<copy todir="${basedir}/${classes.dir}">
+			<fileset dir="${basedir}/${src.dir}">
+				<include name="**/*.properties" />
+			</fileset>
+		</copy>
+	</target>
+	
+	<!--  ===================================================================  -->
+	<!--   "clean" - Deletes the directories ${dist.dir} and ${classes.dir}    -->
+	<!--  ===================================================================  -->
+	<target name="clean" 
+		description="Deletes the directories ${dist.dir} and ${classes.dir}">
+		<delete dir="${basedir}/${dist.dir}"/>
+		<delete dir="${basedir}/${classes.dir}"/>
+	</target>
+
+	<target name="dist" depends="jar"/>
+
+</project>

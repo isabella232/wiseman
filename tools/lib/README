@@ -5,6 +5,8 @@ velocity-1.4.jar  http://jakarta.apache.org/velocity/
 velocity-dep-1.4.jar 
 wsdl4j.jar  vers 1.5 http://wsdl4j.sourceforge.net/downloads/
 
+JAX-WS 2.0 libraries http://java.sun.com/webservices/jaxws/
+
 ************************************************************************
 Sun Microsystems will not be liable or responsible in any way for
 materials or code which you download or copy from another web site or

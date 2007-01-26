@@ -1,18 +1,13 @@
 
 package com.sun.ws.management.server.handler.wsman.traffic;
 
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.framework.handlers.DelegatingHandler;
-import com.sun.ws.management.server.HandlerContext;
-import com.sun.ws.management.Management;
-import com.sun.ws.management.xml.XmlBinding;
-import com.sun.ws.management.InternalErrorFault;
-
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBException;
-
 import wsman.traffic.resource.ResourceHandler;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.framework.handlers.DelegatingHandler;
+import com.sun.ws.management.server.HandlerContext;
 
 /**
  * This Handler deligates to the wsman.traffic.resource.ResourceHandler class.

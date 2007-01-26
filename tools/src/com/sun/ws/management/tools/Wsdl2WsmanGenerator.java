@@ -1,8 +1,45 @@
 package com.sun.ws.management.tools;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.wsdl.Definition;
+import javax.wsdl.Input;
+import javax.wsdl.Operation;
+import javax.wsdl.Port;
+import javax.wsdl.PortType;
+import javax.wsdl.Service;
+import javax.wsdl.Types;
+import javax.wsdl.WSDLException;
+import javax.wsdl.extensions.UnknownExtensibilityElement;
+import javax.wsdl.extensions.schema.Schema;
+import javax.wsdl.factory.WSDLFactory;
+import javax.wsdl.xml.WSDLReader;
+import javax.xml.namespace.QName;
+
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXParseException;
+
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JPackage;
-import com.sun.tools.xjc.*;
+import com.sun.tools.xjc.AbortException;
+import com.sun.tools.xjc.ConsoleErrorReporter;
+import com.sun.tools.xjc.ErrorReceiver;
+import com.sun.tools.xjc.Language;
+import com.sun.tools.xjc.ModelLoader;
+import com.sun.tools.xjc.Options;
 import com.sun.tools.xjc.api.ErrorListener;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import com.sun.tools.xjc.api.SchemaCompiler;
@@ -11,30 +48,6 @@ import com.sun.tools.xjc.model.Model;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.xml.bind.api.impl.NameConverter;
-
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
-import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.tools.ant.types.XMLCatalog;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXParseException;
-
-import javax.wsdl.*;
-import javax.wsdl.extensions.UnknownExtensibilityElement;
-import javax.wsdl.extensions.schema.Schema;
-import javax.wsdl.factory.WSDLFactory;
-import javax.wsdl.xml.WSDLReader;
-import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Wsdl2Wsman Java Generator Class
@@ -55,7 +68,7 @@ public class Wsdl2WsmanGenerator
 
 
     private File m_wsdl = null;
-    private String m_enumIteratorName = null;
+    private String m_iteratorFactoryName = null;
     private File m_outputDir = new File("").getAbsoluteFile();
 
     private Map<String, WsManOp> m_overriddenMethodMap = new HashMap<String, WsManOp>();
@@ -602,12 +615,18 @@ public class Wsdl2WsmanGenerator
 
         VelocityContext context = new VelocityContext();
 
-        context.put("firstJaxBPackage", packName);
+        context.put("jaxbFactoryPackage", packName);
 
         //build directories
         File delegatePackageDir = new File(m_outputDir, getDelegatePackageName(resourceUri).replace('.', File.separatorChar));
         delegatePackageDir.mkdirs();
 
+        String name = resourceUri.substring(resourceUri.lastIndexOf('/') + 1);
+        String firstChar = name.substring(0, 1).toUpperCase();
+        if (name.length() > 1)
+            name = firstChar + name.substring(1);
+        else
+        	name = firstChar;
         String del_package = getDelegatePackageName(resourceUri);
         String wisemanPackage = createHandlerClassName(resourceUri).substring(0, createHandlerClassName(resourceUri).lastIndexOf("."));
         String handlerName = createHandlerClassName(resourceUri).substring(createHandlerClassName(resourceUri).lastIndexOf(".") + 1);
@@ -620,10 +639,12 @@ public class Wsdl2WsmanGenerator
 
         if (isEnumeration)
         {
-            m_enumIteratorName = delegateName + "EnumerationIterator";
-            context.put("enumerationIteratorName", m_enumIteratorName);
+            m_iteratorFactoryName = name + "IteratorFactory";
+            context.put("iteratorFactoryName", m_iteratorFactoryName);
         }
 
+        context.put("name", name);
+        context.put("resourceURI", resourceUri);
         context.put("package", del_package);
         context.put("wisemanPackage", wisemanPackage);
         context.put("delegateClassName", delegateClassName);
@@ -648,8 +669,8 @@ public class Wsdl2WsmanGenerator
         if (isEnumeration)
         {
             processTemplate(context, TEMPLATES_PATH + "/EnumerationSupport.vm", outputFile);
-            outputFile = new File(delegatePackageDir, m_enumIteratorName + ".java");
-            processTemplate(context, TEMPLATES_PATH + "/EnumerationIterator.vm", outputFile);
+            outputFile = new File(delegatePackageDir, m_iteratorFactoryName + ".java");
+            processTemplate(context, TEMPLATES_PATH + "/IteratorFactory.vm", outputFile);
         }
         else
         {

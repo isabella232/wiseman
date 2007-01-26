@@ -106,10 +106,7 @@
             <copy todir="${staging.dir}" file="project.properties" />
 		<copy todir="${staging.dir}/lib">
               <fileset dir="${lib.dir}" />      
-			</copy>
-		<copy todir="${staging.dir}/samples">
-              <fileset dir="${samples.dir}" />      
-        </copy> 
+		</copy> 
 		<copy todir="${staging.dir}/src">
         <fileset dir="${src.dir}" />      
 	        </copy> 

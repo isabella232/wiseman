@@ -1,200 +1,215 @@
-<project name="user" default="war" basedir=".">
-        
-        <property file="project.properties"/>
-        <property file="${user.home}/.ant.properties"/>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="trafficlight_server" default="war" basedir=".">
+
+	<property file="project.properties"/>
+	<property file="${user.home}/.ant.properties"/>
+
+	<setproxy proxyhost="${http.proxyHost}" 
+	          proxyport="${http.proxyPort}" 
+	          nonproxyhosts="${http.nonProxyHosts}"/>
+
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="jaxb.compile.classpath">
+		<fileset dir="${extern.lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!--  =================================================  -->
+	<!--   "init" - initializes props and dirs for targets   -->
+	<!--  =================================================  -->
+	<target name="init">
+		<!-- determine if user added an xsd to the dir -->
+		<fileset id="empty" dir="${xsd.dir}" includes="**/*.xsd"/>
+		<pathconvert property="nofiles.files" refid="empty"/>
+		<condition property="xsd.user.not.null">
+			<not>
+				<equals arg1="" arg2="${nofiles.files}"/>
+			</not>
+		</condition>
+		<mkdir dir="${basedir}/${dist.dir}" />
+		<mkdir dir="${basedir}/${classes.dir}" />
+		<mkdir dir="${basedir}/${classes.dir}_model" />
+		<mkdir dir="${basedir}/${gen.src.dir}" />
+	</target>
 
 
-		  <path id="jaxb.compile.classpath">
-            <fileset dir="${jaxb.lib.dir}">
-              <include name="**/*.jar" />
-            </fileset>
-          </path>
-
-          <path id="jaxrpc.compile.classpath">
-            <fileset dir="${jaxrpc.lib.dir}">
-              <include name="**/*.jar" />
-            </fileset>
-          </path>
-
-          <path id="compile.classpath">
-            <fileset dir="${lib.dir}">
-              <include name="**/*.jar"/>
-            </fileset>
-          	
-           </path>
-        
-        <!--  =================================================  -->
-        <!--   "init" - initializes props and dirs for targets   -->
-        <!--  =================================================  -->   
-        <target name="init">     
-           <!-- determine if user added an xsd to the dir -->
-           <fileset id="empty" dir="${xsd.dir}" includes="**/*.xsd"/>
-           <pathconvert property="nofiles.files" refid="empty"/>
-           <condition property="xsd.user.not.null">
-            <not>
-               <equals arg1="" arg2="${nofiles.files}"/>
-            </not>
-           </condition>
-            <mkdir dir="${dist.dir}" />           
-           <mkdir dir="${classes.dir}" />
-            <mkdir dir="${classes.dir}_model" />
-           <mkdir dir="${gensrc.dir}" />
-         </target>
-
-
-         <!--  ==========================================================  -->
-         <!--   "compile" - Compiles source files in src and gensrc dirs   -->
-         <!--  ==========================================================  -->   
-         <target name="compile" depends="init,generate" description="Compiles source files in src and gensrc directories.">
-              <javac destdir="${classes.dir}_model"
+	<!--  ===========================================================  -->
+	<!--   "compile" - Compiles source files in src and gen-src dirs   -->
+	<!--  ===========================================================  -->
+	<target name="compile" 
+		depends="init,generate" 
+		description="Compiles source files in src and gen-src directories.">
+		<javac destdir="${basedir}/${classes.dir}_model"
                    debug="${debug}">
-              <classpath refid="compile.classpath" />       
-              <src path="model/${src.dir}" />           
-            </javac>
+			<classpath refid="compile.classpath" />
+			<src path="${basedir}/model/${src.dir}" />
+		</javac>
 
-            <copy todir="${classes.dir}_model">
-              <fileset dir="model/${src.dir}" includes="**/*.gif,**/*.properties"/>      
-       		</copy>
+		<copy todir="${basedir}/${classes.dir}_model">
+			<fileset dir="${basedir}/model/${src.dir}" includes="**/*.gif,**/*.properties"/>
+		</copy>
 
-            	<javac destdir="${classes.dir}"
+		<javac destdir="${basedir}/${classes.dir}"
                    debug="${debug}">
-              <classpath refid="compile.classpath" />       
-              <classpath path="${classes.dir}_model"/>
-            		<src path="${src.dir}" />           
-            </javac>
-         	
-            <copy todir="${classes.dir}">
-              <fileset dir="${src.dir}" includes="**/*.gif,**/*.properties"/>      
-       		</copy>
-         	
-         </target>          
+			<classpath refid="compile.classpath" />
+			<classpath path="${basedir}/${classes.dir}_model"/>
+			<src path="${basedir}/${src.dir}" />
+		</javac>
 
-         <!--  ===================================================================  -->
-         <!--   "jar" - Compiles source files in src and gensrc dirs and Jars them  -->
-         <!--  ===================================================================  -->  
-         <target name="jar" depends="compile" description="Compiles source and creates the jar: ${jar.file}" >
-            <jar destfile="${dist.dir}/traffic_model.jar" update="true">
-                <fileset dir="${classes.dir}_model"/>
-            </jar>         	
-         </target>
+		<copy todir="${basedir}/${classes.dir}">
+			<fileset dir="${basedir}/${src.dir}" includes="**/*.gif,**/*.properties"/>
+		</copy>
+	</target>
 
-         <!--  ===================================================================  -->
-         <!--   "jaxb" - Runs JAXB's XJC compiler on any .xsd files in the xsd dir  -->
-         <!--  ===================================================================  -->          
-         <target name="jaxb" depends="init" if="xsd.user.not.null" description="Runs JAXB's XJC compiler on any .xsd files in the xsd directory.">
-            <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
-              <classpath>
-                <fileset dir="${jaxb.lib.dir}" includes="*.jar" excludes="ant.jar"/>
-              </classpath>
-            </taskdef>
-                <xjc target="${gensrc.dir}">
-                    <schema dir="${xsd.dir}" />
-                </xjc>
-         </target>
+	<!--  ====================================================================  -->
+	<!--   "jar" - Compiles source files in src and gen-src dirs and Jar them   -->
+	<!--  ====================================================================  -->
+	<target name="jar" 
+		depends="compile" 
+		description="Compiles source and creates the jar: ${jar.file}" >
+		<jar destfile="${basedir}/${dist.dir}/traffic_model.jar" update="true">
+			<fileset dir="${basedir}/${classes.dir}_model"/>
+		</jar>
+	</target>
 
-         <!--  =================================================  -->
-         <!--   "deploy" - Deploys the jar to a webapp's lib dir  -->
-         <!--  =================================================  -->   
-         <!--target name="deploy" depends="jar" description="Deploys the ${jar.file} to the webapp's lib directory at: ${webapp.lib.dir}">
-         </target-->
+	<!--  ===================================================================  -->
+	<!--   "jaxb" - Runs JAXB's XJC compiler on any .xsd files in the xsd dir  -->
+	<!--  ===================================================================  -->
+	<target name="jaxb" 
+		depends="init" if="xsd.user.not.null" 
+		description="Runs JAXB's XJC compiler on any .xsd files in the xsd directory.">
+		<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+			<classpath>
+				<fileset dir="${extern.lib.dir}/jaxws" includes="*.jar" excludes="ant.jar"/>
+			</classpath>
+		</taskdef>
+		<xjc target="${gen.src.dir}">
+			<!-- uncomment if HTTP proxies are needed for internet access, 
+                 define it in ${user.home}/.ant.properties -->
+			<arg value="-httpproxy" />
+			<arg value="${http.proxy}" />
+			<schema dir="${basedir}/${xsd.dir}" />
+		</xjc>
+	</target>
 
-	  <path id="deployer.classpath">
-	    <pathelement path="${catalina.home}/server/lib/catalina-ant.jar" />
-	  </path>
+	<!--  =================================================  -->
+	<!--   "deploy" - Deploys the jar to a webapp's lib dir  -->
+	<!--  =================================================  -->
+	<path id="deployer.classpath">
+		<pathelement path="${catalina.home}/server/lib/catalina-ant.jar" />
+	</path>
 
-	  <target name="deploy" depends="war">
-		<taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" classpathref="deployer.classpath" />
-	    <deploy url="${catalina.manager.url}" username="${catalina.manager.username}" password="${catalina.manager.password}"
-	            path="${war.context.path}" war="${basedir}/${dist.dir}/${war.filename}" update="true" />
-	  </target>
+	<target name="deploy" depends="war">
+		<taskdef name="deploy" 
+			     classname="org.apache.catalina.ant.DeployTask" 
+			     classpathref="deployer.classpath" />
+		<deploy url="${catalina.manager.url}" 
+			    username="${catalina.manager.username}" 
+			    password="${catalina.manager.password}"
+		        path="${war.context.path}" 
+			    war="${basedir}/${dist.dir}/${war.filename}" 
+			    update="true" />
+	</target>
 
-	  <target name="war" depends="jar">
-	    <war destfile="${dist.dir}/${war.filename}"
+	<!--  =================================================  -->
+	<!--   "war" - Create the war file                       -->
+	<!--  =================================================  -->
+	<target name="war" depends="jar">
+		<war destfile="${basedir}/${dist.dir}/${war.filename}"
 	         webxml="${wiseman.root}/etc/web.xml"
 	         index="true">
-	      <classes dir="${classes.dir}">
-	        <include name="**" />
-	      </classes>
-	    	
-	      <lib dir="${lib.dir}">
-	        <include  name="wiseman.jar" />
-	        <include  name="velocity-1.4.jar" />
-	        <include  name="velocity-dep-1.4.jar" />
-	      </lib>	    	
-	      <lib dir="${lib.dir}">
-	        <include  name="activation.jar" />
-	        <include  name="jsr173_1.0_api.jar" />
-	        <include  name="jaxb-api.jar" />
-	        <include  name="jaxb-impl.jar" />
-	      </lib>
-	      <lib dir="${lib.dir}">
-	        <include  name="saaj-api.jar" />
-	        <include  name="saaj-impl.jar" />
-	      </lib>
-	      <lib dir="${dist.dir}">
-	        <include name="traffic_model.jar" />
-	      </lib>
-	      <metainf dir="${wiseman.root}/etc">
-	        <include name="context.xml" />
-	      </metainf>
-	      <webinf dir="${wiseman.root}/etc">
-	        <include name="sun-web.xml" />
-	      </webinf>
-	      <!-- the build runs without schema validation by default 
+			<classes dir="${basedir}/${classes.dir}">
+				<include name="**" />
+			</classes>
+			<classes dir="etc">
+				<include name="binding.properties" />
+			</classes>
+			<lib dir="${lib.dir}">
+				<include  name="wiseman.jar" />
+				<include  name="velocity-1.4.jar" />
+				<include  name="velocity-dep-1.4.jar" />
+			</lib>
+			<lib dir="${extern.lib.dir}/jaxws">
+				<include  name="activation.jar" />
+				<include  name="jsr173_1.0_api.jar" />
+				<include  name="jaxb-api.jar" />
+				<include  name="jaxb-impl.jar" />
+			</lib>
+			<lib dir="${extern.lib.dir}/jaxws">
+				<include  name="saaj-api.jar" />
+				<include  name="saaj-impl.jar" />
+			</lib>
+			<lib dir="${basedir}/${dist.dir}">
+				<include name="traffic_model.jar" />
+			</lib>
+			<metainf dir="${wiseman.root}/etc">
+				<include name="context.xml" />
+			</metainf>
+			<webinf dir="${wiseman.root}/etc">
+				<include name="sun-web.xml" />
+			</webinf>
+			<!-- the build runs without schema validation by default 
 	           to enable schema validation, see etc/xsd/README -->
-	      <zipfileset dir="${classes.dir}"
+			<zipfileset dir="${basedir}/${classes.dir}"
 	                  includes="*.properties" />
-	      <zipfileset dir="${src.dir}"
+			<zipfileset dir="${basedir}/${src.dir}"
 	                  includes="**/*.xml" />
-	    </war>
-	  </target>
-	
-	
-	<!--  ===================================================================  -->
-         <!--   "clean" - Deletes the directories but leaves ${jar.file}  -->
-         <!--  ===================================================================  -->          
-         <target name="clean" description="Deletes the directories ${classes.dir} and ${gensrc.dir}  **NOTE: leaves ${jar.file}">
-           <delete dir="${classes.dir}"/>
-            <delete dir="${classes.dir}_model"/>
-            <delete dir="${gensrc.dir}"/>
-            <delete dir="velocity.log"/>
-         </target>              
+		</war>
+	</target>
 
-    <!--  ===================================================================  -->
-    <!--   "genwsdl" - Generates WSDL from State XSD                           -->
-    <!--  ===================================================================  -->          
-    <target name="genwsdl" description="Generates WSDL from State XSD">
-        <mkdir dir="wsdl" />           
-   	   <taskdef name="xsd2wsdl" classname="com.sun.ws.management.tools.Xsd2WsdlTask">
-       	<!-- classpath refid="compile.classpath" / -->
-   	   	<classpath>
-   		    <fileset dir="../../lib">
-   		      <include name="*.jar"/>
-   		    </fileset>
-    	   	</classpath>
-      </taskdef>
-      <!-- mkdir dir="${user.output.dir}"/ -->
-      <xsd2wsdl xsdFile="${user.xsd.file}" />
-    </target>     
 
 	<!--  ===================================================================  -->
-         <!--   "generate" - Generates Java Classes from WSDL                       -->
-         <!--  ===================================================================  -->          
-         <target name="generate" depends="genwsdl" description="Generates Java Classes from WSDL">
-           <taskdef 
-               name="wsdl2wsman" 
-               classname="com.sun.ws.management.tools.Wsdl2WsmanTask" >
-      	      <classpath refid="compile.classpath" />
+	<!--   "clean" - Deletes the directories ${dist.dir} and ${classes.dir}    -->
+	<!--  ===================================================================  -->
+	<target name="clean" 
+		description="Deletes the directories ${classes.dir} and ${gen.src.dir}">
+		<delete dir="${basedir}/${dist.dir}"/>
+		<delete dir="${basedir}/${classes.dir}"/>
+		<delete dir="${basedir}/${classes.dir}_model"/>
+		<delete dir="${basedir}/${gen.src.dir}"/>
+		<delete dir="${basedir}/velocity.log"/>
+	</target>
 
-           </taskdef>
-           <mkdir dir="${user.output.dir}"/>
-           <wsdl2wsman generateJaxb="${user.generate.jaxb}" outputDir="${user.output.dir}" 
-                       wsdlFile="${user.wsdl.file}"
-                       processAsSchema="false"/>
-           <!-- delete spec generated types until we know how to tell jaxb not to generate again -->
-          <delete dir="${gensrc.dir}\org\xmlsoap\schemas" />           
-         </target>     
+	<!--  ===================================================================  -->
+	<!--   "genwsdl" - Generates WSDL from State XSD                           -->
+	<!--  ===================================================================  -->
+	<target name="genwsdl" description="Generates WSDL from State XSD">
+		<mkdir dir="${basedir}/wsdl"/>
+		<taskdef name="xsd2wsdl" 
+			     classname="com.sun.ws.management.tools.Xsd2WsdlTask">
+			<classpath>
+				<fileset dir="${lib.dir}">
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+		</taskdef>
+		<xsd2wsdl xsdFile="${basedir}/${user.xsd.file}" outputDir="${basedir}/wsdl"/>
+	</target>
 
-	
-	
+	<!--  ===================================================================  -->
+	<!--   "generate" - Generates Java Classes from WSDL                       -->
+	<!--  ===================================================================  -->
+	<target name="generate" depends="genwsdl" description="Generates Java Classes from WSDL">
+		<taskdef name="wsdl2wsman" 
+                 classname="com.sun.ws.management.tools.Wsdl2WsmanTask" >
+			<classpath refid="compile.classpath" />
+		</taskdef>
+		<mkdir dir="${user.output.dir}"/>
+		<wsdl2wsman generateJaxb="${user.generate.jaxb}" 
+			           outputDir="${basedir}/${user.output.dir}" 
+                       wsdlFile="${basedir}/${user.wsdl.file}"
+                       processAsSchema="false" >
+
+		</wsdl2wsman>
+		<!-- delete spec generated types until we know how to tell jaxb not to generate again -->
+		<delete dir="${gen.src.dir}/org/xmlsoap/schemas" />
+	</target>
+
 </project>

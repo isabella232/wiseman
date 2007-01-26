@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="samples" default="build" basedir=".">
+
+	<target name="init" depends="clean">
+		<tstamp/>
+	</target>
+
+	<target name="clean">
+		<delete file="../traffic*.jar"/>
+		<delete file="../traffic.war"/>
+	</target>
+
+	<target name="build" depends="init">
+		<ant antfile="trafficlight_client/build.xml" inheritall="no" description="Build Traffic Light Client"/>
+		<copy todir="..">
+			<fileset dir="trafficlight_client/dist">
+				<include name="**/traffic*.jar" />
+			</fileset>
+		</copy>
+
+		<ant antfile="trafficlight_server/build.xml" inheritall="no" description="Build Traffic Light Server"/>
+		<copy todir="..">
+			<fileset dir="trafficlight_server/dist">
+				<include name="**/traffic.war"/>
+			</fileset>
+		</copy>
+	</target>
+
+</project>

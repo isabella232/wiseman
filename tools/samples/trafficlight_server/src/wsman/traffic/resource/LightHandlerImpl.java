@@ -20,6 +20,7 @@ import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.framework.Utilities;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XmlBinding;
 
 
@@ -33,9 +34,9 @@ public class LightHandlerImpl {
 		try {
 			name = getNameSelector(request);
 		} catch (JAXBException e) {
-			throw new InternalErrorFault(e.getMessage());
+			throw new InternalErrorFault(e);
 		} catch (SOAPException e) {
-			throw new InternalErrorFault(e.getMessage());
+			throw new InternalErrorFault(e);
 		}
   		TrafficLight light = TrafficLightModel.getModel().find(name);
         copyStateFromRequestToModel(request, light,binding);
@@ -57,19 +58,28 @@ public class LightHandlerImpl {
 		// Convert JABX to an element and copy it to the SOAP
 		// Response Body
 			Document soapBodyDoc = Management.newDocument();
-			binding.marshal(trafficLightFactory.createTrafficlight(tlType),
-					soapBodyDoc);
+
+			try {
+				binding.marshal(trafficLightFactory.createTrafficlight(tlType),
+						soapBodyDoc);
+			} catch (Exception e) {
+				final String explanation = 
+					 "XML Binding marshall failed for JAXBElement<TrafficLightType>. " 
+					+ "Ensure 'binding.properties' file is correctly set on server.";
+				log.log(Level.SEVERE, explanation, e);
+				throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
+			}
 			response.getBody().addDocument(soapBodyDoc);
 		} catch (JAXBException e) {
 			log.log(Level.SEVERE,
 					"An error occured while creating a traffic light SOAP body for the "
 							+ name + " resource", e);
-			throw new InternalErrorFault();
+			throw new InternalErrorFault(e);
 		} catch (SOAPException e) {
 			log.log(Level.SEVERE,
 					"An error occured while creating a traffic light SOAP body for the "
 							+ name + " resource", e);
-			throw new InternalErrorFault();
+			throw new InternalErrorFault(e);
 		}
 	}
 
@@ -79,9 +89,9 @@ public class LightHandlerImpl {
     	try{
     		name = getNameSelector(request);
 	} catch (JAXBException e) {
-		throw new InternalErrorFault(e.getMessage());
+		throw new InternalErrorFault(e);
 	} catch (SOAPException e) {
-		throw new InternalErrorFault(e.getMessage());
+		throw new InternalErrorFault(e);
 	}
           TrafficLight light = TrafficLightModel.getModel().find(name);
           if(light==null){
@@ -112,8 +122,10 @@ public class LightHandlerImpl {
   				try {
   					tlElement = (JAXBElement<TrafficLightType>)binding.unmarshal(request.getBody().getFirstChild());
   				} catch (JAXBException e) {
-  					//m_log.log(Level.SEVERE,"The body of this request did not conform to its schema.",e );
-  					throw new InternalErrorFault();
+  					final String explanation = 
+  						 "XML Binding unmarshall failed for JAXBElement<TrafficLightType>. " 
+  						+ "Ensure 'binding.properties' file is correctly set on server.";
+  					throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
   				}
   				TrafficLightType tlType = tlElement.getValue();
   		

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="trafficlight_client/src"/>
+	<classpathentry kind="src" path="trafficlight_server/src"/>
+	<classpathentry kind="src" path="trafficlight_server/model/src"/>
+	<classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/activation.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/ant.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/junit.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/servlet-api.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/velocity-1.4.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/velocity-dep-1.4.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman_src.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman_test.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman-client.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman-client-src.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman-tools.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wsdl4j.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/FastInfoset.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/http.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jaxb-api.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jaxb-impl.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jaxb-xjc.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jaxws-api.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jaxws-rt.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jaxws-tools.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jsr173_api.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jsr181-api.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/jsr250-api.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/resolver.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/saaj-api.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/saaj-impl.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/sjsxp.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

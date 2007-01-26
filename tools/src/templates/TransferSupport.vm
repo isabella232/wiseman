@@ -13,86 +13,74 @@
                               this is used for overridden SPEC operation names
     ${customOperationMap}   - Map containing key:String ActionURI to value:WsManOp
                               this is used for custom operations
+    ${jaxbFactoryPackage}       - package name for the JAXB type associated with the resource
 *#
 package ${package};
 
 import com.sun.ws.management.framework.transfer.TransferSupport;
 import com.sun.ws.management.Management;
-import com.sun.ws.management.xml.XmlBinding;
-import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.server.HandlerContext;
 
-import java.util.logging.Logger;
-import java.util.Map;
+import ${jaxbFactoryPackage}.ObjectFactory;
 
-import javax.xml.bind.JAXBException;
+import java.util.logging.Logger;
 
 /**
- * ${delegateName} deligate is responsible for processing WS-Transfer actions.
+ * ${delegateName} delegate is responsible for processing WS-Transfer actions.
  * @GENERATED
  */
-public class ${delegateName} extends TransferSupport
-{
-    //Log for logging messages
-    private Logger log = Logger.getLogger(${delegateName}.class.getName());
+public class ${delegateName} extends TransferSupport {
 
-	private static XmlBinding binding;
-	private static final String RESOURCE_JAXB_PACKAGE = "${firstJaxBPackage}";
-	{
-		try {
-			binding = new XmlBinding(null,RESOURCE_JAXB_PACKAGE);
-		} catch (JAXBException e) {
-			throw new InternalErrorFault(e.getMessage());
-		}
-	}
-	private static final ${firstJaxBPackage}.ObjectFactory resourceFactory = new ${firstJaxBPackage}.ObjectFactory();
-    public static final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory addressingFactory = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
-    public static final org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory managementFactory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
-
-
+    // Log for logging messages
+    @SuppressWarnings("unused")
+    private final Logger log;
+    private final ObjectFactory resourceFactory;
+    
+    public static final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory addressingFactory =
+                         new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
+    public static final org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory managementFactory =
+                         new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
+    
+    public ${delegateName}() {
+        super();
+        
+        // Initialize our member variables
+        log = Logger.getLogger(${delegateName}.class.getName());
+        resourceFactory = new ObjectFactory();
+    } 
 #if(!${hasCustomOpNames})
-    public void create(HandlerContext context, Management request, Management response)
-    {
+
+    public void create(HandlerContext context, Management request, Management response) {
         super.create(context, request, response);
     }
-
-    public void delete(HandlerContext context,Management request, Management response)
-    {
+    
+    public void delete(HandlerContext context,Management request, Management response) {
         super.delete(context, request, response);
     }
 
-    public void get(HandlerContext context, Management request, Management response)
-    {
+    public void get(HandlerContext context, Management request, Management response) {
         super.get(context, request, response);
     }
 
-    public void put(HandlerContext context,Management request, Management response)
-    {
+    public void put(HandlerContext context,Management request, Management response) {
         super.put(context,request,response);
     }
 #end
-
 #if(${hasCustomOpNames})
 #foreach( $key in ${overriddenMethodMap.keySet()} )
-     public void ${overriddenMethodMap.get($key).OverriddenOpName}( HandlerContext context, Management request, Management response )
-     {
-         //TODO IMPLEMENT
-         ${overriddenMethodMap.get($key).OperationName}( context, request, response);
-     }
 
+    public void ${overriddenMethodMap.get($key).OverriddenOpName}( HandlerContext context, Management request, Management response ) {
+        //TODO IMPLEMENT
+        ${overriddenMethodMap.get($key).OperationName}( context, request, response);
+    }
 #end
-
 #end
-
 #if(${hasCustomOps})
 #foreach( $key in ${customOperationMap.keySet()} )
-     public void ${customOperationMap.get($key).OperationName}( HandlerContext context, Management request, Management response )
-     {
-         //TODO IMPLEMENT CUSTOM OPERATION
-     }
 
+    public void ${customOperationMap.get($key).OperationName}( HandlerContext context, Management request, Management response ) {
+        //TODO IMPLEMENT CUSTOM OPERATION
+    }
 #end
-
 #end
-
 }

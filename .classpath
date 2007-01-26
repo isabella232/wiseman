@@ -6,10 +6,10 @@
 	<classpathentry kind="src" path="se/test/gen-src"/>
 	<classpathentry kind="src" path="client/src"/>
 	<classpathentry kind="src" path="client/test"/>
-	<classpathentry kind="src" path="client/samples/trafficlight_client/src"/>
 	<classpathentry kind="src" path="tools/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/model/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
+	<classpathentry kind="src" path="tools/samples/trafficlight_client/src"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/activation.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/FastInfoset.jar"/>

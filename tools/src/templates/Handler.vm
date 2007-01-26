@@ -5,8 +5,10 @@
   to setup the request dispatching to the Delegate.
 
   Required Velocity Variables:
+    ${name}                 - simple name to build standard class names
+    ${resourceURI}          - resource URI of the resource
     ${wisemanPackage}       - packagename for the class, based on Wiseman dispatching
-    ${delegateClassName}        - fully qualified class name of the Delegate
+    ${delegateClassName}    - fully qualified class name of the Delegate
     ${delegateName}         - simple name of delegate class
     ${handlerName}          - name of Delegate class (no package)
     ${hasCustomOpNames}     - boolean. Determines if a mapping is needed for
@@ -23,8 +25,6 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.Management;
-import com.sun.ws.management.xml.XmlBinding;
-import com.sun.ws.management.InternalErrorFault;
 
 import java.util.logging.Logger;
 
@@ -33,67 +33,64 @@ import javax.xml.bind.JAXBException;
 import ${delegateClassName};
 
 /**
- * This Handler deligates to the ${delegateClassName} class.
+ * This Handler delegates to the ${delegateClassName} class.
  * There is typically nothing to implement in this class.
  *
  * @GENERATED
  */
 public class ${handlerName} extends DelegatingHandler
 {
-    //Log for logging messages
+    // Log for logging messages
     @SuppressWarnings("unused")
-    private Logger log = Logger.getLogger(${handlerName}.class.getName());
+    private final Logger log;
 
-    private static ${delegateName} delegate;
-    static
-    {
-        delegate = new ${delegateName}();
-    }
-
-    public ${handlerName}()
-    {
-        super(delegate);
+    private static final ${delegateName} delegate = new ${delegateName}();
+    
+    /**
+     * Handler constructor.
+     */
+    public ${handlerName}() {
+        super(delegate);    
+        log = Logger.getLogger(${handlerName}.class.getName());
     } 
-
 #if(${hasCustomOpNames})
-   /**
-    * Overridden handle operation to support the custom operation name mapping
-    * to wsa:Action uri for SPEC Action URIs
-    */
+
+    /**
+     * Overridden handle operation to support the custom operation name mapping
+     * to wsa:Action uri for SPEC Action URIs
+     */
     @Override
-    public void handle(String action, String resourceURI, HandlerContext context, Management request, Management response) throws Exception
-    {
+    public void handle(String action, String resourceURI, HandlerContext context,
+                       Management request, Management response) throws Exception {
 #foreach( $key in ${overriddenMethodMap.keySet()} )
-        if ("$key".equals(action))
-        {
+        if ("$key".equals(action)) {
             response.setAction("${overriddenMethodMap.get($key).ResponseURI}");
 #if(${overriddenMethodMap.get($key).isEnumMethod})            
-            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context,new Enumeration(request), new Enumeration(response));   
+            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context, new Enumeration(request), new Enumeration(response));   
 #else
             delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context, request, response);     
 #end
             return;
         }
-
 #end
-        super.handle(action, resourceURI, context, request, response);//be sure to call to super to ensure all operations are handled.
+        // be sure to call to super to ensure all operations are handled.
+        super.handle(action, resourceURI, context, request, response);
     }
 #end
-
 #if(${hasCustomOps})
+
     /**
      * Overridden method to handle custom operations and custom Action URIs
      */
-    public boolean customDispatch(String action, HandlerContext context, Management request, Management response) throws Exception
-    {
+    @Override
+    public boolean customDispatch(String action, HandlerContext context,
+                                  Management request, Management response) throws Exception {
 #foreach( $key in ${customOperationMap.keySet()} )
-        if ("$key".equals(action))
-        {
+        if ("$key".equals(action)) {
             response.setAction("${customOperationMap.get($key).ResponseURI}");
             delegate.${customOperationMap.get($key).OperationName}(context, request, response);
             return true;
         }
-
 #end
         return false;
     }
