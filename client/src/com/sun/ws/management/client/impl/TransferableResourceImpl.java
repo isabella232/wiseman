@@ -3,11 +3,9 @@ package com.sun.ws.management.client.impl;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -295,6 +293,9 @@ public class TransferableResourceImpl implements TransferableResource {
 		//parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors
         SOAPBody body = response.getBody();
+        
+        if (body.getChildNodes().getLength() == 0)
+        	return null;
         
        try {
         Document bodyDoc = body.extractContentAsDocument();
