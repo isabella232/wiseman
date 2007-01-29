@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.15 2007-01-22 12:48:58 denis_rachal Exp $
+ * $Id: XmlBinding.java,v 1.16 2007-01-29 05:59:10 denis_rachal Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -49,9 +49,13 @@ public final class XmlBinding {
     private static final String BINDING_PROPERTIES_FILE = "/binding.properties";
     private static final String CUSTOM_PACKAGE_NAMES = 
             XmlBinding.class.getPackage().getName() + ".custom.packagenames";
+    private static final String VALIDATE = 
+            XmlBinding.class.getPackage().getName() + ".validate";
+    private static final String VALIDATE_DEFAULT = "true";
     
     final JAXBContext context;
     final Schema schema;
+    final boolean validate;
     final Set packageNamesHandled = new HashSet<String>();
     
     private static final class ValidationHandler implements ValidationEventHandler {
@@ -95,7 +99,7 @@ public final class XmlBinding {
         // Check System properties first to allow command line override
         String customPackageNames = System.getProperty(CUSTOM_PACKAGE_NAMES);
         if (customPackageNames == null || customPackageNames.equals("")) {
-            customPackageNames = (String) BINDING_PROPERTIES.get(CUSTOM_PACKAGE_NAMES);
+            customPackageNames = BINDING_PROPERTIES.getProperty(CUSTOM_PACKAGE_NAMES);
         }
         if (customPackageNames != null && !customPackageNames.equals("")) {
             for (final String packageName : customPackageNames.split(",")) {
@@ -116,6 +120,20 @@ public final class XmlBinding {
                 Thread.currentThread().getContextClassLoader());
         
         this.schema = schema;
+        
+        // Allow enabling and disabling validation via properties
+        if (this.schema != null) {
+			// Check System properties for validate flag first
+			String doValidation = System.getProperty(VALIDATE);
+			if ((doValidation == null) || (doValidation.length() == 0)) {
+				// Check for the validation flag in 'binding.properties'
+				doValidation = BINDING_PROPERTIES.getProperty(VALIDATE,
+						VALIDATE_DEFAULT);
+			}
+			this.validate = Boolean.getBoolean(doValidation);
+		} else {
+			this.validate = false;
+		}
     }
     
     public void marshal(final Object obj, final Node node) throws JAXBException {
@@ -125,7 +143,7 @@ public final class XmlBinding {
     
     public Object unmarshal(final Node node) throws JAXBException {
         final Unmarshaller unmarshaller = context.createUnmarshaller();
-        if (schema != null) {
+        if (this.validate) {
             unmarshaller.setSchema(schema);
         }
         final ValidationHandler handler = new ValidationHandler();
@@ -139,7 +157,7 @@ public final class XmlBinding {
     }    
     
     public boolean isValidating() {
-        return schema != null;
+        return this.validate;
     }
     
     public boolean isPackageHandled(final String pkg) {

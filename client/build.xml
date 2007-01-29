@@ -46,7 +46,7 @@
 	    <mkdir dir="${lib.dir}" />
 	    <mkdir dir="${doc.dir}" />
 	    <mkdir dir="${apidocs.dir}" />	
-	  </target>
+    </target>
 	
 	
 	<!-- Compile -->
@@ -88,7 +88,6 @@
            </classpath>
        </javadoc>
       	<zip destfile="${dist.dir}/wiseman-client-apidocs.zip" basedir="${apidocs.dir}"/>
-
     </target>
 
 	
@@ -130,8 +129,7 @@
 	</target>
 	
     <target name="test" depends="jar" >
-        <junit
-               showoutput="true"
+        <junit showoutput="true"
                fork="true" haltonfailure="true">
           <assertions>
             <enable/>
@@ -154,12 +152,10 @@
           <jvmarg value="-Dwsman.password=secret" />
           <jvmarg value="-Dwsman.basicauthentication=true" />
           <jvmarg value="-Dcom.sun.ws.management.xml.custom.packagenames=foo.test,com.hp.examples.ws.wsman.user" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.validate=true" />
         </junit>
-
     </target>
 	
 	<target name="autobuild" depends="javadoc,jar,test" />
 
 </project>
-
-
