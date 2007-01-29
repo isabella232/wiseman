@@ -45,24 +45,25 @@ public class ${delegateName} extends EnumerationHandler {
         // Initialize our member variables
         log = Logger.getLogger(${delegateName}.class.getName());
         try {
+            // Register the IteratorFactory with EnumerationSupport
             EnumerationSupport.registerIteratorFactory("${resourceURI}",
                                                        new ${name}IteratorFactory("${resourceURI}"));
         } catch (Exception e) {
-			throw new InternalErrorFault(e);
-		}
+            throw new InternalErrorFault(e);
+        }
     }
 #if(${hasCustomOpNames})
 #foreach( $key in ${overriddenMethodMap.keySet()} )
 #if(${overriddenMethodMap.get($key).isEnumMethod})
 
     public void ${overriddenMethodMap.get($key).OverriddenOpName}(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse ) {
-        ${overriddenMethodMap.get($key).OperationName}( context, enuRequest, enuResponse);
+        super.${overriddenMethodMap.get($key).OperationName}( context, enuRequest, enuResponse);
     }    
 #else
 
     public void ${overriddenMethodMap.get($key).OverriddenOpName}(HandlerContext context, Management request, Management response ) {
-        //TODO IMPLEMENT
-        ${overriddenMethodMap.get($key).OperationName}( context, request, response);
+        // TODO: Implement ${overriddenMethodMap.get($key).OverriddenOpName} here and remove the following call to super
+        super.${overriddenMethodMap.get($key).OperationName}( context, request, response);
     }   
 #end
 #end
@@ -70,7 +71,7 @@ public class ${delegateName} extends EnumerationHandler {
 #foreach( $key in ${customOperationMap.keySet()} )
 
     public void ${customOperationMap.get($key).OperationName}(HandlerContext context, Management request, Management response ) {
-        //TODO IMPLEMENT CUSTOM OPERATION
+        // TODO: Implement ${customOperationMap.get($key).OperationName} custom operation here
     }
 #end
 #end

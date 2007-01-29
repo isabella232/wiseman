@@ -88,8 +88,8 @@ public class Xsd2WsdlTask extends Task {
 				resourceURI = "urn:" + uri.getHost() + 
 				              "/" + uri.getPath() + 
 				              "/" + context.get("service_name");
-				context.put("resource_uri", resourceURI);
 			}
+			context.put("resource_uri", resourceURI);
 			
 			File outputFile = new File(outputDir, wsdlFileName);
 	        

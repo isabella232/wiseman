@@ -1,52 +1,30 @@
-#*
-  This is the template to produce the required CUSTOM EnumerationIterator.
 
-  This delegate utilizes EnumerationSupport.
+package net.java.dev.wiseman.resources.traffic._1.light;
 
-  Required Velocity Variables:
-    ${name}                     - simple name to build standard class names
-    ${package}                  - packagename for this class
-    ${jaxbFactoryType}          - name of the JAXB type for the resource
-    ${jaxbFactoryPackage}       - package name for the JAXB type associated with the resource
-    ${jaxbFactoryCreateMethod}  - name of JAXB create method to create the JAXBElement 
-    ${resourceURI}              - resource URI of the resource
-*#
-package ${package};
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.parsers.DocumentBuilder;
 
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-
-import ${jaxbFactoryPackage}.ObjectFactory;
-#if(${factoryTypeKnown})
-import ${jaxbFactoryPackage}.${jaxbFactoryType}; 
-#end
+import net.java.dev.wiseman.schemas.traffic._1.light.ObjectFactory;
+import net.java.dev.wiseman.traffic.light.impl.LightIteratorImpl;
 
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
-import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.IteratorFactory;
 import com.sun.ws.management.xml.XmlBinding;
 
-/* This enumeration factory is for the <i>${name}</i> resource.
+/* This enumeration factory is for the <i>Light</i> resource.
  * It handles creation of an iterator for use to access 
- * the <i>${name}</i> resources.
+ * the <i>Light</i> resources.
  *
  * @see com.sun.ws.management.server.IteratorFactory
  *
  */
-public final class ${name}IteratorFactory implements IteratorFactory {
+public final class LightIteratorFactory implements IteratorFactory {
     
     // Common variables shared by all Iterator instances
     public final String resourceURI;
@@ -57,12 +35,12 @@ public final class ${name}IteratorFactory implements IteratorFactory {
      *
      * @param the resourceURI for this Iterator Factory.
      */
-     ${name}IteratorFactory(final String resourceURI) {
+     LightIteratorFactory(final String resourceURI) {
          this.resourceURI = resourceURI;
-         this.factory = new ${jaxbFactoryPackage}.ObjectFactory();
+         this.factory = new net.java.dev.wiseman.schemas.traffic._1.light.ObjectFactory();
     }
     
-    /** This creates iterators for the <i>${name}</i> resource.
+    /** This creates iterators for the <i>Light</i> resource.
      * 
      * @see com.sun.ws.management.server.IteratorFactory#newIterator(
      * com.sun.ws.management.server.HandlerContext, 
@@ -73,7 +51,7 @@ public final class ${name}IteratorFactory implements IteratorFactory {
             Enumeration request, DocumentBuilder db,
             boolean includeItem, boolean includeEPR)
             throws UnsupportedFeatureFault, InternalErrorFault {
-        return new ${name}EnumerationIterator(context, resourceURI, request.getXmlBinding(), factory, 
+        return new LightEnumerationIterator(context, resourceURI, request.getXmlBinding(), factory, 
                                               request, db, includeItem, includeEPR);
     }
     
@@ -97,9 +75,11 @@ public final class ${name}IteratorFactory implements IteratorFactory {
      * 
      * @see com.sun.ws.management.server.EnumerationIterator
      */
-    public final class ${name}EnumerationIterator implements EnumerationIterator {
+    public final class LightEnumerationIterator implements EnumerationIterator {
         // Log for logging messages
-        private final Logger log; 
+        private final Logger log;
+        
+		private final LightIteratorImpl impl;
     
         private boolean isFiltered = false;
     
@@ -112,9 +92,9 @@ public final class ${name}IteratorFactory implements IteratorFactory {
         private final boolean includeEPR;
     
         /**
-         * Constructor used by the ${name}IteratorFactory
+         * Constructor used by the LightIteratorFactory
          */
-        protected ${name}EnumerationIterator(final HandlerContext context,
+        protected LightEnumerationIterator(final HandlerContext context,
                                              final String resourceURI,
                                              final XmlBinding binding,
                                              final ObjectFactory factory, 
@@ -130,34 +110,22 @@ public final class ${name}IteratorFactory implements IteratorFactory {
             }
             */
             
-            this.log = Logger.getLogger(${name}EnumerationIterator.class.getName());
+            this.log = Logger.getLogger(LightEnumerationIterator.class.getName());
             
             // TODO: Authorize user to access this resource
             //       Check user info in HandlerContext
              
             this.address = context.getURL();
             this.resourceURI = resourceURI;
-            // TODO: Add a 'binding.properties' file to the root of the classes directory
-            //       in the warfile with the following entry for binding to work.
-            //
-            //       com.sun.ws.management.xml.custom.packagenames = ${jaxbFactoryPackage}
-            //
-            //       Validation may be enabled with the following property:
-            //
-            //       com.sun.ws.management.xml.validate = true
-            //
-            //       Include the xsd file in /xsd of the warfile if XML validation is enabled
-            //
             this.binding = binding;
             this.factory = factory;
             this.db = db;
             this.includeItem = includeItem;
             this.includeEPR = includeEPR;
-            
-            // TODO: Extract any additional items needed from the 'request'
-                
-            // TODO: Initialize access to resource,
+                            
+            // Initialize access to resource,
             //       e.g. execute query against DB and open cursor
+            this.impl = new LightIteratorImpl(this.address, includeEPR);
         }
 
         /**
@@ -168,8 +136,7 @@ public final class ${name}IteratorFactory implements IteratorFactory {
           * Return a negative number if an estimate is not available.
           */
         public final int estimateTotalItems() {
-            // TODO: Add code here to return an estimate count
-            return -1;
+        	return impl.estimateTotalItems();
         }
     
         /**
@@ -191,8 +158,7 @@ public final class ${name}IteratorFactory implements IteratorFactory {
           * {@code false} otherwise.
           */
         public final boolean hasNext() {
-            // TODO: Add code here to signify more resource are available
-            return false;
+        	return impl.hasNext();
         }
     
         /**
@@ -216,56 +182,7 @@ public final class ${name}IteratorFactory implements IteratorFactory {
           * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
           */
            public final EnumerationItem next() {
-            if (hasNext() == false) {
-                throw new NoSuchElementException();
-            }
-
-#if(${factoryTypeKnown})            
-            // TODO: Create the data value object
-            final ${jaxbFactoryType} value = new ${jaxbFactoryType}();
-            
-            // TODO: Call the setter methods to fill in the value object
-            //       with the values for the next element.
-            
-            // TODO: Create the JAXBElement from the value object
-            final JAXBElement<${jaxbFactoryType}> item = 
-                             this.factory.${jaxbFactoryCreateMethod}(value);
-#else
-            // TODO: Create the data value object
-            // final <ResourceType> value = new <ResourceType>();
-            
-            // TODO: Call the setter methods to fill in the value object
-            //       with the values for the next element.
-            
-            // TODO: Create the JAXBElement from the value object
-            final JAXBElement item = null;
-#end
-            EndpointReferenceType epr = null;
-            
-            if (this.includeEPR) {
-                // Create a map to hold the selectors
-                final Map<String, String> selectorMap = 
-                                          new HashMap<String, String>();
-
-                // TODO: Assign the key values to the selectorMap
-
-                // Create the EPR
-                epr = EnumerationSupport.createEndpointReference(this.address,
-                                                                 this.resourceURI,
-                                                                 selectorMap);
-            }
-            // Create and fill in the return object
-            final EnumerationItem ee;
-            
-            // Always return item if filtering is done by EnumerationSupport
-            if ((this.includeItem) || (this.isFiltered == false)) {  
-                ee = new EnumerationItem(item, epr);
-                ee = null;
-            } else {
-                ee = new EnumerationItem(null, epr);
-            }
-
-            return ee;
+        	   return impl.next();
         }
     
         /**
@@ -274,7 +191,7 @@ public final class ${name}IteratorFactory implements IteratorFactory {
           * undefined behaviour, after this method completes.
           */
         public final void release() {
-            // TODO: Release any resources here, e.g. close the DB connection.
+        	impl.release();
         } 
     }
 }

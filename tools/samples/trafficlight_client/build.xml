@@ -38,11 +38,11 @@
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Built-At" value="${DSTAMP}" />
 				<attribute name="Specification-Title" value="WS-Management" />
-				<attribute name="Specification-Version" value="06/2005" />
+				<attribute name="Specification-Version" value="1.0.0a" />
 				<attribute name="Implementation-Title" value="Traffic Client" />
 				<attribute name="Implementation-Version" value="1.0" />
 				<attribute name="Sealed" value="false" />
-				<attribute name="Main-Class" value="com.sun.ws.management.traffic.client.TrafficClientApp" />
+				<attribute name="Main-Class" value="net.java.dev.wiseman.traffic.light.client.TrafficClientApp" />
 				<attribute name="Class-Path" value="lib/wiseman-client.jar lib/wiseman.jar lib/jaxws/activation.jar lib/jaxws/jaxb-api.jar lib/jaxws/jaxb-impl.jar lib/jaxws/jsr173_api.jar lib/jaxws/jsr181-api.jar lib/jaxws/jsr250-api.jar lib/jaxws/saaj-api.jar lib/jaxws/saaj-impl.jar" />
 			</manifest>
 			<fileset dir="${basedir}/${classes.dir}"/>

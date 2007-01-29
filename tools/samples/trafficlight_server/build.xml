@@ -155,12 +155,15 @@
 			<webinf dir="${wiseman.root}/etc">
 				<include name="sun-web.xml" />
 			</webinf>
-			<!-- the build runs without schema validation by default 
-	           to enable schema validation, see etc/xsd/README -->
+			<!-- the build runs with schema validation by default 
+	             to disable schema validation, see etc/xsd/README -->
+            <zipfileset dir="${basedir}"
+                        prefix=""
+                        includes="${user.xsd.file}" />
 			<zipfileset dir="${basedir}/${classes.dir}"
-	                  includes="*.properties" />
+	                    includes="*.properties" />
 			<zipfileset dir="${basedir}/${src.dir}"
-	                  includes="**/*.xml" />
+	                    includes="**/*.xml" />
 		</war>
 	</target>
 
@@ -190,7 +193,9 @@
 				</fileset>
 			</classpath>
 		</taskdef>
-		<xsd2wsdl xsdFile="${basedir}/${user.xsd.file}" outputDir="${basedir}/wsdl"/>
+		<xsd2wsdl xsdFile="${basedir}/${user.xsd.file}"
+			      resourceURI="${resource.uri}"
+			      outputDir="${basedir}/wsdl"/>
 	</target>
 
 	<!--  ===================================================================  -->

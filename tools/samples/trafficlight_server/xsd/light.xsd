@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd" 
+           elementFormDefault="qualified" blockDefault="#all" 
+           xmlns:tl="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd" 
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:complexType name="TrafficLightType">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string"/>
+			<xs:element name="color" type="xs:string"/>
+			<xs:element name="x" type="xs:int"/>
+			<xs:element name="y" type="xs:int"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="trafficlight" type="tl:TrafficLightType"/>
+</xs:schema>
+
