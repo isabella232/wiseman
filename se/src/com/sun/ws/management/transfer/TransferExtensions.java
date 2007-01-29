@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -38,8 +39,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+// import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
+import org.xmlsoap.schemas.ws._2004._09.transfer.ObjectFactory;
 
-import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.AlreadyExistsFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
@@ -47,9 +49,9 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.server.BaseSupport;
+import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.Filter;
 import com.sun.ws.management.server.NamespaceMap;
-import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
 
@@ -63,6 +65,8 @@ public class TransferExtensions extends Transfer {
     
     public static final QName DIALECT = new QName("Dialect");
     
+    public static final ObjectFactory FACTORY = new ObjectFactory();
+    
     public TransferExtensions() throws SOAPException {
         super();
     }
@@ -75,6 +79,26 @@ public class TransferExtensions extends Transfer {
         super(is);
     }
     
+	/**
+	 * Utility method to create an EPR.
+	 * 
+	 * @param address
+	 *            The transport address of the service.
+	 * 
+	 * @param resource
+	 *            The resource being addressed.
+	 * 
+	 * @param selectorMap
+	 *            Selectors used to identify the resource.
+	 */
+	public static EndpointReferenceType createEndpointReference(
+			final String address, final String resource,
+			final Map<String, String> selectorMap) {
+		return EnumerationSupport.createEndpointReference(address, 
+				                                          resource, 
+				                                          selectorMap);
+	}
+	
     /**
      * Returns the FragmentTransfer SOAPElement if it exists
      *
@@ -114,6 +138,7 @@ public class TransferExtensions extends Transfer {
     }
     
     /**
+     * Sets the fragment header for the specified exprssion & dialect.
      *
      * @param query
      * @param dialect
@@ -158,6 +183,25 @@ public class TransferExtensions extends Transfer {
     }
     
     /**
+     * Inserts the resource into the body of the response.
+     *
+     * @param resource  Resource to be returned for this Get. The binding must be
+     *                  able to marshall this object.
+     * @throws JAXBException
+     * @throws XPathExpressionException 
+     */
+    public void setGetResponse(
+			final Object resource) throws JAXBException, SOAPException {
+    	
+        // add the payload to the body
+		if (resource instanceof Document) {
+			getBody().addDocument((Document)resource);
+		} else {
+            getXmlBinding().marshal(resource, getBody());
+		}
+    }
+    
+    /**
      * Inserts the resource as a Fragment-level Get response into the body 
      * and adds the FragmentTransfer Header to the SOAP Headers.
      * Fragment-level filtering is done on the resource using 
@@ -175,6 +219,21 @@ public class TransferExtensions extends Transfer {
 			final SOAPHeaderElement fragmentTransferHeader,
 			final Object resource) throws JAXBException, SOAPException {
 
+		final Object fragment = createFragment(fragmentTransferHeader, resource);
+        
+        // add the header
+		if (fragmentTransferHeader != null)
+		    setFragmentHeader(fragmentTransferHeader);
+		
+        // add the payload to the body
+		if (fragment instanceof Document) {
+			getBody().addDocument((Document)fragment);
+		} else {
+            getXmlBinding().marshal(fragment, getBody());
+		}
+    }
+
+	private Object createFragment(final SOAPHeaderElement fragmentTransferHeader, final Object resource) throws SOAPException {
 		final Object fragment;
 		if (fragmentTransferHeader != null) {
 			final Filter filter = createFilter(fragmentTransferHeader);
@@ -208,18 +267,8 @@ public class TransferExtensions extends Transfer {
 		} else {
 			fragment = resource;
 		}
-        
-        // add the header
-		if (fragmentTransferHeader != null)
-		    setFragmentHeader(fragmentTransferHeader);
-		
-        // add the payload to the body
-		if (fragment instanceof Document) {
-			getBody().addDocument((Document)fragment);
-		} else {
-            getXmlBinding().marshal(fragment, getBody());
-		}
-    }
+		return fragment;
+	}
     
     /**
      * Inserts the Fragment-level Get response into the body 
@@ -273,34 +322,70 @@ public class TransferExtensions extends Transfer {
         return xmlFragment;
     }
     
+    
     /**
-     * Handles the Fragment Delete operation
+     * Handles the Delete operation response
      *
-     * @param fragmentHeader
-     * @param nodes
      * @throws SOAPException
      */
-    public void setFragmentDeleteResponse(final SOAPHeaderElement fragmentHeader, 
-            final List<Node> nodes) throws SOAPException {
-        final Node selectedNode = nodes.get(0);
-        synchronized (selectedNode) {
-            final Node parentNode = selectedNode.getParentNode();
-            if (parentNode != null) {
-                final Node childNode = parentNode.removeChild(selectedNode);
-                try {
-                    getXmlBinding().unmarshal(parentNode);
-                } catch (JAXBException e) {
-                    // validation failed
-                    parentNode.appendChild(childNode);//rollback
-                    // TODO: is this the right fault?
-                    throw new AccessDeniedFault();
-                }
-            } else {
-                // TODO
-            }
-            setFragmentHeader(fragmentHeader);
-        }
-    }
+    public void setDeleteResponse()
+			throws SOAPException {
+    	// Nothing to do
+	}
+    
+    /**
+     * Handles the Fragment Delete operation response
+     *
+     * @param fragmentHeader
+     * @throws SOAPException
+     */
+    public void setFragmentDeleteResponse(final SOAPHeaderElement fragmentHeader)
+			throws SOAPException {
+		setFragmentHeader(fragmentHeader);
+	}
+    
+    
+    /**
+     * Handles the Put operation response
+     *
+     * @throws SOAPException
+     */
+    public void setPutResponse()
+			throws SOAPException {
+    	// Nothing to do
+	}
+    
+    /**
+     * Inserts the resource as a Fragment-level Put response into the body 
+     * and adds the FragmentTransfer Header to the SOAP Headers.
+     * Fragment-level filtering is done on the resource using 
+     * filter dialect in fragmentTransferHeader, if fragmentTransferHeader
+     * is not null, otherwise a standard put response is done.
+     *
+     * @param fragmentTransferHeader The Fragement Transfer Header
+     * to be returned in the headers, if any
+     * @param resource  Resource to be returned for this Get. The binding must be
+     *                  able to marshall this object.
+     * @throws JAXBException
+     * @throws XPathExpressionException 
+     */
+    public void setFragmentPutResponse(final SOAPHeaderElement fragmentHeader,
+			final Object resource) throws SOAPException, JAXBException {
+
+		// add the header
+		if (fragmentHeader != null) {
+			setFragmentHeader(fragmentHeader);
+
+			final Object fragment = createFragment(fragmentHeader, resource);
+
+			// add the payload to the body if it's a fragment
+			if (fragment instanceof Document) {
+				getBody().addDocument((Document) fragment);
+			} else {
+				getXmlBinding().marshal(fragment, getBody());
+			}
+		}
+	}
     
     public void setFragmentPutResponse(final SOAPHeaderElement fragmentHeader, 
             final List<Object> requestContent, final String expression, final List<Node> nodes) 
@@ -347,99 +432,42 @@ public class TransferExtensions extends Transfer {
         getXmlBinding().marshal(xmlFragment, getBody());
         
     }
+
+    /**
+     * Handles the Create operation response
+     *
+     * @param epr the EndpointReference of the newly created object
+     * @throws SOAPException
+     * @throws JAXBException 
+     */
+    public void setCreateResponse(EndpointReferenceType epr)
+			throws SOAPException, JAXBException {
+    	JAXBElement<EndpointReferenceType> jaxbEpr = FACTORY.createResourceCreated(epr);
+    	
+        //add payload to the body
+        getXmlBinding().marshal(jaxbEpr, getBody());
+	}
     
     /**
-     * Inserts the specified resource into the body of the Create response.
-     * If wrapAsFragment is true and a Fragment Trasfer header is specified,
-     * the object will be filtered and wrapped within a
-     * <code>wsman:XmlFragment</code> node, otherwise the object will be
-     * marshalled directly into the body of the response.
-     * 
-     * Filtering is done on the resource using the
-     * filter dialect in specified in the fragmentTransferHeader,
-     * if fragmentTransferHeader is not null and wrapAsFragment is true,
-     * otherwise the resource is added to the response without
-     * filtering or wrapping.
-     * 
-     * If the Fragment Transfer header is not null,
-     * it is always added to the response.
-     * 
-     * @see BaseSupport.getSupportedDialects() for information on
-     * supported filter dialects.
+     * Handles the Fragment Create operation response
      *
-     * @param resource  Resource to be returned for this Create. 
-     * The binding must be able to marshall this object.
-     * @param wrapAsFragment 
-     * @param fragmentTransferHeader The Fragement Transfer Header
-     * to be returned in the headers, if any, and to specify Fragment Transfer
-     * filter processing
-     * @throws JAXBException
-     * @throws XPathExpressionException 
+     * @param epr the EndpointReference of the newly created object
+     * @throws SOAPException
+     * @throws JAXBException 
      */
-    public void setFragmentCreateResponse(final Object resource,
-    		final boolean wrapAsFragment,
-			final SOAPHeaderElement fragmentTransferHeader
-			) throws JAXBException, SOAPException {
+    public void setFragmentCreateResponse(
+			final SOAPHeaderElement fragmentHeader, EndpointReferenceType epr)
+			throws SOAPException, JAXBException {
+		JAXBElement<EndpointReferenceType> jaxbEpr = FACTORY
+				.createResourceCreated(epr);
 
-		final Object fragment;
-		if ((fragmentTransferHeader != null) && (wrapAsFragment)) {
-			Filter filter = createFilter(this);
-
-			try {
-				final Element item;
-				if (resource instanceof Element) {
-					item = (Element) resource;
-				} else if (resource instanceof Document) {
-					item = ((Document) resource).getDocumentElement();
-					// append the Element to the owner document if
-					// it has
-					// not been done
-					// this is critical for XPath filtering to work
-					final Document owner = item.getOwnerDocument();
-					if (owner.getDocumentElement() == null) {
-						owner.appendChild(item);
-					}
-				} else {
-					Document content = Management.newDocument(); // db.newDocument();
-					try {
-						getXmlBinding().marshal(resource, content);
-					} catch (Exception e) {
-						final String explanation = 
-							 "XML Binding marshall failed for object of type: "
-		                     + resource.getClass().getName();
-						throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
-					}
-					item = content.getDocumentElement();
-				}
-				NodeList result = filter.evaluate(item);
-				final MixedDataType mixedDataType = Management.FACTORY
-						.createMixedDataType();
-				if ((result != null) && (result.getLength() > 0)) {
-					// XPath returned a set of nodes. Add them.
-					for (int i = 0; i < result.getLength(); i++) {
-						mixedDataType.getContent().add(result.item(i));
-					}
-				}
-				// create the XmlFragmentElement
-				fragment = Management.FACTORY.createXmlFragment(mixedDataType);
-			} catch (FaultException e) {
-				throw new CannotProcessFilterFault();
-			} catch (Exception e) {
-				throw new CannotProcessFilterFault();
-			}
-		} else {
-			fragment = resource;
+		// add the fragment header if specified
+		if (fragmentHeader != null) {
+			setFragmentHeader(fragmentHeader);
 		}
-        
-        // add the header
-		if (fragmentTransferHeader != null)
-		    setFragmentHeader(fragmentTransferHeader);
-		
-		
-        // add the payload to the body
-        getXmlBinding().marshal(fragment, getBody());
-
-    }
+		// add payload to the body
+		getXmlBinding().marshal(jaxbEpr, getBody());
+	}
     
     public void setFragmentCreateResponse(final SOAPHeaderElement fragmentHeader, 
             final List<Object> requestContent, final String expression, final List<Node> nodes, 

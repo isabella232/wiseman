@@ -1,13 +1,22 @@
 package com.sun.ws.management.tools;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.CharBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.wsdl.Definition;
 import javax.wsdl.Input;
@@ -70,6 +79,8 @@ public class Wsdl2WsmanGenerator
     private File m_wsdl = null;
     private String m_iteratorFactoryName = null;
     private File m_outputDir = new File("").getAbsoluteFile();
+    private String m_resourceType = "";
+    private String m_resourceName = "";
 
     private Map<String, WsManOp> m_overriddenMethodMap = new HashMap<String, WsManOp>();
     private Map<String, WsManOp> m_customOperationMap = new HashMap<String, WsManOp>();
@@ -78,6 +89,7 @@ public class Wsdl2WsmanGenerator
     private static final String TEMPLATES_PATH = "templates";
     private HashMap<String, String> m_enumerationResponseActionURIs = new HashMap<String, String>();
     private HashMap<String, String> m_specResponseActionURIs = new HashMap<String, String>();
+    
     private static boolean GEN_JAXB = true;
     private static final QName EPR_QNAME = new QName(ADDRESSING_ACTION_QNAME.getNamespaceURI(), "EndpointReference");
     private static boolean GEN_AS_SCHEMA = false;
@@ -149,6 +161,8 @@ public class Wsdl2WsmanGenerator
         if (m_wsdl.exists())
         {
             definition = loadWsdlDefinition();
+            m_resourceType = getResourceType();
+            m_resourceName = getResourceName();
         }
         else
         {
@@ -162,10 +176,6 @@ public class Wsdl2WsmanGenerator
         }
         
         generateHandlers(definition);
-
-
-
-
     }
 
     /**
@@ -513,7 +523,7 @@ public class Wsdl2WsmanGenerator
                 {
                     responseUri = qName.getLocalPart();
                 }
-                m_customOperationMap.put(responseUri, new WsManOp(actionURI, operation.getName(), null));
+                m_customOperationMap.put(actionURI, new WsManOp(responseUri, operation.getName(), null));
             }
         }
     }
@@ -615,13 +625,34 @@ public class Wsdl2WsmanGenerator
 
         VelocityContext context = new VelocityContext();
 
+        if ((m_resourceType != null) && (m_resourceType.length() > 0)) {
+            context.put("factoryTypeKnown", true);
+            context.put("jaxbFactoryType", m_resourceType);
+            String methodName = m_resourceName;
+            String firstChar = methodName.substring(0, 1).toUpperCase();
+            if (methodName.length() > 1)
+            	methodName = "create" + firstChar + methodName.substring(1);
+            else
+            	methodName = "create" + firstChar;
+            context.put("jaxbFactoryCreateMethod", methodName);
+        } else {
+            context.put("factoryTypeKnown", false);
+            context.put("jaxbFactoryType", "");
+            context.put("jaxbFactoryType", "");
+            context.put("jaxbFactoryCreateMethod", "");
+        }
         context.put("jaxbFactoryPackage", packName);
+        
+        // TODO: Add other custom package names
+        context.put("jaxbCustomPackages", packName);
 
         //build directories
         File delegatePackageDir = new File(m_outputDir, getDelegatePackageName(resourceUri).replace('.', File.separatorChar));
         delegatePackageDir.mkdirs();
 
-        String name = resourceUri.substring(resourceUri.lastIndexOf('/') + 1);
+        String name = resourceUri.substring(resourceUri.lastIndexOf(':') + 1);
+        if (name.length() > 1)
+            name = name.substring(resourceUri.lastIndexOf('/') + 1);
         String firstChar = name.substring(0, 1).toUpperCase();
         if (name.length() > 1)
             name = firstChar + name.substring(1);
@@ -668,18 +699,27 @@ public class Wsdl2WsmanGenerator
 
         if (isEnumeration)
         {
+        	System.out.println("Generating sourcefile: " + outputFile.getName());
             processTemplate(context, TEMPLATES_PATH + "/EnumerationSupport.vm", outputFile);
             outputFile = new File(delegatePackageDir, m_iteratorFactoryName + ".java");
+            System.out.println("Generating sourcefile: " + outputFile.getName());
             processTemplate(context, TEMPLATES_PATH + "/IteratorFactory.vm", outputFile);
         }
         else
         {
+        	System.out.println("Generating sourcefile: " + outputFile.getName());
             processTemplate(context, TEMPLATES_PATH + "/TransferSupport.vm", outputFile);
         }
 
+        // create ResourceURI handler
         outputFile = new File(wisemanPackageDir, handlerName + ".java");
+        System.out.println("Generating sourcefile: " + outputFile.getName());
         processTemplate(context, TEMPLATES_PATH + "/Handler.vm", outputFile);
 
+        // create binding.properties file
+        outputFile = new File(m_outputDir, "binding.properties");
+        System.out.println("Generating properties file: " + outputFile.getName());
+        processTemplate(context, TEMPLATES_PATH + "/binding.properties.vm", outputFile);
     }
 
     private String capitalizeFirstLetter(String classname)
@@ -733,4 +773,112 @@ public class Wsdl2WsmanGenerator
     {
         GEN_AS_SCHEMA = asSchema;
     }
+    
+    // Code follows to get data type from Wiseman generated WSDL
+    // Charset and decoder for ISO-8859-15
+    private static Charset charset = Charset.forName("ISO-8859-15");
+    private static CharsetDecoder decoder = charset.newDecoder();
+
+    // Pattern used to parse lines
+    private static Pattern linePattern = Pattern.compile(".*\r?\n");
+
+    // Use the linePattern to break the given CharBuffer into lines, applying
+    // the input pattern to each line to see if we have a match
+    //
+    private static String grep(final CharBuffer cb, final Pattern pattern) {
+    	
+		Matcher lm = linePattern.matcher(cb); // Line matcher
+		Matcher pm = null; // Pattern matcher
+
+		while (lm.find()) {
+			CharSequence cs = lm.group(); // The current line
+			if (pm == null)
+				pm = pattern.matcher(cs);
+			else
+				pm.reset(cs);
+			if (pm.find()) {
+				return pm.group();
+			}
+			if (lm.end() == cb.limit())
+				break;
+		}
+		return "";
+	}
+
+    // Search for occurrences of the input pattern in the given file
+	//
+	private String getResourceType() throws IOException {
+
+		// Open the file and then get a channel from the stream
+		final FileInputStream fis = new FileInputStream(m_wsdl);
+		final FileChannel fc = fis.getChannel();
+
+		// Get the file's size and then map it into memory
+		final int len = (int) fc.size();
+		MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, len);
+
+		// Decode the file into a char buffer
+		final CharBuffer cb = decoder.decode(bb);
+
+		// Close the channel and the stream
+		fc.close();
+
+		final Pattern pattern;
+
+		try {
+			pattern = Pattern.compile("^resource_type=.*$");
+		} catch (PatternSyntaxException x) {
+			System.err.println(x.getMessage());
+			return "";
+		}
+
+		// Perform the search
+		String line = grep(cb, pattern);
+
+		if ((line != null) && (line.length() > 0)) {
+			String[] parts = line.split("=");
+			if ((parts.length == 2) && (parts[0].equals("resource_type")))
+				return parts[1];
+		}
+		return "";
+	}
+    
+    // Search for occurrences of the input pattern in the given file
+    //
+    private String getResourceName() throws IOException {
+
+		// Open the file and then get a channel from the stream
+		final FileInputStream fis = new FileInputStream(m_wsdl);
+		final FileChannel fc = fis.getChannel();
+
+		// Get the file's size and then map it into memory
+		final int len = (int) fc.size();
+		final MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0,
+				len);
+
+		// Decode the file into a char buffer
+		final CharBuffer cb = decoder.decode(bb);
+
+		// Close the channel and the stream
+		fc.close();
+
+		final Pattern pattern;
+
+		try {
+			pattern = Pattern.compile("^resource_name=.*$");
+		} catch (PatternSyntaxException x) {
+			System.err.println(x.getMessage());
+			return "";
+		}
+
+		// Perform the search
+		final String line = grep(cb, pattern);
+
+		if ((line != null) && (line.length() > 0)) {
+			String[] parts = line.split("=");
+			if ((parts.length == 2) && (parts[0].equals("resource_name")))
+				return parts[1];
+		}
+		return "";
+	}
 }

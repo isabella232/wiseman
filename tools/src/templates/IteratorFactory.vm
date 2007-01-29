@@ -25,7 +25,9 @@ import javax.xml.parsers.DocumentBuilder;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import ${jaxbFactoryPackage}.ObjectFactory;
-// import ${jaxbFactoryPackage}.${jaxbFactoryType};
+#if(${factoryTypeKnown})
+import ${jaxbFactoryPackage}.${jaxbFactoryType}; 
+#end
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.enumeration.Enumeration;
@@ -120,10 +122,12 @@ public final class ${name}IteratorFactory implements IteratorFactory {
 				                             final boolean includeItem,
 				                             final boolean includeEPR) {
 
-            // TODO: Remove the following if EPRs are supported
+            // TODO: Add the following if EPRs are not supported
+            /*
             if (includeEPR == true) {
                 throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ENUMERATION_MODE);
             }
+            */
             
             this.log = Logger.getLogger(${name}EnumerationIterator.class.getName());
             
@@ -136,6 +140,12 @@ public final class ${name}IteratorFactory implements IteratorFactory {
             //       in the warfile with the following entry for binding to work.
             //
             //       com.sun.ws.management.xml.custom.packagenames = ${jaxbFactoryPackage}
+            //
+            //       Validation may be enabled with the following property:
+            //
+            //       com.sun.ws.management.xml.validate = true
+            //
+            //       Include the xsd file in /xsd of the warfile if XML validation is enabled
             //
             this.binding = binding;
             this.factory = factory;
@@ -208,16 +218,27 @@ public final class ${name}IteratorFactory implements IteratorFactory {
         	if (hasNext() == false) {
 				throw new NoSuchElementException();
 			}
-			
+
+#if(${factoryTypeKnown})			
 			// TODO: Create the data value object
-			// final ${jaxbFactoryType} value = new ${jaxbFactoryType}();
+			final ${jaxbFactoryType} value = new ${jaxbFactoryType}();
 			
 			// TODO: Call the setter methods to fill in the value object
 			//       with the values for the next element.
 			
 			// TODO: Create the JAXBElement from the value object
-			// final JAXBElement<${jaxbFactoryType}> item = 
-			//                  this.factory.${jaxbFactoryCreateMethod}(value);
+			final JAXBElement<${jaxbFactoryType}> item = 
+			                 this.factory.${jaxbFactoryCreateMethod}(value);
+#else
+			// TODO: Create the data value object
+			// final <ResourceType> value = new <ResourceType>();
+			
+			// TODO: Call the setter methods to fill in the value object
+			//       with the values for the next element.
+			
+			// TODO: Create the JAXBElement from the value object
+			final JAXBElement item = null;
+#end
 			EndpointReferenceType epr = null;
 			
 			if (this.includeEPR) {
@@ -237,7 +258,7 @@ public final class ${name}IteratorFactory implements IteratorFactory {
 			
 			// Always return item if filtering is done by EnumerationSupport
 			if ((this.includeItem) || (this.isFiltered == false)) {  
-				// TODO: ee = new EnumerationItem(item, epr);
+				ee = new EnumerationItem(item, epr);
 				ee = null;
 			} else {
 			    ee = new EnumerationItem(null, epr);

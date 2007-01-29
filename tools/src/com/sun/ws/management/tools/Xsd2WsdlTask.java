@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
@@ -11,7 +13,6 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -25,11 +26,17 @@ public class Xsd2WsdlTask extends Task {
     private String outputDir = "wsdl";
     private String filePath=null;
     private String wsdlFileName=null;
-	private void setResourceName(String resourceName) {
-		context.put("resource_name",resourceName);
+    private String resourceURI=null;
+    private boolean singleHandler=true;
+    
+	private void setResourceType(String resourceType) {
+		context.put("resource_type", resourceType);
 	}
 
-
+	private void setResourceName(String resourceName) {
+		context.put("resource_name", resourceName);
+	}
+	
 	private void setTargetNamespace(String targetNamespace) {
 		context.put("target_namespace",targetNamespace);
 	}
@@ -48,12 +55,17 @@ public class Xsd2WsdlTask extends Task {
     {
         this.outputDir = output;
     }
+	
+    public void setSingleHandler(boolean singleHandler)
+    {
+        this.singleHandler = singleHandler;
+    }
+	
+    public void setResourceURI(String resourceURI)
+    {
+        this.resourceURI = resourceURI;
+    }
     
-	private void setElementName(String elementName){
-		context.put("element_name",elementName);
-		
-	}
-
 	public Xsd2WsdlTask() {
 		super();
 		// TODO Auto-generated constructor stub
@@ -70,10 +82,22 @@ public class Xsd2WsdlTask extends Task {
 			}
 			extractXsdInfo(new File(filePath));
 			
+			// Build the resourceURI if not specified
+			if (resourceURI == null) {
+				URI uri = URI.create((String)context.get("target_namespace"));
+				resourceURI = "urn:" + uri.getHost() + 
+				              "/" + uri.getPath() + 
+				              "/" + context.get("service_name");
+				context.put("resource_uri", resourceURI);
+			}
+			
 			File outputFile = new File(outputDir, wsdlFileName);
 	        
 			try {//wsdlFromXsd
-				processTemplate(context, TEMPLATES_PATH + "/WsdlFromXsd.vm", outputFile);
+				if (this.singleHandler)
+				    processTemplate(context, TEMPLATES_PATH + "/WsdlFromXsd.vm", outputFile);
+				else
+					processTemplate(context, TEMPLATES_PATH + "/WsdlFromXsdMultiHandler.vm", outputFile);
 			} catch (Exception e) {
 				throw new BuildException(e);
 			}		   
@@ -184,11 +208,11 @@ public class Xsd2WsdlTask extends Task {
 		
 		String type=getXPathValue(pathToXsdFile, xPathExpressionType);
 		if(type.split(":").length>=2)
-			setResourceName(type.split(":")[1]);
+			setResourceType(type.split(":")[1]);
 		else
-			setResourceName(type);
-		String elementName=getXPathValue(pathToXsdFile, xPathExpressionTypeName);
-		setElementName(elementName);
+			setResourceType(type);
+		String resourceName=getXPathValue(pathToXsdFile, xPathExpressionTypeName);
+		setResourceName(resourceName);
     }
 
 

@@ -128,8 +128,7 @@ public class fragment_Handler extends base_Handler {
                 // this is a regular transfer: not a fragment transfer, delete the entire doc
                 // TODO
             } else {
-                transExtResponse.setFragmentDeleteResponse(fragmentHeader,
-                        XPath.filter(doc.getDocumentElement(), expression, nsMap));
+                transExtResponse.setFragmentDeleteResponse(fragmentHeader);
             }
             // dump the modified doc for debugging
             prettyPrint(doc);

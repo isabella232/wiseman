@@ -248,7 +248,7 @@ public class TransferExtensionsTest extends TestBase {
         content.add(isElement);
         
         //simulate a server-side request to build the response
-        transfer.setFragmentDeleteResponse(fragmentHeader, content);
+        transfer.setFragmentDeleteResponse(fragmentHeader);
         
         //print contents of Transfer
         transfer.prettyPrint(logfile);
