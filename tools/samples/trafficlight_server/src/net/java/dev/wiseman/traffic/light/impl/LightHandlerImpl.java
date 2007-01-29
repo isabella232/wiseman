@@ -31,7 +31,7 @@ public class LightHandlerImpl {
 	private static final ObjectFactory trafficLightFactory = new ObjectFactory();
 
 	private static final QName QNAME = new QName(
-			"http://sun.com/traffic/light/types", "trafficlight");
+			"http://schemas.wiseman.dev.java.net/traffic/1/light.xsd", "trafficlight");
 
 	public static void get(Management request, Management response, Logger log) {
 
