@@ -12,12 +12,12 @@ These tools require ant to be in the execution path.
  
  This project may be used with Eclipse.
  - In your Eclipse project
-   - Under: Window->Preferences->Java-Build Path->Classpath Variables
+   - Under: "Window->Preferences->Java-Build Path->Classpath Variables"
      Add the variable: WISEMAN_HOME=<directory of Wiseman distribution>
-   - Select File->Import->Existing Projects into Workspace and then "Next"
+   - Select "File->Import->General->Existing Projects into Workspace" and then click "Next"
    - Browse to "samples" directory and then "OK"
-   - Select the "samples" prject and "Finish"
+   - Select the "samples" project and "Finish"
    
- - To build within Eclipse:
-   - right click on build.xml & select Run As->Ant Build
+ - To build within Eclipse using ant:
+   - right click on build.xml & select "Run As->Ant Build"
    
