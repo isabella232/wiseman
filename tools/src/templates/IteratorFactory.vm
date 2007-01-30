@@ -260,7 +260,6 @@ public final class ${name}IteratorFactory implements IteratorFactory {
             // Always return item if filtering is done by EnumerationSupport
             if ((this.includeItem) || (this.isFiltered == false)) {  
                 ee = new EnumerationItem(item, epr);
-                ee = null;
             } else {
                 ee = new EnumerationItem(null, epr);
             }
