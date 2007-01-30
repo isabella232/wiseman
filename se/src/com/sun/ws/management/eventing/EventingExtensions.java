@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensions.java,v 1.5 2007-01-14 17:52:35 denis_rachal Exp $
+ * $Id: EventingExtensions.java,v 1.6 2007-01-30 12:26:14 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -98,59 +98,46 @@ public class EventingExtensions extends Eventing {
             final MaxEnvelopeSizeType maxEnvelopeSize, final Long maxElements, final Duration maxTime)
             throws SOAPException, JAXBException {
         
-        Element retryElement = null;
+        JAXBElement<ConnectionRetryType> retryElement = null;
         if (retryType != null) {
-            final Document retryDoc = newDocument();
-            getXmlBinding().marshal(FACTORY.createConnectionRetry(retryType), retryDoc);
-            retryElement = retryDoc.getDocumentElement();
+            retryElement = FACTORY.createConnectionRetry(retryType);
         }
         
-        Element heartbeatsElement = null;
+        JAXBElement<AttributableDuration> heartbeatsElement = null;
         if (heartbeats != null) {
-            final Document heartbeatsDoc = newDocument();
             final AttributableDuration heartbeatDuration = FACTORY.createAttributableDuration();
             heartbeatDuration.setValue(heartbeats);
-            getXmlBinding().marshal(FACTORY.createHeartbeats(heartbeatDuration), heartbeatsDoc);
-            heartbeatsElement = heartbeatsDoc.getDocumentElement();
+            heartbeatsElement = FACTORY.createHeartbeats(heartbeatDuration);
         }
         
-        Element sendBookmarksElement = null;
+        JAXBElement<AttributableEmpty> sendBookmarksElement = null;
         if (sendBookmarks != null && sendBookmarks.booleanValue()) {
-            final Document sendBookmarksDoc = newDocument();
-            getXmlBinding().marshal(FACTORY.createSendBookmarks(new AttributableEmpty()), sendBookmarksDoc);
-            sendBookmarksElement = sendBookmarksDoc.getDocumentElement();
+        	sendBookmarksElement = FACTORY.createSendBookmarks(new AttributableEmpty());
+
         }
         
-        Element bookmarkElement = null;
+        JAXBElement<AttributableAny> bookmarkElement = null;
         if (bookmark != null) {
-            final Document bookmarkDoc = newDocument();
-            getXmlBinding().marshal(FACTORY.createBookmark(bookmark), bookmarkDoc);
-            bookmarkElement = bookmarkDoc.getDocumentElement();
+        	bookmarkElement = FACTORY.createBookmark(bookmark);
         }
         
-        Element maxEnvelopeSizeElement = null;
+        JAXBElement<MaxEnvelopeSizeType> maxEnvelopeSizeElement = null;
         if (maxEnvelopeSize != null) {
-            final Document maxEnvelopeSizeDoc = newDocument();
-            getXmlBinding().marshal(FACTORY.createMaxEnvelopeSize(maxEnvelopeSize), maxEnvelopeSizeDoc);
-            maxEnvelopeSizeElement = maxEnvelopeSizeDoc.getDocumentElement();
+        	maxEnvelopeSizeElement = FACTORY.createMaxEnvelopeSize(maxEnvelopeSize);
         }
         
-        Element maxElementsElement = null;
+        JAXBElement<AttributablePositiveInteger> maxElementsElement = null;
         if (maxElements != null) {
-            final Document maxElementsDoc = newDocument();
             final AttributablePositiveInteger maxInteger = FACTORY.createAttributablePositiveInteger();
             maxInteger.setValue(new BigInteger(Long.toString(maxElements)));
-            getXmlBinding().marshal(FACTORY.createMaxElements(maxInteger), maxElementsDoc);
-            maxElementsElement = maxElementsDoc.getDocumentElement();
+            maxElementsElement = FACTORY.createMaxElements(maxInteger);
         }
         
-        Element maxTimeElement = null;
+        JAXBElement<AttributableDuration> maxTimeElement = null;
         if (maxTime != null) {
-            final Document maxTimeDoc = newDocument();
             final AttributableDuration maxDuration = FACTORY.createAttributableDuration();
             maxDuration.setValue(maxTime);
-            getXmlBinding().marshal(FACTORY.createMaxTime(maxDuration), maxTimeDoc);
-            maxTimeElement = maxTimeDoc.getDocumentElement();
+            maxTimeElement = FACTORY.createMaxTime(maxDuration);
         }
         
         super.setSubscribe(endTo, deliveryMode, notifyTo, expires, filter,

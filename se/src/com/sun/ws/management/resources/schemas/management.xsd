@@ -190,6 +190,21 @@ Copyright © 2006 Distributed Management Task Force, Inc. (DMTF). All rights res
   </xs:complexType>
 
   <xs:element name="Items" type="wsman:anyListType"/>
+
+  <!-- Added missing 'Item' by Wiseman project -->
+  <xs:complexType name="ItemType">
+    <xs:complexContent mixed="true">
+      <xs:restriction base="xs:anyType">
+        <xs:sequence>
+  	  <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+        <xs:anyAttribute namespace="##other" processContents="lax" />
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="Item" type="wsman:ItemType"/>
+
   <xs:element name="EndOfSequence" type="wsman:attributableEmpty"/>
 
   <xs:complexType name="attributableLanguage">

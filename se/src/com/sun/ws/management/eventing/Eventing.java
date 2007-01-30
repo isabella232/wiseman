@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.10 2007-01-14 17:52:35 denis_rachal Exp $
+ * $Id: Eventing.java,v 1.11 2007-01-30 12:26:14 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -26,9 +26,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
@@ -101,7 +98,7 @@ public class Eventing extends Addressing {
     
     public void setSubscribe(final EndpointReferenceType endTo, final String deliveryMode,
             final EndpointReferenceType notifyTo, final String expires, final FilterType filter,
-            final Element... extensions)
+            final Object... extensions)
             throws SOAPException, JAXBException {
         
         removeChildren(getBody(), SUBSCRIBE);
@@ -118,25 +115,11 @@ public class Eventing extends Addressing {
         }
         
         if (notifyTo != null) {
-            final Document doc = newDocument();
-            final Element notifyElement = doc.createElementNS(
-                    NOTIFY_TO.getNamespaceURI(),
-                    NOTIFY_TO.getPrefix() + COLON +
-                    NOTIFY_TO.getLocalPart());
-            getXmlBinding().marshal(Addressing.FACTORY.createEndpointReference(notifyTo), notifyElement);
-            
-            // JAXB wraps the notifyTo EPR into an wsa:EndpointReference enclosing element, unwrap it
-            final Node epr = notifyElement.getFirstChild();
-            for (final Node node : unwrapEndpointReference(epr)) {
-                notifyElement.appendChild(node);
-            }
-            notifyElement.removeChild(epr);
-            
-            delivery.getContent().add(notifyElement);
+        	delivery.getContent().add((FACTORY.createNotifyTo(notifyTo)));
         }
         
         if (extensions != null) {
-            for (final Element ext : extensions) {
+            for (final Object ext : extensions) {
                 delivery.getContent().add(ext);
             }
         }
@@ -237,46 +220,47 @@ public class Eventing extends Addressing {
     
     public Subscribe getSubscribe() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), SUBSCRIBE);
-        return value == null ? null : (Subscribe) value;
+        return (Subscribe) value;
     }
     
     public SubscribeResponse getSubscribeResponse() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), SUBSCRIBE_RESPONSE);
-        return value == null ? null : (SubscribeResponse) value;
+        return (SubscribeResponse) value;
     }
     
     public Renew getRenew() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), RENEW);
-        return value == null ? null : (Renew) value;
+        return (Renew) value;
     }
     
     public RenewResponse getRenewResponse() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), RENEW_RESPONSE);
-        return value == null ? null : (RenewResponse) value;
+        return (RenewResponse) value;
     }
     
     public GetStatus getGetStatus() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), GET_STATUS);
-        return value == null ? null : (GetStatus) value;
+        return (GetStatus) value;
     }
     
     public GetStatusResponse getGetStatusResponse() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), GET_STATUS_RESPONSE);
-        return value == null ? null : (GetStatusResponse) value;
+        return (GetStatusResponse) value;
     }
     
     public Unsubscribe getUnsubscribe() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), UNSUBSCRIBE);
-        return value == null ? null : (Unsubscribe) value;
+        return (Unsubscribe) value;
     }
     
     public SubscriptionEnd getSubscriptionEnd() throws JAXBException, SOAPException {
         final Object value = unbind(getBody(), SUBSCRIPTION_END);
-        return value == null ? null : (SubscriptionEnd) value;
+        return (SubscriptionEnd) value;
     }
     
     public String getIdentifier() throws JAXBException, SOAPException {
-        final Object value = unbind(getHeader(), IDENTIFIER);
-        return value == null ? null : ((JAXBElement<String>) value).getValue();
+        final JAXBElement<String> value = 
+        	  (JAXBElement<String>) unbind(getHeader(), IDENTIFIER);
+        return value.getValue();
     }
 }
