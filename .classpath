@@ -11,27 +11,27 @@
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_client/src"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/activation.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/FastInfoset.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/http.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jaxb-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jaxb-impl.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jaxb-xjc.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jaxws-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jaxws-rt.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jaxws-tools.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jsr173_api.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jsr181-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/jsr250-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/resolver.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/saaj-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="se/lib/jaxws/saaj-impl.jar"/>
-        <classpathentry exported="true" kind="lib" path="se/lib/jaxws/sjsxp.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/servlet-api.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/wsdl4j.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/velocity-dep-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/velocity-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/ant.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/test/lib/junit.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/activation.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/FastInfoset.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/http.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jaxb-xjc.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jaxws-api.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jaxws-rt.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jaxws-tools.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jsr173_api.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jsr181-api.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/jsr250-api.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/resolver.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/saaj-api.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/saaj-impl.jar"/>
+	<classpathentry kind="lib" path="se/lib/jaxws/sjsxp.jar"/>
 	<classpathentry kind="output" path="ebin"/>
 </classpath>

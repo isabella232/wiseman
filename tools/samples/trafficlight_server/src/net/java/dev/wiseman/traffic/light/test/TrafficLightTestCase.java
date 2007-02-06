@@ -49,7 +49,7 @@ public class TrafficLightTestCase extends WsManBaseTestSupport {
 	public TrafficLightTestCase() {
 		super();
 		try {
-			binding = new XmlBinding(null, "com.sun.traffic.light.types");
+			binding = new XmlBinding(null, "net.java.dev.wiseman.schemas.traffic._1.light");
 		} catch (JAXBException e) {
 			fail(e.getMessage());
 		}
@@ -104,7 +104,8 @@ public class TrafficLightTestCase extends WsManBaseTestSupport {
 
 		String xPathResourceUri = xpathBase + "/*[namespace-uri()=\""
 				+ WSMAN_NS + "\" and local-name()=\"ResourceURI\"]";
-		assertEquals("wsman:traffic/resource", getXPathText(xPathResourceUri,
+		assertEquals("urn:resources.wiseman.dev.java.net/traffic/1/light", 
+				getXPathText(xPathResourceUri,
 				ret.getBody()));
 
 		String xPathSelector = xpathBase + "/*[namespace-uri()=\"" + WSMAN_NS

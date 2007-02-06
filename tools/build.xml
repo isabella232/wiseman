@@ -19,6 +19,9 @@
 	    <fileset dir="${lib.dir}">
 	      <include name="**/*.jar"/>
 	    </fileset>
+<!--	    <fileset dir="${lib.dir}/jaxws">
+	      <include name="**/*.jar"/>
+	    </fileset> -->
 	    <fileset dir="${wiseman.root}/${lib.dir}">
 	      <include name="**/*.jar"/>
 	    </fileset>
@@ -83,7 +86,7 @@
     </target>
 	  
     <target name="javadoc" depends="compile" description="Generate the javadocs">
-       <javadoc sourcepath="${src.dir}" destdir="${apidocs.dir}" packagenames="*">
+       <javadoc sourcepath="${src.dir}" destdir="${apidocs.dir}" packagenames="*"> 
            <classpath>
                <path refid="compile.classpath" />
                <pathelement location="${build.classes.dir}" />
@@ -96,7 +99,37 @@
 	<target name="install" depends="jar">
 	</target>
 	
- 	
+	<!-- Task is meant to be an automated test of the 
+		 code generation framework.
+	 -->
+ <!--   <target name="test" depends="jar" >
+        <junit showoutput="true"
+               fork="true" haltonfailure="true">
+          <assertions>
+            <enable/>
+          </assertions>
+            <batchtest>
+                <fileset dir="${test.dir}">
+                  <include name="**/*Test*.java"/>
+                  <exclude name="**/*Interop*.java"/>
+                </fileset>
+             </batchtest>
+            <classpath>
+            	<path refid="compile.classpath" />
+        	    <path path="${build.classes.dir}" />
+        	    <path path="${test.build.classes.dir}" />
+            </classpath>
+          <formatter usefile="false" type="brief"/>
+          <formatter type="xml"/>
+          <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+          <jvmarg value="-Dwsman.user=wsman" />
+          <jvmarg value="-Dwsman.password=secret" />
+          <jvmarg value="-Dwsman.basicauthentication=true" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.custom.packagenames=foo.test,com.hp.examples.ws.wsman.user" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.validate=true" />
+        </junit>
+    </target> -->
+	
 	<target name="autobuild" depends="javadoc,jar" />
 
 </project>

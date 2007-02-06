@@ -105,7 +105,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		assertNotNull(serverInfo.getSpecVersion());
 		assertNotNull(serverInfo.getBuildId());
 		assertEquals(serverInfo.getProductVendor(),"The Wiseman Project - https://wiseman.dev.java.net");
-		assertEquals(serverInfo.getProductVersion(),"0.4");
+		assertEquals(serverInfo.getProductVersion(),"0.6");
 		assertEquals(serverInfo.getProtocolVersion(),"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
 		assertEquals(serverInfo.getSpecVersion(),"1.0.0a");
 		// assertTrue(serverInfo.getBuildId().startsWith("2006"));
