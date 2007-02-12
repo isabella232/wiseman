@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.47 2007-01-22 12:48:58 denis_rachal Exp $
+ $Id: build.xml,v 1.48 2007-02-12 20:28:25 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -23,6 +23,16 @@
     <property file="project.properties"/>
     <property file="${user.home}/.ant.properties"/>
 
+	<!-- Test that a valid ant version is being used -->
+	<condition property="valid.ant.version">
+		<or>
+		  <contains substring="1.6.5" string="${ant.version}" />	
+		  <contains substring="1.7." string="${ant.version}" />	
+		</or>
+	</condition>
+	<fail message="You should be using ant 1.6.5 or better."
+	      unless="valid.ant.version"/>
+	
     <target name="init">
         <tstamp />
         <mkdir dir="${dist.dir}" />
