@@ -33,5 +33,6 @@
 	<classpathentry kind="lib" path="se/lib/jaxws/saaj-api.jar"/>
 	<classpathentry kind="lib" path="se/lib/jaxws/saaj-impl.jar"/>
 	<classpathentry kind="lib" path="se/lib/jaxws/sjsxp.jar"/>
+	<classpathentry kind="lib" path="tools/lib/ant-launcher.jar"/>
 	<classpathentry kind="output" path="ebin"/>
 </classpath>

@@ -1,0 +1,66 @@
+<!-- This build file was generated as a makeshift installer for the Wiseman project.
+	 The primary motivation for the installer was the requirement by the Sun Microsystems
+	 project owners that the users of the binary explicitly see that Wiseman is offered 
+	 under Apache 2.0 License, but uses JAXWS 2.1 libraries which are governed by CDDL 1.0
+	 license. 
+	 Design spec:
+	 	-Consumers of the Wiseman 0.6 bundle be informed of the above. 
+	 	-Consumers would have to agree to both license agreements before this installer
+	 	   could successfully build a functional installation of Wiseman0.6.
+ -->
+<project name="Wiseman Installer" default="complete">
+	<!-- Project properties -->
+	<property name="jaxws.jar" value="JAXWS2.1FCS_20070202.jar"/>
+	<property name="jaxws.lib.dir" value="lib/jaxws"/>
+	<property name="jaxws.root" value="jaxws-ri"/>
+	
+   	<!-- Test that a valid ant version is being used -->
+	<condition property="valid.ant.version">
+		<or>
+		  <contains substring="1.6.5" string="${ant.version}" />	
+		  <contains substring="1.7." string="${ant.version}" />	
+		</or>
+	</condition>
+	<fail message="You should be using ant 1.6.5 or better."
+	      unless="valid.ant.version"/>
+
+	<!-- Root target that governs the installation steps. -->
+    <target name="complete" depends="copy-jaxws-libs-to-wiseman">
+    	<condition property="completed.status">
+			<and>
+			 <istrue value="${wiseman.success}"/>	
+			 <istrue value="${jaxws.success}"/>	
+			 <istrue value="${jaxws.lib.copy.success}"/>	
+			</and>
+    	</condition>
+    	<fail unless="completed.status" 
+    		message="You declined a license agreement, or there was an error installing Wiseman 0.6."/>
+    	<echo message="You have successfully completed the installation of Wiseman 0.6"/>
+    </target>
+
+	<!-- launch Wiseman file extraction -->
+	<target name="install-wiseman">
+		<java jar="lib/wiseman_0.6.jar" fork="true">
+		</java>
+		<property name="wiseman.success" value="true"/>
+	</target>
+
+	<!-- launch Jaxws file extraction -->
+	<target name="install-jaxws" depends="install-wiseman">
+		<java jar="${jaxws.jar}" fork="true">
+		</java>
+		<property name="jaxws.success" value="true"/>
+	</target>
+	
+	<!-- Copy the jaxws libraries into the wiseman project, as consumers have agreed to use them.  -->
+    <target name="copy-jaxws-libs-to-wiseman" depends="install-jaxws">
+    	<mkdir dir="${jaxws.lib.dir}"/>
+    	<copy todir="${jaxws.lib.dir}">
+    	    <fileset dir="${jaxws.root}/lib">
+    	      <include name="**/*.jar"/>
+    	    </fileset>
+    	</copy>
+    	<property name="jaxws.lib.copy.success" value="true"/>
+    </target>
+	
+</project>

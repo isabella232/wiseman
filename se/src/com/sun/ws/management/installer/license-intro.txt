@@ -1,0 +1,9 @@
+
+Wiseman is being provided to you under the Apache License, Version 2.0(http://www.apache.org/licenses/LICENSE-2.0).
+
+
+Wiseman 0.6 uses JAXWS 2.1 components which are covered by the COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0(http://www.sun.com/cddl/cddl.html).
+
+
+You will need to accept both licensing terms in the following windows to get a fully functional Wiseman 0.6 installation upon completion of this installation.
+

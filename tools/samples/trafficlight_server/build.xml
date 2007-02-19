@@ -2,6 +2,16 @@
 
 <project name="trafficlight_server" default="war" basedir=".">
 
+	<!-- Test that a valid ant version is being used -->
+	<condition property="valid.ant.version">
+		<or>
+		  <contains substring="1.6.5" string="${ant.version}" />	
+		  <contains substring="1.7." string="${ant.version}" />	
+		</or>
+	</condition>
+	<fail message="You should be using ant 1.6.5 or better."
+	      unless="valid.ant.version"/>
+	
 	<property file="project.properties"/>
 	<property file="${user.home}/.ant.properties"/>
 

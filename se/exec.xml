@@ -1,0 +1,56 @@
+<!-- This project builds the Wiseman components into a Wiseman-install bundle.
+	A key component for this project is the executable binary bundling the 
+	Wiseman deliverables and the Apache 2.0 License agreement.
+	The deliverable is a bundle upon which 2 commands need to be run in same directory:
+		i) jar -xf <bundle-name>
+		ii)java -Dant.home=<location of ant(1.6.5 or greater)> -jar <bundle-name> 
+ -->
+<project name="Generate Wiseman Install Bundle" default="gen-exec-jar" basedir=".">
+ 	 <!-- Project variables -->
+	<property name="executable.jar" value="wiseman_0.6.jar"/>
+	<property name="install.bundle.name" value="wiseman_0.6-bundle.jar"/>
+	<property name="un.jar.dir" value="top6"/>
+	<property name="install.build.file" value="execute-install.xml"/>
+	<!-- Intermediate executable jar file -->
+	<property name="wise.jar.name" value="exec-wise.jar"/>
+	<property name="install.lic.file" value="license-intro.txt"/>
+	<property name="install.ant.err" value="ant-error.txt"/>
+	
+	<target name="gen-exec-jar" >
+		<mkdir dir="${un.jar.dir}"/>
+		<jar destfile="${wise.jar.name}">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Specification-Title" value="WS-Management" />
+				<attribute name="Specification-Version" value="1.0.0a" />
+				<attribute name="Implementation-Title" value="Wiseman Installer" />
+				<attribute name="Implementation-Version" value="1.0" />
+				<attribute name="Sealed" value="false" />
+				<attribute name="Main-Class" value="com.sun.ws.management.installer.Installer" />
+				<attribute name="Class-Path" value="lib/ant-launcher.jar lib/ant.jar lib/${executable.jar} ${install.build.file} ${install.lic.file} ${install.ant.err} " />
+			</manifest>
+			<fileset dir="../ebin" casesensitive="true">
+				<include name="com/sun/ws/management/installer/*.class"/>
+			</fileset>
+			<fileset dir="src" casesensitive="true">
+				<include name="com/sun/ws/management/installer/*.txt"/>				
+			</fileset>
+			<fileset dir="../tools" casesensitive="true">
+				<include name="**/lib/ant.jar"/>  
+				<include name="**/lib/ant-launcher.jar"/>
+				<include name="**/lib/wiseman_0.6.jar"/>
+			</fileset>
+			<fileset dir=".">
+			  <include name="${install.build.file}"/>
+			</fileset>
+		</jar>
+		<!-- Unbundle zip and rename the install-build-file to build.xml -->
+		<unzip src="${wise.jar.name}" dest="${un.jar.dir}"/>
+		<copy file="${un.jar.dir}/${install.build.file}"
+				tofile="${un.jar.dir}/build.xml"/>
+		<delete file="${un.jar.dir}/${install.build.file}"/>
+		<!-- Recreate executable jar file -->
+		<zip basedir="${un.jar.dir}" excludes="${install.bundle.name}"
+			destfile="${un.jar.dir}/${install.bundle.name}"/>
+	</target>
+</project>
