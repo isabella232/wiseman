@@ -1,1 +1,0 @@
-The installer was unable to locate your ANT_HOME location and cannot proceed.  Please check that you have successfully installed Ant(http://ant.apache.org/manual/install.html#installing) and that you have passed in the -Dant.home=<your ant install root directory> with the right value.
