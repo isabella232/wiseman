@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: properties_Handler.java,v 1.18 2007-01-14 17:52:36 denis_rachal Exp $
+ * $Id: properties_Handler.java,v 1.18.2.1 2007-02-20 12:15:10 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.java.system;
@@ -79,11 +79,11 @@ public class properties_Handler implements Handler {
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);
-            EnumerationSupport.pull(enuRequest, enuResponse);
+            EnumerationSupport.pull(hcontext,enuRequest, enuResponse);
         } else if (Enumeration.RELEASE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.RELEASE_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);
-            EnumerationSupport.release(enuRequest, enuResponse);
+            EnumerationSupport.release(hcontext,enuRequest, enuResponse);
         } else if (Transfer.GET_ACTION_URI.equals(action)) {
             enuResponse.setAction(Transfer.GET_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);

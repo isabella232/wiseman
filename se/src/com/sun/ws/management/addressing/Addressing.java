@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.13 2007-01-11 13:12:57 jfdenise Exp $
+ * $Id: Addressing.java,v 1.13.2.1 2007-02-20 12:15:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -21,6 +21,8 @@ package com.sun.ws.management.addressing;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.xml.XmlBinding;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -179,17 +181,21 @@ public class Addressing extends SOAP {
             return;
         }
         
+        XmlBinding binding = getXmlBinding();
         final Node header = getHeader();
         for (final Object any : anyList) {
-            // cannot simply use the following - we get a JAXB unable to marshal exception
-            // getXmlBinding().marshal(any, getHeader());
             if (any instanceof Node) {
                 final Node node = (Node) any;
                 // TODO: can be a performance hog if the node is deeply nested
                 header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
             } else {
-                throw new RuntimeException("RefP " + any.toString() +
-                        " of class " + any.getClass() + " is being ignored");
+            	try {
+                    binding.marshal(any, header);
+            	}
+                catch (JAXBException e) {
+                    throw new RuntimeException("RefP " + any.toString() +
+                            " of class " + any.getClass() + " is being ignored");
+                }
             }
         }
     }

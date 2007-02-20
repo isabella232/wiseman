@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Transfer.java,v 1.4 2007-01-14 17:52:37 denis_rachal Exp $
+ * $Id: Transfer.java,v 1.4.2.1 2007-02-20 12:15:12 denis_rachal Exp $
  */
 
 package com.sun.ws.management.transfer;
@@ -23,6 +23,7 @@ import java.io.InputStream;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 
 import com.sun.ws.management.addressing.Addressing;
@@ -60,5 +61,16 @@ public class Transfer extends Addressing {
     
     public Object getResource(QName element) throws JAXBException, SOAPException {
         return unbind(getBody(), element);
+    }
+    
+    public Object getResource() throws JAXBException, SOAPException {
+        final SOAPElement[] elements = getChildren(getBody());
+        if (elements.length == 0) {
+            return null;
+        }
+        if (elements[0] == null) {
+            return null;
+        }
+        return getXmlBinding().unmarshal(elements[0]);
     }
 }

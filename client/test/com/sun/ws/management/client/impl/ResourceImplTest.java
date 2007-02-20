@@ -84,6 +84,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		} catch (SOAPException e) {
 			fail("Can't init wiseman");
 		}
+		// Set the system property to always create bindings with our package
+		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
+				"com.hp.examples.ws.wsman.user");
 		try {
 			binding = new XmlBinding(null,"com.hp.examples.ws.wsman.user");
 		} catch (JAXBException e) {

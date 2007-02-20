@@ -68,7 +68,11 @@ public class ${handlerName} extends DelegatingHandler
 #if(${overriddenMethodMap.get($key).isEnumMethod})            
             delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context, new Enumeration(request), new Enumeration(response));   
 #else
+#if(${overriddenMethodMap.get($key).isEventMethod})            
+            delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context, new Eventing(request), new Eventing(response));   
+#else
             delegate.${overriddenMethodMap.get($key).OverriddenOpName}(context, request, response);     
+#end
 #end
             return;
         }

@@ -311,7 +311,13 @@ public class TransferExtensions extends Transfer {
     private JAXBElement<MixedDataType> buildXmlFragment(final List<Object> content) throws SOAPException {
         //build the JAXB Wrapper Element
         final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
-        mixedDataType.getContent().addAll(content);
+		for (int j = 0; j < content.size(); j++) {
+			// Check if it is a text node from text() function
+			if (content.get(j) instanceof Text)
+				mixedDataType.getContent().add(((Text)content.get(j)).getTextContent());
+			else 
+			    mixedDataType.getContent().add(content.get(j));
+		}
         //create the XmlFragmentElement
         final JAXBElement<MixedDataType> xmlFragment = 
                 Management.FACTORY.createXmlFragment(mixedDataType);

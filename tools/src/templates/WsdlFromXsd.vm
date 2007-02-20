@@ -14,6 +14,7 @@ resource_uri=${resource_uri}
         xmlns:state="${target_namespace}"
         xmlns:wxf="http://schemas.xmlsoap.org/ws/2004/09/transfer"
         xmlns:wsen="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
+        xmlns:wse="http://schemas.xmlsoap.org/ws/2004/08/eventing"
         xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
         xmlns="http://schemas.xmlsoap.org/wsdl/"
         xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -28,16 +29,8 @@ resource_uri=${resource_uri}
                 location="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.wsdl" />
         <types>
                 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                        elementFormDefault="qualified" blockDefault="#all">
-                        <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
-                                   schemaLocation="http://schemas.xmlsoap.org/ws/2004/09/transfer/transfer.xsd" />
-                        <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
-                                   schemaLocation="http://schemas.xmlsoap.org/ws/2004/09/enumeration/enumeration.xsd" />
-                        <!-- 
-                        <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
-                                   schemaLocation="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.xsd" />
-                          -->  
-                        <xs:import namespace="${target_namespace}" schemaLocation="../xsd/${xsd_file}"/>
+                        elementFormDefault="qualified" blockDefault="#all"> 
+                        <xs:import namespace="${target_namespace}" schemaLocation="${xsd_file}"/>
                 </xs:schema>
         </types>
         <!-- Custom Messages -->
@@ -58,6 +51,12 @@ resource_uri=${resource_uri}
                 </documentation>
                 
                 <!-- WS-Transfer Operations -->
+                <operation name="Create">
+                        <input message="tns:${resource_type}Message"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create" />
+                        <output message="tns:CreateResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse" />
+                </operation>
                 <operation name="Get">
                         <input message="wxf:EmptyMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Get" />
@@ -75,12 +74,6 @@ resource_uri=${resource_uri}
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete" />
                         <output message="wxf:EmptyMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/DeleteResponse" />
-                </operation>
-                <operation name="Create">
-                        <input message="tns:${resource_type}Message"
-                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create" />
-                        <output message="tns:CreateResponseMessage"
-                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse" />
                 </operation>
                 
                 <!-- TODO: Add all Custom Operations with Custom wsa:Action Attributes here
@@ -126,6 +119,32 @@ resource_uri=${resource_uri}
                 <operation name="EnumerationEndOp">
                         <output message="wsen:EnumerationEndMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd" />
+                </operation>
+                
+                <!-- WS Eventing operations -->
+                <operation name="SubscribeOp" >
+                         <input message="wse:SubscribeMsg" 
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/Subscribe" />
+                         <output message="wse:SubscribeResponseMsg" 
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/SubscribeResponse" />
+                </operation>
+                <operation name="RenewSubscriptionOp" >
+                         <input message="wse:RenewMsg"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/Renew" />
+                         <output message="wse:RenewResponseMsg" 
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/RenewResponse" />
+                </operation>
+                <operation name="GetSubscriptionStatusOp" >
+                         <input message="wse:GetStatusMsg" 
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/GetStatus" />
+                         <output message="wse:GetStatusResponseMsg" 
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/GetStatusResponse" />
+                </operation>
+                <operation name="UnsubscribeOp" >
+                         <input message="wse:UnsubscribeMsg" 
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/Unsubscribe" />
+                         <output message="wse:UnsubscribeResponseMsg"
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/UnsubscribeResponse" />
                 </operation>
         </portType>
 
@@ -237,13 +256,50 @@ resource_uri=${resource_uri}
                                 <wsoap12:body use="literal"/>
                         </output>                
                 </operation>
+                
+                <!-- WS Eventing operations -->
+                <operation name="SubscribeOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/Subscribe"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="RenewSubscriptionOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/Renew"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="GetSubscriptionStatusOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/GetStatus"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="UnsubscribeOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/Unsubscribe"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
         </binding>
 
         <service name="${service_name}Service">
           <documentation>${service_name} Service</documentation>                               
                 
                 <port name="${service_name}Resource" binding="tns:${service_name}ResourceBinding">
-                  <wsoap12:address location="http://localhost/wsman"/>
                   <wsa:EndpointReference>
                     <wsa:Address>http://localhost/wsman</wsa:Address>
                     <wsa:ReferenceParameters>

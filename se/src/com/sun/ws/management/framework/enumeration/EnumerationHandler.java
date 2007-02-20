@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationHandler.java,v 1.7 2007-01-14 17:52:37 denis_rachal Exp $
+ * $Id: EnumerationHandler.java,v 1.7.2.1 2007-02-20 12:15:12 denis_rachal Exp $
  *
  */
 package com.sun.ws.management.framework.enumeration;
@@ -50,7 +50,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
 			Enumeration enuResponse) {
 
 		try {
-			EnumerationSupport.release(enuRequest, enuResponse);
+			EnumerationSupport.release(context, enuRequest, enuResponse);
 		} catch (SOAPException e) {
 			LOG.log(Level.SEVERE, "", e);
 			throw new InternalErrorFault(e.getMessage());
@@ -69,7 +69,7 @@ public abstract class EnumerationHandler extends TransferSupport implements Enum
 	public void pull(HandlerContext context, Enumeration enuRequest,
 			Enumeration enuResponse) {
 		try {
-			EnumerationSupport.pull(enuRequest, enuResponse);
+			EnumerationSupport.pull(context, enuRequest, enuResponse);
 		} catch (SOAPException e) {
 			LOG.log(Level.SEVERE, "", e);
 			throw new InternalErrorFault(e.getMessage());

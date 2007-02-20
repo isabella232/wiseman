@@ -54,6 +54,7 @@ import com.sun.tools.xjc.api.SchemaCompiler;
 import com.sun.tools.xjc.api.XJC;
 import com.sun.tools.xjc.model.Model;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.xml.bind.api.impl.NameConverter;
 
@@ -74,6 +75,7 @@ public class Wsdl2WsmanGenerator {
 	private boolean m_hasCustomOpNames = false;
 	private boolean m_hasCustomOps = false;
 	private boolean m_isEnumeration = false;
+	private boolean m_isEventing = false;
 	private String m_resourceType = "";
 	private String m_resourceName = "";
 	private String m_iteratorFactoryName = null;
@@ -83,6 +85,8 @@ public class Wsdl2WsmanGenerator {
 	private Map<String, String> m_specActionURIs = new HashMap<String, String>();
 	private Map<String, String> m_enumerationActionURIs = new HashMap<String, String>();
 	private HashMap<String, String> m_enumerationResponseActionURIs = new HashMap<String, String>();
+	private Map<String, String> m_eventingActionURIs = new HashMap<String, String>();
+	private HashMap<String, String> m_eventingResponseActionURIs = new HashMap<String, String>();
 	private HashMap<String, String> m_specResponseActionURIs = new HashMap<String, String>();
 
 	private boolean GEN_JAXB = true;
@@ -154,6 +158,24 @@ public class Wsdl2WsmanGenerator {
 
 		m_specActionURIs.putAll(m_enumerationActionURIs);
 		m_specResponseActionURIs.putAll(m_enumerationResponseActionURIs);
+		
+		// eventing
+		m_eventingActionURIs.put(Eventing.SUBSCRIBE_ACTION_URI, "subscribe");
+        m_eventingResponseActionURIs.put(Eventing.SUBSCRIBE_ACTION_URI,
+        		                            Eventing.SUBSCRIBE_RESPONSE_URI);
+		m_eventingActionURIs.put(Eventing.UNSUBSCRIBE_ACTION_URI, "unsubscribe");
+		m_eventingResponseActionURIs.put(Eventing.UNSUBSCRIBE_ACTION_URI,
+        		                            Eventing.UNSUBSCRIBE_RESPONSE_URI);
+		m_eventingActionURIs.put(Eventing.GET_STATUS_ACTION_URI, "getSubscriptionStatus");
+		m_eventingResponseActionURIs.put(Eventing.GET_STATUS_ACTION_URI,
+        		                            Eventing.GET_STATUS_RESPONSE_URI);
+		m_eventingActionURIs.put(Eventing.RENEW_ACTION_URI, "renewSubscription");
+		m_eventingResponseActionURIs.put(Eventing.RENEW_ACTION_URI,
+        		                            Eventing.RENEW_RESPONSE_URI);
+        
+		m_specActionURIs.putAll(m_eventingActionURIs);
+		m_specResponseActionURIs.putAll(m_eventingResponseActionURIs);
+		
 	}
 
 	/**
@@ -255,7 +277,7 @@ public class Wsdl2WsmanGenerator {
 								for (int j = 0; j < elementsByTagNameNS
 										.getLength(); j++) {
 									Node el = elementsByTagNameNS.item(j);
-									resourceUri = el.getTextContent();
+									resourceUri = el.getTextContent().trim();
 								}
 							}
 						}
@@ -281,6 +303,7 @@ public class Wsdl2WsmanGenerator {
 		m_overriddenMethodMap = new HashMap<String, WsManOp>();
 		m_customOperationMap = new HashMap<String, WsManOp>();
 		m_isEnumeration = false;
+		m_isEventing = false;
 		PortType portType = port.getBinding().getPortType();
 		validateIsWsManWsdl(portType);
 		processTemplates(resourceUri);
@@ -473,11 +496,20 @@ public class Wsdl2WsmanGenerator {
 				m_isEnumeration = true;
 				op = new WsManOp(
 						m_enumerationResponseActionURIs.get(actionURI),
-						getSpecOperationName(actionURI), true, operation
+						getSpecOperationName(actionURI), true, false, operation
 								.getName());
 			} else {
-				op = new WsManOp(m_specResponseActionURIs.get(actionURI),
-						getSpecOperationName(actionURI), operation.getName());
+				if (m_eventingActionURIs.containsKey(actionURI)) {
+					m_isEventing = true;
+					op = new WsManOp(
+							m_eventingResponseActionURIs.get(actionURI),
+							getSpecOperationName(actionURI), false, true, operation
+									.getName());
+				} else {
+					op = new WsManOp(m_specResponseActionURIs.get(actionURI),
+							getSpecOperationName(actionURI), operation
+									.getName());
+				}
 			}
 			m_overriddenMethodMap.put(actionURI, op);
 		} else {
@@ -657,7 +689,7 @@ public class Wsdl2WsmanGenerator {
 		if (m_isEnumeration) {
 			System.out
 					.println("Generating sourcefile: " + outputFile.getName());
-			processTemplate(context, TEMPLATES_PATH + "/EnumerationSupport.vm",
+			processTemplate(context, TEMPLATES_PATH + "/ResourceSupport.vm",
 					outputFile);
 			outputFile = new File(delegatePackageDir, m_iteratorFactoryName
 					+ ".java");

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.13 2007-01-18 08:43:43 denis_rachal Exp $
+ * $Id: BaseSupport.java,v 1.13.2.1 2007-02-20 12:15:01 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -66,13 +66,13 @@ public class BaseSupport {
                 final BaseContext context = contextMap.get(key);
                 if (context != null) {
 					if (context.isExpired(nowXml)) {
-						context.setDeleted();
-						contextMap.remove(key);
+						removeContext(null, key);
 					}
 				}
             }
         }
     };
+    
     private static final Logger LOG = Logger.getLogger(BaseSupport.class.getName());
     
     private static final int CLEANUP_INTERVAL = 60000;
@@ -97,7 +97,7 @@ public class BaseSupport {
             // cause it to fail so this exception is being silenced.
             LOG.fine("Base support was re-initalized.");
         }*/
-        }catch(Exception ex) {
+        } catch(Exception ex) {
             throw new RuntimeException("Fail to initialize BaseSupport " + ex);
         }
     }
@@ -241,9 +241,13 @@ public class BaseSupport {
         return expiration;
     }
     
-    protected static UUID initContext(final BaseContext context) {
+    protected static UUID initContext(final HandlerContext requestContext,
+    		                          final BaseContext context) {
         final UUID uuid = UUID.randomUUID();
         contextMap.put(uuid, context);
+		if (context.getListener() != null) {
+			context.getListener().contextBound(requestContext, uuid);
+		}
         return uuid;
     }
     
@@ -255,12 +259,16 @@ public class BaseSupport {
         return contextMap.put(context, ctx);
     }
     
-    protected static BaseContext removeContext(final Object context) {
+    protected static BaseContext removeContext(final HandlerContext requestContext, 
+    		                                   final Object context) {
     	BaseContext ctx = contextMap.get(context);
     	if (ctx == null)
     		return null;
     	// Set to deleted in case another thread still has a reference to this context.
     	ctx.setDeleted();
+    	if (ctx.getListener() != null) {
+    		ctx.getListener().contextUnbound(requestContext, (UUID)context);
+    	}
         return contextMap.remove(context);
     }
 }

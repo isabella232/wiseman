@@ -13,23 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.4 2007-01-17 08:47:00 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.4.2.1 2007-02-20 12:15:03 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.AccessDeniedFault;
-import com.sun.ws.management.EncodingLimitFault;
-import com.sun.ws.management.InternalErrorFault;
-import com.sun.ws.management.Message;
-import com.sun.ws.management.Management;
-import com.sun.ws.management.TimedOutFault;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.transport.ContentType;
-import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.xml.XmlBinding;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,10 +27,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -63,9 +51,23 @@ import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.xml.sax.SAXException;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+
+import com.sun.ws.management.AccessDeniedFault;
+import com.sun.ws.management.EncodingLimitFault;
+import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.Management;
+import com.sun.ws.management.Message;
+import com.sun.ws.management.TimedOutFault;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.transport.ContentType;
+import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * WS-MAN agent decoupled from transport. Can be used in Servlet / JAX-WS / ...
@@ -78,9 +80,10 @@ public abstract class WSManAgent {
     private static final Logger LOG = Logger.getLogger(WSManAgent.class.getName());
     private static final long DEFAULT_TIMEOUT = 30000;
     private static final long MIN_ENVELOPE_SIZE = 8192;
-    private static final String PROPERTY_FILE_NAME = "/wsman.properties";
-    private static final String UUID_SCHEME = "uuid:";
-    
+    private static final boolean enforceOperationTimeout;
+    private static final String WSMAN_PROPERTY_FILE_NAME = "/wsman.properties";
+    private static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
+    private static final String UUID_SCHEME = "uuid:";    
     private static final String SCHEMA_PATH =
             "/com/sun/ws/management/resources/schemas/";
     
@@ -92,35 +95,22 @@ public abstract class WSManAgent {
     private Schema schema;
     private static Source[] stdSchemas;
     private String[] customPackages;
+    private final XmlBinding binding;
     static {
         // NO MORE LOGGING CONFIGURATION
         // THE CODE HAS BEEN REMOVED
         
         // load subsystem properties and save them in a type-safe, unmodifiable Map
-        final InputStream ism = Management.class.getResourceAsStream(PROPERTY_FILE_NAME);
-        if (ism != null) {
-            final Properties props = new Properties();
-            try {
-                props.load(ism);
-            } catch (IOException iex) {
-                LOG.log(Level.WARNING, "Error reading properties from " +
-                        PROPERTY_FILE_NAME, iex);
-                throw new RuntimeException("Error reading properties from " +
-                        PROPERTY_FILE_NAME +  " " + iex);
-            }
-            final Map<String, String> propertySet = new HashMap<String, String>();
-            final Iterator<Entry<Object, Object>> ei = props.entrySet().iterator();
-            while (ei.hasNext()) {
-                final Entry<Object, Object> entry = ei.next();
-                final Object key = entry.getKey();
-                final Object value = entry.getValue();
-                if (key instanceof String && value instanceof String) {
-                    propertySet.put((String) key, (String) value);
-                }
-            }
-            properties = Collections.unmodifiableMap(propertySet);
-        }
+    	final Map<String, String> propertySet = new HashMap<String, String>();
+        getProperties(WSMAN_PROPERTY_FILE_NAME, propertySet);
+        getProperties(WISEMAN_PROPERTY_FILE_NAME, propertySet);
+        properties = Collections.unmodifiableMap(propertySet);
         
+        if (properties.get("enforce.OperationTimeout") != null) {
+        	enforceOperationTimeout = Boolean.parseBoolean(properties.get("enforce.OperationTimeout")); 
+        } else {
+        	enforceOperationTimeout = false;
+        }
         extraIdInfo.put(Identify.BUILD_ID, properties.get("build.version"));
         extraIdInfo.put(Identify.SPEC_VERSION, properties.get("spec.version"));
         
@@ -143,6 +133,30 @@ public abstract class WSManAgent {
             i++;
         }
     }
+
+	private static void getProperties(final String filename, final Map<String, String> propertySet) {
+		final InputStream ism = Management.class.getResourceAsStream(filename);
+        if (ism != null) {
+            final Properties props = new Properties();
+            try {
+                props.load(ism);
+            } catch (IOException iex) {
+                LOG.log(Level.WARNING, "Error reading properties from " +
+                		filename, iex);
+                throw new RuntimeException("Error reading properties from " +
+                		filename +  " " + iex);
+            }
+            final Iterator<Entry<Object, Object>> ei = props.entrySet().iterator();
+            while (ei.hasNext()) {
+                final Entry<Object, Object> entry = ei.next();
+                final Object key = entry.getKey();
+                final Object value = entry.getValue();
+                if (key instanceof String && value instanceof String) {
+                    propertySet.put((String) key, (String) value);
+                }
+            }
+        }
+	}
     
     protected WSManAgent() throws SAXException {
         this(null);
@@ -169,6 +183,11 @@ public abstract class WSManAgent {
             throw ex;
         }
         this.customPackages = customPackages;
+        try {
+            this.binding = new XmlBinding(this.schema, this.customPackages);
+        } catch (JAXBException e) {
+        	throw new InternalErrorFault(e);
+        }
     }
     
     /**
@@ -202,7 +221,7 @@ public abstract class WSManAgent {
     public Message handleRequest(final Management request, final HandlerContext context) {
         Addressing response = null;
         
-        try {
+        // try {
             // XXX WARNING, CREATING A JAXBCONTEXT FOR EACH REQUEST IS TOO EXPENSIVE.
             // JAXB team says that you should share as much as you can JAXBContext.
             // I propose to make XmlBinding back to be static and locked. I mean
@@ -214,11 +233,11 @@ public abstract class WSManAgent {
             // Relaying on JAXB becomes an implementation detail.
             
             // schema might be null if no XSDs were found
-            request.setXmlBinding(new XmlBinding(schema, customPackages));
-        } catch (JAXBException jex) {
-            LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
+            request.setXmlBinding(binding);
+       // } catch (JAXBException jex) {
+       //     LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
             // TODO throw new ServletException(jex);
-        }
+       // }
         
         try {
             logMessage(LOG, request);
@@ -303,13 +322,16 @@ public abstract class WSManAgent {
         // ExecutionException, perform the get on FutureTask itself
         pool.submit(task);
         try {
-            return task.get(timeout, TimeUnit.MILLISECONDS);
+        	if (enforceOperationTimeout == true)
+        		return task.get(timeout, TimeUnit.MILLISECONDS);
+        	else
+                return task.get();
         } catch (ExecutionException ex) {
             throw ex.getCause();
         } catch (InterruptedException ix) {
             // ignore
         } catch (TimeoutException tx) {
-            throw new TimedOutFault();
+           throw new TimedOutFault();
         } finally {
             task.cancel(true);
         }

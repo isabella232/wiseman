@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.18 2006-06-27 21:54:37 akhilarora Exp $
+ * $Id: ManagementTest.java,v 1.18.4.1 2007-02-20 12:15:07 denis_rachal Exp $
  */
 
 package management;
@@ -35,6 +35,7 @@ import com.sun.ws.management.xml.XMLSchema;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -385,11 +386,17 @@ public class ManagementTest extends TestBase {
         mgmt.setTimeout(durationFactory.newDuration(2000));
         
         mgmt.prettyPrint(logfile);
+        final GregorianCalendar start = new GregorianCalendar();
         final Addressing response = HttpClient.sendRequest(mgmt);
+        final GregorianCalendar end = new GregorianCalendar();
         response.prettyPrint(logfile);
         if (!response.getBody().hasFault()) {
             fail("fault not returned");
         }
+        long diff = end.getTimeInMillis()-start.getTimeInMillis();
+        assertTrue((diff >= 2000));
+        assertTrue("Timeout was " + diff + " milliseconds, expected 2000 milliseconds.",(diff<= 3000)); // Should be reasonable
+        
         final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
         assertEquals(TimedOutFault.TIMED_OUT, fault.getCode().getSubcode().getValue());

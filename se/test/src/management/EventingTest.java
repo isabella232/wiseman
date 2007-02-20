@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.13 2007-01-14 17:53:12 denis_rachal Exp $
+ * $Id: EventingTest.java,v 1.13.2.1 2007-02-20 12:15:07 denis_rachal Exp $
  */
 
 package management;
@@ -213,7 +213,7 @@ public class EventingTest extends TestBase {
         final SubscribeResponse subr = response.getSubscribeResponse();
         final EndpointReferenceType mgr = subr.getSubscriptionManager();
         assertEquals(DESTINATION, mgr.getAddress().getValue());
-        final Object identifier = mgr.getReferenceProperties().getAny().get(0);
+        final Object identifier = mgr.getReferenceParameters().getAny().get(1);
         assertNotNull(identifier);
         final String expires2 = subr.getExpires();
         assertNotNull(expires2);
@@ -243,7 +243,7 @@ public class EventingTest extends TestBase {
         final SubscribeResponse subr = response.getSubscribeResponse();
         final EndpointReferenceType mgr = subr.getSubscriptionManager();
         assertEquals(DESTINATION, mgr.getAddress().getValue());
-        final Object identifierElement = mgr.getReferenceProperties().getAny().get(0);
+        final Object identifierElement = mgr.getReferenceParameters().getAny().get(1);
         assertNotNull(identifierElement);
         final String identifier = ((JAXBElement<String>) identifierElement).getValue();
         
@@ -383,7 +383,7 @@ public class EventingTest extends TestBase {
         final SubscribeResponse subr = response.getSubscribeResponse();
         final EndpointReferenceType mgr = subr.getSubscriptionManager();
         assertEquals(DESTINATION, mgr.getAddress().getValue());
-        final Object identifier = mgr.getReferenceProperties().getAny().get(0);
+        final Object identifier = mgr.getReferenceParameters().getAny().get(1);
         assertNotNull(identifier);
         final String expires2 = subr.getExpires();
         assertNotNull(expires2);

@@ -13,27 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: eventing_Handler.java,v 1.12 2006-07-19 22:41:38 akhilarora Exp $
+ * $Id: eventing_Handler.java,v 1.12.4.1 2007-02-20 12:15:01 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
 
-import com.sun.ws.management.server.Handler;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.server.EventingSupport;
+import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 public class eventing_Handler implements Handler {
     
@@ -69,7 +72,12 @@ public class eventing_Handler implements Handler {
         
         if (Eventing.SUBSCRIBE_ACTION_URI.equals(action)) {
             evtResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-            final Object evtContext = EventingSupport.subscribe(evtRequest, evtResponse, nsMap);
+            final UUID evtContext = EventingSupport.subscribe(context,
+            		                                          evtRequest,
+            		                                          evtResponse,
+            		                                          false,
+            		                                          1024,
+            		                                          null);
             
             // setup a timer to send some test events
             final TimerTask sendEventTask = new TimerTask() {
@@ -77,17 +85,18 @@ public class eventing_Handler implements Handler {
                 public void run() {
                     try {
                         final Addressing msg = new Addressing();
-                        msg.getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
-                        msg.setAction(Management.EVENT_URI);
+                        // msg.getEnvelope().addNamespaceDeclaration(NS_PREFIX, NS_URI);
+                        // msg.setAction(Management.EVENT_URI);
                         
                         final Document doc = msg.newDocument();
                         final Element root = doc.createElementNS(NS_URI, NS_PREFIX + ":" + EVENTS[eventCount][1]);
                         root.setTextContent(EVENTS[eventCount][0]);
                         doc.appendChild(root);
-                        msg.getBody().addDocument(doc);
+                        // msg.getBody().addDocument(doc);
                         
                         final String info = root.getNodeName() + " " + root.getTextContent();
-                        if (EventingSupport.sendEvent(evtContext, msg, nsMap)) {
+                        // if (EventingSupport.sendEvent(evtContext, msg, nsMap)) {
+                        if (EventingSupport.sendEvent(evtContext, doc.getDocumentElement())) {
                             LOG.info("Sent event " + info);
                         } else {
                             LOG.info("Event filtered " + info);
@@ -109,7 +118,7 @@ public class eventing_Handler implements Handler {
             eventTimer.schedule(sendEventTask, DELAY, PERIOD);
         } else if (Eventing.UNSUBSCRIBE_ACTION_URI.equals(action)) {
             evtResponse.setAction(Eventing.UNSUBSCRIBE_RESPONSE_URI);
-            EventingSupport.unsubscribe(evtRequest, evtResponse);
+            EventingSupport.unsubscribe(context,evtRequest, evtResponse);
         } else {
             throw new ActionNotSupportedFault(action);
         }

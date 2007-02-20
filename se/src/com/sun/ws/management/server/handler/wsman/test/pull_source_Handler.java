@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.14 2007-01-14 17:52:33 denis_rachal Exp $
+ * $Id: pull_source_Handler.java,v 1.14.2.1 2007-02-20 12:15:01 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 
@@ -31,6 +36,7 @@ import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.server.ContextListener;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.EventingSupport;
 import com.sun.ws.management.server.Handler;
@@ -38,7 +44,81 @@ import com.sun.ws.management.server.HandlerContext;
 
 public class pull_source_Handler implements Handler {
 
-    private static final Map<String, String> NAMESPACES = new HashMap<String, String>();
+	private static final String NS_URI = "https://wiseman.dev.java.net/test/events/pull";
+	private static final String NS_PREFIX = "log";
+	
+	private final Timer eventTimer;
+	private final AddEventsTask addEventsTask;
+	private int i = 0;
+    
+	final class AddEventsTask extends TimerTask implements ContextListener {
+		
+		private final ArrayList<UUID> subscriptions;
+		
+		AddEventsTask() {
+			this.subscriptions = new ArrayList<UUID>();
+		}
+
+		@Override
+		public void run() {
+
+			synchronized (subscriptions) {
+				UUID id;
+				Iterator iter = this.subscriptions.iterator();
+				while (iter.hasNext()) {
+					id = (UUID) iter.next();
+					// Create 1 new events
+					try {
+						switch (i) {
+						case 0: EventingSupport.sendEvent(id, 
+								createEvent("event1", "critical"));
+						case 1: EventingSupport.sendEvent(id,
+								createEvent("event2", "warning"));
+						case 2: EventingSupport.sendEvent(id,
+								createEvent("event3", "info"));
+						case 3: EventingSupport.sendEvent(id,
+								createEvent("event4", "debug"));
+						}
+						i++;
+						if (i >=3) i = 0;
+					} catch (Exception e) {
+						// TODO: end subscription
+					}
+				}
+			}
+		}
+
+		private Element createEvent(final String key, final String value) {
+			Document doc = Management.newDocument();
+			Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":" + key);
+			item.setTextContent(value);
+			doc.appendChild(item);
+			return item;
+		}
+
+		public void contextBound(HandlerContext requestContext, UUID context) {
+			// Add the context to our list of subscribers
+            synchronized(subscriptions) {
+            	subscriptions.add(context);
+            }
+		}
+
+		public void contextUnbound(HandlerContext requestContext, UUID context) {
+			// Remove the context from our list of subscribers
+            synchronized(subscriptions) {
+            	subscriptions.remove(context);
+            }	
+		}
+	}
+	
+	public pull_source_Handler() {
+		
+		// Schedule a task to add data every 5 seconds to any subscriber
+        final long REPEAT = 2000;
+        eventTimer = new Timer(true);
+        addEventsTask = new AddEventsTask();
+        eventTimer.schedule(addEventsTask, 0, REPEAT);	
+	}
 
     public void handle(final String action, final String resource,
             final HandlerContext context,
@@ -49,28 +129,23 @@ public class pull_source_Handler implements Handler {
         
         if (Eventing.SUBSCRIBE_ACTION_URI.equals(action)) {
             final EventingExtensions evtx = new EventingExtensions(request);
+            final EventingExtensions evtxResponse = new EventingExtensions(response);
             final Subscribe subscribe = evtx.getSubscribe();
             final DeliveryType deliveryType = subscribe.getDelivery();
             if (EventingExtensions.PULL_DELIVERY_MODE.equals(deliveryType.getMode())) {
                 enuResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-                synchronized (this) {
-                	// Make sure there is an Iterator factory registered for this resource
-                	if (EnumerationSupport.getIteratorFactory(resource) == null) {
-                		EnumerationSupport.registerIteratorFactory(resource,
-                				new pull_source_IteratorFactory(resource));
-                	}
-                }
-                EnumerationSupport.enumerate(context, enuRequest, enuResponse);
+                EventingSupport.subscribe(context, evtx, evtxResponse, false, 4, addEventsTask);
             } else {
                 throw new DeliveryModeRequestedUnavailableFault(
                         EventingSupport.getSupportedDeliveryModes());
             }
         } else if (Eventing.UNSUBSCRIBE_ACTION_URI.equals(action)) {
+            final EventingExtensions evtx = new EventingExtensions(request);
+            final EventingExtensions evtxResponse = new EventingExtensions(response);
             response.setAction(Eventing.UNSUBSCRIBE_RESPONSE_URI);
-            EnumerationSupport.release(enuRequest, enuResponse);
+            EventingSupport.unsubscribe(context, evtx, evtxResponse);
         } else if (Enumeration.ENUMERATE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
-            enuResponse.addNamespaceDeclarations(NAMESPACES);
             
             synchronized (this) {
             	// Make sure there is an Iterator factory registered for this resource
@@ -82,10 +157,10 @@ public class pull_source_Handler implements Handler {
             EnumerationSupport.enumerate(context, enuRequest, enuResponse);
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
-            EnumerationSupport.pull(enuRequest, enuResponse);
+            EnumerationSupport.pull(context,enuRequest, enuResponse);
         } else if (Enumeration.RELEASE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.RELEASE_RESPONSE_URI);
-            EnumerationSupport.release(enuRequest, enuResponse);
+            EnumerationSupport.release(context,enuRequest, enuResponse);
         } else {
             throw new ActionNotSupportedFault(action);
         }
