@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: pull_source_Handler.java,v 1.14.2.1 2007-02-20 12:15:01 denis_rachal Exp $
+ * $Id: pull_source_Handler.java,v 1.14.2.2 2007-02-27 11:28:16 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 
@@ -135,6 +136,15 @@ public class pull_source_Handler implements Handler {
             if (EventingExtensions.PULL_DELIVERY_MODE.equals(deliveryType.getMode())) {
                 enuResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
                 EventingSupport.subscribe(context, evtx, evtxResponse, false, 4, addEventsTask);
+    			Document doc = Management.newDocument();
+    			Element item1 = doc.createElementNS(NS_URI, NS_PREFIX + ":" + "param1");
+    			item1.setTextContent("Custom parameter 1");
+    			Element item2 = doc.createElementNS(NS_URI, NS_PREFIX + ":" + "param2");
+    			item2.setTextContent("Custom parameter 2");
+                ArrayList<Object> list = new ArrayList<Object>(2);
+                list.add(item1);
+                list.add(item2);
+                evtxResponse.addRefParamsToSubscriptionManagerEpr(list);
             } else {
                 throw new DeliveryModeRequestedUnavailableFault(
                         EventingSupport.getSupportedDeliveryModes());
