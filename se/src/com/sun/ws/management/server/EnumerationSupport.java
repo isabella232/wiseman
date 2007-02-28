@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.44.2.1 2007-02-20 12:15:04 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.44.2.2 2007-02-28 08:57:23 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -258,6 +258,9 @@ public final class EnumerationSupport extends BaseSupport {
 					if (optimize) {
 						final Duration maxTime = new Management(request).getTimeout();
 						final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
+						if (ctx.getIterator() instanceof EnumerationPullIterator) {
+							((EnumerationPullIterator)ctx.getIterator()).startPull(request);
+						}
 						final boolean more = doPull(handlerContext, request, response, context,
 								ctx, maxTime, passed, maxElements);
 
@@ -266,6 +269,9 @@ public final class EnumerationSupport extends BaseSupport {
 						enxResponse.setEnumerateResponse(context.toString(),
 								ctx.getExpiration(), passed, enumerationMode,
 								more);
+						if (ctx.getIterator() instanceof EnumerationPullIterator) {
+							((EnumerationPullIterator)ctx.getIterator()).endPull(response);
+						}
 					} else {
 						// place an item count estimate if one was requested
 						insertTotalItemCountEstimate(request, response,
@@ -367,6 +373,9 @@ public final class EnumerationSupport extends BaseSupport {
 				maxTime = pull.getMaxTime();
 			}
 			final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
+			if (ctx.getIterator() instanceof EnumerationPullIterator) {
+				((EnumerationPullIterator)ctx.getIterator()).startPull(request);
+			}
 			final boolean more = doPull(handlerContext, request, response, context,
 					                    ctx, maxTime, passed, maxElements);
 			
@@ -378,6 +387,9 @@ public final class EnumerationSupport extends BaseSupport {
 			} else {
 				wsmanResponse.setPullResponse(passed, null, false, ctx
 						.getEnumerationMode());
+			}
+			if (ctx.getIterator() instanceof EnumerationPullIterator) {
+				((EnumerationPullIterator)ctx.getIterator()).endPull(response);
 			}
 		}
 	}
