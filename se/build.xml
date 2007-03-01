@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.48 2007-02-12 20:28:25 simeonpinder Exp $
+ $Id: build.xml,v 1.49 2007-03-01 06:01:23 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -82,6 +82,7 @@
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="transfer.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_09/transfer/*.java" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="management.xsd" />
+        	<schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="metadata.xsd" />
         </xjc>
     </target>
 
@@ -132,6 +133,7 @@
         <copy todir="${build.classes.dir}">
             <fileset dir="${src.dir}">
                 <include name="wsman.properties" />
+                <include name="metadata-handlers.properties" />
             </fileset>
         </copy>
     </target>

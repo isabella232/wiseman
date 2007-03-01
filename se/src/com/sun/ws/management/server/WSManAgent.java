@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.4 2007-01-17 08:47:00 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.5 2007-03-01 06:01:22 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server;
@@ -26,6 +26,8 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
+import com.sun.ws.management.metadata.annotations.WsManagementDefaultAddressingModelAnnotation;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
@@ -124,6 +126,47 @@ public abstract class WSManAgent {
         extraIdInfo.put(Identify.BUILD_ID, properties.get("build.version"));
         extraIdInfo.put(Identify.SPEC_VERSION, properties.get("spec.version"));
         
+        //If MetaData resource is exposed, then populate that information here.
+         String value = null;
+         //Determine whether to turn on/off metaData exposure
+         String mDataEnabled="metadata.index.enabled";
+         	value = properties.get(mDataEnabled);
+         boolean exposeMetaDataContent = false;
+           exposeMetaDataContent = Boolean.parseBoolean(value);
+         if((value!=null)&&(value.trim().length()>0)){
+	        	extraIdInfo.put(
+	        			AnnotationProcessor.META_DATA_ENABLED, 
+	        	  value);
+         }
+           
+         //If enabled then populate then expose default meta data resource  
+         if(exposeMetaDataContent){  
+        	 //MetaData Addressing TO field
+	         String mDataTo="metadata.index.to";
+	          value = properties.get(mDataTo);
+	         if((value!=null)&&(value.trim().length()>0)){
+	        	extraIdInfo.put(
+	        			AnnotationProcessor.META_DATA_TO, 
+	        	  value);
+	         }
+	         //MetaData WsManagement ResourceURI field
+		     String mDataResourceURI="metadata.index.resourceURI";
+		      value = properties.get(mDataResourceURI);
+		     if((value!=null)&&(value.trim().length()>0)){
+		       	extraIdInfo.put(
+		       			AnnotationProcessor.META_DATA_RESOURCE_URI, 
+		       	  value);
+		     }
+		     //MetaData descriptive information
+	         String mDataDesc="metadata.index.description";
+	          value = properties.get(mDataDesc);
+	         if((value!=null)&&(value.trim().length()>0)){
+	          extraIdInfo.put(
+	        		  AnnotationProcessor.META_DATA_DESCRIPTION, 
+	        	value);
+	         }
+         }
+         
         // The returned list of schemas is already sorted
         String schemaNames = properties.get("schemas");
         StringTokenizer t = new StringTokenizer(schemaNames, ";");
