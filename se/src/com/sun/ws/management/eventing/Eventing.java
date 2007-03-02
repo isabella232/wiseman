@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Eventing.java,v 1.11 2007-01-30 12:26:14 denis_rachal Exp $
+ * $Id: Eventing.java,v 1.12 2007-03-02 15:50:26 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -27,6 +28,7 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.GetStatus;
@@ -263,4 +265,48 @@ public class Eventing extends Addressing {
         	  (JAXBElement<String>) unbind(getHeader(), IDENTIFIER);
         return value.getValue();
     }
+    
+    // retrieve the current subscription EPR
+    public EndpointReferenceType getSubscriptionManagerEpr() throws JAXBException, SOAPException {
+    	
+        SubscribeResponse response = this.getSubscribeResponse();
+		if (response == null) {
+			return null;
+		} else {
+			return response.getSubscriptionManager();
+		}
+    }
+    
+    public void setSubscriptionManagerEpr(EndpointReferenceType mgr) throws JAXBException, SOAPException {
+    	
+    	SubscribeResponse response = this.getSubscribeResponse();
+    	if (response == null) {
+    		this.setSubscribeResponse(mgr, null);
+    	} else {
+    		removeChildren(getBody(), SUBSCRIBE_RESPONSE);
+    		response.setSubscriptionManager(mgr);
+    		getXmlBinding().marshal(response, getBody());
+    	}
+    }
+    
+    public void addRefParamsToSubscriptionManagerEpr(List<Object> list) throws JAXBException, SOAPException {
+    	
+    	EndpointReferenceType mgr = getSubscriptionManagerEpr();
+    	
+    	if (mgr == null) {
+    		throw new IllegalStateException("Subscription Manager EPR is not set.");
+    	} else {
+			ReferenceParametersType refs = mgr.getReferenceParameters();
+			if (refs == null) {
+				refs = new ReferenceParametersType();
+				mgr.setReferenceParameters(refs);
+			}
+			List<Object> params = refs.getAny();
+			for (final Object obj : list) {
+				params.add(obj);
+			}
+			setSubscriptionManagerEpr(mgr);
+    	}
+    }
+
 }
