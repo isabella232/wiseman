@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.49 2007-03-01 06:01:23 simeonpinder Exp $
+ $Id: build.xml,v 1.50 2007-03-02 16:08:18 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -232,7 +232,10 @@
             </classes>
             <classes dir="${test.dir}/etc">
             	<include name="binding.properties" />
-            </classes>  	
+            </classes>
+            <classes dir="${test.dir}/etc">
+                <include name="wiseman.properties" />
+            </classes>
             <lib dir="${dist.dir}">
                 <include name="${lib.filename}" />
             </lib>
@@ -288,7 +291,10 @@
             </classes>
             <classes dir="${test.dir}/etc">
             	<include name="binding.properties" />
-            </classes> 	
+            </classes> 
+            <classes dir="${test.dir}/etc">
+                <include name="wiseman.properties" />
+            </classes>
             <lib dir="${dist.dir}">
                 <include name="${lib.filename}" />
             </lib>
@@ -338,6 +344,9 @@
             </classes>
             <classes dir="${test.dir}/etc">
             	<include name="binding.properties" />
+            </classes>
+            <classes dir="${test.dir}/etc">
+                <include name="wiseman.properties" />
             </classes>
             <manifest>
                 <attribute name="Built-By" value="${user.name}" />
