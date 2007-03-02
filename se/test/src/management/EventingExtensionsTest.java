@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.9 2007-01-14 17:53:12 denis_rachal Exp $
+ * $Id: EventingExtensionsTest.java,v 1.10 2007-03-02 16:12:28 denis_rachal Exp $
  */
 
 package management;
@@ -175,13 +175,14 @@ public class EventingExtensionsTest extends TestBase {
         assertNotNull(context);
         
         boolean done = false;
+        int count = 0;
         do {
             final Enumeration en = new Enumeration();
             en.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             en.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
             en.setTo(DESTINATION);
             en.setAction(Enumeration.PULL_ACTION_URI);
-            final Duration pullDuration = DatatypeFactory.newInstance().newDuration(5000);
+            final Duration pullDuration = DatatypeFactory.newInstance().newDuration(20000);
             en.setPull(context, -1, 2, pullDuration);
             
             final Management mgmt2 = new Management(en);
@@ -205,9 +206,16 @@ public class EventingExtensionsTest extends TestBase {
                 // commented to reduce clutter: uncomment to see the output
                 // System.out.println(el.getNodeName() + " = " + el.getTextContent());
             }
-            if (pr.getEndOfSequence() != null) {
-                done = true;
-            }
+            // We should never get EOS from our event source
+            assertTrue(pr.getEndOfSequence() == null);
+            // if (pr.getEndOfSequence() != null) {
+            //    done = true;
+            // }
+            // This should go on forever
+            count++;
+            if (count >= 5)
+            	done = true;
         } while (!done);
+        assertTrue(count >= 5);
     }
 }

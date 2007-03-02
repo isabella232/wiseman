@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseContext.java,v 1.9 2007-01-14 17:52:34 denis_rachal Exp $
+ * $Id: BaseContext.java,v 1.10 2007-03-02 16:12:27 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -29,7 +29,7 @@ class BaseContext {
 	
 	private class BaseNodeList implements NodeList {
 
-		final private ArrayList<Node> list;
+		private final ArrayList<Node> list;
 
 		protected BaseNodeList() {
 			list = new ArrayList<Node>();
@@ -55,17 +55,28 @@ class BaseContext {
     private final XMLGregorianCalendar expiration;
     private final Filter filter;
     private boolean deleted;
+    private final ContextListener listener;
     
     BaseContext(final XMLGregorianCalendar expiry,
-            final Filter filter) {
+            final Filter filter,
+	        final ContextListener listener) {
         
         this.expiration = expiry;
         this.filter = filter;
         this.deleted = false;
+        this.listener = listener;
     }
     
     String getExpiration() {
         return expiration.toXMLFormat();
+    }
+    
+    ContextListener getListener() {
+    	return this.listener;
+    }
+    
+    Filter getFilter() {
+    	return this.filter;
     }
     
     boolean isExpired(final XMLGregorianCalendar now) {

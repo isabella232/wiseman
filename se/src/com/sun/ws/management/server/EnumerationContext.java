@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.8 2007-01-14 17:52:34 denis_rachal Exp $
+ * $Id: EnumerationContext.java,v 1.9 2007-03-02 16:12:27 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -30,8 +30,9 @@ final class EnumerationContext extends BaseContext {
     EnumerationContext(final XMLGregorianCalendar expiration,
             final Filter filter,
             final EnumerationModeType mode,
-            final EnumerationIterator iterator) {
-        super(expiration, filter);
+            final EnumerationIterator iterator,
+            final ContextListener listener) {
+        super(expiration, filter, listener);
         this.iterator = iterator;
         this.mode = mode;
     }
@@ -41,10 +42,23 @@ final class EnumerationContext extends BaseContext {
      * @return the EnumerationModeType, null if the mode was not set
      */
     public EnumerationModeType getEnumerationMode() {
-        return mode;
+        return this.mode;
     }
 
+    /**
+     * Returns the iterator associated with this enumeration.
+     * 
+     * @return the iterator associated with this enumeration
+     */
     EnumerationIterator getIterator() {
-        return iterator;
+        return this.iterator;
+    }
+    
+    void setDeleted() {
+    	super.setDeleted();
+    	synchronized (this.iterator) {
+    	   this.iterator.release();
+    	   this.iterator.notifyAll();
+    	}
     }
 }

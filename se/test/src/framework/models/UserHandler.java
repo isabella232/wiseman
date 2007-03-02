@@ -33,6 +33,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
@@ -202,8 +203,13 @@ public class UserHandler extends TransferSupport {
 		selectorMap.put("firstname",userObject.getFirstname());
 		selectorMap.put("lastname",userObject.getLastname());
 		try{
-			appendCreateResponse(response, resourceUri, selectorMap); 
+			TransferExtensions xferResponse = new TransferExtensions(response);
+			EndpointReferenceType epr = TransferExtensions.createEndpointReference(request.getTo(), request.getResourceURI(), selectorMap);
+			xferResponse.setCreateResponse(epr);
+			// appendCreateResponse(response, resourceUri, selectorMap); 
 		} catch (JAXBException e) {
+			throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
+		} catch (SOAPException e) {
 			throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
 		}
 

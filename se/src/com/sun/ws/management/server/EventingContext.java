@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingContext.java,v 1.4 2006-12-05 10:35:23 jfdenise Exp $
+ * $Id: EventingContext.java,v 1.5 2007-03-02 16:12:27 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -28,8 +28,9 @@ final class EventingContext extends BaseContext {
     
     EventingContext(final XMLGregorianCalendar expiration, 
             final Filter filter, 
-            final EndpointReferenceType notifyTo) {
-        super(expiration, filter);
+            final EndpointReferenceType notifyTo,
+            final ContextListener listener) {
+        super(expiration, filter, listener);
         this.notifyTo = notifyTo;
     }
     

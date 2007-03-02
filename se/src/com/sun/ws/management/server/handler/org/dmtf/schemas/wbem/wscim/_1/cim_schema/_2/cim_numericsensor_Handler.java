@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: cim_numericsensor_Handler.java,v 1.8 2007-01-14 17:52:33 denis_rachal Exp $
+ * $Id: cim_numericsensor_Handler.java,v 1.9 2007-03-02 16:12:29 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.org.dmtf.schemas.wbem.wscim._1.cim_schema._2;
@@ -222,12 +222,12 @@ public class cim_numericsensor_Handler implements Handler {
             final Enumeration ereq = new Enumeration(request);
             final Enumeration eres = new Enumeration(response);
             eres.setAction(Enumeration.PULL_RESPONSE_URI);
-            EnumerationSupport.pull(ereq, eres);
+            EnumerationSupport.pull(hcontext,ereq, eres);
         } else if (Enumeration.RELEASE_ACTION_URI.equals(action)) {
             final Enumeration ereq = new Enumeration(request);
             final Enumeration eres = new Enumeration(response);
             eres.setAction(Enumeration.RELEASE_RESPONSE_URI);
-            EnumerationSupport.release(ereq, eres);
+            EnumerationSupport.release(hcontext,ereq, eres);
         } else {
             throw new ActionNotSupportedFault(action);
         }

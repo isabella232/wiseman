@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: custom_filter_Handler.java,v 1.3 2007-01-14 17:52:36 denis_rachal Exp $
+ * $Id: custom_filter_Handler.java,v 1.4 2007-03-02 16:12:30 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test.enumeration.filter;
@@ -136,11 +136,11 @@ public class custom_filter_Handler implements Handler{
         } else if (Enumeration.PULL_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.PULL_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);
-            EnumerationSupport.pull(enuRequest, enuResponse);
+            EnumerationSupport.pull(hcontext,enuRequest, enuResponse);
         } else if (Enumeration.RELEASE_ACTION_URI.equals(action)) {
             enuResponse.setAction(Enumeration.RELEASE_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);
-            EnumerationSupport.release(enuRequest, enuResponse);
+            EnumerationSupport.release(hcontext,enuRequest, enuResponse);
         } else if (Transfer.GET_ACTION_URI.equals(action)) {
             enuResponse.setAction(Transfer.GET_RESPONSE_URI);
             enuResponse.addNamespaceDeclarations(NAMESPACES);
