@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
@@ -27,18 +26,22 @@ public class Xsd2WsdlTask extends Task {
     private String filePath=null;
     private String wsdlFileName=null;
     private String resourceURI=null;
+    private String wsdlTemplate=null;
+    private String resourceName=null;
+    private String resourceType=null;
+    private String targetNamespace=null;
     private boolean singleHandler=true;
     
-	private void setResourceType(String resourceType) {
-		context.put("resource_type", resourceType);
+    public void setResourceType(String resourceType) {
+    	this.resourceType = resourceType;
 	}
 
-	private void setResourceName(String resourceName) {
-		context.put("resource_name", resourceName);
+	public void setResourceName(String resourceName) {
+		this.resourceName=resourceName;
 	}
 	
-	private void setTargetNamespace(String targetNamespace) {
-		context.put("target_namespace",targetNamespace);
+	public void setTargetNamespace(String targetNamespace) {
+		this.targetNamespace=targetNamespace;
 	}
 
 	public void setXsdFile(String xsdFile) {
@@ -48,7 +51,11 @@ public class Xsd2WsdlTask extends Task {
 		String serviceName = xsdFileName.split("\\.")[0];
 		wsdlFileName=serviceName+".wsdl";
 		context.put("service_name",serviceName);
-		context.put("xsd_file",xsdFileName);
+		context.put("xsd_file",new File(xsdFile).toURI().toString());
+	}
+	
+	public void setWsdlTemplate(String template) {
+		this.wsdlTemplate = template;
 	}
 	
     public void setOutputDir(String output)
@@ -94,10 +101,14 @@ public class Xsd2WsdlTask extends Task {
 			File outputFile = new File(outputDir, wsdlFileName);
 	        
 			try {//wsdlFromXsd
-				if (this.singleHandler)
-				    processTemplate(context, TEMPLATES_PATH + "/WsdlFromXsd.vm", outputFile);
-				else
-					processTemplate(context, TEMPLATES_PATH + "/WsdlFromXsdMultiHandler.vm", outputFile);
+				if (wsdlTemplate == null) {
+					if (this.singleHandler) {
+						wsdlTemplate = TEMPLATES_PATH + "/WsdlFromXsd.vm";
+					} else {
+						wsdlTemplate = TEMPLATES_PATH + "/WsdlFromXsdMultiHandler.vm";
+					}
+				}
+				processTemplate(context, wsdlTemplate, outputFile);
 			} catch (Exception e) {
 				throw new BuildException(e);
 			}		   
@@ -122,12 +133,18 @@ public class Xsd2WsdlTask extends Task {
         Velocity.setProperty(RuntimeConstants.VM_LIBRARY, "");
 
         // configure to use classpath-based resource loader
-        Velocity.addProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-        String resourceLoaderBaseKey = "classpath." + RuntimeConstants.RESOURCE_LOADER + ".";
-        Velocity.setProperty(resourceLoaderBaseKey + "class",
+        if (wsdlTemplate != null) {
+        	Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "file" );
+        	Velocity.setProperty( "file.resource.loader.path", "./" );
+
+        } else {
+            Velocity.addProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+            String resourceLoaderBaseKey = "classpath." + RuntimeConstants.RESOURCE_LOADER + ".";
+            Velocity.setProperty(resourceLoaderBaseKey + "class",
                              "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-        Velocity.setProperty(resourceLoaderBaseKey + "cache", "false");
-        Velocity.setProperty(resourceLoaderBaseKey + "modificationCheckInterval", "2");
+            Velocity.setProperty(resourceLoaderBaseKey + "cache", "false");
+            Velocity.setProperty(resourceLoaderBaseKey + "modificationCheckInterval", "2");
+        }
         Velocity.init();
     }
 
@@ -203,16 +220,23 @@ public class Xsd2WsdlTask extends Task {
 			throw new BuildException(e);
 		}
 
-		String namespace=getXPathValue(pathToXsdFile, xPathExpressionNamespace);
-		setTargetNamespace(namespace);
+		if (this.targetNamespace == null) {
+			this.targetNamespace=getXPathValue(pathToXsdFile, xPathExpressionNamespace);
+		}
+		context.put("target_namespace", this.targetNamespace);
 		
 		String type=getXPathValue(pathToXsdFile, xPathExpressionType);
-		if(type.split(":").length>=2)
-			setResourceType(type.split(":")[1]);
-		else
-			setResourceType(type);
-		String resourceName=getXPathValue(pathToXsdFile, xPathExpressionTypeName);
-		setResourceName(resourceName);
+		if (this.resourceType == null) {
+			if (type.split(":").length >= 2)
+				this.resourceType = type.split(":")[1];
+			else
+				this.resourceType = type;
+		}
+		context.put("resource_type", this.resourceType);
+		if (this.resourceName == null) {
+		    this.resourceName=getXPathValue(pathToXsdFile, xPathExpressionTypeName);
+		}
+		context.put("resource_name", this.resourceName);
     }
 
 
