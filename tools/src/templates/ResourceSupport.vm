@@ -1,0 +1,92 @@
+#*
+  This is the template to produce the required CUSTOM delegate.
+
+  This delegate utilizes EnumerationImpl.
+
+  Required Velocity Variables: 
+    ${package}              - packagename for the class
+    ${delegateName}         - simple name of delegate class
+    ${resourceURI}          - resourceURI for this resource
+    ${hasCustomOpNames}     - boolean. Determines if a mapping is needed for
+                              SPEC Action URIs to custom op names
+    ${hasCustomOps}         - boolean. Determines if there are custom operations.
+    ${overriddenMethodMap}  - Map containing key:String ActionURI to value:WsManOp
+                              this is used for overridden SPEC operation names
+    ${customOperationMap}   - Map containing key:String ActionURI to value:WsManOp
+                              this is used for custom operations
+*#
+package ${package};
+
+import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.Management;
+import com.sun.ws.management.framework.handlers.ResourceHandler;
+import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.server.HandlerContext;
+
+import java.util.logging.Logger;
+
+/**
+ * ${delegateName} delegate is responsible for processing enumeration actions.
+ *
+ * @GENERATED
+ */
+public class ${delegateName} extends ResourceHandler {
+
+    public static final String resourceURI = "${resourceURI}";
+       
+    // Log for logging messages
+    @SuppressWarnings("unused")
+    private final Logger log;
+
+    public ${delegateName}() {
+        super();
+        
+        // Initialize our member variables
+        log = Logger.getLogger(${delegateName}.class.getName());
+        try {
+            // Register the IteratorFactory with EnumerationSupport
+            EnumerationSupport.registerIteratorFactory("${resourceURI}",
+                                                       new ${name}IteratorFactory("${resourceURI}"));
+        } catch (Exception e) {
+            throw new InternalErrorFault(e);
+        }
+    }
+#if(${hasCustomOpNames})
+#foreach( $key in ${overriddenMethodMap.keySet()} )
+#if(${overriddenMethodMap.get($key).isEnumMethod})
+
+    public void ${overriddenMethodMap.get($key).OverriddenOpName}(HandlerContext context, Enumeration request, Enumeration response) {
+        super.${overriddenMethodMap.get($key).OperationName}(context, request, response);
+    }    
+#else
+#if(${overriddenMethodMap.get($key).isEventMethod})
+
+    public void ${overriddenMethodMap.get($key).OverriddenOpName}(HandlerContext context, Eventing request, Eventing response) {
+        // TODO: For subscribe:
+        //       Call EventSupport.subscribe() & save the UUID returned (use ContextListener to detect subscribe/unsubscribes)
+        //       Start sending events to EventSupport.sendEvent(uuid, event)
+        
+        // TODO: For unsubscribe:
+        //       Call EventSupport.unsubscribe()
+        //       Stop sending events for this UUID
+        super.${overriddenMethodMap.get($key).OperationName}(context, request, response);
+    } 
+#else
+    public void ${overriddenMethodMap.get($key).OverriddenOpName}(HandlerContext context, Management request, Management response) {
+        // TODO: Implement ${overriddenMethodMap.get($key).OverriddenOpName} here and remove the following call to super
+        super.${overriddenMethodMap.get($key).OperationName}(context, request, response);
+    }
+#end   
+#end
+#end
+#if(${hasCustomOps})
+#foreach( $key in ${customOperationMap.keySet()} )
+
+    public void ${customOperationMap.get($key).OperationName}(HandlerContext context, Management request, Management response) {
+        // TODO: Implement ${customOperationMap.get($key).OperationName} custom operation here
+    }
+#end
+#end
+#end
+}

@@ -9,13 +9,15 @@ public class WsManOp
     public String ResponseURI;
     public String OperationName;
     public boolean isEnumMethod = false;
+    public boolean isEventMethod = false;
     public String OverriddenOpName;
 
-    public WsManOp(String responseURI, String operationName, boolean enumMethod, String overriddenOpName)
+    public WsManOp(String responseURI, String operationName, boolean enumMethod, boolean eventMethod, String overriddenOpName)
     {
         ResponseURI = responseURI;
         OperationName = operationName;
         isEnumMethod = enumMethod;
+        isEventMethod = eventMethod;
         OverriddenOpName = overriddenOpName;
     }
 
@@ -41,6 +43,11 @@ public class WsManOp
         return isEnumMethod;
     }
 
+    public boolean getIsEventMethod()
+    {
+        return isEventMethod;
+    }
+    
     public String getOverriddenOpName()
     {
         return OverriddenOpName;
