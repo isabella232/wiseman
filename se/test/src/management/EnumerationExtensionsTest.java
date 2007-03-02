@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.10 2007-01-14 17:53:12 denis_rachal Exp $
+ * $Id: EnumerationExtensionsTest.java,v 1.11 2007-03-02 16:06:27 denis_rachal Exp $
  */
 
 package management;
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
@@ -42,14 +43,26 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * Unit test for WS-Enumeration extensions in WS-Management
  */
 public class EnumerationExtensionsTest extends TestBase {
     
+	XmlBinding binding;
+	
     public EnumerationExtensionsTest(final String testName) {
         super(testName);
+        
+		// Set the system property to always create bindings with our package
+		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
+				"com.hp.examples.ws.wsman.user");
+		try {
+			binding = new XmlBinding(null, "com.hp.examples.ws.wsman.user");
+		} catch (JAXBException e) {
+			fail(e.getMessage());
+		}
     }
     
     public static junit.framework.Test suite() {
@@ -60,6 +73,7 @@ public class EnumerationExtensionsTest extends TestBase {
     public void testEnumerateVisual() throws Exception {
         
         final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         
         final EndpointReferenceType endTo = Addressing.createEndpointReference("http://host/endTo", null, null, null, null);
@@ -75,6 +89,7 @@ public class EnumerationExtensionsTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         e2.prettyPrint(logfile);
         final Enumerate enu2 = e2.getEnumerate();
@@ -88,6 +103,7 @@ public class EnumerationExtensionsTest extends TestBase {
     public void testEnumerateItemCountEstimateVisual() throws Exception {
         
         final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         
         enu.setEnumerate(null, false, false, 0, null, null, null);
@@ -99,6 +115,7 @@ public class EnumerationExtensionsTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         assertNotNull(e2.getRequestTotalItemsCountEstimate());
     }
@@ -130,6 +147,7 @@ public class EnumerationExtensionsTest extends TestBase {
     public void totalItemCountEstimateVisual(final BigInteger itemCount) throws Exception {
         
         final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
         
         enu.setEnumerateResponse(null, null, null, null, true);
@@ -140,6 +158,7 @@ public class EnumerationExtensionsTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         final AttributableNonNegativeInteger count = e2.getTotalItemsCountEstimate();
         assertNotNull(count);
@@ -157,6 +176,7 @@ public class EnumerationExtensionsTest extends TestBase {
         // final String RESOURCE = "wsman:test/pull_source";
         // prepare the test
         final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -178,6 +198,7 @@ public class EnumerationExtensionsTest extends TestBase {
         
         // retrieve the response
         final Addressing response = HttpClient.sendRequest(mgmt);
+        response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
@@ -198,6 +219,7 @@ public class EnumerationExtensionsTest extends TestBase {
         do {
             // Set up a request to pull the next item of the enumeration
             final EnumerationExtensions pullRequest = new EnumerationExtensions();
+            pullRequest.setXmlBinding(binding);
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -209,6 +231,7 @@ public class EnumerationExtensionsTest extends TestBase {
             mp.setResourceURI(RESOURCE);
             mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);
+            praddr.setXmlBinding(binding);
             praddr.prettyPrint(logfile);
             
             // Fail if response is an error
@@ -298,6 +321,7 @@ public class EnumerationExtensionsTest extends TestBase {
     		final Set<OptionType> options) throws Exception {
     	
         final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setXmlBinding(binding);
         
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -328,6 +352,7 @@ public class EnumerationExtensionsTest extends TestBase {
         
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
+        response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
@@ -352,6 +377,7 @@ public class EnumerationExtensionsTest extends TestBase {
         boolean done = enuResponse.isEndOfSequence();
         while (!done) {
             final EnumerationExtensions pullRequest = new EnumerationExtensions();
+            pullRequest.setXmlBinding(binding);
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -363,6 +389,7 @@ public class EnumerationExtensionsTest extends TestBase {
             
             mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);
+            praddr.setXmlBinding(binding);
             praddr.prettyPrint(logfile);
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);

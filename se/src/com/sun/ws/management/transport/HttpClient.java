@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.16 2006-11-15 15:06:39 obiwan314 Exp $
+ * $Id: HttpClient.java,v 1.17 2007-03-02 16:06:28 denis_rachal Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -156,7 +156,9 @@ public final class HttpClient {
         }
         
         transfer(http, msg);
-        return readResponse(http);
+        final Addressing response = readResponse(http);
+        response.setXmlBinding(msg.getXmlBinding());
+        return response;
     }
     
     private static HttpURLConnection initRequest(final String destination, final ContentType contentType)

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationTest.java,v 1.25 2007-01-14 17:53:13 denis_rachal Exp $
+ * $Id: EnumerationTest.java,v 1.26 2007-03-02 16:06:28 denis_rachal Exp $
  */
 
 package management;
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 
@@ -49,14 +50,26 @@ import com.sun.ws.management.server.handler.wsman.test.enumeration.filter.custom
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
+import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * Unit test for WS-Enumeration
  */
 public class EnumerationTest extends TestBase {
     
+	XmlBinding binding;
+	
     public EnumerationTest(final String testName) {
         super(testName);
+        
+		// Set the system property to always create bindings with our packages
+		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
+				"");
+		try {
+			binding = new XmlBinding(null);
+		} catch (JAXBException e) {
+			fail(e.getMessage());
+		}
     }
     
     public static junit.framework.Test suite() {
@@ -67,6 +80,7 @@ public class EnumerationTest extends TestBase {
     public void testEnumerateVisual() throws Exception {
         
         final Enumeration enu = new Enumeration();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         
         final EndpointReferenceType endTo = Addressing.createEndpointReference("http://host/endTo", null, null, null, null);
@@ -81,6 +95,7 @@ public class EnumerationTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         final Enumerate enu2 = e2.getEnumerate();
         assertEquals(expires, enu2.getExpires());
@@ -91,6 +106,7 @@ public class EnumerationTest extends TestBase {
     public void testEnumerateResponseVisual() throws Exception {
         
         final Enumeration enu = new Enumeration();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
         
         final String context = "context";
@@ -102,6 +118,7 @@ public class EnumerationTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         final EnumerateResponse er2 = e2.getEnumerateResponse();
         assertEquals(expires, er2.getExpires());
@@ -111,6 +128,7 @@ public class EnumerationTest extends TestBase {
     public void testPullVisual() throws Exception {
         
         final Enumeration enu = new Enumeration();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.PULL_ACTION_URI);
         
         final String context = "context";
@@ -124,6 +142,7 @@ public class EnumerationTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         final Pull p2 = e2.getPull();
         assertEquals(context, p2.getEnumerationContext().getContent().get(0));
@@ -135,6 +154,7 @@ public class EnumerationTest extends TestBase {
     public void testPullResponseVisual() throws Exception {
         
         final Enumeration enu = new Enumeration();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.PULL_RESPONSE_URI);
         
         final String context = "context";
@@ -150,6 +170,7 @@ public class EnumerationTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         final PullResponse pr2 = e2.getPullResponse();
         assertEquals(context, pr2.getEnumerationContext().getContent().get(0));
@@ -160,6 +181,7 @@ public class EnumerationTest extends TestBase {
     public void testReleaseVisual() throws Exception {
         
         final Enumeration enu = new Enumeration();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.RELEASE_ACTION_URI);
         
         final String context = "context";
@@ -170,6 +192,7 @@ public class EnumerationTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final Enumeration e2 = new Enumeration(new ByteArrayInputStream(bos.toByteArray()));
+        e2.setXmlBinding(binding);
         
         final Release r2 = e2.getRelease();
         assertEquals(context, r2.getEnumerationContext().getContent().get(0));
@@ -189,6 +212,7 @@ public class EnumerationTest extends TestBase {
         
         final String RESOURCE = "wsman:test/java/system/properties";
         final Enumeration enu = new Enumeration();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -200,6 +224,7 @@ public class EnumerationTest extends TestBase {
         
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
+        response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
@@ -211,6 +236,7 @@ public class EnumerationTest extends TestBase {
         String context = (String) enr.getEnumerationContext().getContent().get(0);
         
         final Enumeration releaseRequest = new Enumeration();
+        releaseRequest.setXmlBinding(binding);
         releaseRequest.setAction(Enumeration.RELEASE_ACTION_URI);
         releaseRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         releaseRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -222,6 +248,7 @@ public class EnumerationTest extends TestBase {
         
         mr.prettyPrint(logfile);
         final Addressing rraddr = HttpClient.sendRequest(mr);
+        rraddr.setXmlBinding(binding);
         rraddr.prettyPrint(logfile);
         if (rraddr.getBody().hasFault()) {
             rraddr.prettyPrint(System.err);
@@ -229,6 +256,7 @@ public class EnumerationTest extends TestBase {
         }
         
         final Enumeration pullRequest = new Enumeration();
+        pullRequest.setXmlBinding(binding);
         pullRequest.setAction(Enumeration.PULL_ACTION_URI);
         pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -240,6 +268,7 @@ public class EnumerationTest extends TestBase {
         
         mp.prettyPrint(logfile);
         final Addressing praddr = HttpClient.sendRequest(mp);
+        praddr.setXmlBinding(binding);
         praddr.prettyPrint(logfile);
         if (!praddr.getBody().hasFault()) {
             fail("pull after release succeeded");
@@ -259,6 +288,7 @@ public class EnumerationTest extends TestBase {
             final String dialect, final NamespaceMap filterNsMap, final String RESOURCE) throws Exception {
         
         final Enumeration enu = new Enumeration();
+        enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -278,6 +308,7 @@ public class EnumerationTest extends TestBase {
         
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
+        response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
@@ -295,6 +326,7 @@ public class EnumerationTest extends TestBase {
         boolean done = false;
         do {
             final Enumeration pullRequest = new Enumeration();
+            pullRequest.setXmlBinding(binding);
             pullRequest.setAction(Enumeration.PULL_ACTION_URI);
             pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
             pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -306,6 +338,7 @@ public class EnumerationTest extends TestBase {
             
             mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);
+            praddr.setXmlBinding(binding);
             praddr.prettyPrint(logfile);
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);

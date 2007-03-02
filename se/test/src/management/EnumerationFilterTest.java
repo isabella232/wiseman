@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationFilterTest.java,v 1.3 2007-01-23 06:28:33 denis_rachal Exp $
+ * $Id: EnumerationFilterTest.java,v 1.4 2007-03-02 16:06:27 denis_rachal Exp $
  */
 
 package management;
@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
@@ -40,6 +41,7 @@ import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
+import com.sun.ws.management.xml.XmlBinding;
 
 import framework.models.UserEnumerationHandler;
 import framework.models.UserFilterFactory;
@@ -48,9 +50,24 @@ import framework.models.UserFilterFactory;
  * Unit test for WS-Enumeration extensions in WS-Management
  */
 public class EnumerationFilterTest extends TestBase {
+	
+	XmlBinding binding;
+
+	protected void setUp() throws Exception {
+		super.setUp();
+	}
     
     public EnumerationFilterTest(final String testName) {
         super(testName);
+        
+		// Set the system property to always create bindings with our package
+		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
+				"com.hp.examples.ws.wsman.user");
+		try {
+			binding = new XmlBinding(null, "com.hp.examples.ws.wsman.user");
+		} catch (JAXBException e) {
+			fail(e.getMessage());
+		}
     }
     
     public static junit.framework.Test suite() {
@@ -123,6 +140,7 @@ public class EnumerationFilterTest extends TestBase {
     		final Set<OptionType> options) throws Exception {
     	
         final EnumerationExtensions enu = new EnumerationExtensions();
+        enu.setXmlBinding(binding);
         
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
         enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -158,6 +176,8 @@ public class EnumerationFilterTest extends TestBase {
         
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
+        
+        response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
