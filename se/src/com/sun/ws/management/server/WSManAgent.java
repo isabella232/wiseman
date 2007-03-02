@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.4.2.1 2007-02-20 12:15:03 denis_rachal Exp $
+ * $Id: WSManAgent.java,v 1.4.2.2 2007-03-02 09:21:23 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -80,9 +80,10 @@ public abstract class WSManAgent {
     private static final Logger LOG = Logger.getLogger(WSManAgent.class.getName());
     private static final long DEFAULT_TIMEOUT = 30000;
     private static final long MIN_ENVELOPE_SIZE = 8192;
-    private static final boolean enforceOperationTimeout;
+    private static final long defaultOperationTimeout;
     private static final String WSMAN_PROPERTY_FILE_NAME = "/wsman.properties";
     private static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
+    private static final String OPERATION_TIMEOUT_DEFAULT = "OperationTimeoutDefault";
     private static final String UUID_SCHEME = "uuid:";    
     private static final String SCHEMA_PATH =
             "/com/sun/ws/management/resources/schemas/";
@@ -106,10 +107,10 @@ public abstract class WSManAgent {
         getProperties(WISEMAN_PROPERTY_FILE_NAME, propertySet);
         properties = Collections.unmodifiableMap(propertySet);
         
-        if (properties.get("enforce.OperationTimeout") != null) {
-        	enforceOperationTimeout = Boolean.parseBoolean(properties.get("enforce.OperationTimeout")); 
+        if (properties.get(OPERATION_TIMEOUT_DEFAULT) != null) {
+        	defaultOperationTimeout = Long.parseLong(properties.get(OPERATION_TIMEOUT_DEFAULT)); 
         } else {
-        	enforceOperationTimeout = false;
+        	defaultOperationTimeout = DEFAULT_TIMEOUT;
         }
         extraIdInfo.put(Identify.BUILD_ID, properties.get("build.version"));
         extraIdInfo.put(Identify.SPEC_VERSION, properties.get("spec.version"));
@@ -290,7 +291,7 @@ public abstract class WSManAgent {
     }
     
     private static long getTimeout(Management request) throws Exception {
-        long timeout = DEFAULT_TIMEOUT;
+        long timeout = defaultOperationTimeout;
         final Duration timeoutDuration = request.getTimeout();
         if (timeoutDuration != null) {
             timeout = timeoutDuration.getTimeInMillis(new Date());
@@ -322,7 +323,7 @@ public abstract class WSManAgent {
         // ExecutionException, perform the get on FutureTask itself
         pool.submit(task);
         try {
-        	if (enforceOperationTimeout == true)
+        	if (defaultOperationTimeout != -1)
         		return task.get(timeout, TimeUnit.MILLISECONDS);
         	else
                 return task.get();
