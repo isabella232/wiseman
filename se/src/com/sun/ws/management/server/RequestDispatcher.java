@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.10 2007-01-11 13:12:55 jfdenise Exp $
+ * $Id: RequestDispatcher.java,v 1.11 2007-03-02 16:05:31 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -55,6 +55,7 @@ public abstract class RequestDispatcher implements Callable {
         request = req;
         context = ctx;
         response = new Management();
+        response.setXmlBinding(req.getXmlBinding());
 
         final ContentType contentType = 
                 ContentType.createFromHttpContentType(
