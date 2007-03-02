@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MetadataTest.java,v 1.1 2007-03-01 06:01:22 simeonpinder Exp $
+ * $Id: MetadataTest.java,v 1.1.2.1 2007-03-02 13:15:29 denis_rachal Exp $
  */
 
 package management;

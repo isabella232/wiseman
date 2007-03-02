@@ -1,11 +1,15 @@
 package com.sun.ws.management.server.handler.wsman.auth;
 
+import management.MetadataTest;
 import java.util.logging.Logger;
 
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.framework.handlers.DelegatingHandler;
-import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.metadata.annotations.WsManagementAddressDetailsAnnotation;
+import com.sun.ws.management.metadata.annotations.WsManagementDefaultAddressingModelAnnotation;
+import com.sun.ws.management.metadata.annotations.WsManagementEnumerationAnnotation;
 
+import com.sun.ws.management.server.EnumerationSupport;
 import framework.models.FileIteratorFactory;
 import framework.models.UserEnumerationHandler;
 import framework.models.UserIteratorFactory;
@@ -15,6 +19,21 @@ import framework.models.UserIteratorFactory;
  * @author simeonpinder
  *
  */
+@WsManagementEnumerationAnnotation(
+	getDefaultAddressModelDefinition=
+		@WsManagementDefaultAddressingModelAnnotation(
+			getDefaultAddressDefinition=
+				@WsManagementAddressDetailsAnnotation(
+					wsaTo=MetadataTest.enuAddress, 
+					wsmanResourceURI=MetadataTest.enuResUri
+				),
+		resourceMetaDataUID = MetadataTest.enuMetaDataUID
+		),
+	resourceEnumerationAccessRecipe = 
+		MetadataTest.enuAccessRecipe,
+	resourceFilterUsageDescription = 
+		 MetadataTest.enuFilUsage
+)
 public class userenum_Handler extends DelegatingHandler {
 	
 	public final static String RESOURCE_URI = "wsman:auth/userenum";
