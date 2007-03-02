@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WsManagementDefaultAddressingModelAnnotation.java,v 1.1 2007-03-01 06:01:25 simeonpinder Exp $
+ * $Id: WsManagementDefaultAddressingModelAnnotation.java,v 1.1.2.1 2007-03-02 13:09:24 denis_rachal Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 

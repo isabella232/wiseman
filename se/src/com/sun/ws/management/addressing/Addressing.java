@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.13.2.1 2007-02-20 12:15:09 denis_rachal Exp $
+ * $Id: Addressing.java,v 1.13.2.2 2007-03-02 13:09:23 denis_rachal Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -330,7 +330,14 @@ public class Addressing extends SOAP {
     private EndpointReferenceType getEndpointReference(final QName... qname) throws JAXBException, SOAPException {
         return getEndpointReference(getHeader(), qname);
     }
-    
+
+    /** This is a convenience method to create a ReferencePropertyType from a QName and content
+     *  value.
+     * 
+     * @param container QName
+     * @param content
+     * @return ReferencePropertyType instance.
+     */
     public static ReferencePropertiesType createReferencePropertyType(QName container, String content) {
     	//test for invalid input.
     	if((container==null)||(content==null)){
@@ -345,11 +352,39 @@ public class Addressing extends SOAP {
     	final Document document = Management.newDocument();
     	final Element identifier = document.createElementNS(container.getNamespaceURI(),
     			container.getPrefix() + ":" + container.getLocalPart());
+    	identifier.setTextContent(content);
+    	document.appendChild(identifier);
+    	refProperty.getAny().add(document.getDocumentElement());
+    	
+    	return refProperty;
+    }
+
+    /** This is a convenience method to create a ReferenceParametersType from a QName and content
+     *  value.
+     * 
+     * @param container QName
+     * @param content
+     * @return ReferenceParametersType instance.
+     */
+    public static ReferenceParametersType createReferenceParametersType(QName container, String content) {
+    	//test for invalid input.
+    	if((container==null)||(content==null)){
+    		throw new IllegalArgumentException("QName and/or string content cannot be null.");
+    	}
+    	if(content.trim().length()==0){
+    		throw new IllegalArgumentException("Content entered cannot be an empty string.");
+    	}
+    	
+    	//create and populate the reference property and it's value.
+    	final ReferenceParametersType refParameter = Addressing.FACTORY.createReferenceParametersType();
+    	final Document document = Management.newDocument();
+    	final Element identifier = document.createElementNS(container.getNamespaceURI(),
+    			container.getPrefix() + ":" + container.getLocalPart());
     	 identifier.setTextContent(content);
     	 document.appendChild(identifier);
-    	 refProperty.getAny().add(document.getDocumentElement());
+    	 refParameter.getAny().add(document.getDocumentElement());
     	 
-    	return refProperty;
+    	return refParameter;
     }
 
     
