@@ -8,8 +8,8 @@
 <project name="Generate Wiseman Install Bundle" default="gen-exec-jar" basedir=".">
  	 <!-- Project variables -->
 	<property name="executable.jar" value="wiseman_0.6.jar"/>
-	<property name="install.bundle.name" value="wiseman_0.6-bundle.jar"/>
-	<property name="un.jar.dir" value="top6"/>
+	<property name="install.bundle.name" value="WISEMAN_0.6_FC-20070302.jar"/>
+	<property name="un.jar.dir" value="install-bundle"/>
 	<property name="install.build.file" value="execute-install.xml"/>
 	<!-- Intermediate executable jar file -->
 	<property name="wise.jar.name" value="exec-wise.jar"/>
