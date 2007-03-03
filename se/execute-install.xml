@@ -54,6 +54,12 @@
 	
 	<!-- Copy the jaxws libraries into the wiseman project, as consumers have agreed to use them.  -->
     <target name="copy-jaxws-libs-to-wiseman" depends="install-jaxws">
+    	<condition property="inst.jaxws-.status">
+			 <istrue value="${jaxws.success}"/>	
+    	</condition>
+    	<fail unless="inst.jaxws-.status" 
+    		message="You declined a license agreement, or there was an error installing Wiseman 0.6."/>
+    	
     	<mkdir dir="${jaxws.lib.dir}"/>
     	<copy todir="${jaxws.lib.dir}">
     	    <fileset dir="${jaxws.root}/lib">
