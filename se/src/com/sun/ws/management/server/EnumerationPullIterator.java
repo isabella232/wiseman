@@ -12,7 +12,7 @@ import com.sun.ws.management.enumeration.Enumeration;
  */
 public interface EnumerationPullIterator extends EnumerationIterator {
 
-	public void startPull(final Enumeration request);
+	public void startPull(final HandlerContext context, final Enumeration request);
 	
 	public void endPull(final Enumeration response);
 }

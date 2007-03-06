@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.45 2007-03-02 16:12:27 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.46 2007-03-06 08:07:04 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -259,7 +259,7 @@ public final class EnumerationSupport extends BaseSupport {
 						final Duration maxTime = new Management(request).getTimeout();
 						final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
 						if (ctx.getIterator() instanceof EnumerationPullIterator) {
-							((EnumerationPullIterator)ctx.getIterator()).startPull(request);
+							((EnumerationPullIterator)ctx.getIterator()).startPull(handlerContext, request);
 						}
 						final boolean more = doPull(handlerContext, request, response, context,
 								ctx, maxTime, passed, maxElements);
@@ -374,7 +374,7 @@ public final class EnumerationSupport extends BaseSupport {
 			}
 			final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
 			if (ctx.getIterator() instanceof EnumerationPullIterator) {
-				((EnumerationPullIterator)ctx.getIterator()).startPull(request);
+				((EnumerationPullIterator)ctx.getIterator()).startPull(handlerContext, request);
 			}
 			final boolean more = doPull(handlerContext, request, response, context,
 					                    ctx, maxTime, passed, maxElements);
