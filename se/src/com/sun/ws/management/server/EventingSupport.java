@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.19 2007-03-02 16:12:26 denis_rachal Exp $
+ * $Id: EventingSupport.java,v 1.20 2007-03-06 08:08:11 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -104,11 +104,23 @@ public final class EventingSupport extends BaseSupport {
         return false;
     }
     
-    // the EventingExtensions.PULL_DELIVERY_MODE is handled by EnumerationSupport
+    // the EventingExtensions.PULL_DELIVERY_MODE is handled by
+	// EnumerationSupport
+	public static UUID subscribe(final HandlerContext handlerContext,
+			                     final Eventing request, 
+			                     final Eventing response,
+			                     final ContextListener listener)
+			throws DatatypeConfigurationException, SOAPException,
+			JAXBException, FaultException {
+		return subscribe(handlerContext, request, response, false, DEFAULT_QUEUE_SIZE, listener);
+	}
+    
+    // the EventingExtensions.PULL_DELIVERY_MODE is handled by
+	// EnumerationSupport
     public static UUID subscribe(final HandlerContext handlerContext, 
     		                     final Eventing request,
     		                     final Eventing response,
-    		                     final boolean ignoreFilter,
+    		                     final boolean isFiltered,
     		                     final int queueSize,
     		                     final ContextListener listener)
         throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
@@ -117,16 +129,6 @@ public final class EventingSupport extends BaseSupport {
 		if (subscribe == null) {
 			throw new InvalidMessageFault();
 		}
-		
-        Filter filter = null;
-        try {
-             filter = createFilter(request);
-        } catch(FilteringRequestedUnavailableFault fex) {
-            throw fex;
-        }
-        catch(Exception ex) {
-            throw new EventSourceUnableToProcessFault(ex.getMessage());
-        }
         
         final EndpointReferenceType endTo = subscribe.getEndTo();
         if (endTo != null) {
@@ -140,6 +142,8 @@ public final class EventingSupport extends BaseSupport {
             deliveryMode = Eventing.PUSH_DELIVERY_MODE;
         }
         
+        Filter filter = null;
+        
         if (deliveryMode.equals(EventingExtensions.PULL_DELIVERY_MODE)) {
         	// this is a pull event mode subscribe request so setup an enumeration
 			final EventingExtensions evtxRequest = new EventingExtensions(
@@ -148,11 +152,20 @@ public final class EventingSupport extends BaseSupport {
 			EnumerationIterator iterator = newIterator(handlerContext, 
 					                                   request, 
 					                                   response, 
-					                                   ignoreFilter, 
+					                                   isFiltered, 
 					                                   queueSize);
+			
+			
+			
 			if (iterator.isFiltered() == false) {
 				// We will do the filtering
-				filter = EventingSupport.createFilter(evtxRequest);
+				try {
+					filter = createFilter(request);
+				} catch (FilteringRequestedUnavailableFault fex) {
+					throw fex;
+				} catch (Exception ex) {
+					throw new EventSourceUnableToProcessFault(ex.getMessage());
+				}
 			}
 
 			if (subscribe.getEndTo() != null) {
@@ -179,6 +192,16 @@ public final class EventingSupport extends BaseSupport {
         	
         } else {
 			// one of the push modes
+        	if (isFiltered == false) {
+                // We will do the filtering
+				try {
+					filter = createFilter(request);
+				} catch (FilteringRequestedUnavailableFault fex) {
+					throw fex;
+				} catch (Exception ex) {
+					throw new EventSourceUnableToProcessFault(ex.getMessage());
+				}
+        	}
 			if (!isDeliveryModeSupported(deliveryMode)) {
 				throw new DeliveryModeRequestedUnavailableFault(
 						SUPPORTED_DELIVERY_MODES);
@@ -291,13 +314,15 @@ public final class EventingSupport extends BaseSupport {
         }
         
         // the filter is only applied to the first child in soap body
-        final Node content = msg.getBody().getFirstChild();
-        try {
-            if (ctx.evaluate(content) == null)
-                return false;
-        } catch(XPathExpressionException ex) {
-            throw ex;
-        }
+        if (ctx.getFilter() != null) {
+			final Node content = msg.getBody().getFirstChild();
+			try {
+				if (ctx.evaluate(content) == null)
+					return false;
+			} catch (XPathExpressionException ex) {
+				throw ex;
+			}
+		}
         
         final EndpointReferenceType notifyTo = ctx.getNotifyTo();
         final ReferencePropertiesType refp = notifyTo.getReferenceProperties();
