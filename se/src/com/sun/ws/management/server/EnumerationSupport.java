@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.46 2007-03-06 08:07:04 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.47 2007-03-08 09:02:44 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -243,7 +243,7 @@ public final class EnumerationSupport extends BaseSupport {
 			ctx = new EnumerationContext(expiration, filter, enumerationMode, iterator, listener);
 			
 			// Set single thread use of this context
-			synchronized (ctx) {
+			// synchronized (ctx) {
 				context = initContext(handlerContext, ctx);
 				if (enumerate == null) {
 					// this is a pull event mode subscribe request
@@ -280,7 +280,7 @@ public final class EnumerationSupport extends BaseSupport {
 								.getExpiration());
 					}
 				}
-			}
+			// }
 		} catch (TimedOutFault e) {
 			// Do not delete the context for timeouts
 			throw e;
@@ -347,7 +347,7 @@ public final class EnumerationSupport extends BaseSupport {
 		}
 
         // Set single thread use of this context
-		synchronized (ctx) {
+		// synchronized (ctx) {
 			if (ctx.isDeleted()) {
 				throw new InvalidEnumerationContextFault();
 			}
@@ -391,7 +391,7 @@ public final class EnumerationSupport extends BaseSupport {
 			if (ctx.getIterator() instanceof EnumerationPullIterator) {
 				((EnumerationPullIterator)ctx.getIterator()).endPull(response);
 			}
-		}
+		// }
 	}
 
 	private static boolean doPull(final HandlerContext handlerContext, 
@@ -443,6 +443,10 @@ public final class EnumerationSupport extends BaseSupport {
 		// Synchronize on the iterator
 		synchronized (iterator) {
 			while ((passed.size() < maxElements) && (iterator.hasNext())) {
+				if (ctx.isDeleted()) {
+					// Context was deleted. Abort the request.
+					throw new InvalidEnumerationContextFault();
+				}
 
 				// Check for a timeout
 				// if (maxTime.getTimeInMillis(new GregorianCalendar()) <= 0) {
@@ -450,8 +454,7 @@ public final class EnumerationSupport extends BaseSupport {
 					if (passed.size() == 0) {
 						// timed out with no data
 						throw new TimedOutFault();
-					}
-					else {
+					} else {
 						// timed out with data
 						break;
 					}
@@ -460,17 +463,18 @@ public final class EnumerationSupport extends BaseSupport {
 
 				if (ee == null) {
 					// wait for more data to arrive
-					long timeLeft = end - new GregorianCalendar().getTimeInMillis();
+					long timeLeft = end
+							- new GregorianCalendar().getTimeInMillis();
 					while ((timeLeft > 0) && (ee == null)) {
 						try {
 							iterator.wait(timeLeft);
-							// TODO: Don't know if this can be set while we have the ctx synchronized
 							if (ctx.isDeleted()) {
 								// Context was deleted while we were waiting
 								throw new InvalidEnumerationContextFault();
 							}
 							ee = iterator.next();
-							timeLeft = end - new GregorianCalendar().getTimeInMillis();
+							timeLeft = end
+									- new GregorianCalendar().getTimeInMillis();
 						} catch (InterruptedException e) {
 							break;
 						}
@@ -549,10 +553,9 @@ public final class EnumerationSupport extends BaseSupport {
 						if ((result != null) && (result.getLength() > 0)) {
 							// Then add this instance
 							if (fragmentCheck == null) {
-								// Only check this one
-								// If 'result' is same as the 'item' then this
-								// is
-								// not a fragment selection
+								// Only check this once
+								// If 'result' is same as the 'item'
+								// then this is not a fragment selection
 								fragmentCheck = new Boolean(result.item(0)
 										.equals(item));
 							}
@@ -580,21 +583,21 @@ public final class EnumerationSupport extends BaseSupport {
 					}
 				}
 			}
-		}
-		
-		// Cancel the timeout thread
-		// timeoutTimer.cancel();
 
-		// place an item count estimate if one was requested
-		insertTotalItemCountEstimate(request, response, ctx.getIterator());
-		
-		if (iterator.hasNext() == false) {
-			// remove the context - 
-			// a subsequent release will fault with an invalid context
-			removeContext(handlerContext, context);
-			return false;
+			// Cancel the timeout thread
+			// timeoutTimer.cancel();
+
+			// place an item count estimate if one was requested
+			insertTotalItemCountEstimate(request, response, ctx.getIterator());
+
+			if (iterator.hasNext() == false) {
+				// remove the context -
+				// a subsequent release will fault with an invalid context
+				removeContext(handlerContext, context);
+				return false;
+			}
+			return iterator.hasNext();
 		}
-		return iterator.hasNext();
 	}
 
 	/**
@@ -648,7 +651,7 @@ public final class EnumerationSupport extends BaseSupport {
 		}
 		
         // Set single thread use of this context
-		synchronized (ctx) {
+		// synchronized (ctx) {
 			if (ctx.isDeleted()) {
 				throw new InvalidEnumerationContextFault();
 			}
@@ -662,7 +665,7 @@ public final class EnumerationSupport extends BaseSupport {
 			if (rctx == null) {
 				throw new InvalidEnumerationContextFault();
 			}
-		}
+		// }
 	}
 
 	/**

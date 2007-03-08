@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.14 2007-03-02 16:12:27 denis_rachal Exp $
+ * $Id: BaseSupport.java,v 1.15 2007-03-08 09:02:44 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -259,7 +259,7 @@ public class BaseSupport {
         return contextMap.put(context, ctx);
     }
     
-    protected static BaseContext removeContext(final HandlerContext requestContext, 
+    protected synchronized static BaseContext removeContext(final HandlerContext requestContext, 
     		                                   final Object context) {
     	BaseContext ctx = contextMap.get(context);
     	if (ctx == null)
