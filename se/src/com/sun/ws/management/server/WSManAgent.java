@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.6 2007-03-02 16:05:30 denis_rachal Exp $
+ * $Id: WSManAgent.java,v 1.7 2007-03-09 11:02:09 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -95,7 +95,6 @@ public abstract class WSManAgent {
     private static Map<String, String> properties = null;
     // XXX REVISIT, SHOULD BE STATIC BUT CURRENTLY CAN'T Due to openess of JAXBContext
     private Schema schema;
-    private static Source[] stdSchemas;
     private String[] customPackages;
     private final XmlBinding binding;
     static {
@@ -156,25 +155,6 @@ public abstract class WSManAgent {
 	        	value);
 	         }
          }
-         
-        // The returned list of schemas is already sorted
-        String schemaNames = properties.get("schemas");
-        StringTokenizer t = new StringTokenizer(schemaNames, ";");
-        if(LOG.isLoggable(Level.FINE))
-            LOG.log(Level.FINE, t.countTokens() + " schemas to load.");
-        stdSchemas = new Source[t.countTokens()];
-        int i = 0;
-        while(t.hasMoreTokens()) {
-            String name = t.nextToken();
-            if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Schema to load " + SCHEMA_PATH + name);
-            final InputStream xsd =
-                    Management.class.getResourceAsStream(SCHEMA_PATH + name);
-            if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Loaded schema " + xsd);
-            stdSchemas[i] = new StreamSource(xsd);
-            i++;
-        }
     }
 
 	private static void getProperties(final String filename, final Map<String, String> propertySet) {
@@ -200,6 +180,30 @@ public abstract class WSManAgent {
             }
         }
 	}
+        
+    private static Source[] createStdSources() {
+        Source[] stdSchemas = null;
+         // The returned list of schemas is already sorted
+        String schemaNames = properties.get("schemas");
+        StringTokenizer t = new StringTokenizer(schemaNames, ";");
+        if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, t.countTokens() + " schemas to load.");
+        stdSchemas = new Source[t.countTokens()];
+        int i = 0;
+        while(t.hasMoreTokens()) {
+            String name = t.nextToken();
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Schema to load from " + SCHEMA_PATH + name);
+            final InputStream xsd =
+                  Management.class.getResourceAsStream(SCHEMA_PATH + name);
+           
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Loaded schema " + xsd);
+            stdSchemas[i] = new StreamSource(xsd);
+            i++;
+        }
+        return stdSchemas;
+    }
     
     protected WSManAgent() throws SAXException {
         this(null);
@@ -208,6 +212,7 @@ public abstract class WSManAgent {
     protected WSManAgent(Source[] customSchemas, final String... customPackages) throws SAXException {
         final SchemaFactory schemaFactory =
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Source[] stdSchemas = createStdSources();
         Source[] finalSchemas = stdSchemas;
         if(customSchemas != null) {
             if(LOG.isLoggable(Level.FINE))
