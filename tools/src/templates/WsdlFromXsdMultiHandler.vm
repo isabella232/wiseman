@@ -48,6 +48,11 @@ resource_uri=${resource_uri}
                 <part name="CreateResponseMessage"
                         element="wxf:ResourceCreated" />
         </message>
+        
+        <message name="DeleteRequestMessage">
+      		<part name="DeleteRequestMessage" element="wxf:AnyXmlOptional"/>
+   		</message>
+        
 
         <!-- PortTypes -->
         <portType name="${service_name}Enumeration">
@@ -85,10 +90,10 @@ resource_uri=${resource_uri}
                         <output message="wsen:ReleaseResponseMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/ReleaseResponse" />
                 </operation>
-                <operation name="EnumerationEndOp">
+                <!--operation name="EnumerationEndOp">
                         <output message="wsen:EnumerationEndMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd" />
-                </operation>
+                </operation-->
         </portType>
         
         <portType name="${service_name}Resource">
@@ -104,13 +109,13 @@ resource_uri=${resource_uri}
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/GetResponse" />
                 </operation>
                 <operation name="Put">
-                        <input message="tns:${resource_type}Message"
+                        <input message="wxf:AnyXmlMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Put" />
                         <output message="wxf:OptionalXmlMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/PutResponse" />
                 </operation>
                 <operation name="Delete">
-                        <input message="wxf:EmptyMessage"
+                        <input message="tns:DeleteRequestMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete" />
                         <output message="wxf:EmptyMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/DeleteResponse" />
@@ -186,7 +191,7 @@ resource_uri=${resource_uri}
                                 <wsoap12:body use="literal"/>
                         </output>
                 </operation>
-                <operation name="EnumerationEndOp">
+                <!--operation name="EnumerationEndOp">
                 <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd"/>
                         <input>                        
                                 <wsoap12:body use="literal"/>
@@ -194,7 +199,7 @@ resource_uri=${resource_uri}
                         <output>
                                 <wsoap12:body use="literal"/>
                         </output>                
-                </operation>
+                </operation-->
         </binding>
 
         <binding name="${service_name}ResourceBinding" type="tns:${service_name}Resource">
@@ -257,9 +262,9 @@ resource_uri=${resource_uri}
           <documentation>${service_name} Service</documentation>                               
                 
                 <port name="${service_name}Resource" binding="tns:${service_name}ResourceBinding">
-                  <wsoap12:address location="http://localhost/wsman"/>
+                  <wsoap12:address location="${service_address}"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:Address>${service_address}</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>wsman:${service_name}/resource</wsman:ResourceURI>
                     </wsa:ReferenceParameters>
@@ -267,9 +272,9 @@ resource_uri=${resource_uri}
                 </port>        
                 
                 <port name="${service_name}Enumeration" binding="tns:${service_name}EnumerationBinding">
-                  <wsoap12:address location="http://localhost/wsman"/>
+                  <wsoap12:address location="http://${server_name}:${server_port}/${deployment_url}/"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:Address>http://${server_name}:${server_port}/${deployment_url}</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>wsman:${service_name}/list</wsman:ResourceURI>
                     </wsa:ReferenceParameters>
@@ -277,9 +282,9 @@ resource_uri=${resource_uri}
                 </port>        
 
                 <port name="${service_name}ResourceFactory" binding="tns:${service_name}ResourceFactoryBinding">
-                  <wsoap12:address location="http://localhost/wsman"/>
+                  <wsoap12:address location="http://${server_name}:${server_port}/${deployment_url}/"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:Address>http://${server_name}:${server_port}/${deployment_url}</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>${resource_uri}/factory</wsman:ResourceURI>
                     </wsa:ReferenceParameters>

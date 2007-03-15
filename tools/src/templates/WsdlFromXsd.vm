@@ -41,6 +41,10 @@ resource_uri=${resource_uri}
                 <part name="CreateResponseMessage"
                         element="wxf:ResourceCreated" />
         </message>
+        
+        <message name="DeleteRequestMessage">
+      		<part name="DeleteRequestMessage" element="wxf:AnyXmlOptional"/>
+   		</message>
 
         <!-- PortTypes -->
         
@@ -64,13 +68,13 @@ resource_uri=${resource_uri}
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/GetResponse" />
                 </operation>
                 <operation name="Put">
-                        <input message="tns:${resource_type}Message"
+                        <input message="wxf:AnyXmlMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Put" />
                         <output message="wxf:OptionalXmlMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/PutResponse" />
                 </operation>
                 <operation name="Delete">
-                        <input message="wxf:EmptyMessage"
+                        <input message="tns:DeleteRequestMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete" />
                         <output message="wxf:EmptyMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/DeleteResponse" />
@@ -116,10 +120,10 @@ resource_uri=${resource_uri}
                         <output message="wsen:ReleaseResponseMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/ReleaseResponse" />
                 </operation>
-                <operation name="EnumerationEndOp">
+                <!--operation name="EnumerationEndOp">
                         <output message="wsen:EnumerationEndMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd" />
-                </operation>
+                </operation-->
                 
                 <!-- WS Eventing operations -->
                 <operation name="SubscribeOp" >
@@ -247,7 +251,7 @@ resource_uri=${resource_uri}
                                 <wsoap12:body use="literal"/>
                         </output>
                 </operation>
-                <operation name="EnumerationEndOp">
+                <!--operation name="EnumerationEndOp">
                 <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd"/>
                         <input>                        
                                 <wsoap12:body use="literal"/>
@@ -255,7 +259,7 @@ resource_uri=${resource_uri}
                         <output>
                                 <wsoap12:body use="literal"/>
                         </output>                
-                </operation>
+                </operation-->
                 
                 <!-- WS Eventing operations -->
                 <operation name="SubscribeOp" >
@@ -300,8 +304,9 @@ resource_uri=${resource_uri}
           <documentation>${service_name} Service</documentation>                               
                 
                 <port name="${service_name}Resource" binding="tns:${service_name}ResourceBinding">
+                  <wsoap12:address location="${service_address}"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:Address>${service_address}</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>${resource_uri}</wsman:ResourceURI>
                     </wsa:ReferenceParameters>

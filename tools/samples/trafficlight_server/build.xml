@@ -205,7 +205,8 @@
 		</taskdef>
 		<xsd2wsdl xsdFile="${basedir}/${user.xsd.file}"
 			      resourceURI="${resource.uri}"
-			      outputDir="${basedir}/wsdl"/>
+			      outputDir="${basedir}/wsdl"
+				  serviceAddress="${service.address}" />
 	</target>
 
 	<!--  ===================================================================  -->

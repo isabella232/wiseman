@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
@@ -31,6 +33,8 @@ public class Xsd2WsdlTask extends Task {
     private String resourceType=null;
     private String targetNamespace=null;
     private boolean singleHandler=true;
+    private String serviceAddress=null;
+    
     
     public void setResourceType(String resourceType) {
     	this.resourceType = resourceType;
@@ -98,6 +102,7 @@ public class Xsd2WsdlTask extends Task {
 			}
 			context.put("resource_uri", resourceURI);
 			
+
 			File outputFile = new File(outputDir, wsdlFileName);
 	        
 			try {//wsdlFromXsd
@@ -237,6 +242,20 @@ public class Xsd2WsdlTask extends Task {
 		    this.resourceName=getXPathValue(pathToXsdFile, xPathExpressionTypeName);
 		}
 		context.put("resource_name", this.resourceName);
+		
+		if (this.serviceAddress == null) {
+            // Generate a reasonable default address
+			String localhost;
+			try {
+				localhost = InetAddress.getLocalHost().getCanonicalHostName();
+			} catch (UnknownHostException e) {
+				localhost = "localhost";
+		}
+		this.serviceAddress="http://" + localhost + ":8080/" 
+           + context.get("service_name") + "/";
+		}
+		context.put("service_address", this.serviceAddress);
+		
     }
 
 
@@ -255,6 +274,11 @@ private String getXPathValue(File pathToXsdFile, XPathExpression xPathExpression
 	} catch (XPathExpressionException e) {
 		throw new BuildException(e);
 	}
+}
+
+
+public void setServiceAddress(String serviceAddress) {
+	this.serviceAddress = serviceAddress;
 }
 
 }
