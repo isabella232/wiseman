@@ -93,7 +93,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final String filter, final Map<String, String> map, final String dialect,
+	public EnumerationCtx enumerate(final Object filter, final Map<String, String> map, final String dialect,
 			final boolean useEprs, final boolean useObjects, final long timeout)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
@@ -130,7 +130,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final String filter, final Map<String, String> map, final String dialect,
+	public EnumerationCtx enumerate(final Object filter, final Map<String, String> map, final String dialect,
 			final boolean useEprs, final boolean useObjects, final long timeout, final boolean getItemCount)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
@@ -164,7 +164,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final String filter, final Map<String, String> map, final String dialect,
+	public EnumerationCtx enumerate(final Object filter, final Map<String, String> map, final String dialect,
 			final boolean useEprs, final boolean useObjects, final long timeout, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
@@ -202,7 +202,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final String filter, final Map<String, String> namespaces, final String dialect,
+	public EnumerationCtx enumerate(final Object filter, final Map<String, String> namespaces, final String dialect,
 			final boolean useEprs, final boolean useObjects, final long timeout, final boolean getItemCount, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException 
@@ -234,7 +234,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final String filter, final Map<String, String> namespaces, final String dialect,
+	public EnumerationCtx enumerate(final Object filter, final Map<String, String> namespaces, final String dialect,
 			final boolean useEprs, final boolean useObjects)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
@@ -263,7 +263,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final String filter, final Map<String, String> namespaces, final String dialect,
+	public EnumerationCtx enumerate(final Object filter, final Map<String, String> namespaces, final String dialect,
 			final boolean useEprs, final boolean useObjects, final boolean getItemCount, 
 			final String fragmentRequest, final String fragmentDialect, final boolean optimized, final long maxElem, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
