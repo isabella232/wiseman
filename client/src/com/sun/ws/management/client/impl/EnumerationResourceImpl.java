@@ -611,6 +611,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
+			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
@@ -645,9 +646,11 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
+			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
+		log.info("RESPONSE:\n" + response + "\n");
 	}
 
 

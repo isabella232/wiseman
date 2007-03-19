@@ -68,14 +68,12 @@ public class ResourceImpl extends EnumerationResourceImpl implements Resource {
         final Addressing response = HttpClient.sendRequest(mgmt);
 
         //Check for fault during message generation
-        if (response.getBody().hasFault()) {
-        	log.severe("FAULT:\n"+response+"\n");
-            SOAPFault fault = response.getBody().getFault();
-            throw new FaultException(fault.getFaultString());
-        }
-        
-        //Process the response to extract useful information.
-        log.info("RESPONSE:\n"+response+"\n");
+		if (response.getBody().hasFault()) {
+			log.severe("FAULT:\n" + response + "\n");
+			SOAPFault fault = response.getBody().getFault();
+			throw new FaultException(fault);
+		}
+		log.info("RESPONSE:\n" + response + "\n");
         
         //parse response and retrieve contents.
         // Iterate through the create response to obtain the selectors

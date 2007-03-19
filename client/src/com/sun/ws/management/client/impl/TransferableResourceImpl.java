@@ -203,15 +203,12 @@ public class TransferableResourceImpl implements TransferableResource {
         final Addressing response = HttpClient.sendRequest(mgmt);
 
         //Check for fault during message generation
-        if (response.getBody().hasFault()) {
-            log.severe("FAULT:\n"+response+"\n");
-            SOAPFault fault = response.getBody().getFault();
-            throw new FaultException(fault.getFaultString());
-        }
-        
-        //Process the response to extract useful information.
-        log.fine("RESPONSE:\n"+response+"\n");
-               
+		if (response.getBody().hasFault()) {
+			log.severe("FAULT:\n" + response + "\n");
+			SOAPFault fault = response.getBody().getFault();
+			throw new FaultException(fault);
+		}
+		log.info("RESPONSE:\n" + response + "\n");       
 	}
 
 	
@@ -283,12 +280,11 @@ public class TransferableResourceImpl implements TransferableResource {
 		
 		//Check for fault during message generation
 		if (response.getBody().hasFault()) {
+			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
-			throw new FaultException(fault.getFaultString());
+			throw new FaultException(fault);
 		}
-		
-		//Process the response to extract useful information.
-		log.info("RESPONSE:\n"+response+"\n");
+		log.info("RESPONSE:\n" + response + "\n");
 		
 		//parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors
@@ -422,14 +418,12 @@ public class TransferableResourceImpl implements TransferableResource {
         final Addressing response = HttpClient.sendRequest(mgmt);
 
         //Check for fault during message generation
-        if (response.getBody().hasFault()) {
-        	log.severe("FAULT:\n"+response+"\n");
-            SOAPFault fault = response.getBody().getFault();
-            throw new FaultException(fault.getFaultString());
-        }
-        
-        //Process the response to extract useful information.
-        log.info("RESPONSE:\n"+response+"\n");
+		if (response.getBody().hasFault()) {
+			log.severe("FAULT:\n" + response + "\n");
+			SOAPFault fault = response.getBody().getFault();
+			throw new FaultException(fault);
+		}
+		log.info("RESPONSE:\n" + response + "\n");
         
         //parse response and retrieve contents.
         // Iterate through the create response to obtain the selectors

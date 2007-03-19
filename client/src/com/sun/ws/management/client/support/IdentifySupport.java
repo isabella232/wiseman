@@ -1,5 +1,7 @@
 package com.sun.ws.management.client.support;
 
+import java.util.logging.Logger;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPElement;
@@ -17,6 +19,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.impl.ResourceStateImpl;
+import com.sun.ws.management.client.impl.TransferableResourceImpl;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
@@ -55,8 +58,8 @@ public class IdentifySupport {
 		IdentifyResponseType retrievedIdentify = null;
 		//Check for fault in message passed in.
 		if (identifyResponse.getBody().hasFault()) {
-		    SOAPFault fault = identifyResponse.getBody().getFault();
-		    throw new FaultException(fault.getFaultString());
+			SOAPFault fault = identifyResponse.getBody().getFault();
+			throw new FaultException(fault);
 		}else{
 			Node identifyChildNode = null;
 			identifyChildNode = identifyResponse.getBody().getFirstChild();

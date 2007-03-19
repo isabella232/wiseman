@@ -163,9 +163,11 @@ public class ResourceFactory {
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
+			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
-			throw new FaultException(fault.getFaultString());
+			throw new FaultException(fault);
 		}
+		log.info("RESPONSE:\n" + response + "\n");
 
 
 		// parse response and retrieve contents.
@@ -291,9 +293,11 @@ public class ResourceFactory {
 
 			//Check for fault during message generation
 			if (response.getBody().hasFault()) {
+				log.severe("FAULT:\n" + response + "\n");
 				SOAPFault fault = response.getBody().getFault();
-				throw new FaultException(fault.getFaultString());
+				throw new FaultException(fault);
 			}
+			log.info("RESPONSE:\n" + response + "\n");
 			
 			//parse response and retrieve contents.
 			// Iterate through the create response to obtain the selectors

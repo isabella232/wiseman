@@ -571,7 +571,7 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 		}
 		if (message.getBody().hasFault()) {
 			SOAPFault fault = message.getBody().getFault();
-			throw new FaultException(fault.getFaultString());
+			throw new FaultException(fault);
 		}
 	}
 	
