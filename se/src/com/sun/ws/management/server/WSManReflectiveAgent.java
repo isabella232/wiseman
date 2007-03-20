@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManReflectiveAgent.java,v 1.2 2007-01-11 13:19:06 jfdenise Exp $
+ * $Id: WSManReflectiveAgent.java,v 1.3 2007-03-20 20:35:38 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server;
@@ -37,9 +37,10 @@ public class WSManReflectiveAgent extends WSManAgent {
         super(schemas, customPackages);
     }
      
-    protected RequestDispatcher createDispatcher(final Management request,
-            final HandlerContext context) throws SOAPException, JAXBException, IOException {
-        return new ReflectiveRequestDispatcher(request, context);
-    }
+	@Override
+	protected RequestDispatcher createDispatcher(Management request, HandlerContext context, 
+			WSManAgent agent) throws SOAPException, JAXBException, IOException {
+		return new ReflectiveRequestDispatcher(request, context,agent);
+	}
 }
 

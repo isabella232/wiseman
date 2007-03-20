@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.7 2007-03-09 11:02:09 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.8 2007-03-20 20:35:39 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server;
@@ -45,7 +45,6 @@ import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
@@ -64,7 +63,6 @@ import com.sun.ws.management.Message;
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
@@ -112,49 +110,6 @@ public abstract class WSManAgent {
         } else {
         	defaultOperationTimeout = DEFAULT_TIMEOUT;
         }
-        extraIdInfo.put(Identify.BUILD_ID, properties.get("build.version"));
-        extraIdInfo.put(Identify.SPEC_VERSION, properties.get("spec.version"));
-        
-        //If MetaData resource is exposed, then populate that information here.
-         String value = null;
-         //Determine whether to turn on/off metaData exposure
-         String mDataEnabled="metadata.index.enabled";
-         	value = properties.get(mDataEnabled);
-         boolean exposeMetaDataContent = false;
-           exposeMetaDataContent = Boolean.parseBoolean(value);
-         if((value!=null)&&(value.trim().length()>0)){
-	        	extraIdInfo.put(
-	        			AnnotationProcessor.META_DATA_ENABLED, 
-	        	  value);
-         }
-           
-         //If enabled then populate then expose default meta data resource  
-         if(exposeMetaDataContent){  
-        	 //MetaData Addressing TO field
-	         String mDataTo="metadata.index.to";
-	          value = properties.get(mDataTo);
-	         if((value!=null)&&(value.trim().length()>0)){
-	        	extraIdInfo.put(
-	        			AnnotationProcessor.META_DATA_TO, 
-	        	  value);
-	         }
-	         //MetaData WsManagement ResourceURI field
-		     String mDataResourceURI="metadata.index.resourceURI";
-		      value = properties.get(mDataResourceURI);
-		     if((value!=null)&&(value.trim().length()>0)){
-		       	extraIdInfo.put(
-		       			AnnotationProcessor.META_DATA_RESOURCE_URI, 
-		       	  value);
-		     }
-		     //MetaData descriptive information
-	         String mDataDesc="metadata.index.description";
-	          value = properties.get(mDataDesc);
-	         if((value!=null)&&(value.trim().length()>0)){
-	          extraIdInfo.put(
-	        		  AnnotationProcessor.META_DATA_DESCRIPTION, 
-	        	value);
-	         }
-         }
     }
 
 	private static void getProperties(final String filename, final Map<String, String> propertySet) {
@@ -240,10 +195,12 @@ public abstract class WSManAgent {
     
     /**
      * Hook your own dispatcher
+     * @param agent 
      */
     abstract protected RequestDispatcher createDispatcher(final Management request,
-            final HandlerContext context) throws SOAPException, JAXBException, IOException;
-    
+            final HandlerContext context, WSManAgent agent) throws SOAPException, JAXBException, 
+            IOException;
+
     public Map<String, String> getProperties() {
         return properties;
     }
@@ -290,19 +247,18 @@ public abstract class WSManAgent {
         try {
             logMessage(LOG, request);
             
-            Identify identifyResponse = null;
-            
-            if ((identifyResponse = handleIfIdentify(request)) != null) {
-                return identifyResponse;
-            }
-            
             long timeout = getTimeout(request);
             
             if((response = isValidEnvelopSize(request)) == null) {
                 final RequestDispatcher dispatcher = createDispatcher(request,
-                        context);
+                        context,this);
                 try {
                     dispatcher.authenticate();
+                    //Test for identify responses
+                    Identify identifyResponse = dispatcher.processForIdentify();
+                    if(identifyResponse!=null){
+                    	return identifyResponse;
+                    }
                     dispatcher.validateRequest();
                     response = dispatch(dispatcher, timeout);
                 } catch (SecurityException sx) {
@@ -384,25 +340,6 @@ public abstract class WSManAgent {
             task.cancel(true);
         }
         return null;
-    }
-    
-    private static Identify handleIfIdentify(final Management msg)
-    throws SOAPException, JAXBException, IOException {
-        final Identify identify = new Identify(msg);
-        identify.setXmlBinding(msg.getXmlBinding());
-        
-        final SOAPElement id = identify.getIdentify();
-        if (id == null) {
-            return null;
-        }
-        final Identify response = new Identify();
-        response.setXmlBinding(msg.getXmlBinding()); // TODO ???
-        response.setIdentifyResponse(
-                properties.get("impl.vendor") + " - " + properties.get("impl.url"),
-                properties.get("impl.version"),
-                Management.NS_URI,
-                extraIdInfo);
-        return response;
     }
     
     private static void fillReturnAddress(Addressing request,

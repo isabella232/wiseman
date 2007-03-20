@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.18 2007-01-11 13:12:55 jfdenise Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.19 2007-03-20 20:35:39 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server;
@@ -22,14 +22,19 @@ import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
+import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 public final class ReflectiveRequestDispatcher extends RequestDispatcher {
@@ -66,13 +71,17 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         }
     }
     
+    private static WSManAgent dispatchingAgent = null;
+    
     private static final Map<String, HandlerEntry> cache = new WeakHashMap<String, HandlerEntry>();
     
     private final RequestDispatcherConfig config;
     
     public ReflectiveRequestDispatcher(final Management req,
-            final HandlerContext context) throws JAXBException, SOAPException {
-        super(req, context);
+            final HandlerContext context, WSManAgent agent) throws JAXBException, SOAPException {
+        super(req, context, agent);
+        //reference to spawning agent.
+        dispatchingAgent = agent;
         config = new RequestDispatcherConfig(context);
     }
     
@@ -217,4 +226,64 @@ public final class ReflectiveRequestDispatcher extends RequestDispatcher {
         
         return sb.toString();
     }
+
+	/* (non-Javadoc)
+	 * @see com.sun.ws.management.server.RequestDispatcher#getAdditionalIdentifyElements()
+	 */
+	@Override
+	public Map<QName, String> getAdditionalIdentifyElements() {
+	  //Add additional elements to the IdentifyResponse object.
+	  Map<QName,String> extraIdInfo = new HashMap<QName, String>();
+	  if(dispatchingAgent==null){
+		  String msg ="Unable to retrieve properties defined for the spawning agent.";
+		  msg+="IdentifyResponse will not have all required information.";
+		  LOG.severe(msg);
+		  return extraIdInfo;
+	  }
+	  
+      extraIdInfo.put(Identify.BUILD_ID, dispatchingAgent.getProperties().get("build.version"));
+      extraIdInfo.put(Identify.SPEC_VERSION, dispatchingAgent.getProperties().get("spec.version"));
+      
+      //If MetaData resource is exposed, then populate that information here.
+       String value = null;
+       //Determine whether to turn on/off metaData exposure
+       String mDataEnabled="metadata.index.enabled";
+       	value = dispatchingAgent.getProperties().get(mDataEnabled);
+       boolean exposeMetaDataContent = false;
+         exposeMetaDataContent = Boolean.parseBoolean(value);
+       if((value!=null)&&(value.trim().length()>0)){
+        	extraIdInfo.put(
+        	AnnotationProcessor.META_DATA_ENABLED, 
+        	value);
+       }
+         
+       //If enabled then populate then expose default meta data resource  
+       if(exposeMetaDataContent){  
+      	 //MetaData Addressing TO field
+         String mDataTo="metadata.index.to";
+          value = dispatchingAgent.getProperties().get(mDataTo);
+         if((value!=null)&&(value.trim().length()>0)){
+        	extraIdInfo.put(
+        			AnnotationProcessor.META_DATA_TO, 
+        	  value);
+         }
+         //MetaData WsManagement ResourceURI field
+	     String mDataResourceURI="metadata.index.resourceURI";
+	      value = dispatchingAgent.getProperties().get(mDataResourceURI);
+	     if((value!=null)&&(value.trim().length()>0)){
+	       	extraIdInfo.put(
+	       			AnnotationProcessor.META_DATA_RESOURCE_URI, 
+	       	  value);
+	     }
+	     //MetaData descriptive information
+         String mDataDesc="metadata.index.description";
+          value = dispatchingAgent.getProperties().get(mDataDesc);
+         if((value!=null)&&(value.trim().length()>0)){
+          extraIdInfo.put(
+        		  AnnotationProcessor.META_DATA_DESCRIPTION, 
+        	value);
+         }
+       }
+		return extraIdInfo;
+	}
 }
