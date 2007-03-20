@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.19 2007-03-02 16:06:28 denis_rachal Exp $
+ * $Id: ManagementTest.java,v 1.20 2007-03-20 21:35:17 simeonpinder Exp $
  */
 
 package management;
@@ -224,7 +224,7 @@ public class ManagementTest extends TestBase {
                 ((JAXBElement<AttributedURI>) fault.getDetail().getAny().get(0)).getValue().getValue());
     }
     
-    public void testGet() throws Exception {
+    public void testGetResponseEncoding() throws Exception {
         
         final Transfer xf = new Transfer();
         xf.setAction(Transfer.GET_ACTION_URI);
@@ -255,7 +255,7 @@ public class ManagementTest extends TestBase {
         }
         
         // verify that the response is received encoded in UTF-16
-        assertEquals(ContentType.UTF16_CONTENT_TYPE, response.getContentType());
+        assertEquals("Incorrect Encoding type returned.",ContentType.UTF16_CONTENT_TYPE, response.getContentType());
 
         logfile.write("\n\n---- pretty-printed, pretty-printer converts encoding to utf-8 ----\n\n".getBytes());
         response.prettyPrint(logfile);

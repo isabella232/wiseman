@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.22 2007-01-16 11:00:16 denis_rachal Exp $
+ * $Id: InteropTest.java,v 1.23 2007-03-20 21:35:16 simeonpinder Exp $
  */
 
 package interop._06;
@@ -1316,7 +1316,8 @@ public final class InteropTest extends TestBase {
         final EndpointReferenceType sm = sr.getSubscriptionManager();
         assertNotNull(sm);
         assertNotNull(sm.getAddress());
-        final Object identifierElement = sm.getReferenceProperties().getAny().get(0);
+//        final Object identifierElement = sm.getReferenceProperties().getAny().get(0);
+        final Object identifierElement = sm.getReferenceParameters().getAny().get(1);
         assertNotNull(identifierElement);
         final String identifier = ((JAXBElement<String>) identifierElement).getValue();
         assertNotNull(identifier);
