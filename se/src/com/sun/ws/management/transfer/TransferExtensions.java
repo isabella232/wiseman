@@ -355,6 +355,22 @@ public class TransferExtensions extends Transfer {
      * Handles the Put operation response
      *
      * @throws SOAPException
+     * @throws JAXBException 
+     */
+    public void setPutResponse(final Object obj)
+			throws SOAPException, JAXBException {
+		// add the payload to the body if it's a fragment
+		if (obj instanceof Document) {
+			getBody().addDocument((Document) obj);
+		} else {
+			getXmlBinding().marshal(obj, getBody());
+		}
+	}    
+    
+    /**
+     * Handles the Put operation response
+     *
+     * @throws SOAPException
      */
     public void setPutResponse()
 			throws SOAPException {
