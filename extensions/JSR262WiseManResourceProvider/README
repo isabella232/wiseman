@@ -1,0 +1,28 @@
+JSR 262 RESOURCE PROVIDER
+==========================
+
+WARNING!!!!!! THIS IS AN EXPERIMENTAL EXTENSION. TAKE IT AS INFORMATIVE. 
+THIS IS NOT A FINAL SOLUTION.
+NO PUBLIC JSR262 RI CURRENTLY SUPPORT THIS FEATURE. SHOULD BECOME PUBLIC SOON.
+
+
+SETUP
+=====
+THIS IS A NETBEANS PROJECT. BE SURE TO UPDATE THE PROJECT PROPERTIES WITH : 
+- JSR262 jmxws.jar
+- JAX-WS 2.1 jars
+- WiseMan jar (located in se/dist/) wiseman.jar
+
+
+DISCOVER HOW TO PLUG A PROVIDER
+===============================
+- Have a look to test/com/sun/ws/management/x/test/ResourceProviderTest.java
+
+RUN THE TEST
+============
+This test shows how a WS-Man get request targeted to platform ThreadMXBean is routed
+to a WiseMan resource implemented with WiseMan tooling.
+thread.xsd file is the resource description
+
+- Right click on project, Select "Test Project". The project will then compile and run.
+
