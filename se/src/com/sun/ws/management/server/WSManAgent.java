@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.8 2007-03-20 20:35:39 simeonpinder Exp $
+ * $Id: WSManAgent.java,v 1.9 2007-03-28 14:23:08 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -45,6 +46,7 @@ import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
@@ -79,50 +81,48 @@ public abstract class WSManAgent {
     private static final Logger LOG = Logger.getLogger(WSManAgent.class.getName());
     private static final long DEFAULT_TIMEOUT = 30000;
     private static final long MIN_ENVELOPE_SIZE = 8192;
-    private static final long defaultOperationTimeout;
+    private static final long DISABLED_TIMEOUT = -1;
+    
+    public static final String OPERATION_TIMEOUT =
+            WSManAgent.class.getPackage().getName() + ".operation.timeout";
     private static final String WSMAN_PROPERTY_FILE_NAME = "/wsman.properties";
     private static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
     private static final String OPERATION_TIMEOUT_DEFAULT = "OperationTimeoutDefault";
-    private static final String UUID_SCHEME = "uuid:";    
+    private static final String UUID_SCHEME = "uuid:";
     private static final String SCHEMA_PATH =
             "/com/sun/ws/management/resources/schemas/";
     
     private static final ExecutorService pool = Executors.newCachedThreadPool();
     
-    private static final Map<QName, String> extraIdInfo = new HashMap<QName, String>();
     private static Map<String, String> properties = null;
+    
+    private Map<String, String> localproperties = null;
+    private long defaultOperationTimeout = 0;
+    
     // XXX REVISIT, SHOULD BE STATIC BUT CURRENTLY CAN'T Due to openess of JAXBContext
-    private Schema schema;
-    private String[] customPackages;
     private final XmlBinding binding;
+    
     static {
-        // NO MORE LOGGING CONFIGURATION
-        // THE CODE HAS BEEN REMOVED
-        
         // load subsystem properties and save them in a type-safe, unmodifiable Map
-    	final Map<String, String> propertySet = new HashMap<String, String>();
+        final Map<String, String> propertySet = new HashMap<String, String>();
         getProperties(WSMAN_PROPERTY_FILE_NAME, propertySet);
-        getProperties(WISEMAN_PROPERTY_FILE_NAME, propertySet);
         properties = Collections.unmodifiableMap(propertySet);
-        
-        if (properties.get(OPERATION_TIMEOUT_DEFAULT) != null) {
-        	defaultOperationTimeout = Long.parseLong(properties.get(OPERATION_TIMEOUT_DEFAULT)); 
-        } else {
-        	defaultOperationTimeout = DEFAULT_TIMEOUT;
-        }
     }
-
-	private static void getProperties(final String filename, final Map<String, String> propertySet) {
-		final InputStream ism = Management.class.getResourceAsStream(filename);
+    
+    public static void getProperties(final String filename, final Map<String, String> propertySet) {
+         if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Getting properties [" + filename 
+                        + "]");
+        final InputStream ism = WSManAgent.class.getResourceAsStream(filename);
         if (ism != null) {
             final Properties props = new Properties();
             try {
                 props.load(ism);
             } catch (IOException iex) {
                 LOG.log(Level.WARNING, "Error reading properties from " +
-                		filename, iex);
+                        filename, iex);
                 throw new RuntimeException("Error reading properties from " +
-                		filename +  " " + iex);
+                        filename +  " " + iex);
             }
             final Iterator<Entry<Object, Object>> ei = props.entrySet().iterator();
             while (ei.hasNext()) {
@@ -130,41 +130,15 @@ public abstract class WSManAgent {
                 final Object key = entry.getKey();
                 final Object value = entry.getValue();
                 if (key instanceof String && value instanceof String) {
+                    if(LOG.isLoggable(Level.FINE))
+                        LOG.log(Level.FINE, "Found property " + key + "=" + value);
                     propertySet.put((String) key, (String) value);
                 }
             }
         }
-	}
-        
-    private static Source[] createStdSources() {
-        Source[] stdSchemas = null;
-         // The returned list of schemas is already sorted
-        String schemaNames = properties.get("schemas");
-        StringTokenizer t = new StringTokenizer(schemaNames, ";");
-        if(LOG.isLoggable(Level.FINE))
-            LOG.log(Level.FINE, t.countTokens() + " schemas to load.");
-        stdSchemas = new Source[t.countTokens()];
-        int i = 0;
-        while(t.hasMoreTokens()) {
-            String name = t.nextToken();
-            if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Schema to load from " + SCHEMA_PATH + name);
-            final InputStream xsd =
-                  Management.class.getResourceAsStream(SCHEMA_PATH + name);
-           
-            if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Loaded schema " + xsd);
-            stdSchemas[i] = new StreamSource(xsd);
-            i++;
-        }
-        return stdSchemas;
     }
     
-    protected WSManAgent() throws SAXException {
-        this(null);
-    }
-    
-    protected WSManAgent(Source[] customSchemas, final String... customPackages) throws SAXException {
+    public static Schema createSchema(Source[] customSchemas) throws SAXException {
         final SchemaFactory schemaFactory =
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         Source[] stdSchemas = createStdSources();
@@ -179,28 +153,146 @@ public abstract class WSManAgent {
             System.arraycopy(customSchemas,0,finalSchemas,stdSchemas.length,
                     customSchemas.length);
         }
+        Schema schema = null;
         try {
             schema = schemaFactory.newSchema(finalSchemas);
         } catch (SAXException ex) {
             LOG.log(Level.SEVERE, "Error setting schemas", ex);
             throw ex;
         }
-        this.customPackages = customPackages;
-        try {
-            this.binding = new XmlBinding(this.schema, this.customPackages);
-        } catch (JAXBException e) {
-        	throw new InternalErrorFault(e);
-        }
+        return schema;
     }
     
+    public static Source[] newSources(String schemaNames, String schemaPath) {
+        
+        if(schemaNames == null) return null;
+        
+        Source[] stdSchemas = null;
+        StringTokenizer t = new StringTokenizer(schemaNames, ",");
+        if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, t.countTokens() + " schemas to load.");
+        stdSchemas = new Source[t.countTokens()];
+        int i = 0;
+        while(t.hasMoreTokens()) {
+            String name = t.nextToken();
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Schema to load from " + schemaPath + name);
+            final InputStream xsd =
+                    Management.class.getResourceAsStream(schemaPath + name);
+            
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Loaded schema " + xsd);
+            stdSchemas[i] = new StreamSource(xsd);
+            i++;
+        }
+        return stdSchemas;
+    }
+    
+    private static Source[] createStdSources() {
+        // The returned list of schemas is already sorted
+        String schemaNames = properties.get("schemas");
+        return newSources(schemaNames, SCHEMA_PATH);
+    }
+    
+    
+    protected WSManAgent() throws SAXException {
+        this(null, null, null);
+    }
+    
+    protected WSManAgent(Map<String,String> wisemanConf, Source[] customSchemas, 
+           Map<String,String> bindingConf) 
+        throws SAXException {
+        final Map<String, String> propertySet = new HashMap<String, String>();
+        getProperties(WISEMAN_PROPERTY_FILE_NAME, propertySet);
+        // Put all passed properties
+        if(wisemanConf != null)
+            propertySet.putAll(wisemanConf);
+        localproperties = Collections.unmodifiableMap(propertySet);
+        
+        String opTimeout = System.getProperty(OPERATION_TIMEOUT);
+        if(opTimeout == null)
+            opTimeout = localproperties.get(OPERATION_TIMEOUT_DEFAULT);
+        
+        if(opTimeout == null)
+             this.defaultOperationTimeout = DEFAULT_TIMEOUT;
+        else
+            this.defaultOperationTimeout = Long.parseLong(opTimeout);
+            
+        Schema schema = createSchema(customSchemas);
+        try {
+            // 
+            this.binding = new XmlBinding(schema, bindingConf);
+        } catch (JAXBException e) {
+            throw new InternalErrorFault(e);
+        }
+            
+    }
+    
+     /** This method is called when processing Identify requests.
+     * Modify this method to adjust the Identify
+     *  processing functionality, but you may be able to simply override 
+     *  the getAdditionalIdentifyElements() method to add your own custom 
+     *  elements.  
+     * 
+     * @return Identify  This is the Identify instance to be returned to identify Request
+     * @throws SecurityException
+     * @throws JAXBException
+     * @throws SOAPException
+     */
+    private Identify processForIdentify(Management request) 
+        throws SecurityException, JAXBException, SOAPException {
+    	//Test for identify message
+        final Identify identify = new Identify(request);
+        identify.setXmlBinding(request.getXmlBinding());
+        
+        final SOAPElement id = identify.getIdentify();
+        if (id == null) {
+            return null;//else exit
+        }
+        if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, "Serving Identity");
+        
+    	//As this is an indentify message then populate the response.
+        Identify response = new Identify();
+        response.setXmlBinding(request.getXmlBinding()); 
+
+        Map<QName, String> additionals = getAdditionalIdentifyElements();
+        if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, "Additionals QNames " + additionals);
+        
+        if(additionals == null)
+            additionals = new HashMap<QName, String>();
+        
+        additionals.put(Identify.BUILD_ID, getProperties().get("build.version"));
+        additionals.put(Identify.SPEC_VERSION, getProperties().get("spec.version"));
+        
+        response.setIdentifyResponse(
+            getProperties().get("impl.vendor") + " - " + 
+            		getProperties().get("impl.url"),
+            getProperties().get("impl.version"),
+            Management.NS_URI,
+            additionals);
+
+        return response;
+    }
     /**
      * Hook your own dispatcher
-     * @param agent 
+     * @param agent
      */
     abstract protected RequestDispatcher createDispatcher(final Management request,
-            final HandlerContext context, WSManAgent agent) throws SOAPException, JAXBException, 
+            final HandlerContext context) throws SOAPException, JAXBException,
             IOException;
-
+        
+    /** Override this method to define additional Identify elements
+     *  to be returned.  This method is usually called in processForIdentify()
+     *  method to add additional nodes.
+     * 
+     * @return Map containing information to simple xml nodes.
+     */
+    protected Map<QName, String> getAdditionalIdentifyElements(){
+        return null;
+    }
+    
     public Map<String, String> getProperties() {
         return properties;
     }
@@ -227,22 +319,22 @@ public abstract class WSManAgent {
         Addressing response = null;
         
         // try {
-            // XXX WARNING, CREATING A JAXBCONTEXT FOR EACH REQUEST IS TOO EXPENSIVE.
-            // JAXB team says that you should share as much as you can JAXBContext.
-            // I propose to make XmlBinding back to be static and locked. I mean
-            // that no custom package nor schema should be added to this JAXBContext.
-            // It is private to wiseman and only used to handle the protocol.
-            // Any model dependent JAXB processing must be done in separate JAXBContext(s).
-            // Model layer(s) can implement their own JAXBContext strategies.
-            // BTW, doing so, we make clear that any rechnology can be used to marsh/unmarsh.
-            // Relaying on JAXB becomes an implementation detail.
-            
-            // schema might be null if no XSDs were found
-            request.setXmlBinding(binding);
-       // } catch (JAXBException jex) {
-       //     LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
-            // TODO throw new ServletException(jex);
-       // }
+        // XXX WARNING, CREATING A JAXBCONTEXT FOR EACH REQUEST IS TOO EXPENSIVE.
+        // JAXB team says that you should share as much as you can JAXBContext.
+        // I propose to make XmlBinding back to be static and locked. I mean
+        // that no custom package nor schema should be added to this JAXBContext.
+        // It is private to wiseman and only used to handle the protocol.
+        // Any model dependent JAXB processing must be done in separate JAXBContext(s).
+        // Model layer(s) can implement their own JAXBContext strategies.
+        // BTW, doing so, we make clear that any rechnology can be used to marsh/unmarsh.
+        // Relaying on JAXB becomes an implementation detail.
+        
+        // schema might be null if no XSDs were found
+        request.setXmlBinding(binding);
+        // } catch (JAXBException jex) {
+        //     LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
+        // TODO throw new ServletException(jex);
+        // }
         
         try {
             logMessage(LOG, request);
@@ -251,13 +343,13 @@ public abstract class WSManAgent {
             
             if((response = isValidEnvelopSize(request)) == null) {
                 final RequestDispatcher dispatcher = createDispatcher(request,
-                        context,this);
+                        context);
                 try {
                     dispatcher.authenticate();
                     //Test for identify responses
-                    Identify identifyResponse = dispatcher.processForIdentify();
+                    Identify identifyResponse = processForIdentify(request);
                     if(identifyResponse!=null){
-                    	return identifyResponse;
+                        return identifyResponse;
                     }
                     dispatcher.validateRequest();
                     response = dispatch(dispatcher, timeout);
@@ -274,6 +366,9 @@ public abstract class WSManAgent {
             }
             
             fillReturnAddress(request, response);
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Request / Response content type " +
+                        request.getContentType());
             response.setContentType(request.getContentType());
             
             Message resp = handleResponse(response, getValidEnvelopeSize(request));
@@ -293,7 +388,7 @@ public abstract class WSManAgent {
         return response;
     }
     
-    private static long getTimeout(Management request) throws Exception {
+    private long getTimeout(Management request) throws Exception {
         long timeout = defaultOperationTimeout;
         final Duration timeoutDuration = request.getTimeout();
         if (timeoutDuration != null) {
@@ -318,7 +413,7 @@ public abstract class WSManAgent {
         return response;
     }
     
-    private static Addressing dispatch(final Callable dispatcher, final long timeout)
+    private Addressing dispatch(final Callable dispatcher, final long timeout)
     throws Throwable {
         final FutureTask<Management> task =
                 new FutureTask<Management>(dispatcher);
@@ -326,16 +421,16 @@ public abstract class WSManAgent {
         // ExecutionException, perform the get on FutureTask itself
         pool.submit(task);
         try {
-        	if (defaultOperationTimeout != -1)
-        		return task.get(timeout, TimeUnit.MILLISECONDS);
-        	else
+            if (defaultOperationTimeout != DISABLED_TIMEOUT)
+                return task.get(timeout, TimeUnit.MILLISECONDS);
+            else
                 return task.get();
         } catch (ExecutionException ex) {
             throw ex.getCause();
         } catch (InterruptedException ix) {
             // ignore
         } catch (TimeoutException tx) {
-           throw new TimedOutFault();
+            throw new TimedOutFault();
         } finally {
             task.cancel(true);
         }
@@ -424,8 +519,8 @@ public abstract class WSManAgent {
                         EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED), maxEnvelopeSize, true);
             }
         }else
-         if(LOG.isLoggable(Level.FINE))
-            LOG.log(Level.FINE, "Response actual size is smaller than maxSize.");
+            if(LOG.isLoggable(Level.FINE))
+                LOG.log(Level.FINE, "Response actual size is smaller than maxSize.");
         
         
         final String dest = response.getTo();
@@ -450,8 +545,8 @@ public abstract class WSManAgent {
         return HttpClient.sendResponse(to, bits, contentType);
     }
     
-    static void logMessage(Logger logger, 
-             final Message msg) throws IOException, SOAPException {
+    static void logMessage(Logger logger,
+            final Message msg) throws IOException, SOAPException {
         // expensive serialization ahead, so check first
         if (logger.isLoggable(Level.FINE)) {
             if(msg == null) {

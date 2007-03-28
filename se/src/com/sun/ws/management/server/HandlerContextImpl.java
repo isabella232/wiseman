@@ -13,36 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HandlerContextImpl.java,v 1.2 2007-01-11 13:12:55 jfdenise Exp $
+ * $Id: HandlerContextImpl.java,v 1.3 2007-03-28 14:23:07 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.security.Principal;
 import java.util.Map;
-import javax.servlet.ServletConfig;
-import javax.servlet.http.HttpServletRequest;
 
 final class HandlerContextImpl implements HandlerContext {
     private String charEncoding;
     private String contentType;
     private Principal principal;
     private Map<String, ?> requestProperties;
-    private Map<String, String> agentProperties;
     private String url;
     HandlerContextImpl(final Principal principal, final String contentType, 
-            final String charEncoding, final String url, final Map<String, ?> requestProperties,
-            final Map<String, String> agentProperties) {
+            final String charEncoding, final String url, final Map<String, ?> requestProperties) {
         this.principal = principal;
         this.contentType = contentType;
         this.charEncoding = charEncoding;
         this.requestProperties = requestProperties;
-         this.agentProperties = agentProperties;
         this.url = url;
-    }
-    
-    public Map<String, String> getAgentProperties() {
-        return agentProperties;
     }
 
     public String getContentType() {

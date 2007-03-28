@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: RequestDispatcher.java,v 1.12 2007-03-20 20:35:38 simeonpinder Exp $
+ * $Id: RequestDispatcher.java,v 1.13 2007-03-28 14:23:08 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -37,7 +37,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
@@ -53,13 +52,8 @@ public abstract class RequestDispatcher implements Callable {
     protected final Management request;
     protected final Management response;
     
-    protected final WSManAgent dispatchingAgent;
-    
-    public RequestDispatcher(final Management req, final HandlerContext ctx, 
-    		final WSManAgent rootAgent) 
+    public RequestDispatcher(final Management req, final HandlerContext ctx) 
     throws JAXBException, SOAPException {
-        
-    	dispatchingAgent = rootAgent;
         request = req;
         context = ctx;
         response = new Management();
@@ -81,51 +75,6 @@ public abstract class RequestDispatcher implements Callable {
     	final Principal user = context.getPrincipal();
     	final String resource = request.getResourceURI();
     	// TODO: perform access control, throw SecurityException to deny access
-    }
-
-    /** This method is called when processing Identify requests for 
-     *  each request dispatcher.  Modify this method to adjust the Identify
-     *  processing functionality, but you may be able to simply override 
-     *  the getAdditionalIdentifyElements() method to add your own custom 
-     *  elements.  
-     * 
-     * @return Identify  This is the Identify instance to be returned to identify Request
-     * @throws SecurityException
-     * @throws JAXBException
-     * @throws SOAPException
-     */
-    public Identify processForIdentify() throws SecurityException, JAXBException, SOAPException {
-    	//Test for identify message
-        final Identify identify = new Identify(request);
-        identify.setXmlBinding(request.getXmlBinding());
-        
-        final SOAPElement id = identify.getIdentify();
-        if (id == null) {
-            return null;//else exit
-        }
-        
-    	//As this is an indentify message then populate the response.
-        Identify response = new Identify();
-        response.setXmlBinding(request.getXmlBinding()); 
-        response.setIdentifyResponse(
-            dispatchingAgent.getProperties().get("impl.vendor") + " - " + 
-            		dispatchingAgent.getProperties().get("impl.url"),
-            dispatchingAgent.getProperties().get("impl.version"),
-            Management.NS_URI,
-            getAdditionalIdentifyElements());
-
-        return response;
-    }
-    
-    /** Override this method to define additional Identify elements
-     *  to be returned.  This method is usually called in processForIdentify()
-     *  method to add additional nodes.
-     * 
-     * @return Map containing information to simple xml nodes.
-     */
-    public Map<QName, String> getAdditionalIdentifyElements(){
-    	Map<QName, String> additional = null;
-    	return additional;
     }
     
     private void log(final byte[] bits) throws UnsupportedEncodingException {

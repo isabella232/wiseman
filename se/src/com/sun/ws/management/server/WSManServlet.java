@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.30 2007-01-17 08:47:00 jfdenise Exp $
+ * $Id: WSManServlet.java,v 1.31 2007-03-28 14:23:08 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -104,7 +104,7 @@ public class WSManServlet extends HttpServlet {
     
     protected WSManAgent createWSManAgent(Source[] schemas) throws SAXException {
         // It is an extension of WSManAgent to handle Reflective Dispatcher
-        return new WSManReflectiveAgent(schemas);
+        return new WSManReflectiveAgent(null, schemas, null);
     }
     
     public void doGet(final HttpServletRequest req,
@@ -162,7 +162,7 @@ public class WSManServlet extends HttpServlet {
         Map<String, Object> props = new HashMap<String, Object>(1);
         props.put(HandlerContext.SERVLET_CONTEXT, getServletContext());
         final HandlerContext context = new HandlerContextImpl(user, contentype,
-                charEncoding, url, props, agent.getProperties());
+                charEncoding, url, props);
         
         Message response = agent.handleRequest(request, context);
         

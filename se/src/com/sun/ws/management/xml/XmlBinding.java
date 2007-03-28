@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.17 2007-03-01 06:01:25 simeonpinder Exp $
+ * $Id: XmlBinding.java,v 1.18 2007-03-28 14:23:09 jfdenise Exp $
  */
 
 package com.sun.ws.management.xml;
 
 import com.sun.ws.management.SchemaValidationErrorFault;
+import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.soap.FaultException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import javax.xml.bind.JAXBContext;
@@ -31,33 +34,34 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.ValidationEventHandler;
+import javax.xml.transform.Source;
 import javax.xml.validation.Schema;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 public final class XmlBinding {
     
     private static final String[] DEFAULT_PACKAGES = {
-            "org.w3._2003._05.soap_envelope",
-            "org.xmlsoap.schemas.ws._2004._08.addressing",
-            "org.xmlsoap.schemas.ws._2004._08.eventing",
-            "org.xmlsoap.schemas.ws._2004._09.enumeration",
-            "org.xmlsoap.schemas.ws._2004._09.transfer",
-            "org.dmtf.schemas.wbem.wsman._1.wsman",
-            "org.xmlsoap.schemas.ws._2004._09.mex"
+        "org.w3._2003._05.soap_envelope",
+        "org.xmlsoap.schemas.ws._2004._08.addressing",
+        "org.xmlsoap.schemas.ws._2004._08.eventing",
+        "org.xmlsoap.schemas.ws._2004._09.enumeration",
+        "org.xmlsoap.schemas.ws._2004._09.transfer",
+        "org.dmtf.schemas.wbem.wsman._1.wsman"
     };
     
-    private static final Properties BINDING_PROPERTIES = new Properties();
     private static final String BINDING_PROPERTIES_FILE = "/binding.properties";
-    private static final String CUSTOM_PACKAGE_NAMES = 
+    public static final String CUSTOM_PACKAGE_NAMES =
             XmlBinding.class.getPackage().getName() + ".custom.packagenames";
-    private static final String VALIDATE = 
+    public static final String CUSTOM_SCHEMA_NAMES =
+            XmlBinding.class.getPackage().getName() + ".custom.schemas";
+    public static final String VALIDATE =
             XmlBinding.class.getPackage().getName() + ".validate";
-    private static final String VALIDATE_DEFAULT = "true";
     
-    final JAXBContext context;
-    final Schema schema;
-    final boolean validate;
-    final Set packageNamesHandled = new HashSet<String>();
+    private JAXBContext context;
+    private Schema schema;
+    private boolean validate;
+    private Set packageNamesHandled = new HashSet<String>();
     
     private static final class ValidationHandler implements ValidationEventHandler {
         
@@ -74,10 +78,48 @@ public final class XmlBinding {
         }
     }
     
-    public XmlBinding(final Schema schema, final String... customPackages) throws JAXBException {
+    
+    public XmlBinding(final Schema schema, String... customPackages)
+    throws JAXBException {
+        init(schema, null, null, null, 
+             false,
+             customPackages);
+    }
+    
+    public XmlBinding(final Schema schema, Map<String, String> bindingConf)
+    throws JAXBException {
+        init(schema, null, bindingConf, 
+                Thread.currentThread().getContextClassLoader(), false);
+    }
+    
+    public XmlBinding(final Source[] customSchemas, Map<String, String> bindingConf,
+            ClassLoader loader,
+            String... customPackages)
+            throws JAXBException {
+        init(null, customSchemas, bindingConf, 
+             loader,true, customPackages);
+    }
+    
+    public XmlBinding(Schema schema, Source[] customSchemas,
+            Map<String, String> bindingConf,
+            ClassLoader loader,
+            String... customPackages)
+            throws JAXBException {
+         init(schema, customSchemas, bindingConf, loader, true,
+              customPackages);
+    }
+    
+    private void init(Schema schema, Source[] customSchemas,
+            Map<String, String> bindingConf,
+            ClassLoader loader, boolean validation,
+            String... customPackages) throws JAXBException {
         
+        if(loader == null)
+            loader = Thread.currentThread().getContextClassLoader();
+   
         final StringBuilder packageNames = new StringBuilder();
         boolean first = true;
+        
         for (final String p : DEFAULT_PACKAGES) {
             if (first) {
                 first = false;
@@ -88,20 +130,16 @@ public final class XmlBinding {
             packageNamesHandled.add(p);
         }
         
-        final InputStream ism = XmlBinding.class.getResourceAsStream(BINDING_PROPERTIES_FILE);
-        if (ism != null) {
-            try {
-                BINDING_PROPERTIES.load(ism);
-            } catch (IOException ex) {
-                throw new JAXBException(ex);
-            }
+        final Map<String, String> propertySet = new HashMap<String, String>();
+        WSManAgent.getProperties(BINDING_PROPERTIES_FILE, propertySet);
+        // Put all passed properties
+        if(bindingConf != null)
+            propertySet.putAll(bindingConf);
+        String customPackageNames = System.getProperty(CUSTOM_PACKAGE_NAMES);
+        if(customPackageNames == null || customPackageNames.equals("")) {
+            customPackageNames = propertySet.get(CUSTOM_PACKAGE_NAMES);
         }
         
-        // Check System properties first to allow command line override
-        String customPackageNames = System.getProperty(CUSTOM_PACKAGE_NAMES);
-        if (customPackageNames == null || customPackageNames.equals("")) {
-            customPackageNames = BINDING_PROPERTIES.getProperty(CUSTOM_PACKAGE_NAMES);
-        }
         if (customPackageNames != null && !customPackageNames.equals("")) {
             for (final String packageName : customPackageNames.split(",")) {
                 final String pkg = packageName.trim();
@@ -117,24 +155,54 @@ public final class XmlBinding {
             packageNamesHandled.add(p);
         }
         
-        context = JAXBContext.newInstance(packageNames.toString(),
-                Thread.currentThread().getContextClassLoader());
+        context = JAXBContext.newInstance(packageNames.toString(), loader);
+        
+        // Compute a schema based on passed sources and custom ones.
+        if(schema == null && validation) {
+            String customSchemaNames = System.getProperty(CUSTOM_SCHEMA_NAMES);
+            if(customSchemaNames == null)
+                customSchemaNames = propertySet.get(CUSTOM_SCHEMA_NAMES);
+            Source[] customSchemas1 = null;
+            if(customSchemaNames != null)
+                customSchemas1 = WSManAgent.newSources(customSchemaNames, "/");
+            Source[] finalSchemas = null;
+            if(customSchemas != null || customSchemas1 != null) {
+                finalSchemas = customSchemas ==  null ? customSchemas1 : customSchemas;
+                if(customSchemas != null && customSchemas1 != null) {
+                    // Need to merge both
+                    finalSchemas = new Source[customSchemas.length +
+                            customSchemas1.length];
+                    System.arraycopy(customSchemas1,0,finalSchemas,0,customSchemas1.length);
+                    System.arraycopy(customSchemas,0,finalSchemas,customSchemas1.length,
+                            customSchemas.length);
+                }
+            }
+            try {
+                schema = WSManAgent.createSchema(finalSchemas);
+            }catch(SAXException sx) {
+                sx.printStackTrace();
+                throw new IllegalArgumentException("Invalid schema, " +
+                        "can't validate. " + sx);
+            }
+        } 
         
         this.schema = schema;
         
         // Allow enabling and disabling validation via properties
         if (this.schema != null) {
-			// Check System properties for validate flag first
-			String doValidation = System.getProperty(VALIDATE);
-			if ((doValidation == null) || (doValidation.length() == 0)) {
-				// Check for the validation flag in 'binding.properties'
-				doValidation = BINDING_PROPERTIES.getProperty(VALIDATE,
-						VALIDATE_DEFAULT);
-			}
-			this.validate = Boolean.getBoolean(doValidation);
-		} else {
-			this.validate = false;
-		}
+            String doValidate = null;
+            // Check System properties for validate flag first
+            doValidate = System.getProperty(VALIDATE);
+            if ((doValidate == null) || (doValidate.length() == 0)) {
+                // Check for the validation flag in 'binding.properties'
+                doValidate = propertySet.get(VALIDATE);
+            }
+            if(doValidate == null)
+                this.validate = true;
+            else
+                this.validate = Boolean.getBoolean(doValidate);
+        } else
+            this.validate = false;
     }
     
     public void marshal(final Object obj, final Node node) throws JAXBException {
@@ -155,7 +223,7 @@ public final class XmlBinding {
             throw fault;
         }
         return obj;
-    }    
+    }
     
     public boolean isValidating() {
         return this.validate;

@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.50 2007-03-02 16:08:18 denis_rachal Exp $
+ $Id: build.xml,v 1.51 2007-03-28 14:23:07 jfdenise Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -23,15 +23,15 @@
     <property file="project.properties"/>
     <property file="${user.home}/.ant.properties"/>
 
-	<!-- Test that a valid ant version is being used -->
-	<condition property="valid.ant.version">
-		<or>
-		  <contains substring="1.6.5" string="${ant.version}" />	
-		  <contains substring="1.7." string="${ant.version}" />	
-		</or>
-	</condition>
-	<fail message="You should be using ant 1.6.5 or better."
-	      unless="valid.ant.version"/>
+    <!-- Test that a valid ant version is being used -->
+    <condition property="valid.ant.version">
+        <or>
+            <contains substring="1.6.5" string="${ant.version}" />	
+            <contains substring="1.7." string="${ant.version}" />	
+        </or>
+    </condition>
+    <fail message="You should be using ant 1.6.5 or better."
+    unless="valid.ant.version"/>
 	
     <target name="init">
         <tstamp />
@@ -64,7 +64,7 @@
         <xjc destdir="${gen.src.dir}">
             <!-- uncomment if HTTP proxies are needed for internet access, 
             define them in ${user.home}/.ant.properties -->
-        	<!--
+            <!--
             <arg value="-httpproxy" />
             <arg value="${http.proxy}" />
             -->
@@ -82,7 +82,7 @@
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="transfer.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_09/transfer/*.java" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="management.xsd" />
-        	<schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="metadata.xsd" />
+            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="metadata.xsd" />
         </xjc>
     </target>
 
@@ -121,7 +121,7 @@
             <classpath refid="compile.classpath" />
             <src path="${gen.src.dir}" />
             <src path="${src.dir}" />
-        	<exclude name="com/sun/ws/management/server/handler/**" />
+            <exclude name="com/sun/ws/management/server/handler/**" />
         </javac>
         <propertyfile file="${src.dir}/wsman.properties">
             <entry key="build.version" value="${DSTAMP}${TSTAMP}" />
@@ -133,7 +133,6 @@
         <copy todir="${build.classes.dir}">
             <fileset dir="${src.dir}">
                 <include name="wsman.properties" />
-                <include name="metadata-handlers.properties" />
             </fileset>
         </copy>
     </target>
@@ -193,11 +192,14 @@
             index="true">
             <fileset dir="${test.build.classes.dir}">
                 <include name="com/hp/**" />
-            	<include name="com/sun/**" />
+                <include name="com/sun/**" />
                 <include name="foo/test/**" />
                 <include name="framework/models/**" />
                 <include name="util/**" />
                 <include name="transport/**" />
+            </fileset>
+            <fileset dir="${test.dir}/etc">
+                <include name="binding.properties" />
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}" />
@@ -227,14 +229,18 @@
                 <include name="foo/test/**" />
                 <include name="framework/models/**" />
             </classes>
-        	<classes dir="${test.dir}/etc">
+            <classes dir="${test.dir}/etc">
                 <include name="logging.properties" />
             </classes>
             <classes dir="${test.dir}/etc">
-            	<include name="binding.properties" />
+                <include name="binding.properties" />
             </classes>
             <classes dir="${test.dir}/etc">
                 <include name="wiseman.properties" />
+            </classes>
+            <classes dir="${test.dir}/etc">
+                <include name="metadata.properties" />
+                <include name="metadata-handlers.properties" />
             </classes>
             <lib dir="${dist.dir}">
                 <include name="${lib.filename}" />
@@ -286,14 +292,18 @@
                 <include name="foo/test/**" />
                 <include name="framework/models/**" />
             </classes>
-        	<classes dir="${test.dir}/etc">
+            <classes dir="${test.dir}/etc">
                 <include name="logging.properties" />
             </classes>
             <classes dir="${test.dir}/etc">
-            	<include name="binding.properties" />
+                <include name="binding.properties" />
             </classes> 
             <classes dir="${test.dir}/etc">
                 <include name="wiseman.properties" />
+            </classes>
+            <classes dir="${test.dir}/etc">
+                <include name="metadata.properties" />
+                <include name="metadata-handlers.properties" />
             </classes>
             <lib dir="${dist.dir}">
                 <include name="${lib.filename}" />
@@ -339,11 +349,11 @@
             <classes dir="${test.build.classes.dir}">
                 <include name="server/EventsReceiverServlet.class" />
             </classes>
-        	<classes dir="${test.dir}/etc">
+            <classes dir="${test.dir}/etc">
                 <include name="logging.properties" />
             </classes>
             <classes dir="${test.dir}/etc">
-            	<include name="binding.properties" />
+                <include name="binding.properties" />
             </classes>
             <classes dir="${test.dir}/etc">
                 <include name="wiseman.properties" />
@@ -455,7 +465,7 @@
             debug="${debug}">
             <classpath refid="test.compile.classpath" />
             <src path="${src.dir}" />
-        	<include name="com/sun/ws/management/server/handler/**" />
+            <include name="com/sun/ws/management/server/handler/**" />
         </javac>
         <javac destdir="${test.build.classes.dir}"
             debug="${debug}">
@@ -478,6 +488,7 @@
         <path path="${test.build.classes.dir}" />
         <fileset dir="${dist.dir}">
             <include name="${lib.filename}"/>
+            <include name="wiseman_test.jar"/>
         </fileset>
         <path refid="jaxws.compile.classpath" />
         <fileset dir="${test.lib.dir}">
@@ -490,7 +501,7 @@
         path="/events" war="${basedir}/${dist.dir}/${events.filename}" update="true" />
     </target>
   
-    <target name="test" depends="lib,test-compile,deploy,test-deploy">
+    <target name="test" depends="lib,test-compile"><!--,deploy,test-deploy">-->
         <copy todir="${ant.home}/lib" 
         file="${test.lib.dir}/junit.jar" />
         <taskdef name="junit"
@@ -517,16 +528,26 @@
         </junit>
     </target> 
     
-    <!-- J2SE Deployment, NOT YET WORKING, A LOT OF TESTS ARE REFERENCING Servlet-->
-    <!--<target name="deploy-j2se-jaxws" depends="lib,test-compile">
-    <java fork="true" classname="server.JAXWSAgent">
-    <sysproperty key="java.util.logging.config.file" value="logging.properties"/>
-    <classpath refid="test.run.classpath"/>
-    </java>
+    <target name="deploy-j2se-jaxws" depends="lib">
+          <!-- Need to compute a jar for wiseman configuration -->
+        <jar destfile="${dist.dir}/${lib.test.filename}"
+            index="true">
+            <fileset dir="${test.dir}/etc">
+                <include name="logging.properties" />
+                <include name="binding.properties" />
+                <include name="wiseman.properties" />
+                <include name="metadata.properties" />
+                <include name="metadata-handlers.properties" />
+            </fileset>
+        </jar>
+        <java fork="true" classname="server.JAXWSAgent">
+            <sysproperty key="java.util.logging.config.file" value="logging.properties"/>
+            <classpath refid="test.run.classpath"/>
+            <classpath path="${dist.dir}/${lib.test.filename}"/>
+        </java>
     </target>
   
     <target name="test-j2se-jaxws" depends="test-compile">
-   
         <copy todir="${ant.home}/lib" 
         file="${test.lib.dir}/junit.jar" />
         <taskdef name="junit"
@@ -539,8 +560,8 @@
             </assertions>
             <batchtest todir="${test.run.dir}">
                 <fileset dir="${test.src.dir}">
-                     <include name="management/*Test.java" />
-                     <include name="framework/*TestCase.java" />
+                    <include name="management/*Test.java" />
+                    <include name="framework/*TestCase.java" />
                 </fileset>
             </batchtest>
             <classpath refid="test.run.classpath" />
@@ -551,8 +572,7 @@
             <jvmarg value="-Dwsman.password=secret" />
             <jvmarg value="-Dwsman.basicauthentication=true" />
         </junit>
-    </target> 
-    -->
+    </target>
     
     <target name="test-jaxws" depends="lib,test-compile,deploy-jaxws,test-deploy">
    
@@ -568,8 +588,8 @@
             </assertions>
             <batchtest todir="${test.run.dir}">
                 <fileset dir="${test.src.dir}">
-                     <include name="management/*Test.java" />
-                     <include name="framework/*TestCase.java" />
+                    <include name="management/*Test.java" />
+                    <include name="framework/*TestCase.java" />
                 </fileset>
             </batchtest>
             <classpath refid="test.run.classpath" />

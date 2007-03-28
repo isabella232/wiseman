@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManJAXWSEndpoint.java,v 1.3 2007-01-17 08:47:00 jfdenise Exp $
+ * $Id: WSManJAXWSEndpoint.java,v 1.4 2007-03-28 14:23:08 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -34,6 +34,8 @@ import java.util.logging.Logger;
 import javax.security.auth.Subject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.transform.Source;
+import javax.xml.validation.Schema;
 import javax.xml.ws.WebServiceContext;
 import java.lang.management.ManagementFactory;
 import javax.annotation.Resource;
@@ -55,6 +57,12 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
     
     private static final Logger LOG = Logger.getLogger(WSManJAXWSEndpoint.class.getName());
     private WSManAgent agent;
+    
+    // Agent constuction parameters
+    private Map<String,String> wisemanConf;
+    private Source[] customSchemas;
+    private Map<String,String> bindingConf;
+    
     // JAXWS Context injection
     @Resource
     private WebServiceContext context;
@@ -63,6 +71,17 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
      * JAX-WS Endpoint constructor
      */
     public WSManJAXWSEndpoint() {
+        this(null, null, null);
+        
+    }
+    /**
+     * JAX-WS Endpoint constructor
+    */
+    public WSManJAXWSEndpoint(Map<String,String> wisemanConf, Source[] customSchemas, 
+            Map<String,String> bindingConf) {
+       this.wisemanConf = wisemanConf;
+       this.customSchemas = customSchemas;
+       this.bindingConf = bindingConf;
     }
     
     public SOAPMessage invoke(SOAPMessage message) {
@@ -82,15 +101,13 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
             props.put(HandlerContext.SERVLET_CONTEXT, servletContext);
             props.put(HandlerContext.JAX_WS_CONTEXT, webctx);
             
-            
-             if (LOG.isLoggable(Level.FINE))
+            if (LOG.isLoggable(Level.FINE))
                 LOG.fine("Context properties : " + " contentType " + contentType + 
                         ", encoding " + encoding + ", url " + url + ", servletContext"
                         + servletContext + ", webctx " + 
                         webctx);
 
-            ctx = new HandlerContextImpl(principal, contentType, encoding, url, props,
-                    getAgent().getProperties());
+            ctx = new HandlerContextImpl(principal, contentType, encoding, url, props);
             Message reply = getAgent().handleRequest(request, ctx);
             
             // reply being null means that no reply is to be sent back. 
@@ -130,6 +147,7 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
     
     protected WSManAgent createWSManAgent() throws SAXException {
         // It is an extension of WSManAgent to handle Reflective Dispatcher
-        return new WSManReflectiveAgent();
+        return new WSManReflectiveAgent(wisemanConf, customSchemas, 
+                bindingConf);
     }
 }

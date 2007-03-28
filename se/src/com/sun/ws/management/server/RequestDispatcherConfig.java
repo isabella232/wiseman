@@ -1,6 +1,7 @@
 package com.sun.ws.management.server;
 
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -8,7 +9,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletContext;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -21,8 +21,9 @@ public class RequestDispatcherConfig {
     
     private static final Logger LOG = Logger
             .getLogger(RequestDispatcherConfig.class.getName());
-    
-    public static final String RESOURCE_HANDLER_CONFIG = "/WEB-INF/resource-handler-config.xml";
+    public static final String RESOURCE_HANDLER_CONFIG_FILE = "/resource-handler-config.xml";
+    public static final String J2EE_RESOURCE_HANDLER_CONFIG = "/WEB-INF" + RESOURCE_HANDLER_CONFIG_FILE;
+    public static final String J2SE_RESOURCE_HANDLER_CONFIG = RESOURCE_HANDLER_CONFIG_FILE;
     
     private static final String RESOURCE_HANDLER_PACKAGE_NAME = "net.java.dev.wiseman.server.handler.config._1";
     
@@ -56,11 +57,32 @@ public class RequestDispatcherConfig {
             if (initDone == false) {
                 initDone = true;
                 try {
-                    // Get the ServletConfig
-                    ServletContext servletCtx = 
-                            (ServletContext) context.
+                    // Get the ServletContext
+                    Object servletCtx = context.
                             getRequestProperties().
                             get(HandlerContext.SERVLET_CONTEXT);
+                    InputStream is = null;
+                    if(servletCtx != null) {
+                        // We are in a J2EE context
+                        try {
+                            Class srvletContextClass = Class.forName("javax.servlet.ServletContext");
+                            Method getResource = srvletContextClass.getMethod("getResourceAsStream", 
+                                java.lang.String.class);
+                            is = (InputStream) getResource.invoke(servletCtx, J2EE_RESOURCE_HANDLER_CONFIG);
+                        }catch(Exception ex) {
+                            if (LOG.isLoggable(Level.FINE)) {
+                                LOG.log(Level.FINE,
+                                    "WARNING: Failed to access to servlet classes");
+                            }
+                            return;
+                        }
+                    } else {
+                        // We are in a J2SE context
+                        // XXX REVISIT, could add flexibility by relying on a classloader
+                        is = RequestDispatcherConfig.class.
+                                getResourceAsStream(J2SE_RESOURCE_HANDLER_CONFIG);
+                    }
+                    
                     // Create a JAXBContext
                     JAXBContext jbc = JAXBContext
                             .newInstance(RESOURCE_HANDLER_PACKAGE_NAME);
@@ -68,16 +90,12 @@ public class RequestDispatcherConfig {
                     // Create an Unmarshaller
                     Unmarshaller unmarshaller = jbc.createUnmarshaller();
                     
-                    // Get an InputStream for the config file
-                    InputStream is = servletCtx
-                            .getResourceAsStream(RESOURCE_HANDLER_CONFIG);
-                    
                     // Check if InputStream was successfully opened
                     if (is == null) {
                         if (LOG.isLoggable(Level.FINE)) {
                             LOG.log(Level.FINE,
                                     "WARNING: Failed to load configuration "
-                                    + RESOURCE_HANDLER_CONFIG);
+                                    + RESOURCE_HANDLER_CONFIG_FILE);
                         }
                         return;
                     }
