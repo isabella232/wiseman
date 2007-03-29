@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.15 2007-03-08 09:02:44 denis_rachal Exp $
+ * $Id: BaseSupport.java,v 1.16 2007-03-29 12:38:53 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,6 +27,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
@@ -76,7 +77,7 @@ public class BaseSupport {
     private static final Logger LOG = Logger.getLogger(BaseSupport.class.getName());
     
     private static final int CLEANUP_INTERVAL = 60000;
-    private static final Timer cleanupTimer = new Timer(true);
+    private static Timer cleanupTimer = new Timer(true);
     
     private static Map<String, FilterFactory> supportedFilters =
             new HashMap<String, FilterFactory>();
@@ -257,6 +258,14 @@ public class BaseSupport {
     
     protected static BaseContext putContext(final UUID context, final BaseContext ctx) {
         return contextMap.put(context, ctx);
+    }
+    
+    public static synchronized void stopTimer() {
+        if(LOG.isLoggable(Level.FINER))
+            LOG.log(Level.FINER, "Stopping timer " + cleanupTimer);
+        if(cleanupTimer == null) return;
+        cleanupTimer.cancel();
+        cleanupTimer = null;
     }
     
     protected synchronized static BaseContext removeContext(final HandlerContext requestContext, 
