@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.9 2007-03-28 14:23:08 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.10 2007-03-29 13:10:13 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -92,7 +92,7 @@ public abstract class WSManAgent {
     private static final String SCHEMA_PATH =
             "/com/sun/ws/management/resources/schemas/";
     
-    private static final ExecutorService pool = Executors.newCachedThreadPool();
+    private static ExecutorService pool;
     
     private static Map<String, String> properties = null;
     
@@ -227,6 +227,16 @@ public abstract class WSManAgent {
         }
             
     }
+    
+    /**
+     * Allow subclass to provide a ThreadPool according to their own 
+     * caching/threadingstrategy
+     */
+     protected synchronized ExecutorService getExecutorService() {
+         if(pool == null)
+              pool = Executors.newCachedThreadPool();
+         return pool;
+     }
     
      /** This method is called when processing Identify requests.
      * Modify this method to adjust the Identify
@@ -419,7 +429,7 @@ public abstract class WSManAgent {
                 new FutureTask<Management>(dispatcher);
         // the Future returned by pool.submit does not propagate
         // ExecutionException, perform the get on FutureTask itself
-        pool.submit(task);
+        getExecutorService().submit(task);
         try {
             if (defaultOperationTimeout != DISABLED_TIMEOUT)
                 return task.get(timeout, TimeUnit.MILLISECONDS);
