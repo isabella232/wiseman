@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.31 2007-03-28 14:23:08 jfdenise Exp $
+ * $Id: WSManServlet.java,v 1.32 2007-03-30 15:03:24 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -153,6 +153,8 @@ public class WSManServlet extends HttpServlet {
             throws SOAPException, JAXBException, IOException {
         
         final Management request = new Management(is);
+        request.setXmlBinding(agent.getXmlBinding());
+        
         request.setContentType(contentType);
         
         String contentype = req.getContentType();

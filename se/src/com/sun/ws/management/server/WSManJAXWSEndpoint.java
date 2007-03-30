@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManJAXWSEndpoint.java,v 1.4 2007-03-28 14:23:08 jfdenise Exp $
+ * $Id: WSManJAXWSEndpoint.java,v 1.5 2007-03-30 15:03:23 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -90,7 +90,7 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
         
         try {
             request = new Management(message);
-            
+            request.setXmlBinding(getAgent().getXmlBinding());
             Principal principal = getWebServiceContext().getUserPrincipal();
             String contentType = ContentType.DEFAULT_CONTENT_TYPE.getMimeType();
             String encoding = request.getContentType() == null ? null : request.getContentType().getEncoding();
@@ -120,6 +120,7 @@ public class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
         }catch(Exception ex) {
             try {
                 Management response = new Management();
+                response.setXmlBinding(getAgent().getXmlBinding());
                 response.setFault(new InternalErrorFault(ex.getMessage()));
                 return response.getMessage();
             }catch(Exception ex2) {

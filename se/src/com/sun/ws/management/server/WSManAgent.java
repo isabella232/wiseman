@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.10 2007-03-29 13:10:13 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.11 2007-03-30 15:03:24 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -579,5 +579,9 @@ public abstract class WSManAgent {
                 logger.fine(new String(content, encoding));
             
         }
+    }
+
+    public XmlBinding getXmlBinding() {
+        return binding;
     }
 }
