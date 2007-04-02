@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManReflectiveAgent.java,v 1.4 2007-03-28 14:23:08 jfdenise Exp $
+ * $Id: WSManReflectiveAgent.java,v 1.5 2007-04-02 15:40:39 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -53,24 +53,25 @@ public class WSManReflectiveAgent extends WSManAgent {
     }
     
     @Override
-            protected RequestDispatcher createDispatcher(Management request, HandlerContext context) 
+    protected RequestDispatcher createDispatcher(Management request, HandlerContext context) 
             throws SOAPException, JAXBException, IOException {
         return new ReflectiveRequestDispatcher(request, context);
     }
     
-        /* (non-Javadoc)
-         * @see com.sun.ws.management.server.RequestDispatcher#getAdditionalIdentifyElements()
-         */
-    @Override
-    public Map<QName, String> getAdditionalIdentifyElements() {
-        //Add additional elements to the IdentifyResponse object.
+    
+    public static Map<QName, String> getMetadataConfiguration(Map<String, String> propertySet) {
+        if(propertySet == null) {
+            propertySet = new HashMap<String, String>();
+            getProperties(METADATA_PROPERTY_FILE_NAME, propertySet);
+        }
+         //Add additional elements to the IdentifyResponse object.
         Map<QName,String> extraIdInfo = new HashMap<QName, String>();
         
         //If MetaData resource is exposed, then populate that information here.
         String value = null;
         //Determine whether to turn on/off metaData exposure
         String mDataEnabled="metadata.index.enabled";
-        value = metadataProperties.get(mDataEnabled);
+        value = propertySet.get(mDataEnabled);
         boolean exposeMetaDataContent = false;
         exposeMetaDataContent = Boolean.parseBoolean(value);
         if((value!=null)&&(value.trim().length()>0)){
@@ -83,7 +84,7 @@ public class WSManReflectiveAgent extends WSManAgent {
         if(exposeMetaDataContent){
             //MetaData Addressing TO field
             String mDataTo="metadata.index.to";
-            value = metadataProperties.get(mDataTo);
+            value = propertySet.get(mDataTo);
             if((value!=null)&&(value.trim().length()>0)){
                 extraIdInfo.put(
                         AnnotationProcessor.META_DATA_TO,
@@ -91,7 +92,7 @@ public class WSManReflectiveAgent extends WSManAgent {
             }
             //MetaData WsManagement ResourceURI field
             String mDataResourceURI="metadata.index.resourceURI";
-            value = metadataProperties.get(mDataResourceURI);
+            value = propertySet.get(mDataResourceURI);
             if((value!=null)&&(value.trim().length()>0)){
                 extraIdInfo.put(
                         AnnotationProcessor.META_DATA_RESOURCE_URI,
@@ -99,7 +100,7 @@ public class WSManReflectiveAgent extends WSManAgent {
             }
             //MetaData descriptive information
             String mDataDesc="metadata.index.description";
-            value = metadataProperties.get(mDataDesc);
+            value = propertySet.get(mDataDesc);
             if((value!=null)&&(value.trim().length()>0)){
                 extraIdInfo.put(
                         AnnotationProcessor.META_DATA_DESCRIPTION,
@@ -107,6 +108,14 @@ public class WSManReflectiveAgent extends WSManAgent {
             }
         }
         return extraIdInfo;
+    }
+    
+    /* (non-Javadoc)
+         * @see com.sun.ws.management.server.RequestDispatcher#getAdditionalIdentifyElements()
+         */
+    @Override
+    protected Map<QName, String> getAdditionalIdentifyElements() {
+       return getMetadataConfiguration(metadataProperties);
     }
 }
 
