@@ -1,5 +1,6 @@
 package com.sun.ws.management.metadata.viewer;
 
+import com.sun.ws.management.mex.MetadataUtility;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -246,7 +247,7 @@ public class MetadataViewer extends JFrame {
 		    //########### TRANSLATE METADATA TO FAMILIAR MANAGEMENT NODES ##### 
 		     //Extract the MetaData node returned as Management instances
 		     Management[] metaDataList = 
-		        	ManagementUtility.extractEmbeddedMetaDataElements(mResp);
+		        	MetadataUtility.extractEmbeddedMetaDataElements(mResp);
 		     if((metaDataList!=null)&&(metaDataList.length>0)){
 		    	 //remove (no metadata to display node)
 		    	 if(rootNodeElement.getIndex(emptyNode)>-1){

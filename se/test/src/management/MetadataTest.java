@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MetadataTest.java,v 1.1 2007-03-01 06:01:22 simeonpinder Exp $
+ * $Id: MetadataTest.java,v 1.2 2007-04-02 16:11:22 jfdenise Exp $
  */
 
 package management;
 
+import com.sun.ws.management.mex.MetadataUtility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.UUID;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
@@ -32,7 +31,6 @@ import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
@@ -190,7 +188,7 @@ public class MetadataTest extends TestBase {
 	    //########### TRANSLATE METADATA TO FAMILIAR MANAGEMENT NODES ##### 
 	        //Extract the MetaData node returned as Management instances
 	        Management[] metaDataList = 
-	        	ManagementUtility.extractEmbeddedMetaDataElements(mResp);
+	        	MetadataUtility.extractEmbeddedMetaDataElements(mResp);
 	        assertEquals("Correct number of Management instances not returned.",
 	        		3, metaDataList.length);
 			
@@ -347,7 +345,7 @@ public class MetadataTest extends TestBase {
    
         //retrieve all the metadata descriptions 
         Management[] metaDataList = 
-        	ManagementUtility.extractEmbeddedMetaDataElements(mResp); 
+        	MetadataUtility.extractEmbeddedMetaDataElements(mResp); 
         assertEquals("Array count incorrect.",3, metaDataList.length);
         Management enumModInst = null;
         for (int i = 0; i < metaDataList.length; i++) {
