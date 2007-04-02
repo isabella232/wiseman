@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ReflectiveRequestDispatcher.java,v 1.20 2007-03-28 14:23:08 jfdenise Exp $
+ * $Id: ReflectiveRequestDispatcher.java,v 1.21 2007-04-02 16:16:55 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -22,19 +22,15 @@ import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBException;
-import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 public final class ReflectiveRequestDispatcher extends RequestDispatcher {
