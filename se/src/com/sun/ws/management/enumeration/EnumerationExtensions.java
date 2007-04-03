@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.12 2007-01-30 12:26:14 denis_rachal Exp $
+ * $Id: EnumerationExtensions.java,v 1.13 2007-04-03 12:18:39 jfdenise Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -315,14 +315,28 @@ public class EnumerationExtensions extends Enumeration {
 					final Iterator iter = content.iterator();
 					while (iter.hasNext()) {
 						Object itemObj = iter.next();
-						if ((itemObj instanceof JAXBElement)
+                                                // XXX Revisit, JAXB is adding an empty String when unmarshaling
+                                                // a Mixed content. getContent() returns a list containing 
+                                                // such empty String element
+                                                // BUG ID is : 6542005
+                                                // Unmarshalled @XmlMixed list contains an additional empty String
+                                                if(itemObj instanceof String) {
+                                                    // Having the list being of Mixed content
+                                                    // An empty string element is added.
+                                                    String str = (String) itemObj;
+                                                    if(str.length() == 0)
+                                                        continue;
+                                                    else
+                                                       item = itemObj; 
+                                                } else
+                                                    if ((itemObj instanceof JAXBElement)
 								&& ((JAXBElement) itemObj).getDeclaredType()
 										.equals(EndpointReferenceType.class)) {
 							final JAXBElement<EndpointReferenceType> jaxbEpr = (JAXBElement<EndpointReferenceType>) itemObj;
 							eprt = jaxbEpr.getValue();
-						} else {
+                                                    } else {
 							item = itemObj;
-						}
+                                                    }
 					}
 				} else {
 					// JAXB Item only
