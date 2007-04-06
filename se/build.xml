@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.52 2007-03-28 15:13:39 jfdenise Exp $
+ $Id: build.xml,v 1.53 2007-04-06 08:50:43 jfdenise Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -197,6 +197,9 @@
                 <include name="framework/models/**" />
                 <include name="util/**" />
                 <include name="transport/**" />
+            </fileset>
+            <fileset dir="etc/xsd">
+                <include name="metadata.xsd" />
             </fileset>
             <fileset dir="${test.dir}/etc">
                 <include name="binding.properties" />
