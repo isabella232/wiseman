@@ -13,32 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WiseManResourceHandler.java,v 1.1 2007-03-28 14:27:00 jfdenise Exp $
+ * $Id: WiseManResourceHandler.java,v 1.2 2007-04-06 13:41:55 jfdenise Exp $
  */
 
 package com.sun.ws.management.x.jmx;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.server.HandlerContext;
-import com.sun.ws.management.server.ReflectiveRequestDispatcher;
+import com.sun.ws.management.server.reflective.ReflectiveRequestDispatcher;
+import com.sun.ws.management.server.reflective.WSManReflectiveAgent;
 import com.sun.ws.management.xml.XmlBinding;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.management.MBeanServer;
 import javax.management.remote.ws.JMXWSManResourceHandler;
 import javax.security.auth.Subject;
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.Source;
 
 /**
  * Plug this class in JSR 262 Connector Server. See the Test directory 
  * to see how to plug it.
+ * WARNING : reuse the same instance for all the resourceURI this handler 
+ * is managing.
+ *
  * @author jfdenise
  */
 public class WiseManResourceHandler implements JMXWSManResourceHandler {
     private XmlBinding binding;
+    private static final Logger LOG = 
+            Logger.getLogger(JMXWSManResourceHandler.class.getName());
     /**
      * Creates a new instance of WiseManResourceProvider
      * @throws javax.xml.bind.JAXBException In case JAXB exception occurs (When reading Binding configuration)
@@ -115,6 +124,9 @@ public class WiseManResourceHandler implements JMXWSManResourceHandler {
      * @return A valid WS-Man response message.
      */
     public SOAPMessage handle(String resourceURI, SOAPMessage msg, Map ctx) throws Exception {
+         if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, "Handling request for " +resourceURI);
+        
         MBeanServer server = (MBeanServer) ctx.get(JMXWSManResourceHandler.JMX_WS_REQUEST_MBEAN_SERVER);
         Subject subject = (Subject) ctx.get(JMXWSManResourceHandler.JMX_WS_REQUEST_SUBJECT);
         HandlerContext context = (HandlerContext) ctx.get("com.sun.ws.management.handler.context");
@@ -165,4 +177,12 @@ public class WiseManResourceHandler implements JMXWSManResourceHandler {
         return reply.getMessage();
     }
     
+    public static Map<QName, String> getAdditionalIdentifyElements() {
+        Map<QName, String> ret = 
+                WSManReflectiveAgent.getMetadataConfiguration(null);
+         if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, "Getting additional elements " + ret);
+        
+        return ret;
+    }
 }

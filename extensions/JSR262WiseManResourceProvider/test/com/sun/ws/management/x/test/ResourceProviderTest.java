@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ResourceProviderTest.java,v 1.2 2007-03-28 14:37:21 jfdenise Exp $
+ * $Id: ResourceProviderTest.java,v 1.3 2007-04-06 13:41:55 jfdenise Exp $
  */
 
 package com.sun.ws.management.x.test;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.identify.IdentifyUtility;
+import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
@@ -38,6 +41,7 @@ import javax.management.remote.ws.JMXWSDefinitions;
 import javax.management.remote.ws.JMXWSManResourceHandler;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import javax.xml.soap.SOAPElement;
 import junit.framework.*;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 
@@ -65,7 +69,10 @@ public class ResourceProviderTest extends TestCase {
             Map<String, Object> env = new HashMap<String, Object>();
             Map<String, JMXWSManResourceHandler> providers = new HashMap<String, JMXWSManResourceHandler>();
             providers.put(RESOURCE, new WiseManResourceHandler());
+            
             env.put(JMXWSDefinitions.JMX_WS_MAN_RESOURCE_HANDLERS, providers);
+            env.put("jmx.remote.x.ws.wsman.identify.qnames", 
+                    WiseManResourceHandler.getAdditionalIdentifyElements());
             
             JMXServiceURL url = new JMXServiceURL("service:jmx:ws:" +
                     "//localhost:0/wsman");
@@ -77,7 +84,38 @@ public class ResourceProviderTest extends TestCase {
             String httpurl = "http://"+ realURL.getHost() +":" +
                     realURL.getPort() + realURL.getURLPath();
             System.out.println("Connecting to : " + httpurl);
+
             // Then the client side...
+            
+            final Identify identify = new Identify();
+            identify.setIdentify();
+            
+            //Send identify request
+            Addressing response = HttpClient.sendRequest(identify.getMessage(), httpurl);
+            
+            if (response.getBody().hasFault()) {
+                fail(response.getBody().getFault().getFaultString());
+            }
+            
+            //Parse the identify response
+            final Identify id = new Identify(response);
+            final SOAPElement idr = id.getIdentifyResponse();
+            assertNotNull(idr);
+            SOAPElement el =IdentifyUtility.locateElement(id,
+                    AnnotationProcessor.META_DATA_RESOURCE_URI);
+            assertNotNull("MetaDatResourceURI is null.",el);
+            //retrieve the MetaData ResourceURI
+            String resUri=el.getTextContent();
+            assertNotNull("Retrieved resourceURI is null.",resUri);
+            el =IdentifyUtility.locateElement(id,
+                    AnnotationProcessor.META_DATA_TO);
+            assertNotNull("MetaDataTo is null",el);
+            //retrieve the MetaData To/Destination
+            String metTo=el.getTextContent();
+            assertNotNull("Retrieved destination is null.",metTo);
+            
+            
+            
             final Transfer xf = new Transfer();
             xf.setAction(Transfer.GET_ACTION_URI);
             xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -98,7 +136,7 @@ public class ResourceProviderTest extends TestCase {
             // send this message encoded in UTF-16
             mgmt.setContentType(ContentType.UTF16_CONTENT_TYPE);
             
-            final Addressing response = HttpClient.sendRequest(mgmt);
+            response = HttpClient.sendRequest(mgmt);
             if (response.getBody().hasFault()) {
                 fail(response.getBody().getFault().getFaultString());
             }
