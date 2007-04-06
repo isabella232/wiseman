@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.54 2007-04-06 10:02:19 jfdenise Exp $
+ $Id: build.xml,v 1.55 2007-04-06 15:04:15 jfdenise Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -333,7 +333,7 @@
             includes="*.xsd" />
             <zipfileset dir="${build.classes.dir}"
             includes="*.properties" />
-            <zipfileset dir="${src.dir}"
+            <zipfileset dir="${src.ext.dir}"
             includes="**/*.xml" />
         </war>
     </target>
@@ -393,7 +393,7 @@
             includes="*.xsd" />
             <zipfileset dir="${build.classes.dir}"
             includes="*.properties" />
-            <zipfileset dir="${src.dir}"
+            <zipfileset dir="${src.ext.dir}"
             includes="**/*.xml" />
         </war>
     </target>
