@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.53 2007-04-06 08:50:43 jfdenise Exp $
+ $Id: build.xml,v 1.54 2007-04-06 10:02:19 jfdenise Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -38,12 +38,14 @@
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${build.dir}" />
         <mkdir dir="${build.classes.dir}" />
+        <mkdir dir="${build.classes.ext.dir}" />
     </target>
 
     <target name="clean" depends="test-clean, javadoc-clean">
         <delete dir="${dist.dir}" />
         <delete dir="${build.dir}" />
         <delete dir="${build.classes.dir}" />
+        <delete dir="${build.classes.ext.dir}" />
     </target>
   
     <path id="jaxws.compile.classpath">
@@ -106,22 +108,32 @@
         </xjc>
     </target>
 	
-    <path id="compile.classpath">
+    <path id="compile.core.classpath">
         <path refid="jaxws.compile.classpath" />
         <path path="${build.classes.dir}" />
-        <fileset dir="${lib.dir}">
+       <!-- <fileset dir="${lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>-->
+    </path>
+    
+    <path id="compile.ext.classpath">
+        <path refid="jaxws.compile.classpath" />
+        <path path="${build.classes.ext.dir}" />
+         <fileset dir="${dist.dir}">
+            <include name="${lib.core.filename}"/>
+        </fileset>
+       <fileset dir="${lib.dir}">
             <include name="**/*.jar"/>
         </fileset>
     </path>
-
-    <target name="compile" depends="init">
-        <javac destdir="${build.classes.dir}"
+    
+    <target name="compile-core" depends="init">
+        <javac destdir="${build.classes.dir}/"
             target="1.5"
             debug="${debug}">
-            <classpath refid="compile.classpath" />
+            <classpath refid="compile.core.classpath" />
             <src path="${gen.src.dir}" />
-            <src path="${src.dir}" />
-            <exclude name="com/sun/ws/management/server/handler/**" />
+            <src path="${src.dir}"/>   
         </javac>
         <propertyfile file="${src.dir}/wsman.properties">
             <entry key="build.version" value="${DSTAMP}${TSTAMP}" />
@@ -136,17 +148,63 @@
             </fileset>
         </copy>
     </target>
+    
+    <target name="lib-core" depends="compile-core">
+
+        <!-- Build Server Shared Jar -->
+        <jar destfile="${dist.dir}/${lib.core.filename}"
+            index="true">
+            <fileset dir="${build.classes.dir}"/>
+            <fileset dir="${src.dir}">
+                <include name="com/sun/ws/management/resources/**" />
+            </fileset>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
+                <attribute name="Specification-Title" value="WS-Management" />
+                <attribute name="Specification-Version" value="${spec.version}" />
+                <attribute name="Implementation-Title" value="Wiseman SE Library" />
+                <attribute name="Implementation-Version" value="${impl.version}" />
+                <attribute name="Implementation-Vendor" value="${impl.vendor}" />
+                <attribute name="Implementation-URL" value="${impl.url}" />
+                <attribute name="Sealed" value="true" />
+            </manifest>
+            <metainf dir=".">
+                <include name="LICENSE" />
+                <include name="NOTICE" />
+            </metainf>
+        </jar>
+ </target>
+ 
+    <target name="compile" depends="lib-core">
+        <javac destdir="${build.classes.ext.dir}"
+            target="1.5"
+            debug="${debug}">
+            <classpath refid="compile.ext.classpath" />
+            <src path="${src.ext.dir}" />
+            <exclude name="com/sun/ws/management/server/handler/**" />
+        </javac>
+    </target>
 
     <target name="lib" depends="test-compile,compile">
 
         <!-- Build Server Shared Jar -->
         <jar destfile="${dist.dir}/${lib.filename}"
             index="true">
-            <fileset dir="${build.classes.dir}">
+            <fileset dir="${build.classes.dir}"/>
+            <fileset dir="${build.classes.ext.dir}">
                 <exclude name="com/sun/ws/management/server/handler/**" />
             </fileset>
             <fileset dir="${src.dir}">
                 <include name="com/sun/ws/management/resources/**" />
+            </fileset>
+            <fileset dir="${src.ext.dir}">
+                <include name="binding.properties" />
+                <include name="metadata.properties" />
+                <include name="metadata-handlers.properties" />
+            </fileset>
+            <fileset dir="etc/xsd">
+                <include name="metadata.xsd" />
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}" />
@@ -168,9 +226,10 @@
         <!-- Build src Jar -->
         <jar destfile="${dist.dir}/${src.lib.filename}"
             index="true">
-            <fileset dir="${src.dir}">
+            <fileset dir="${src.ext.dir}">
                 <exclude name="com/sun/ws/management/server/handler/**" />
             </fileset>
+            <fileset dir="${src.dir}"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}" />
                 <attribute name="Built-At" value="${DSTAMP}${TSTAMP}" />
@@ -197,12 +256,6 @@
                 <include name="framework/models/**" />
                 <include name="util/**" />
                 <include name="transport/**" />
-            </fileset>
-            <fileset dir="etc/xsd">
-                <include name="metadata.xsd" />
-            </fileset>
-            <fileset dir="${test.dir}/etc">
-                <include name="binding.properties" />
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}" />
@@ -241,7 +294,7 @@
             <classes dir="${test.dir}/etc">
                 <include name="wiseman.properties" />
             </classes>
-            <classes dir="${test.dir}/etc">
+            <classes dir="${src.ext.dir}">
                 <include name="metadata.properties" />
                 <include name="metadata-handlers.properties" />
             </classes>
@@ -304,7 +357,7 @@
             <classes dir="${test.dir}/etc">
                 <include name="wiseman.properties" />
             </classes>
-            <classes dir="${test.dir}/etc">
+            <classes dir="${src.ext.dir}">
                 <include name="metadata.properties" />
                 <include name="metadata-handlers.properties" />
             </classes>
@@ -431,6 +484,10 @@
                 defaultexcludes="yes">
                 <include name="com/sun/ws/management/**" />
             </packageset>
+            <packageset dir="${src.ext.dir}" 
+                defaultexcludes="yes">
+                <include name="com/sun/ws/management/**" />
+            </packageset>
             <packageset dir="${gen.src.dir}" 
                 defaultexcludes="yes">
                 <include name="org/**" />
@@ -440,7 +497,7 @@
     </target>
 
     <path id="test.compile.classpath">
-        <path refid="compile.classpath" />
+        <path refid="compile.ext.classpath" />
         <fileset dir="${test.lib.dir}">
             <include name="**/*.jar"/>
         </fileset>
@@ -467,7 +524,7 @@
         <javac destdir="${test.build.classes.dir}"
             debug="${debug}">
             <classpath refid="test.compile.classpath" />
-            <src path="${src.dir}" />
+            <src path="${src.ext.dir}" />
             <include name="com/sun/ws/management/server/handler/**" />
         </javac>
         <javac destdir="${test.build.classes.dir}"
@@ -539,6 +596,8 @@
                 <include name="logging.properties" />
                 <include name="binding.properties" />
                 <include name="wiseman.properties" />
+            </fileset>
+            <fileset dir="${src.ext.dir}">
                 <include name="metadata.properties" />
                 <include name="metadata-handlers.properties" />
             </fileset>
@@ -577,7 +636,7 @@
         </junit>
     </target>
     
-    <target name="test-jaxws" depends="lib,test-compile,deploy-jaxws,test-deploy">
+    <target name="test-jaxws" depends="lib,test-compile"><!--,deploy-jaxws,test-deploy">-->
    
         <copy todir="${ant.home}/lib" 
         file="${test.lib.dir}/junit.jar" />

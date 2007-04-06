@@ -11,7 +11,7 @@
 	version="2.0">
 	<endpoint
        		name="WSManAgent"
-        	implementation="com.sun.ws.management.server.WSManJAXWSEndpoint"
+        	implementation="com.sun.ws.management.server.reflective.WSManReflectiveJAXWSEndpoint"
                 service="{http://schemas.dmtf.org/wbem/wsman/1/}WsManService"
                 port="{http://schemas.dmtf.org/wbem/wsman/1/}WsManAgent"
 		url-pattern="/"

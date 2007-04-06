@@ -10,7 +10,7 @@
 
   <servlet>
     <servlet-name>WSManServlet</servlet-name>
-    <servlet-class>com.sun.ws.management.server.WSManServlet</servlet-class>
+    <servlet-class>com.sun.ws.management.server.reflective.WSManReflectiveServlet</servlet-class>
   </servlet>
 
   <servlet-mapping>

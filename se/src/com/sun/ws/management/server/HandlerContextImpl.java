@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HandlerContextImpl.java,v 1.3 2007-03-28 14:23:07 jfdenise Exp $
+ * $Id: HandlerContextImpl.java,v 1.4 2007-04-06 09:57:13 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -21,13 +21,13 @@ package com.sun.ws.management.server;
 import java.security.Principal;
 import java.util.Map;
 
-final class HandlerContextImpl implements HandlerContext {
+public final class HandlerContextImpl implements HandlerContext {
     private String charEncoding;
     private String contentType;
     private Principal principal;
     private Map<String, ?> requestProperties;
     private String url;
-    HandlerContextImpl(final Principal principal, final String contentType, 
+    public HandlerContextImpl(final Principal principal, final String contentType, 
             final String charEncoding, final String url, final Map<String, ?> requestProperties) {
         this.principal = principal;
         this.contentType = contentType;

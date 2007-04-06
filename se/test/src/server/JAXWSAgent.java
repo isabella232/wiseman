@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: JAXWSAgent.java,v 1.2 2007-01-11 13:13:59 jfdenise Exp $
+ * $Id: JAXWSAgent.java,v 1.3 2007-04-06 10:00:13 jfdenise Exp $
  */
 
 package server;
 
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-import com.sun.ws.management.server.WSManJAXWSEndpoint;
+import com.sun.ws.management.server.jaxws.WSManJAXWSEndpoint;
+import com.sun.ws.management.server.reflective.WSManReflectiveJAXWSEndpoint;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -95,7 +96,7 @@ public class JAXWSAgent {
         
         // WS-MAN Agent
         String binding = SOAPBinding.SOAP12HTTP_BINDING;
-        WSManJAXWSEndpoint wsmanedp = new WSManJAXWSEndpoint();
+        WSManJAXWSEndpoint wsmanedp = new WSManReflectiveJAXWSEndpoint();
         //Create Endpoint
         Endpoint endpoint = Endpoint.create(binding, wsmanedp);
         
