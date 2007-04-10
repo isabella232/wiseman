@@ -22,13 +22,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementMessageValues;
+import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationMessageValues;
+import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
@@ -177,23 +182,32 @@ public class WsManBaseTestSupport extends TestCase {
 
 	    protected EnumerateResponse sendEnumerateRequest(String destination, String resourceUri, String filter) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-	        final Enumeration enu = new Enumeration();
-	        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
-	        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-	        enu.setMessageId("uuid:" + UUID.randomUUID().toString());
-	        final DatatypeFactory factory = DatatypeFactory.newInstance();
-	        final FilterType filterType = Enumeration.FACTORY.createFilterType();
-	        filterType.setDialect(com.sun.ws.management.xml.XPath.NS_URI);
-	        filterType.getContent().add(filter);
-	        enu.setEnumerate(null, factory.newDuration(6000).toString(),
-	                         filter == null ? null : filterType);
-
-	        final Management mgmt = new Management(enu);
-	        mgmt.setXmlBinding(enu.getXmlBinding());
-
-	        mgmt.setTo(destination);
-	        mgmt.setResourceURI(resourceUri);
-
+//	        final Enumeration enu = new Enumeration();
+//	        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
+//	        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+//	        enu.setMessageId("uuid:" + UUID.randomUUID().toString());
+//	        final DatatypeFactory factory = DatatypeFactory.newInstance();
+//	        final FilterType filterType = Enumeration.FACTORY.createFilterType();
+//	        filterType.setDialect(com.sun.ws.management.xml.XPath.NS_URI);
+//	        filterType.getContent().add(filter);
+//	        enu.setEnumerate(null, factory.newDuration(6000).toString(),
+//	                         filter == null ? null : filterType);
+	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
+	    	settings.setFilter(filter);settings.setDefaultTimeout(6000);
+	    	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
+	    	
+//	        final Management mgmt = new Management(enu);
+//	        mgmt.setXmlBinding(enu.getXmlBinding());
+//
+//	        mgmt.setTo(destination);
+//	        mgmt.setResourceURI(resourceUri);
+	    	ManagementMessageValues manSettings = ManagementMessageValues.newInstance();
+	    	manSettings.setTo(destination);
+	    	manSettings.setResourceUri(resourceUri);
+	    	manSettings.setXmlBinding(enu.getXmlBinding());
+	    	final Management mgmt = ManagementUtility.buildMessage(enu,manSettings);
+//	    	mgmt.setXmlBinding(enu.getXmlBinding());
+	    	
 	        final Addressing response = HttpClient.sendRequest(mgmt);
 
 	        if (response.getBody().hasFault())
@@ -211,7 +225,7 @@ public class WsManBaseTestSupport extends TestCase {
 	                                                Object ctx) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
 	        final Addressing response = sendEnumRequest(ctx, destination, resourceUri, Enumeration.PULL_ACTION_URI);
-
+//System.out.println("PullResponse:"+response.toString());
 	        if (response.getBody().hasFault())
 	        {
 	            fail(response.getBody().getFault().getFaultString());
@@ -226,18 +240,30 @@ public class WsManBaseTestSupport extends TestCase {
 	    public Addressing sendEnumRequest(Object ctx, String destination, String resourceUri, String action)
 	            throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-	        final Enumeration enu = new Enumeration();
-	        enu.setAction(action);
-	        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-	        enu.setMessageId("uuid:" + UUID.randomUUID().toString());
-	        final DatatypeFactory factory = DatatypeFactory.newInstance();
-	        enu.setPull(ctx,0,100,factory.newDuration(60000));//maxchars not implemented yet
-
-	        final Management mgmt = new Management(enu);
-	        mgmt.setXmlBinding(enu.getXmlBinding());
-	        mgmt.setTo(destination);
-	        mgmt.setResourceURI(resourceUri);
-
+//	        final Enumeration enu = new Enumeration();
+//	        enu.setAction(action);
+//	        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+//	        enu.setMessageId("uuid:" + UUID.randomUUID().toString());
+//	        final DatatypeFactory factory = DatatypeFactory.newInstance();
+	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
+	    	settings.setEnumerationMessageActionType(action);
+	    	settings.setDefaultTimeout(60000);
+	    	settings.setMaxElements(100);
+	    	settings.setEnumerationContext(ctx);
+	        final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
+//	    	enu.setPull(ctx,0,100,factory.newDuration(60000));//maxchars not implemented yet
+	        
+//	        final Management mgmt = new Management(enu);
+//	        mgmt.setXmlBinding(enu.getXmlBinding());
+//	        mgmt.setTo(destination);
+//	        mgmt.setResourceURI(resourceUri);
+	        ManagementMessageValues manSet = new ManagementMessageValues();
+	        manSet.setXmlBinding(enu.getXmlBinding());
+	        manSet.setTo(destination);
+	        manSet.setResourceUri(resourceUri);
+	        final Management mgmt = ManagementUtility.buildMessage(enu, manSet);
+//System.out.println("Pull Message:"+mgmt.toString());
+	        
 	        final Addressing response = HttpClient.sendRequest(mgmt);
 	        return response;
 	    }
