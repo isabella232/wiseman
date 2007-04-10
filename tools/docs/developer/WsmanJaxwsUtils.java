@@ -109,16 +109,46 @@ public class WsmanJaxwsUtils {
 	 * @param selector the value of the selector field
 	 * @return Header to be added as a header to the SOAP call
 	 */
-	public static Header createSelectorSetHeader(String fieldName, String selector) {
+	public static Header createSelectorSetHeader(String[] fieldNames, String[] selectors) {
 		
+		if (fieldNames.length != selectors.length) {
+			// There must be an equal number of field names and selector strings
+			return null;
+		}
         Document doc = DOMUtil.createDom();
         Element selectorElem = doc.createElementNS(WSMAN_ADDR, "SelectorSet");
-        selectorElem.appendChild(doc.createElementNS(WSMAN_ADDR, "Selector"));
-        ((Element)selectorElem.getFirstChild()).setAttribute("Name", fieldName);
-        selectorElem.getFirstChild().setTextContent(selector);
+		for (int i = 0; i < fieldNames.length; ++i) {
+			Element child = doc.createElementNS(WSMAN_ADDR, "Selector");
+			child.setAttribute("Name", fieldNames[i]);
+			child.setTextContent(selectors[i]);
+			selectorElem.appendChild(child);
+		}
         return Headers.create(selectorElem); 
 	}
 
+	/**
+	 * Create an Header representing the Option Set header
+	 * 
+	 * @param optNames names of the options
+	 * @param optValues values of the options
+	 * @return Header to be added as a header to the SOAP call
+	 */
+	public static Header createOptionSetHeader(String[] optNames, String[] optValues) {
+		
+		if (optNames.length != optValues.length) {
+			// There must be an equal number of option names and option values
+			return null;
+		}
+        Document doc = DOMUtil.createDom();
+        Element selectorElem = doc.createElementNS(WSMAN_ADDR, "OptionSet");
+		for (int i = 0; i < optNames.length; ++i) {
+			Element child = doc.createElementNS(WSMAN_ADDR, "Option");
+			child.setAttribute("Name", optNames[i]);
+			child.setTextContent(optValues[i]);
+			selectorElem.appendChild(child);
+		}
+        return Headers.create(selectorElem); 
+	}
 	/**
 	 * Create the header object for the Create action
 	 * @return Create action header

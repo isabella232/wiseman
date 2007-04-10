@@ -121,14 +121,47 @@ public class WsmanAxisUtils {
 	 * @param selector the value of the selector field
 	 * @return OMElement to be added as a header to the SOAP call
 	 */
-	public static OMElement createSelectorSetHeader(String fieldName, String selector) {
+	public static OMElement createSelectorSetHeader(String[] fieldNames, String[] selectors) {
+		
+		if (fieldNames.length != selectors.length) {
+			// There must be an equal number of field names and selector strings
+			return null;
+		}
 		OMElement headerElement =
 			fact.createOMElement("SelectorSet", WSMAN_ADDR, WSMAN_PREFIX);
-	   	headerElement.addChild(fact.createOMElement("Selector", WSMAN_ADDR, WSMAN_PREFIX));
-	   	headerElement.getFirstElement().addAttribute("Name", fieldName, null);
-    	headerElement.getFirstElement().setText(selector);
+		
+		for (int i = 0; i < fieldNames.length; ++i) {
+			OMElement child = fact.createOMElement("Selector", WSMAN_ADDR, WSMAN_PREFIX);
+			child.addAttribute("Name", fieldNames[i], null);
+			child.setText(selectors[i]);
+			headerElement.addChild(child);
+		}
     	return headerElement;
 	}
+	/**
+	 * Create an OMElement representing the Option Set header
+	 * 
+	 * @param optNames name of the option field
+	 * @param optValues the value of the option field
+	 * @return OMElement to be added as a header to the SOAP call
+	 */
+	public static OMElement createOptionSetHeader(String[] optNames, String[] optValues) {
+		
+		if (optNames.length != optValues.length) {
+			// There must be an equal number of option names and option values
+			return null;
+		}
+		OMElement headerElement =
+			fact.createOMElement("OptionSet", WSMAN_ADDR, WSMAN_PREFIX);
+		
+		for (int i = 0; i < optNames.length; ++i) {
+			OMElement child = fact.createOMElement("Option", WSMAN_ADDR, WSMAN_PREFIX);
+			child.addAttribute("Name", optNames[i], null);
+			child.setText(optValues[i]);
+			headerElement.addChild(child);
+		}
+    	return headerElement;
+	}	
 	
 	/**
 	 * Create the OMElement object for the Create action

@@ -23,6 +23,10 @@ import net.java.dev.wiseman.schemas.traffic._1.light_xsd.LightServiceStub;
 import net.java.dev.wiseman.schemas.traffic._1.light_xsd.TrafficLightType;
 import net.java.dev.wiseman.schemas.traffic._1.light_xsd.TrafficlightDocument;
 
+/**
+ * Sample class which uses the Axis client toolkit to exercise the wiseman enabled traffic light web service
+ *
+ */
 public class TestAxisClient {
 
 	public static String WSMAN_ADDR = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd";
@@ -40,11 +44,11 @@ public class TestAxisClient {
 	public static void main(String[] args) {
 		
         try{
+        	// Establish a connection to the traffic service
         	LightServiceStub stub = new LightServiceStub("http://localhost:7777/traffic/");
   	
+        	// Create a traffic light
 			addCreateHeaders(stub);   
-         	
-        	// Create light
         	TrafficlightDocument newLightDoc = TrafficlightDocument.Factory.newInstance();
         	
         	TrafficLightType newLight= newLightDoc.addNewTrafficlight();
@@ -55,9 +59,8 @@ public class TestAxisClient {
         	
         	ResourceCreatedDocument respDoc = stub.Create(newLightDoc);
         	
-         	addGetHeaders(stub, "Test1");
-			
          	// Get the newly created traffic light
+         	addGetHeaders(stub, "Test1");
         	TrafficlightDocument light = stub.Get();
         	
         	System.out.println(light.getTrafficlight().getName());
@@ -76,6 +79,7 @@ public class TestAxisClient {
         	
          	EnumerateResponseDocument enumresp = stub.EnumerateOp(enumParam);
          	
+         	// Pull the first enumerated traffic light
          	addPullHeaders(stub);
          	         	        	
          	PullDocument pullDoc = PullDocument.Factory.newInstance();
@@ -84,6 +88,8 @@ public class TestAxisClient {
          	
          	pullVal.setEnumerationContext(enumresp.getEnumerateResponse().getEnumerationContext());
 			PullResponseDocument pullRet = stub.PullOp(pullDoc);
+			
+			System.out.println(pullRet.getPullResponse().getItems().getDomNode().getChildNodes().item(0).getNodeName());
 
         } catch(Exception e){
             e.printStackTrace();
@@ -92,7 +98,13 @@ public class TestAxisClient {
 		
 
 	}
-
+	
+	/**
+	 * Add the headers for a Create call
+	 * 
+	 * @param stub client stub
+	 * @throws DatatypeConfigurationException
+	 */
 	protected static void addCreateHeaders(Stub stub) throws DatatypeConfigurationException {
 
     	stub._getServiceClient().removeHeaders();
@@ -112,6 +124,12 @@ public class TestAxisClient {
 
 	}
 
+	/**
+	 * Add the headers for a Get call
+	 * 
+	 * @param stub client stub
+	 * @throws DatatypeConfigurationException
+	 */
 	protected static void addGetHeaders(Stub stub, String lightName) throws DatatypeConfigurationException {
 
     	stub._getServiceClient().removeHeaders();
@@ -129,9 +147,15 @@ public class TestAxisClient {
 		
     	stub._getServiceClient().addHeader(WsmanAxisUtils.createReplyToHeader("http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous"));  		
 
-    	stub._getServiceClient().addHeader(WsmanAxisUtils.createSelectorSetHeader("name", lightName));
+    	stub._getServiceClient().addHeader(WsmanAxisUtils.createSelectorSetHeader(new String[]  {"name", "color"}, new String[] {lightName, "green"}));
 	}
 
+	/**
+	 * Add the headers for a Enumerate call
+	 * 
+	 * @param stub client stub
+	 * @throws DatatypeConfigurationException
+	 */
 	protected static void addEnumerateHeaders(Stub stub) throws DatatypeConfigurationException {
 
     	stub._getServiceClient().removeHeaders();
@@ -150,6 +174,12 @@ public class TestAxisClient {
     	stub._getServiceClient().addHeader(WsmanAxisUtils.createReplyToHeader("http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous"));  		
 	}
 	
+	/**
+	 * Add the headers for a Pull call
+	 * 
+	 * @param stub client stub
+	 * @throws DatatypeConfigurationException
+	 */
 	protected static void addPullHeaders(Stub stub) throws DatatypeConfigurationException {
 
     	stub._getServiceClient().removeHeaders();
@@ -166,8 +196,6 @@ public class TestAxisClient {
 		stub._getServiceClient().addHeader(WsmanAxisUtils.createOperationTimeoutHeader(timeout.toString()));
 		
     	stub._getServiceClient().addHeader(WsmanAxisUtils.createReplyToHeader("http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous"));  		
-       	OMFactory fact = OMAbstractFactory.getOMFactory();
-
 	
 	}
 

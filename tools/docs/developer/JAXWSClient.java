@@ -24,6 +24,11 @@ import net.java.dev.wiseman.schemas.traffic._1.light.LightResource;
 import net.java.dev.wiseman.schemas.traffic._1.light.LightService;
 import net.java.dev.wiseman.schemas.traffic._1.light.TrafficLightType;
 
+/**
+ * Sample class which uses the JAX-WS client toolkit to exercise the wiseman enabled traffic light web service
+ *
+ */
+
 public class JAXWSClient {
 
 	//@WebServiceRef(wsdlLocation=
@@ -52,6 +57,8 @@ public class JAXWSClient {
 	}
 
 	public void doTest(String[] args) {
+		
+		// Get the connection to the traffic light service
 		LightResource resource = new LightService().getLightResource();
 		WSBindingProvider prv = (WSBindingProvider)resource;
 		Duration timeout;
@@ -67,6 +74,7 @@ public class JAXWSClient {
 		}
 
 		try {
+			// Create a traffic light
 			prv.setOutboundHeaders(
 					WsmanJaxwsUtils.createResourceUriHeader("urn:resources.wiseman.dev.java.net/traffic/1/light"),
 					WsmanJaxwsUtils.createToHeader("http://localhost:8080/traffic/"),
@@ -87,7 +95,7 @@ public class JAXWSClient {
 
 
 		try {
-
+			// Get the traffic light that was just created
 			prv.setOutboundHeaders(
 					WsmanJaxwsUtils.createResourceUriHeader("urn:resources.wiseman.dev.java.net/traffic/1/light"),
 					WsmanJaxwsUtils.createToHeader("http://localhost:8080/traffic/"),
@@ -95,7 +103,7 @@ public class JAXWSClient {
 					WsmanJaxwsUtils.createMessageIDHeader(UUID_SCHEME + UUID.randomUUID().toString()),
 					WsmanJaxwsUtils.createOperationTimeoutHeader(timeout.toString()),
 					WsmanJaxwsUtils.createReplyToHeader("http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous"),
-					WsmanJaxwsUtils.createSelectorSetHeader("name", "Fred"));
+					WsmanJaxwsUtils.createSelectorSetHeader(new String[] {"name"}, new String[] {"Fred"}));
 
 			TrafficLightType getLight = resource.get();
 			System.out.println("color = " + getLight.getColor());
@@ -105,6 +113,7 @@ public class JAXWSClient {
 		}
 
 		try {
+			// Enumerate all of the traffic lights
 			prv.setOutboundHeaders(
 					WsmanJaxwsUtils.createResourceUriHeader("urn:resources.wiseman.dev.java.net/traffic/1/light"),
 					WsmanJaxwsUtils.createToHeader("http://localhost:8080/traffic/"),
@@ -122,6 +131,7 @@ public class JAXWSClient {
 
 			EnumerationContextType ctx = resp.getEnumerationContext();
 
+			// Pull the first set of enumerated traffic lights
 			prv.setOutboundHeaders(
 					WsmanJaxwsUtils.createResourceUriHeader("urn:resources.wiseman.dev.java.net/traffic/1/light"),
 					WsmanJaxwsUtils.createToHeader("http://localhost:8080/traffic/"),
