@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.11 2007-03-30 15:03:24 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.12 2007-04-10 15:48:37 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -265,7 +265,6 @@ public abstract class WSManAgent {
     	//As this is an indentify message then populate the response.
         Identify response = new Identify();
         response.setXmlBinding(request.getXmlBinding()); 
-
         Map<QName, String> additionals = getAdditionalIdentifyElements();
         if(LOG.isLoggable(Level.FINE))
             LOG.log(Level.FINE, "Additionals QNames " + additionals);
@@ -359,6 +358,8 @@ public abstract class WSManAgent {
                     //Test for identify responses
                     Identify identifyResponse = processForIdentify(request);
                     if(identifyResponse!=null){
+                        identifyResponse.setContentType(request.getContentType());
+                        logMessage(LOG, identifyResponse);
                         return identifyResponse;
                     }
                     dispatcher.validateRequest();
@@ -374,7 +375,7 @@ public abstract class WSManAgent {
                     response.setFault(new InternalErrorFault(th));
                 }
             }
-            
+
             fillReturnAddress(request, response);
             if(LOG.isLoggable(Level.FINE))
                 LOG.log(Level.FINE, "Request / Response content type " +
