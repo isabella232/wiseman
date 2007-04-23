@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 
@@ -23,8 +24,13 @@ import com.sun.ws.management.enumeration.EnumerationExtensions.Mode;
  *  
  * @author Simeon Pinder
  */
-public class EnumerationMessageValues {
+public class EnumerationMessageValues extends ManagementMessageValues{
 	
+	public EnumerationMessageValues() throws SOAPException {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
 	//In event of failure and to initialize these values are defined
 	public static final String DEFAULT_UID_SCHEME=ManagementMessageValues.DEFAULT_UID_SCHEME;
 	public static long DEFAULT_TIMEOUT_VALUE =ManagementMessageValues.DEFAULT_TIMEOUT;
@@ -49,6 +55,9 @@ public class EnumerationMessageValues {
 		 //eat the exception and move on. This really shouldn't fail. Is fundamental failure   
 	  }
 	}
+	public static final String DEFAULT_END_TO = "";
+	public static long DEFAULT_EXPIRES =ManagementMessageValues.DEFAULT_TIMEOUT;
+	
 	
 	//Default property values.
 	private String uidScheme = DEFAULT_UID_SCHEME;
@@ -67,6 +76,8 @@ public class EnumerationMessageValues {
 	private boolean requestForOptimizedEnumeration = 
 		DEFAULT_REQUEST_TO_OPTIMIZE_ENUMERATION;
 	private Map<String, String> namespaceMap = DEFAULT_NS_MAP;
+	private String endTo = DEFAULT_END_TO;
+	private long expires = DEFAULT_EXPIRES;
 	
 	/**The following static factory method should be used to 
 	 * retrieve a default instance of teh EnumerationMessageValues
@@ -76,8 +87,9 @@ public class EnumerationMessageValues {
 	 * it defaults to Enumeration.ENUMERATION_ACTION_URI.
 	 * 
 	 * @return EnumerationMessageConstants instance with defaults set.
+	 * @throws SOAPException 
 	 */
-	public static EnumerationMessageValues newInstance() {
+	public static EnumerationMessageValues newInstance() throws SOAPException {
 		return new EnumerationMessageValues();
 	}
 
@@ -129,7 +141,7 @@ public class EnumerationMessageValues {
 	/**
 	 * @param enumerationMessageActionType the enumerationMessageActionType to set
 	 */
-	public void setEnumerationMessageType(String enumerationMessageType) {
+	public void setEnumerationMessageActionType(String enumerationMessageType) {
 		this.enumerationMessageActionType = enumerationMessageType;
 	}
 
@@ -177,14 +189,6 @@ public class EnumerationMessageValues {
 	 */
 	public void setFilterDialect(String filterDialect) {
 		this.filterDialect = filterDialect;
-	}
-
-
-	/**
-	 * @param enumerationMessageActionType the enumerationMessageActionType to set
-	 */
-	public void setEnumerationMessageActionType(String enumerationMessageActionType) {
-		this.enumerationMessageActionType = enumerationMessageActionType;
 	}
 
 
@@ -308,6 +312,22 @@ public class EnumerationMessageValues {
 
 	public void setNamespaceMap(Map<String, String> map) {
 		this.namespaceMap = map;
+	}
+
+	public String getEndTo() {
+		return endTo;
+	}
+
+	public void setEndTo(String endTo) {
+		this.endTo = endTo;
+	}
+
+	public long getExpires() {
+		return expires;
+	}
+
+	public void setExpires(long expires) {
+		this.expires = expires;
 	}
 	
 }

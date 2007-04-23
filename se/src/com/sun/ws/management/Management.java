@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.9 2007-01-11 13:12:54 jfdenise Exp $
+ * $Id: Management.java,v 1.10 2007-04-23 19:17:50 nbeers Exp $
  */
 
 package com.sun.ws.management;
@@ -26,7 +26,6 @@ import java.util.Iterator;
 import java.util.Set;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.UnmarshalException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;

@@ -1,11 +1,18 @@
 package com.sun.ws.management;
 
+import java.math.BigInteger;
+import java.util.Set;
 import java.util.Vector;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**This class is meant to be a container for constants
@@ -29,6 +36,10 @@ public class ManagementMessageValues {
 	public static final String DEFAULT_REPLY_TO = Addressing.ANONYMOUS_ENDPOINT_URI;
 	public static final Vector<ReferenceParametersType> DEFAULT_ADDITIONAL_HEADERS = 
 		new Vector<ReferenceParametersType>();
+	public static final Set<SelectorType> DEFAULT_SELECTOR_SET = null;
+	public static final BigInteger DEFAULT_MAX_ENVELOPE_SIZE = BigInteger.valueOf(0);
+	public static final Locale DEFAULT_LOCALE = null;
+	public static final Set<OptionType> DEFAULT_OPTION_SET = null;
 	
 	/*These values are added so that each instance has
 	 * properties that can be get/set for all the relevant
@@ -43,7 +54,27 @@ public class ManagementMessageValues {
 	private XmlBinding xmlBinding = null;
 	private Vector<ReferenceParametersType> additionalHeaders = 
 		DEFAULT_ADDITIONAL_HEADERS;
+	private Set<SelectorType> selectorSet = DEFAULT_SELECTOR_SET;
+	private BigInteger maxEnvelopeSize = DEFAULT_MAX_ENVELOPE_SIZE;
+	private Locale locale = DEFAULT_LOCALE;
+	private Set<OptionType> optionSet = DEFAULT_OPTION_SET;
 	
+	public Locale getLocale() {
+		return locale;
+	}
+
+	public void setLocale(Locale locale) {
+		this.locale = locale;
+	}
+
+	public BigInteger getMaxEnvelopeSize() {
+		return maxEnvelopeSize;
+	}
+
+	public void setMaxEnvelopeSize(BigInteger maxEnvelopeSize) {
+		this.maxEnvelopeSize = maxEnvelopeSize;
+	}
+
 	/** Instance has all the default values set. An empty
 	 * instance of Management is lazily instantiated to 
 	 * obtain a valid xmlbinding instance.
@@ -162,5 +193,22 @@ public class ManagementMessageValues {
 	public void setReplyTo(String replyTo) {
 		this.replyTo = replyTo;
 	}
+
+	public Set<SelectorType> getSelectorSet() {
+		return selectorSet;
+	}
+
+	public void setSelectorSet(Set<SelectorType> selectorSet) {
+		this.selectorSet = selectorSet;
+	}
+
+	public Set<OptionType> getOptionSet() {
+		return optionSet;
+	}
+
+	public void setOptionSet(Set<OptionType> optionSet) {
+		this.optionSet = optionSet;
+	}
+
 	
 }

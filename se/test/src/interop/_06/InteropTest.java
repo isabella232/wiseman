@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InteropTest.java,v 1.23 2007-03-20 21:35:16 simeonpinder Exp $
+ * $Id: InteropTest.java,v 1.24 2007-04-23 19:18:11 nbeers Exp $
  */
 
 package interop._06;
@@ -55,6 +55,8 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementMessageValues;
+import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.addressing.DestinationUnreachableFault;
@@ -131,14 +133,6 @@ public final class InteropTest extends TestBase {
      */
     public void testGet() throws Exception {
         
-        final Management mgmt = new Management();
-        mgmt.setAction(Transfer.GET_ACTION_URI);
-        mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI(COMPUTER_SYSTEM_RESOURCE);
-        
         final Set<SelectorType> selectors = new HashSet<SelectorType>();
         
         final SelectorType selector1 = new SelectorType();
@@ -150,23 +144,23 @@ public final class InteropTest extends TestBase {
         selector2.setName("Name");
         selector2.getContent().add("IPMI Controller 32");
         selectors.add(selector2);
-        
-        mgmt.setSelectors(selectors);
-        
-        final Duration timeout = DatatypeFactory.newInstance().newDuration(60000);
-        mgmt.setTimeout(timeout);
-        
-        final BigInteger envSize = new BigInteger("153600");
-        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
-        maxEnvSize.setValue(envSize);
-        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
-        mgmt.setMaxEnvelopeSize(maxEnvSize);
-        
+
         final Locale locale = Management.FACTORY.createLocale();
         locale.setLang(XML.DEFAULT_LANG);
         locale.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.FALSE);
-        mgmt.setLocale(locale);
-        
+
+        ManagementMessageValues settings = ManagementMessageValues.newInstance();
+    	
+    	settings.setTo(DESTINATION);
+    	settings.setSelectorSet(selectors);
+    	settings.setTimeout(60000);
+    	settings.setMaxEnvelopeSize(new BigInteger("153600"));
+    	settings.setLocale(locale);
+    	settings.setResourceUri(COMPUTER_SYSTEM_RESOURCE);
+    	
+    	final Management mgmt = ManagementUtility.buildMessage(null, settings);
+    	mgmt.setAction(Transfer.GET_ACTION_URI);
+    	
         log(mgmt);
         final Addressing response = HttpClient.sendRequest(mgmt);
         log(response);

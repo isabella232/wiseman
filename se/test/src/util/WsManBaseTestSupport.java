@@ -2,12 +2,9 @@ package util;
  
 import java.io.IOException;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.xpath.XPath;
@@ -17,27 +14,22 @@ import javax.xml.xpath.XPathFactory;
 
 import junit.framework.TestCase;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.ManagementMessageValues;
-import com.sun.ws.management.ManagementUtility;
-import com.sun.ws.management.Message;
+import com.sun.ws.management.transfer.TransferMessageValues;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
-import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.xml.XmlBinding;
 
 public class WsManBaseTestSupport extends TestCase {
     protected static final int TEST_TIMEOUT = 30000;
@@ -56,19 +48,13 @@ public class WsManBaseTestSupport extends TestCase {
 	}
 	    protected Management sendCreateRequest(String destination, String resourceUri, Document propertyDocument) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-	        // Create a transfer document
-	        Transfer xf = new Transfer();
-	        xf.setAction(Transfer.CREATE_ACTION_URI);
-	        xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-	        xf.setMessageId("uuid:" + UUID.randomUUID().toString());
 
-	        // Add required ws-management values
-	        Management mgmt = new Management(xf);
-	        mgmt.setXmlBinding(xf.getXmlBinding());
-	        mgmt.setTo(destination);
-	        mgmt.setResourceURI(resourceUri);
-	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
-	        mgmt.setTimeout(timeout);
+	        // Build Request Document
+	    	TransferMessageValues settings = TransferMessageValues.newInstance();
+	    	settings.setResourceUri(resourceUri);
+	    	settings.setTo(destination);
+	    	settings.setTransferMessageActionType(Transfer.CREATE_ACTION_URI);
+	    	final Transfer mgmt = TransferUtility.buildMessage(null, settings);
 
 	        mgmt.getBody().addDocument(propertyDocument);
 
@@ -87,22 +73,16 @@ public class WsManBaseTestSupport extends TestCase {
 
 	    protected Management sendDeleteRequest(String destination, String resourceUri, Set<SelectorType> selectors) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-	        // Create a transfer document
-	        Transfer xf = new Transfer();
-	        xf.setAction(Transfer.DELETE_ACTION_URI);
-	        xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-	        xf.setMessageId("uuid:" + UUID.randomUUID().toString());
 
-	        // Add required ws-management values
-	        Management mgmt = new Management(xf);
-	        mgmt.setXmlBinding(xf.getXmlBinding());
-	        mgmt.setTo(destination);
-	        mgmt.setResourceURI(resourceUri);
-	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
-	        mgmt.setTimeout(timeout);
-	        mgmt.setSelectors(selectors);
+	        // Build Request Document
+	    	TransferMessageValues settings = TransferMessageValues.newInstance();
+	    	settings.setResourceUri(resourceUri);
+	    	settings.setTo(destination);
+	    	settings.setSelectorSet(selectors);
+	    	settings.setTransferMessageActionType(Transfer.DELETE_ACTION_URI);
+	    	final Transfer mgmt = TransferUtility.buildMessage(null, settings);
 
-	        // Send request
+			// Send request
 	        Addressing response = HttpClient.sendRequest(mgmt);
 
 	        // Look for returned faults
@@ -118,20 +98,14 @@ public class WsManBaseTestSupport extends TestCase {
 
 	    protected Management sendPutRequest(String destination, String resourceUri, Set<SelectorType> selectors, Document propertyDocument) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-	        // Create a transfer document
-	        Transfer xf = new Transfer();
-	        xf.setAction(Transfer.PUT_ACTION_URI);
-	        xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-	        xf.setMessageId("uuid:" + UUID.randomUUID().toString());
 
-	        // Add required ws-management values
-	        Management mgmt = new Management(xf);
-	        mgmt.setXmlBinding(xf.getXmlBinding());
-	        mgmt.setTo(destination);
-	        mgmt.setResourceURI(resourceUri);
-	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
-	        mgmt.setTimeout(timeout);
-	        mgmt.setSelectors(selectors);
+	        // Build Request Document
+	    	TransferMessageValues settings = TransferMessageValues.newInstance();
+	    	settings.setResourceUri(resourceUri);
+	    	settings.setTo(destination);
+	    	settings.setSelectorSet(selectors);
+	    	settings.setTransferMessageActionType(Transfer.PUT_ACTION_URI);
+	    	final Transfer mgmt = TransferUtility.buildMessage(null, settings);
 
 	        mgmt.getBody().addDocument(propertyDocument);
 
@@ -149,23 +123,20 @@ public class WsManBaseTestSupport extends TestCase {
 	    }
 
 
-	    protected Management sendGetRequest(String destination, String resourceUri, Set<SelectorType> selectors) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
+	    protected Management sendGetRequest(String destination, String resourceUri, Set<SelectorType> selectors, Set<OptionType> options) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-	        // Build a transfer request
-	        Transfer xf = new Transfer();
-	        xf.setAction(Transfer.GET_ACTION_URI);
-	        xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-	        xf.setMessageId("uuid:" + UUID.randomUUID().toString());
 
+    	
 	        // Build Request Document
-	        Management mgmt = new Management(xf);
-	        mgmt.setXmlBinding(xf.getXmlBinding());
-	        mgmt.setTo(destination);
-	        mgmt.setResourceURI(resourceUri);
-	        Duration timeout = DatatypeFactory.newInstance().newDuration(TEST_TIMEOUT);
-	        mgmt.setTimeout(timeout);
-
-	        mgmt.setSelectors(selectors);
+	    	TransferMessageValues settings = TransferMessageValues.newInstance();
+	    	settings.setResourceUri(resourceUri);
+	    	settings.setTo(destination);
+	    	settings.setSelectorSet(selectors);
+	    	settings.setTransferMessageActionType(Transfer.GET_ACTION_URI);
+	        if (options != null) {
+	        	settings.setOptionSet(options);
+	        }
+	    	final Transfer mgmt = TransferUtility.buildMessage(null, settings);
 
 	        // Send the get request to the server
 	        Addressing response = HttpClient.sendRequest(mgmt);
@@ -182,33 +153,15 @@ public class WsManBaseTestSupport extends TestCase {
 
 	    protected EnumerateResponse sendEnumerateRequest(String destination, String resourceUri, String filter) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-//	        final Enumeration enu = new Enumeration();
-//	        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
-//	        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-//	        enu.setMessageId("uuid:" + UUID.randomUUID().toString());
-//	        final DatatypeFactory factory = DatatypeFactory.newInstance();
-//	        final FilterType filterType = Enumeration.FACTORY.createFilterType();
-//	        filterType.setDialect(com.sun.ws.management.xml.XPath.NS_URI);
-//	        filterType.getContent().add(filter);
-//	        enu.setEnumerate(null, factory.newDuration(6000).toString(),
-//	                         filter == null ? null : filterType);
+
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
-	    	settings.setFilter(filter);settings.setDefaultTimeout(6000);
+	    	settings.setFilter(filter);
+	    	settings.setDefaultTimeout(6000);
+	    	settings.setTo(destination);
+	    	settings.setResourceUri(resourceUri);
 	    	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
 	    	
-//	        final Management mgmt = new Management(enu);
-//	        mgmt.setXmlBinding(enu.getXmlBinding());
-//
-//	        mgmt.setTo(destination);
-//	        mgmt.setResourceURI(resourceUri);
-	    	ManagementMessageValues manSettings = ManagementMessageValues.newInstance();
-	    	manSettings.setTo(destination);
-	    	manSettings.setResourceUri(resourceUri);
-	    	manSettings.setXmlBinding(enu.getXmlBinding());
-	    	final Management mgmt = ManagementUtility.buildMessage(enu,manSettings);
-//	    	mgmt.setXmlBinding(enu.getXmlBinding());
-	    	
-	        final Addressing response = HttpClient.sendRequest(mgmt);
+	        final Addressing response = HttpClient.sendRequest(enu);
 
 	        if (response.getBody().hasFault())
 	        {
@@ -240,31 +193,16 @@ public class WsManBaseTestSupport extends TestCase {
 	    public Addressing sendEnumRequest(Object ctx, String destination, String resourceUri, String action)
 	            throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-//	        final Enumeration enu = new Enumeration();
-//	        enu.setAction(action);
-//	        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-//	        enu.setMessageId("uuid:" + UUID.randomUUID().toString());
-//	        final DatatypeFactory factory = DatatypeFactory.newInstance();
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
 	    	settings.setEnumerationMessageActionType(action);
 	    	settings.setDefaultTimeout(60000);
 	    	settings.setMaxElements(100);
 	    	settings.setEnumerationContext(ctx);
-	        final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
-//	    	enu.setPull(ctx,0,100,factory.newDuration(60000));//maxchars not implemented yet
+	    	settings.setTo(destination);
+	    	settings.setResourceUri(resourceUri);
+	    	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
 	        
-//	        final Management mgmt = new Management(enu);
-//	        mgmt.setXmlBinding(enu.getXmlBinding());
-//	        mgmt.setTo(destination);
-//	        mgmt.setResourceURI(resourceUri);
-	        ManagementMessageValues manSet = new ManagementMessageValues();
-	        manSet.setXmlBinding(enu.getXmlBinding());
-	        manSet.setTo(destination);
-	        manSet.setResourceUri(resourceUri);
-	        final Management mgmt = ManagementUtility.buildMessage(enu, manSet);
-//System.out.println("Pull Message:"+mgmt.toString());
-	        
-	        final Addressing response = HttpClient.sendRequest(mgmt);
+	        final Addressing response = HttpClient.sendRequest(enu);
 	        return response;
 	    }
 
@@ -281,20 +219,16 @@ public class WsManBaseTestSupport extends TestCase {
 	    protected Addressing sendReleaseRequest(String destination,
 	                                                String resourceUri, Object ctx) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
-	        final Enumeration enu = new Enumeration();
-	        enu.setAction(Enumeration.RELEASE_ACTION_URI);
-	        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-	        enu.setMessageId("uuid:" + UUID.randomUUID().toString());
-	        //final DatatypeFactory factory = DatatypeFactory.newInstance();
-	        enu.setRelease(ctx);
-
-	        final Management mgmt = new Management(enu);
-	        mgmt.setXmlBinding(enu.getXmlBinding());
-	        mgmt.setTo(destination);
-	        mgmt.setResourceURI(resourceUri);
-
-	        Addressing response = HttpClient.sendRequest(mgmt);
-
+	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
+	    	settings.setEnumerationMessageActionType(Enumeration.RELEASE_ACTION_URI);
+	    	settings.setDefaultTimeout(60000);
+	    	settings.setEnumerationContext(ctx);
+	    	settings.setTo(destination);
+	    	settings.setResourceUri(resourceUri);
+	    	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
+	        
+	        Addressing response = HttpClient.sendRequest(enu);
+	        
 	        return response;
 
 

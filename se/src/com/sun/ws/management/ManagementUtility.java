@@ -17,6 +17,7 @@ import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Node;
@@ -27,6 +28,7 @@ import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 //import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
+import com.sun.ws.management.soap.SOAP;
 
 /** This class is meant to provide general utility functionality for
  *  Management instances and all of their related extensions.
@@ -283,6 +285,25 @@ public class ManagementUtility {
 					settings.getTimeout()));
 		}
 		
+        //process the selectors passed in.
+        if((settings.getSelectorSet()!=null)&&(settings.getSelectorSet().size()>0)){
+        	message.setSelectors(settings.getSelectorSet());
+        }
+        
+		 //Processing MaxEnvelopeSize
+		if((settings.getMaxEnvelopeSize()!=null)&&
+		    settings.getMaxEnvelopeSize().longValue() >0){
+	        final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
+	        maxEnvSize.setValue(settings.getMaxEnvelopeSize());
+	        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
+	        message.setMaxEnvelopeSize(maxEnvSize);
+		}
+        
+		 //Processing Locale
+		if(settings.getLocale()!=null){
+			message.setLocale(settings.getLocale());
+		}
+		
 		//Add processing for other Management components
 		if((settings.getAdditionalHeaders()!=null)&&
 			(settings.getAdditionalHeaders().size()>0)){
@@ -291,7 +312,12 @@ public class ManagementUtility {
 				message.addHeaders(element);
 			}
 		}
-		
+
+        //process the options passed in.
+        if((settings.getOptionSet()!=null)&&(settings.getOptionSet().size()>0)){
+        	message.setOptions(settings.getOptionSet());
+        }
+
 		return message;
 	}
 	

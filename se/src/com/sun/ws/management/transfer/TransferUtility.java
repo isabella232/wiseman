@@ -14,8 +14,11 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationMessageValues;
 
 /** This class is meant to provide general utility functionality for
  *  Transfer instances and all of their related extensions.  Management 
@@ -103,4 +106,72 @@ public class TransferUtility {
 		
 	  return mgmt;
 	}
+	
+	public static Transfer buildMessage(Transfer existingMessage, TransferMessageValues settings)
+			
+		  throws SOAPException, 
+			JAXBException, DatatypeConfigurationException{
+			
+			//Create return element reference
+		    if(existingMessage == null){//build default instances
+				Management mgmt = ManagementUtility.buildMessage(null, settings);
+		    	existingMessage = new Transfer(mgmt);
+			}
+			if(settings ==null){//grab a default instance if 
+				settings = TransferMessageValues.newInstance();
+			}
+			
+	        //set the action
+	        if((settings.getTransferMessageActionType()!=null)&&(settings.getTransferMessageActionType().trim().length()>0)){
+	        	existingMessage.setAction(settings.getTransferMessageActionType());
+	        } else {
+	        	existingMessage.setAction(Transfer.GET_ACTION_URI);
+	        }
+			 //Processing ReplyTo
+			if((settings.getReplyTo()!=null)&&
+			    settings.getReplyTo().trim().length()>0){
+				existingMessage.setReplyTo(settings.getReplyTo());
+			}else{
+				existingMessage.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+			}
+			
+			 //Processing MessageId component
+			if((settings.getUidScheme()!=null)&&
+					(settings.getUidScheme().trim().length()>0)){
+				existingMessage.setMessageId(settings.getUidScheme() +
+					   UUID.randomUUID().toString());
+			}else{
+				existingMessage.setMessageId(EnumerationMessageValues.DEFAULT_UID_SCHEME +
+				  UUID.randomUUID().toString());
+			}
+				
+			if (settings.getNamespaceMap() != null &&
+					settings.getNamespaceMap().size() > 0){
+				existingMessage.addNamespaceDeclarations(settings.getNamespaceMap());
+			} 
+			
+	        //populate binding
+			existingMessage.setXmlBinding(new Transfer().getXmlBinding());
+	        
+	        final DatatypeFactory factory = DatatypeFactory.newInstance();
+	        //timeout creation
+/*	        if(settings.getDefaultTimeout()>-1){
+	        	existingMessage.setTimeout(
+	        			factory.newDuration(settings.getDefaultTimeout()));
+	        }else{
+	        	existingMessage.setTimeout(
+	        			factory.newDuration(ManagementMessageValues.DEFAULT_TIMEOUT));
+	        }	        
+	        
+	        //proecess the selectors passed in.
+	        if((settings.getSelectorSet()!=null)&&(settings.getSelectorSet().size()>0)){
+	        	existingMessage.setSelectors(settings.getSelectorSet());
+	        }
+	        //insert the contents passed in.
+//	        if(contents!=null){//
+	           //mgmt.getBody().addDocument(contents);
+//	        }
+*/			
+		  return existingMessage;
+		}	
 }

@@ -9,6 +9,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
@@ -237,7 +238,8 @@ public class TransferTestCase extends WsManBaseTestSupport {
 
 		// Now use these selectors to request back the newly created object 
 		HashSet<SelectorType> selectors1 = createSelector("Test","Get");
-		Management response = sendGetRequest(DESTINATION,RESOURCE_URI, selectors1);
+		HashSet<OptionType> options = createOption("Test","Get");
+		Management response = sendGetRequest(DESTINATION,RESOURCE_URI, selectors1, options);
 
 		// Now verify the values of each returned field
 		UserType user = (UserType)(((JAXBElement<UserType>)binding.unmarshal(response.getBody().getFirstChild())).getValue());
@@ -264,6 +266,19 @@ private HashSet<SelectorType> createSelector(String lastnameValue, String firstn
 	return selectors1;
 }
 
+private HashSet<OptionType> createOption(String lastnameValue, String firstnameValue) {
+	HashSet<OptionType> options1=new HashSet<OptionType>();
+	OptionType lastNameSelector = new OptionType();
+	lastNameSelector.setName("lastname");
+	lastNameSelector.setValue(lastnameValue);
+	options1.add(lastNameSelector);
+	OptionType firstNameSelector = new OptionType();
+	firstNameSelector.setName("firstname");
+	firstNameSelector.setValue(firstnameValue);
+	options1.add(firstNameSelector);
+	return options1;
+}
+
 	@SuppressWarnings("unchecked")
 	public void testPut() throws JAXBException, SOAPException, DatatypeConfigurationException, IOException{
 		// create, will throw an exception on fail
@@ -280,7 +295,7 @@ private HashSet<SelectorType> createSelector(String lastnameValue, String firstn
 		// state and then edit a replace it as a test
 		// Now use these selectors to request back the newly created object 
 		HashSet<SelectorType> selectors1 = createSelector("Test","Put");
-		Management getResponse = sendGetRequest(DESTINATION,RESOURCE_URI, selectors1);
+		Management getResponse = sendGetRequest(DESTINATION,RESOURCE_URI, selectors1, null);
 		UserType user = (UserType)(((JAXBElement<UserType>)binding.unmarshal(getResponse.getBody().getFirstChild())).getValue());
 		
 		// Now edit and put it back
@@ -292,7 +307,7 @@ private HashSet<SelectorType> createSelector(String lastnameValue, String firstn
 		
 		sendPutRequest(DESTINATION,RESOURCE_URI,selectors1,doc);
 		
-		Management getVerifyResponse = sendGetRequest(DESTINATION,RESOURCE_URI, selectors1);
+		Management getVerifyResponse = sendGetRequest(DESTINATION,RESOURCE_URI, selectors1, null);
 		UserType userToVerify = (UserType)(((JAXBElement<UserType>)binding.unmarshal(getVerifyResponse.getBody().getFirstChild())).getValue());
 
 		assertEquals("500 Briggs Road",userToVerify.getAddress());
@@ -309,7 +324,7 @@ private HashSet<SelectorType> createSelector(String lastnameValue, String firstn
 
 
 		// Verify its presence
-		sendGetRequest(DESTINATION,RESOURCE_URI, selectors);
+		sendGetRequest(DESTINATION,RESOURCE_URI, selectors, null);
 		
 		// Delete created resource
 		sendDeleteRequest(DESTINATION,RESOURCE_URI, selectors);
@@ -317,7 +332,7 @@ private HashSet<SelectorType> createSelector(String lastnameValue, String firstn
 		
 		// Try to get it now that is has been deleted
 		try {
-			sendGetRequest(DESTINATION,RESOURCE_URI, selectors);
+			sendGetRequest(DESTINATION,RESOURCE_URI, selectors, null);
 		} catch(SOAPException e){
 			// Fault here indicates that resource has been removed
 			return;

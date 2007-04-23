@@ -57,7 +57,8 @@ public class EnumerationUtility {
 		throws SOAPException, JAXBException, DatatypeConfigurationException{
 		
 		if(existingEnum == null){//build default instances
-		   existingEnum = new Enumeration();
+			Management mgmt = ManagementUtility.buildMessage(null, settings);
+		   existingEnum = new Enumeration(mgmt);
 		}
 		if(settings ==null){//grab a default instance if 
 			settings = EnumerationMessageValues.newInstance();
@@ -106,15 +107,15 @@ public class EnumerationUtility {
             filterType.getContent().add(settings.getFilter());
         }
         
-        if(settings.getDefaultTimeout()>-1){
+        if(settings.getTimeout()>-1){
         	existingEnum.setEnumerate(null, 
         			factory.newDuration(
-        					settings.getDefaultTimeout()).toString(),
+        					settings.getTimeout()).toString(),
               settings.getFilter() == null ? null : filterType);
         }else{
         	existingEnum.setEnumerate(null, 
         			factory.newDuration(
-        					settings.getDefaultTimeout()).toString(),
+        					settings.getTimeout()).toString(),
               settings.getFilter() == null ? null : filterType);
         }
         
@@ -122,35 +123,38 @@ public class EnumerationUtility {
         if(settings.getEnumerationContext()!=null){
         	//Process for PULL action
         	if(existingEnum.getAction().equals(Enumeration.PULL_ACTION_URI)){
-        		existingEnum.setPull(settings.getEnumerationContext(), 
+        		EnumerationExtensions enx = new EnumerationExtensions(existingEnum);
+        		enx.setPull(
+        		settings.getEnumerationContext(), 
         		   settings.getMaxCharacters(), 
         		   settings.getMaxElements(), 
-        		   EnumerationMessageValues.newDuration(settings.getDefaultTimeout()));
+        		   EnumerationMessageValues.newDuration(settings.getDefaultTimeout()),
+        		   settings.isRequestForTotalItemsCount());
+        		existingEnum = new Enumeration(enx);
         	}else if(existingEnum.getAction().equals(Enumeration.ENUMERATE_ACTION_URI)){
         		EnumerationExtensions enx = new EnumerationExtensions(existingEnum);
-//        	    public void setEnumerate(final EndpointReferenceType endTo,
-//		                 final boolean requestTotalItemsCountEstimate,
-//                        final boolean optimize,
-//                        final int maxElements,
-//                        final String expires,
-//                        final DialectableMixedDataType filter,
-//                        final Mode mode,
-//                        final Object... anys) throws JAXBException, SOAPException {        		
-        		
-//        		existingEnum.setEnumerate(
+        		EndpointReferenceType endTo = null;
+        		if (settings.getEndTo() == null || settings.getEndTo().length() == 0) {
+        			endTo = null;
+        		} else {
+        			endTo = Addressing.createEndpointReference(settings.getEndTo(), null, null, null, null);
+        		}
         		enx.setEnumerate(
-        			null, 
+        			endTo, 
         			settings.isRequestForTotalItemsCount(), 
     				settings.isRequestForOptimizedEnumeration(), 
     				settings.getMaxElements(), 
 //    				Long.valueOf(settings.getDefaultTimeout()).toString(),
-    				factory.newDuration(settings.getDefaultTimeout()).toString(),
+    				factory.newDuration(settings.getExpires()).toString(),
             		EnumerationMessageValues.newFilter(
             				settings.getFilter(), 
             				settings.getFilterDialect()), 
             		settings.getEnumerationMode());
         		existingEnum = new Enumeration(enx);
-        	}
+           	}else if(existingEnum.getAction().equals(Enumeration.RELEASE_ACTION_URI)){
+           		existingEnum.setRelease(settings.getEnumerationContext());
+           	
+           	}
         }
         
         //Add namespace elements if defined.

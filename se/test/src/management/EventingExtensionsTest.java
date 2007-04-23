@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.10 2007-03-02 16:12:28 denis_rachal Exp $
+ * $Id: EventingExtensionsTest.java,v 1.11 2007-04-23 19:18:11 nbeers Exp $
  */
 
 package management;
@@ -21,8 +21,12 @@ package management;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationMessageValues;
+import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.eventing.EventingMessageValues;
+import com.sun.ws.management.eventing.EventingUtility;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
@@ -134,26 +138,21 @@ public class EventingExtensionsTest extends TestBase {
     }
     
     private void pullModeTest(final String filter, final NamespaceMap filterNsMap) throws Exception {
-        final EventingExtensions evtx = new EventingExtensions();
-        evtx.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        evtx.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        evtx.setTo(DESTINATION);
-        evtx.setAction(Eventing.SUBSCRIBE_ACTION_URI);
-        final FilterType filterType = Eventing.FACTORY.createFilterType();
-        filterType.setDialect(XPath.NS_URI);
-        filterType.getContent().add(filter);
-        evtx.setSubscribe(null, EventingExtensions.PULL_DELIVERY_MODE, null, null,
-                filter == null ? null : filterType);
-        
-        // TODO: Set this in the filter header.
+
+        EventingMessageValues settings = new EventingMessageValues();
+    	settings.setDeliveryMode(EventingExtensions.PULL_DELIVERY_MODE);
+    	settings.setTo(DESTINATION);
+    	settings.setEventingMessageActionType(Eventing.SUBSCRIBE_ACTION_URI);
+    	settings.setFilter(filter);
+    	settings.setFilterDialect(XPath.NS_URI);
+    	settings.setResourceUri("wsman:test/pull_source");
         if ((filter != null) && (filterNsMap != null))
-        	evtx.addNamespaceDeclarations(filterNsMap.getMap()); 
-        
-        final Management mgmt = new Management(evtx);
-        mgmt.setResourceURI("wsman:test/pull_source");
-        
-        mgmt.prettyPrint(logfile);
-        Addressing response = HttpClient.sendRequest(mgmt);
+        	settings.setNamespaceMap(filterNsMap.getMap()); 
+    	
+    	Eventing evt = EventingUtility.buildMessage(null, settings);
+
+        evt.prettyPrint(logfile);
+        Addressing response = HttpClient.sendRequest(evt);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
@@ -177,19 +176,19 @@ public class EventingExtensionsTest extends TestBase {
         boolean done = false;
         int count = 0;
         do {
-            final Enumeration en = new Enumeration();
-            en.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-            en.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-            en.setTo(DESTINATION);
-            en.setAction(Enumeration.PULL_ACTION_URI);
-            final Duration pullDuration = DatatypeFactory.newInstance().newDuration(20000);
-            en.setPull(context, -1, 2, pullDuration);
-            
-            final Management mgmt2 = new Management(en);
-            mgmt2.setResourceURI("wsman:test/pull_source");
-            
-            mgmt2.prettyPrint(logfile);
-            Addressing response2 = HttpClient.sendRequest(mgmt2);
+        	
+            EnumerationMessageValues enumSettings = new EnumerationMessageValues();
+            enumSettings.setTo(DESTINATION);
+            enumSettings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
+            enumSettings.setTimeout(20000);
+            enumSettings.setEnumerationContext(context);
+            enumSettings.setMaxElements(2);
+            enumSettings.setResourceUri("wsman:test/pull_source");
+       	
+        	Enumeration enu = EnumerationUtility.buildMessage(null, enumSettings);
+          
+        	enu.prettyPrint(logfile);
+            Addressing response2 = HttpClient.sendRequest(enu);
             response2.prettyPrint(logfile);
             if (response2.getBody().hasFault()) {
                 fail(response2.getBody().getFault().getFaultString());

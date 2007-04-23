@@ -150,7 +150,7 @@ public class TrafficLightTestCase extends WsManBaseTestSupport {
 		HashSet<SelectorType> selectorsHash = new HashSet<SelectorType>();
 		selectorsHash.add(nameSelectorType);
 		Management response = sendGetRequest(DESTINATION, RESOURCE_URI,
-				selectorsHash);
+				selectorsHash, null);
 
 		// Now convert the body into a JAXB Type
 		TrafficLightType lightState = (TrafficLightType) (((JAXBElement<TrafficLightType>) binding

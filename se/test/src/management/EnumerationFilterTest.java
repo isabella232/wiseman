@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationFilterTest.java,v 1.4 2007-03-02 16:06:27 denis_rachal Exp $
+ * $Id: EnumerationFilterTest.java,v 1.5 2007-04-23 19:18:11 nbeers Exp $
  */
 
 package management;
@@ -38,6 +38,8 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.enumeration.EnumerationMessageValues;
+import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
@@ -139,43 +141,35 @@ public class EnumerationFilterTest extends TestBase {
     		final String expression,
     		final Set<OptionType> options) throws Exception {
     	
-        final EnumerationExtensions enu = new EnumerationExtensions();
-        enu.setXmlBinding(binding);
-        
-        enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
-        enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        enu.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        final DatatypeFactory factory = DatatypeFactory.newInstance();
-        
-        // Process any filter
-        final DialectableMixedDataType filter;
+    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
+    	settings.setEnumerationMessageActionType(Enumeration.ENUMERATE_ACTION_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri(resource);
+    	settings.setDefaultTimeout(60000);
+    	settings.setMaxElements(maxElements);
+    	settings.setRequestForOptimizedEnumeration(true);
+    	settings.setRequestForTotalItemsCount(true);
+    	settings.setEnumerationMode(mode);
+    	
         if ((expression != null) && (expression.length() > 0)) {
-            filter = Management.FACTORY.createDialectableMixedDataType();
             if ((dialect != null) && (dialect.length() > 0))
-                filter.setDialect(dialect);
-            filter.getContent().add(expression);
-        } else {
-        	filter = null;
+            	settings.setFilterDialect(dialect);
+            settings.setFilter(expression);
         }
-        enu.setEnumerate(null, true, true, maxElements, 
-        		factory.newDuration(60000).toString(),
-        		filter, mode);
-        
-        final Management mgmt = new Management(enu);
-        mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI(resource);
         
         // Add the namespace for the filter
         Map<String, String> map = new  HashMap<String, String>();
         map.put("user", UserEnumerationHandler.NS_URI);
-        mgmt.addNamespaceDeclarations(map);
+        settings.setNamespaceMap(map);
         
         // Add any options
         if (options != null)
-            mgmt.setOptions(options);
+        	settings.setOptionSet(options);
         
-        mgmt.prettyPrint(logfile);
-        final Addressing response = HttpClient.sendRequest(mgmt);
+    	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
+
+        enu.prettyPrint(logfile);
+        final Addressing response = HttpClient.sendRequest(enu);
         
         response.setXmlBinding(binding);
         response.prettyPrint(logfile);
@@ -200,18 +194,16 @@ public class EnumerationFilterTest extends TestBase {
         assertTrue(ee.getValue().intValue() > 0);
         
         if (enuResponse.isEndOfSequence() == false) {
-            final EnumerationExtensions pullRequest = new EnumerationExtensions();
-            pullRequest.setAction(Enumeration.PULL_ACTION_URI);
-            pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-            pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-            pullRequest.setPull(context, 0, 3, factory.newDuration(30000), true);
-            
-            final Management mp = new Management(pullRequest);
-            mp.setTo(DESTINATION);
-            mp.setResourceURI(resource);
-            
-            mp.prettyPrint(logfile);
-            final Addressing praddr = HttpClient.sendRequest(mp);
+        	
+        	settings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
+        	settings.setEnumerationContext(context);
+        	settings.setDefaultTimeout(30000);
+        	settings.setMaxCharacters(0);
+        	settings.setMaxElements(3);
+        	
+        	final Enumeration enuPull = EnumerationUtility.buildMessage(null, settings);
+        	enuPull.prettyPrint(logfile);
+            final Addressing praddr = HttpClient.sendRequest(enuPull);
             praddr.prettyPrint(logfile);
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);
@@ -234,13 +226,12 @@ public class EnumerationFilterTest extends TestBase {
         }
         
         if (enuResponse.isEndOfSequence() == false) {
-            final EnumerationExtensions pullRequest = new EnumerationExtensions();
-            pullRequest.setAction(Enumeration.RELEASE_ACTION_URI);
-            pullRequest.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-            pullRequest.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-            pullRequest.setRelease(context);
-            
-            final Management mp = new Management(pullRequest);
+        	
+        	settings.setEnumerationMessageActionType(Enumeration.RELEASE_ACTION_URI);
+        	
+        	final Enumeration enuRelease = EnumerationUtility.buildMessage(null, settings);
+        	
+            final Management mp = new Management(enuRelease);
             mp.setTo(DESTINATION);
             mp.setResourceURI(resource);
             
