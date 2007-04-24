@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.55 2007-04-06 15:04:15 jfdenise Exp $
+ $Id: build.xml,v 1.56 2007-04-24 03:49:50 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -395,6 +395,8 @@
             includes="*.properties" />
             <zipfileset dir="${src.ext.dir}"
             includes="**/*.xml" />
+        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls" includes="**" />	
+        	<zipfileset prefix="schemas" dir="${test.dir}/schemas" includes="**" />	
         </war>
     </target>
   

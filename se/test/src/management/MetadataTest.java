@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MetadataTest.java,v 1.2 2007-04-02 16:11:22 jfdenise Exp $
+ * $Id: MetadataTest.java,v 1.3 2007-04-24 03:49:51 simeonpinder Exp $
  */
 
 package management;
 
 import com.sun.ws.management.mex.MetadataUtility;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
@@ -36,6 +46,7 @@ import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
@@ -95,6 +106,7 @@ public class MetadataTest extends TestBase {
 	public static long timeoutInMilliseconds = 9400000;
 	
 	XmlBinding binding = null;
+    private int defAnnotCnt =6;
     
     /* Initialize the unit test variables for each test run.
      * (non-Javadoc)
@@ -173,7 +185,8 @@ public class MetadataTest extends TestBase {
 			//Parse the MetadataSections that exist
 			List<MetadataSection> metaDataSections = ob.getMetadataSection();
 			 assertEquals("The correct number of metadata sections were not found.",
-					3, metaDataSections.size());
+//					 3, metaDataSections.size());
+					 defAnnotCnt, metaDataSections.size());
 
         //############ PROCESS A METADATASECTION ###################### 
 			//Examine Metadatasection attributes 
@@ -190,7 +203,8 @@ public class MetadataTest extends TestBase {
 	        Management[] metaDataList = 
 	        	MetadataUtility.extractEmbeddedMetaDataElements(mResp);
 	        assertEquals("Correct number of Management instances not returned.",
-	        		3, metaDataList.length);
+//	        		3, metaDataList.length);
+	        		defAnnotCnt, metaDataList.length);
 			
 	        //locate the Management instances to evaluate.
 	        Management defAddModInst = null;
@@ -200,6 +214,8 @@ public class MetadataTest extends TestBase {
 	        	Management inst = metaDataList[i];
 	        	SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(), 
 	        			AnnotationProcessor.RESOURCE_META_DATA_UID);
+	        	assertNotNull("Unable to locate SoapElement for "+
+	        			AnnotationProcessor.RESOURCE_META_DATA_UID,uid);
 	        	if(uid.getTextContent().equals(MetadataTest.metaDataUID)){
 	        		defAddModInst = inst;
 	        	}
@@ -346,12 +362,15 @@ public class MetadataTest extends TestBase {
         //retrieve all the metadata descriptions 
         Management[] metaDataList = 
         	MetadataUtility.extractEmbeddedMetaDataElements(mResp); 
-        assertEquals("Array count incorrect.",3, metaDataList.length);
+//        assertEquals("Array count incorrect.",3, metaDataList.length);
+        assertEquals("Array count incorrect.",defAnnotCnt, metaDataList.length);
         Management enumModInst = null;
         for (int i = 0; i < metaDataList.length; i++) {
         	Management inst = metaDataList[i];
         	SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(), 
         			AnnotationProcessor.RESOURCE_META_DATA_UID);
+        	assertNotNull("SOAPElement was not located.",uid);
+        	assertNotNull("SOAPElement contained no text element.",uid.getTextContent());
         	if(uid.getTextContent().equals(MetadataTest.enuMetaDataUID)){
         		enumModInst = inst;
         	}
@@ -372,5 +391,49 @@ public class MetadataTest extends TestBase {
       }catch(Exception e){
     	  fail("An error occured:"+e.getMessage());
       }
+    }
+    public void testWsdlSchemaExposure() throws IOException, SOAPException, JAXBException{
+    	//send an http request for a wsdl.
+    	//parse the response to see that it was responded to    	
+    	String urlToXsd = ManagementMessageValues.WSMAN_DESTINATION+"schemas/light.xsd";
+//    	String urlToXsd = ManagementMessageValues.WSMAN_DESTINATION+"schemas/light.xsd1";
+    	String parseFor="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd";
+    	//Create HTTP connection
+        final URL dest = new URL(urlToXsd);
+         assertNotNull("Unable to instantiate URL",dest);
+        final URLConnection conn = dest.openConnection();
+         assertNotNull("Unable to instantiate URLConnection",conn);
+        //Simple request details. 
+          conn.setAllowUserInteraction(false);
+          conn.setDoInput(true);
+          conn.setDoOutput(true);
+        
+        final HttpURLConnection http = (HttpURLConnection) conn;
+        http.setRequestMethod("POST");
+        //Build HTTP GET request.
+	   	 String get = "GET "+urlToXsd+" \r\n";
+	   	 
+		 OutputStream output = http.getOutputStream();
+		 output.write(get.getBytes());
+		 //Retrieve HTTP response code
+        final int response = http.getResponseCode();
+        
+        if(response==HttpServletResponse.SC_OK){
+       	 InputStream input = http.getInputStream();
+     	 BufferedReader br = new BufferedReader(new InputStreamReader(http.getInputStream()));
+    	   output.write(get.getBytes());
+    	 assertNotNull("Unable to open reader.",br);
+    	boolean located = false;
+    	String line = null;
+    	while((line = br.readLine())!=null){
+    		if(line.indexOf(parseFor)>-1){
+    			located = true;
+    		}
+    	}
+    	assertTrue("The expected String could not be found.",located);
+          	
+        }else{
+        	fail("Http request failed.");
+        }
     }
 }

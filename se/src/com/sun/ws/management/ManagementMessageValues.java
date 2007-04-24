@@ -40,6 +40,7 @@ public class ManagementMessageValues {
 	public static final BigInteger DEFAULT_MAX_ENVELOPE_SIZE = BigInteger.valueOf(0);
 	public static final Locale DEFAULT_LOCALE = null;
 	public static final Set<OptionType> DEFAULT_OPTION_SET = null;
+	public static final String WSMAN_DESTINATION="http://localhost:8080/wsman/";
 	
 	/*These values are added so that each instance has
 	 * properties that can be get/set for all the relevant

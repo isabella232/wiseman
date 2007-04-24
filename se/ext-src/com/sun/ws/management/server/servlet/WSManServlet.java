@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.1 2007-04-06 10:03:12 jfdenise Exp $
+ * $Id: WSManServlet.java,v 1.2 2007-04-24 03:49:51 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -32,9 +32,12 @@ import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -118,7 +121,13 @@ public abstract class WSManServlet extends HttpServlet {
         
         final ContentType contentType = ContentType.createFromHttpContentType(req.getContentType());
         if (contentType==null||!contentType.isAcceptable()) {
+        	boolean isWsdlOrSchemaRequest = processForWsdlOrSchemaRequest(req);
+        	if(!isWsdlOrSchemaRequest){
             resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
+        	}else{
+        	  //insert method to generate HTTP response here	
+        	  processAsHttpRequest(req,resp,contentType);	
+        	}
             return;
         }
         
@@ -148,6 +157,148 @@ public abstract class WSManServlet extends HttpServlet {
         }
     }
     
+    /**Process the http request.
+     * 
+     * @param req
+     * @param resp
+     * @throws IOException 
+     */
+    private void processAsHttpRequest(HttpServletRequest req, 
+    		HttpServletResponse resp,ContentType contentType) throws IOException {
+    	//indicate that we agree to process
+        resp.setStatus(HttpServletResponse.SC_OK);
+        if(contentType!=null){
+          resp.setContentType(contentType.toString());
+        }
+        
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = new BufferedInputStream(req.getInputStream());
+            os = new BufferedOutputStream(resp.getOutputStream());
+            
+            String contentype = req.getContentType();
+            final Principal user = req.getUserPrincipal();
+            String charEncoding = req.getCharacterEncoding();
+            String url = req.getRequestURL().toString();
+            Map<String, Object> props = new HashMap<String, Object>(1);
+            props.put(HandlerContext.SERVLET_CONTEXT, getServletContext());
+//            final HandlerContext context = new HandlerContextImpl(user, contentype,
+//            		charEncoding, url, props, agent.getProperties());
+            final HandlerContext context = new HandlerContextImpl(user, contentype,
+                    charEncoding, url, props);
+            
+            String requestURI = req.getRequestURI();
+            if((requestURI!=null)&&(requestURI.startsWith(req.getContextPath()))){
+            	//removing the contextPath in it's entirety
+            	requestURI = requestURI.substring(req.getContextPath().trim().length());
+            }
+            
+            ServletContext srvContext = getServletContext();
+             InputStream inputStream = 
+            	 srvContext.getResourceAsStream(requestURI);
+             Set paths = srvContext.getResourcePaths(requestURI);
+             if(inputStream==null){
+            	resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            	String htmlResponse = "";
+            	  String title="'"+requestURI+"' was not found.";
+            	  String body="<center><h1>"+HttpServletResponse.SC_NOT_FOUND+
+            	     ": File Not Found</h1></center><br></br>";
+            	  body+="<center>The resource <b>'"+requestURI+req.getContextPath()+
+            	  		"'</b> that you requested could not be found.";
+            	  body+="<br></br> Please check that the requested URL is correct.</center>";
+            		htmlResponse=generateHtmlResponse(requestURI,title,body);
+            	inputStream = new ByteArrayInputStream(htmlResponse.getBytes());
+             }
+//             //Then the user has put in the directory request
+//             if((paths!=null)&&(!paths.isEmpty())){
+//             	resp.setStatus(HttpServletResponse.SC_FOUND);
+//            	String htmlResponse = "";
+//            	  String title="File(s) list for '"+requestURI;
+//            	  Iterator iter = paths.iterator();
+//            	  String body ="<b>File(s) found:</b><br></br><ul>";
+//            	  while (iter.hasNext()) {
+//					String file = (String) iter.next();
+//            		  file = file.trim();
+//            		  if(file.lastIndexOf("/")==file.length()-1){
+//            			 //is directory 
+//            			 body+="<li><a href=\""+file+"\">"+file+"</a></li>"; 
+//            		  }else{
+//            			 body+="<li>"+file+"</li>"; 
+//            		  }
+//            	  }
+//            	  if(paths.isEmpty()){
+//            		 body+="<li>(No files to display)</li>"; 
+//            	  }
+//            	  body+="</ul>";
+//            	 htmlResponse=generateHtmlResponse(requestURI,title,body);
+//            	inputStream = new ByteArrayInputStream(htmlResponse.getBytes());
+//             }
+             BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+               String line = null;
+             while((line=br.readLine())!=null){
+          	    bos.write(line.getBytes());
+             }
+             
+             br.close();
+             br = null;
+             inputStream.close();
+             inputStream = null;
+            
+            final byte[] content = bos.toByteArray();
+            resp.setContentLength(content.length);
+            os.write(content);
+        } catch (Throwable th) {
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, th.getMessage());
+            LOG.log(Level.WARNING, th.getMessage(), th);
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+            if (os != null) {
+                os.close();
+            }
+        }
+	}
+
+	private String generateHtmlResponse(String resourceURI,String title,String body) {
+		String htmlResponse = "";
+			htmlResponse+="<HTML>";
+			htmlResponse+="<HEAD><title>"+title+"</title></HEAD>";
+			htmlResponse+="<BODY>"+body;
+			htmlResponse+="</BODY>";
+			htmlResponse+="</HTML>";
+		return htmlResponse;
+	}
+
+	private boolean processForWsdlOrSchemaRequest(HttpServletRequest req) {
+    	boolean isWsdlSchemaReq = false;
+    	if(req!=null){
+    	   //parse the request URI for /wsdl* or /schema*
+    	   //if exists then set to true
+    	   String requestUri = req.getRequestURI();
+    	   if((requestUri!=null)&&(requestUri.trim().length()>0)){
+    		  //disregard spaces and case
+    		  requestUri = requestUri.toLowerCase().trim();
+    		  //check for /wsdl or /schema
+    	   	  if((requestUri.indexOf("/wsdl")>0)||
+    	   		 (requestUri.indexOf("/schema")>0)){
+    	   		 isWsdlSchemaReq = true; 
+    	   	  }
+    	   }else{
+	    	  String msg="This servlet container does not expose the standard field ";
+	    	  msg+="'HttpServletRequest.requestUri'. Unable to proceed.";
+	    	  throw new RuntimeException(msg);
+    	   }
+    	}else{
+    	  String msg="HttpServleRequest passed in cannot be NULL.";
+    	  throw new IllegalArgumentException(msg);
+    	}
+		return isWsdlSchemaReq;
+	}
+
     private void handle(final InputStream is, final ContentType contentType,
             final OutputStream os, final HttpServletRequest req, final HttpServletResponse resp)
             throws SOAPException, JAXBException, IOException {
