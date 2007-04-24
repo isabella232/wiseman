@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="se/src"/>
+	<classpathentry kind="src" path="se/ext-src"/>
 	<classpathentry kind="src" path="se/gen-src"/>
 	<classpathentry kind="src" path="se/test/src"/>
 	<classpathentry kind="src" path="se/test/gen-src"/>
@@ -10,6 +11,7 @@
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/model/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_client/src"/>
+	<classpathentry exported="true" kind="lib" path="se/build"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="lib" path="se/lib/servlet-api.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/wsdl4j.jar"/>
