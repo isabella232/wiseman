@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.56 2007-04-24 03:49:50 simeonpinder Exp $
+ $Id: build.xml,v 1.57 2007-04-24 14:24:28 nbeers Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -481,7 +481,7 @@
             use="true"
             windowtitle="Wiseman API"
             source="1.5"
-            classpathref="compile.classpath">
+            classpathref="compile.core.classpath">
             <packageset dir="${src.dir}" 
                 defaultexcludes="yes">
                 <include name="com/sun/ws/management/**" />
