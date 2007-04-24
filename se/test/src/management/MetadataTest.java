@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MetadataTest.java,v 1.3 2007-04-24 03:49:51 simeonpinder Exp $
+ * $Id: MetadataTest.java,v 1.4 2007-04-24 13:50:19 simeonpinder Exp $
  */
 
 package management;
@@ -106,7 +106,7 @@ public class MetadataTest extends TestBase {
 	public static long timeoutInMilliseconds = 9400000;
 	
 	XmlBinding binding = null;
-    private int defAnnotCnt =6;
+    private int defAnnotCnt =3;
     
     /* Initialize the unit test variables for each test run.
      * (non-Javadoc)
