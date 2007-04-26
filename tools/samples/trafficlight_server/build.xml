@@ -129,9 +129,26 @@
 	</target>
 
 	<!--  =================================================  -->
+	<!--   "properties" - Create the wiseman.properties file -->
+	<!--  =================================================  -->
+	<target name="properties" depends="jar">
+		<echo file="${basedir}/etc/wiseman.properties" 
+			  message="${line.separator}# name of the war file's default WSDL file${line.separator}"/>
+		<echo file="${basedir}/etc/wiseman.properties" 
+			  append="true" 
+			  message="service.wsdl = ${user.wsdl.file}${line.separator}"/>
+		<echo file="${basedir}/etc/wiseman.properties"
+			  append="true"
+			  message="${line.separator}# name of the war file's default schema file${line.separator}"/>
+		<echo file="${basedir}/etc/wiseman.properties" 
+			  append="true" 
+			  message="service.xsd = ${user.xsd.file}${line.separator}"/>
+	</target>
+	
+	<!--  =================================================  -->
 	<!--   "war" - Create the war file                       -->
 	<!--  =================================================  -->
-	<target name="war" depends="jar">
+	<target name="war" depends="jar,properties">
 		<war destfile="${basedir}/${dist.dir}/${war.filename}"
 	         webxml="${wiseman.root}/etc/web.xml"
 	         index="true">
@@ -140,6 +157,7 @@
 			</classes>
 			<classes dir="etc">
 				<include name="binding.properties" />
+				<include name="wiseman.properties" />
 			</classes>
 			<lib dir="${lib.dir}">
 				<include  name="wiseman.jar" />
@@ -167,9 +185,19 @@
 			</webinf>
 			<!-- the build runs with schema validation by default 
 	             to disable schema validation, see etc/xsd/README -->
-            <zipfileset dir="${basedir}"
-                        prefix=""
-                        includes="${user.xsd.file}" />
+			<!-- schemas for schema validation (exclude any wiseman schemas) -->
+            <zipfileset dir="${basedir}/${xsd.dir}"
+                        prefix="xsd"
+                        includes="**/*.xsd"
+                        excludes="wiseman/**" />
+			<!-- schemas for HTTP GET access -->
+            <zipfileset dir="${basedir}/${xsd.dir}"
+                        prefix="schemas"
+                        includes="**/*.xsd" />
+			<!-- WSDLs for HTTP GET access -->
+            <zipfileset dir="${basedir}/${wsdl.dir}"
+                        prefix="wsdls"
+			            includes="**/*.wsdl" />
 			<zipfileset dir="${basedir}/${classes.dir}"
 	                    includes="*.properties" />
 			<zipfileset dir="${basedir}/${src.dir}"
@@ -194,7 +222,7 @@
 	<!--   "genwsdl" - Generates WSDL from State XSD                           -->
 	<!--  ===================================================================  -->
 	<target name="genwsdl" description="Generates WSDL from State XSD">
-		<mkdir dir="${basedir}/wsdl"/>
+		<mkdir dir="${basedir}/${wsdl.dir}/${user.namespace.path}"/>
 		<taskdef name="xsd2wsdl" 
 			     classname="com.sun.ws.management.tools.Xsd2WsdlTask">
 			<classpath>
@@ -203,9 +231,9 @@
 				</fileset>
 			</classpath>
 		</taskdef>
-		<xsd2wsdl xsdFile="${basedir}/${user.xsd.file}"
+		<xsd2wsdl xsdFile="${basedir}/${xsd.dir}/${user.xsd.file}"
 			      resourceURI="${resource.uri}"
-			      outputDir="${basedir}/wsdl"
+			      outputDir="${basedir}/${wsdl.dir}/${user.namespace.path}"
 				  serviceAddress="${service.address}" />
 	</target>
 
@@ -220,7 +248,7 @@
 		<mkdir dir="${user.output.dir}"/>
 		<wsdl2wsman generateJaxb="${user.generate.jaxb}" 
 			           outputDir="${basedir}/${user.output.dir}" 
-                       wsdlFile="${basedir}/${user.wsdl.file}"
+                       wsdlFile="${basedir}/${wsdl.dir}/${user.wsdl.file}"
                        processAsSchema="false" >
 
 		</wsdl2wsman>

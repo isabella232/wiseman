@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MetadataTest.java,v 1.4 2007-04-24 13:50:19 simeonpinder Exp $
+ * $Id: MetadataTest.java,v 1.5 2007-04-26 08:34:28 denis_rachal Exp $
  */
 
 package management;
-
-import com.sun.ws.management.mex.MetadataUtility;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,6 +50,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.identify.IdentifyUtility;
 import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
+import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferUtility;
@@ -392,48 +391,94 @@ public class MetadataTest extends TestBase {
     	  fail("An error occured:"+e.getMessage());
       }
     }
-    public void testWsdlSchemaExposure() throws IOException, SOAPException, JAXBException{
+    
+    public void testSchemaExposure() throws IOException, SOAPException, JAXBException{
     	//send an http request for a wsdl.
     	//parse the response to see that it was responded to    	
-    	String urlToXsd = ManagementMessageValues.WSMAN_DESTINATION+"schemas/light.xsd";
-//    	String urlToXsd = ManagementMessageValues.WSMAN_DESTINATION+"schemas/light.xsd1";
-    	String parseFor="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd";
-    	//Create HTTP connection
-        final URL dest = new URL(urlToXsd);
-         assertNotNull("Unable to instantiate URL",dest);
-        final URLConnection conn = dest.openConnection();
-         assertNotNull("Unable to instantiate URLConnection",conn);
-        //Simple request details. 
-          conn.setAllowUserInteraction(false);
-          conn.setDoInput(true);
-          conn.setDoOutput(true);
-        
-        final HttpURLConnection http = (HttpURLConnection) conn;
-        http.setRequestMethod("POST");
-        //Build HTTP GET request.
-	   	 String get = "GET "+urlToXsd+" \r\n";
-	   	 
-		 OutputStream output = http.getOutputStream();
-		 output.write(get.getBytes());
-		 //Retrieve HTTP response code
-        final int response = http.getResponseCode();
-        
-        if(response==HttpServletResponse.SC_OK){
-       	 InputStream input = http.getInputStream();
-     	 BufferedReader br = new BufferedReader(new InputStreamReader(http.getInputStream()));
-    	   output.write(get.getBytes());
-    	 assertNotNull("Unable to open reader.",br);
+    	String urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "schemas/light.xsd";
+    	String xsdParseFor="<xs:schema targetNamespace=\"http://schemas.wiseman.dev.java.net/traffic/1/light.xsd\"";
+    	
+		// Make the check using the path method in the URL
+    	boolean located = false;
+		located = checkDocument(urlToXsd, xsdParseFor);
+    	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
+    	
+    	// Make the check using a query string in the URL
+    	urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "?xsd=light.xsd";
+		located = checkDocument(urlToXsd, xsdParseFor);
+    	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
+    	
+    	// Make the check using a default query string in the URL
+    	urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "?xsd";
+		located = checkDocument(urlToXsd, xsdParseFor);
+    	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
+    }
+    
+    public void testWsdlExposure() throws IOException, SOAPException,
+			JAXBException {
+		// send an http request for a wsdl.
+		// parse the response to see that it was responded to
+		String urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "wsdls/light.wsdl";
+		String wsdlParseFor = "<service name=\"lightService\">";
+
+        // Make the check using the path method in the URL
+		boolean located = false;
+		located = checkDocument(urlToWsdl, wsdlParseFor);
+		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
+	
+        // Make the check using a query string in the URL
+		urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "?wsdl=light.wsdl";
+		located = checkDocument(urlToWsdl, wsdlParseFor);
+		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
+		
+        // Make the check using a default query string in the URL
+		urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "?wsdl";
+		located = checkDocument(urlToWsdl, wsdlParseFor);
+		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
+		
+	}
+    
+    private boolean checkDocument(final String url,
+    		                      final String parseString) throws IOException {
+		final URL dest = new URL(url);
+		
+		assertNotNull("Unable to instantiate URL", dest);
+		final URLConnection conn = dest.openConnection();
+		assertNotNull("Unable to instantiate URLConnection", conn);
+		//Simple request details. 
+		conn.setAllowUserInteraction(false);
+		conn.setDoInput(true);
+		conn.setDoOutput(true);
+
+		final HttpURLConnection http = (HttpURLConnection) conn;
+		http.setRequestMethod("GET");
+		//Build HTTP GET request.
+		String get = "GET " + url + " \r\n";
+
+		OutputStream output = http.getOutputStream();
+		output.write(get.getBytes());
+		//Retrieve HTTP response code
+		final int response = http.getResponseCode();
+
+		BufferedReader br = null;
+		if (response == HttpServletResponse.SC_OK) {
+			InputStream input = http.getInputStream();
+			br = new BufferedReader(new InputStreamReader(http
+					.getInputStream()));
+			output.write(get.getBytes());
+		} else {
+        	fail("Http request failed.");
+        }
+		assertNotNull("Unable to open reader.", br);
+		
     	boolean located = false;
     	String line = null;
     	while((line = br.readLine())!=null){
-    		if(line.indexOf(parseFor)>-1){
+    		if(line.indexOf(parseString)>-1){
     			located = true;
     		}
     	}
-    	assertTrue("The expected String could not be found.",located);
-          	
-        }else{
-        	fail("Http request failed.");
-        }
-    }
+    	
+		return located;
+	}
 }
