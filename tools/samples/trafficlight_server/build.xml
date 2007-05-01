@@ -202,6 +202,10 @@
 	                    includes="*.properties" />
 			<zipfileset dir="${basedir}/${src.dir}"
 	                    includes="**/*.xml" />
+			<zipfileset dir="${basedir}"
+	                    includes="**/*.wsdl" />
+			<zipfileset dir="${basedir}"
+	                    includes="**/*.xsd" />
 		</war>
 	</target>
 
@@ -222,7 +226,11 @@
 	<!--   "genwsdl" - Generates WSDL from State XSD                           -->
 	<!--  ===================================================================  -->
 	<target name="genwsdl" description="Generates WSDL from State XSD">
-		<mkdir dir="${basedir}/${wsdl.dir}/${user.namespace.path}"/>
+		<mkdir dir="${wsdl.dir}"/>
+		<mkdir dir="${xsd.dir}"/>
+		<copy todir="${xsd.dir}">
+			<fileset dir="${xsd.dir}/${user.namespace.path}" includes="light.xsd"/>
+		</copy>
 		<taskdef name="xsd2wsdl" 
 			     classname="com.sun.ws.management.tools.Xsd2WsdlTask">
 			<classpath>
@@ -233,7 +241,7 @@
 		</taskdef>
 		<xsd2wsdl xsdFile="${basedir}/${xsd.dir}/${user.xsd.file}"
 			      resourceURI="${resource.uri}"
-			      outputDir="${basedir}/${wsdl.dir}/${user.namespace.path}"
+			      outputDir="${wsdl.dir}"
 				  serviceAddress="${service.address}" />
 	</target>
 

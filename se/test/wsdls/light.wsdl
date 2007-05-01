@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
 *****************************************
-Generated from file light.xsd
+Generated from file file:/C:/test1/samples/trafficlight_server/xsd/light.xsd
 target_namespace=http://schemas.wiseman.dev.java.net/traffic/1/light.xsd
-xsd_file=light.xsd
+xsd_file=file:/C:/test1/samples/trafficlight_server/xsd/light.xsd
 service_name=light
 resource_type=TrafficLightType
 resource_name=trafficlight
@@ -14,6 +14,7 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
         xmlns:state="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd"
         xmlns:wxf="http://schemas.xmlsoap.org/ws/2004/09/transfer"
         xmlns:wsen="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
+        xmlns:wse="http://schemas.xmlsoap.org/ws/2004/08/eventing"
         xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
         xmlns="http://schemas.xmlsoap.org/wsdl/"
         xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -21,23 +22,15 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
         xmlns:wsman="http://schemas.xmlsoap.org/ws/2005/06/management" 
         targetNamespace="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd">
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
-                location="http://schemas.xmlsoap.org/ws/2004/09/transfer/transfer.wsdl" />
+                location="wiseman/transfer.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
-                location="http://schemas.xmlsoap.org/ws/2004/09/enumeration/enumeration.wsdl" />
+                location="wiseman/enumeration.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
-                location="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.wsdl" />
+                location="wiseman/eventing.wsdl" />
         <types>
                 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                        elementFormDefault="qualified" blockDefault="#all">
-                        <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
-                                   schemaLocation="http://schemas.xmlsoap.org/ws/2004/09/transfer/transfer.xsd" />
-                        <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
-                                   schemaLocation="http://schemas.xmlsoap.org/ws/2004/09/enumeration/enumeration.xsd" />
-                        <!-- 
-                        <xs:import namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
-                                   schemaLocation="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.xsd" />
-                          -->  
-                        <xs:import namespace="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd" schemaLocation="../xsd/light.xsd"/>
+                        elementFormDefault="qualified" blockDefault="#all"> 
+                        <xs:import namespace="http://schemas.wiseman.dev.java.net/traffic/1/light.xsd" schemaLocation="file:/C:/test1/samples/trafficlight_server/xsd/light.xsd"/>
                 </xs:schema>
         </types>
         <!-- Custom Messages -->
@@ -48,6 +41,16 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                 <part name="CreateResponseMessage"
                         element="wxf:ResourceCreated" />
         </message>
+        
+        <message name="DeleteRequestMessage">
+      		<part name="DeleteRequestMessage" element="wxf:AnyXmlOptional"/>
+   		</message>
+		<message name="GetStatusResponseMessage">
+			<part name="Body1" element="wsen:GetStatusResponse"/>
+			<part name="Header_tom" element="wsa:To"/>
+			<part name="Header_actm" element="wsa:Action"/>
+			<part name="Header_mim" element="wsa:MessageID"/>
+		</message>
 
         <!-- PortTypes -->
         
@@ -58,6 +61,12 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                 </documentation>
                 
                 <!-- WS-Transfer Operations -->
+                <operation name="Create">
+                        <input message="tns:TrafficLightTypeMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create" />
+                        <output message="tns:CreateResponseMessage"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse" />
+                </operation>
                 <operation name="Get">
                         <input message="wxf:EmptyMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Get" />
@@ -65,22 +74,16 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/GetResponse" />
                 </operation>
                 <operation name="Put">
-                        <input message="tns:TrafficLightTypeMessage"
+                        <input message="wxf:AnyXmlMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Put" />
                         <output message="wxf:OptionalXmlMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/PutResponse" />
                 </operation>
                 <operation name="Delete">
-                        <input message="wxf:EmptyMessage"
+                        <input message="tns:DeleteRequestMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete" />
                         <output message="wxf:EmptyMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/DeleteResponse" />
-                </operation>
-                <operation name="Create">
-                        <input message="tns:TrafficLightTypeMessage"
-                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create" />
-                        <output message="tns:CreateResponseMessage"
-                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse" />
                 </operation>
                 
                 <!-- TODO: Add all Custom Operations with Custom wsa:Action Attributes here
@@ -114,7 +117,7 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                 <operation name="GetStatusOp">
                         <input message="wsen:GetStatusMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatus" />
-                        <output message="wsen:GetStatusResponseMessage"
+                        <output message="tns:GetStatusResponseMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatusResponse" />
                 </operation>
                 <operation name="ReleaseOp">
@@ -123,9 +126,35 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                         <output message="wsen:ReleaseResponseMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/ReleaseResponse" />
                 </operation>
-                <operation name="EnumerationEndOp">
+                <!--operation name="EnumerationEndOp">
                         <output message="wsen:EnumerationEndMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd" />
+                </operation-->
+                
+                <!-- WS Eventing operations -->
+                <operation name="SubscribeOp" >
+                         <input message="wse:SubscribeMsg" 
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/Subscribe" />
+                         <output message="wse:SubscribeResponseMsg" 
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/SubscribeResponse" />
+                </operation>
+                <operation name="RenewSubscriptionOp" >
+                         <input message="wse:RenewMsg"
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/Renew" />
+                         <output message="wse:RenewResponseMsg" 
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/RenewResponse" />
+                </operation>
+                <operation name="GetSubscriptionStatusOp" >
+                         <input message="wse:GetStatusMsg" 
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/GetStatus" />
+                         <output message="wse:GetStatusResponseMsg" 
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/GetStatusResponse" />
+                </operation>
+                <operation name="UnsubscribeOp" >
+                         <input message="wse:UnsubscribeMsg" 
+                                wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/Unsubscribe" />
+                         <output message="wse:UnsubscribeResponseMsg"
+                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/08/eventing/UnsubscribeResponse" />
                 </operation>
         </portType>
 
@@ -216,7 +245,10 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                                 <wsoap12:body use="literal"/>
                         </input>
                         <output>
-                                <wsoap12:body use="literal"/>
+							<wsoap12:body use="literal" parts="Body1"/>
+							<wsoap12:header message="tns:ToMessage" part="Header_tom" use="literal"/>
+							<wsoap12:header message="tns:ActionMessage" part="Header_actm" use="literal"/>
+							<wsoap12:header message="tns:MessageIdMessage" part="Header_mim" use="literal"/>
                         </output>   
                 </operation>
                 <operation name="ReleaseOp">
@@ -228,7 +260,7 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                                 <wsoap12:body use="literal"/>
                         </output>
                 </operation>
-                <operation name="EnumerationEndOp">
+                <!--operation name="EnumerationEndOp">
                 <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerationEnd"/>
                         <input>                        
                                 <wsoap12:body use="literal"/>
@@ -236,6 +268,44 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
                         <output>
                                 <wsoap12:body use="literal"/>
                         </output>                
+                </operation-->
+                
+                <!-- WS Eventing operations -->
+                <operation name="SubscribeOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/Subscribe"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="RenewSubscriptionOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/Renew"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="GetSubscriptionStatusOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/GetStatus"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
+                </operation>
+                <operation name="UnsubscribeOp" >
+                <wsoap12:operation soapAction="http://schemas.xmlsoap.org/ws/2004/08/eventing/Unsubscribe"/>
+                        <input>                        
+                                <wsoap12:body use="literal"/>
+                        </input>
+                        <output>
+                                <wsoap12:body use="literal"/>
+                        </output>
                 </operation>
         </binding>
 
@@ -243,9 +313,9 @@ resource_uri=urn:resources.wiseman.dev.java.net/traffic/1/light
           <documentation>light Service</documentation>                               
                 
                 <port name="lightResource" binding="tns:lightResourceBinding">
-                  <wsoap12:address location="http://localhost/wsman"/>
+                  <wsoap12:address location="http://localhost:8080/traffic/"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://localhost/wsman</wsa:Address>
+                    <wsa:Address>http://localhost:8080/traffic</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>urn:resources.wiseman.dev.java.net/traffic/1/light</wsman:ResourceURI>
                     </wsa:ReferenceParameters>

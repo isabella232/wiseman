@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.57 2007-04-24 14:24:28 nbeers Exp $
+ $Id: build.xml,v 1.58 2007-05-01 17:16:03 nbeers Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -335,7 +335,11 @@
             includes="*.properties" />
             <zipfileset dir="${src.ext.dir}"
             includes="**/*.xml" />
-        </war>
+        	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls" includes="**" excludes="light.wsdl"/>	
+        	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas" includes="**" excludes="light.xsd"/>	
+        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls" includes="light.wsdl*"/>	
+        	<zipfileset prefix="schemas" dir="${test.dir}/schemas" includes="light.xsd"/>	
+       </war>
     </target>
  
     <target name="war" depends="test-compile,compile">
@@ -395,8 +399,10 @@
             includes="*.properties" />
             <zipfileset dir="${src.ext.dir}"
             includes="**/*.xml" />
-        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls" includes="**" />	
-        	<zipfileset prefix="schemas" dir="${test.dir}/schemas" includes="**" />	
+        	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls" includes="**" excludes="light.wsdl"/>	
+        	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas" includes="**" excludes="light.xsd"/>	
+        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls" includes="light.wsdl*"/>	
+        	<zipfileset prefix="schemas" dir="${test.dir}/schemas" includes="light.xsd"/>	
         </war>
     </target>
   
