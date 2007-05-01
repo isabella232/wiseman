@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.58 2007-05-01 17:16:03 nbeers Exp $
+ $Id: build.xml,v 1.59 2007-05-01 17:49:48 nbeers Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -75,13 +75,13 @@
             <produces dir="${gen.src.dir}" includes="org/w3/_2003/_05/soap_envelope/*.java" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="identity.xsd" />
             <produces dir="${gen.src.dir}" includes="org/dmtf/schemas/wbem/wsman/identity/_1/wsmanidentity/*.java" />
-            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="addressing.xsd" />
+            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas/original" includes="addressing.xsd" />
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_08/addressing/*.java" />
-            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="enumeration.xsd" /> 
+            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas/original" includes="enumeration.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_09/enumeration/*.java" />
-            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="eventing.xsd" /> 
+            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas/original" includes="eventing.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_08/eventing/*.java" />
-            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="transfer.xsd" /> 
+            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas/original" includes="transfer.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_09/transfer/*.java" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="management.xsd" />
             <schema dir="${basedir}/etc/xsd" includes="metadata.xsd" />
