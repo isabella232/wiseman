@@ -22,11 +22,11 @@ resource_uri=${resource_uri}
         xmlns:wsman="http://schemas.xmlsoap.org/ws/2005/06/management" 
         targetNamespace="${target_namespace}">
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
-                location="http://schemas.xmlsoap.org/ws/2004/09/transfer/transfer.wsdl" />
+                location="wiseman/transfer.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
-                location="http://schemas.xmlsoap.org/ws/2004/09/enumeration/enumeration.wsdl" />
+                location="wiseman/enumeration.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
-                location="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.wsdl" />
+                location="wiseman/eventing.wsdl" />
         <types>
                 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                         elementFormDefault="qualified" blockDefault="#all"> 
@@ -45,6 +45,22 @@ resource_uri=${resource_uri}
         <message name="DeleteRequestMessage">
       		<part name="DeleteRequestMessage" element="wxf:AnyXmlOptional"/>
    		</message>
+		<message name="GetStatusResponseMessage">
+			<part name="Body1" element="wsen:GetStatusResponse"/>
+			<part name="Header_tom" element="wsa:To"/>
+			<part name="Header_actm" element="wsa:Action"/>
+			<part name="Header_mim" element="wsa:MessageID"/>
+		</message>
+		<message name="ToMessage">
+			<part name="Header_tom" element="wsa:To"/>
+		</message>
+		<message name="ActionMessage">
+			<part name="Header_actm" element="wsa:Action"/>
+		</message>
+		<message name="MessageIdMessage">
+			<part name="Header_mim" element="wsa:MessageID"/>
+		</message>
+		
 
         <!-- PortTypes -->
         
@@ -111,7 +127,7 @@ resource_uri=${resource_uri}
                 <operation name="GetStatusOp">
                         <input message="wsen:GetStatusMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatus" />
-                        <output message="wsen:GetStatusResponseMessage"
+                        <output message="tns:GetStatusResponseMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/enumeration/GetStatusResponse" />
                 </operation>
                 <operation name="ReleaseOp">
@@ -239,7 +255,10 @@ resource_uri=${resource_uri}
                                 <wsoap12:body use="literal"/>
                         </input>
                         <output>
-                                <wsoap12:body use="literal"/>
+							<wsoap12:body use="literal" parts="Body1"/>
+							<wsoap12:header message="tns:ToMessage" part="Header_tom" use="literal"/>
+							<wsoap12:header message="tns:ActionMessage" part="Header_actm" use="literal"/>
+							<wsoap12:header message="tns:MessageIdMessage" part="Header_mim" use="literal"/>
                         </output>   
                 </operation>
                 <operation name="ReleaseOp">
@@ -304,7 +323,7 @@ resource_uri=${resource_uri}
           <documentation>${service_name} Service</documentation>                               
                 
                 <port name="${service_name}Resource" binding="tns:${service_name}ResourceBinding">
-                  <wsoap12:address location="${service_address}"/>
+                  <wsoap12:address location="${service_address}/"/>
                   <wsa:EndpointReference>
                     <wsa:Address>${service_address}</wsa:Address>
                     <wsa:ReferenceParameters>
