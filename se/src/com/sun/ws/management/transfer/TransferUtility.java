@@ -154,6 +154,7 @@ public class TransferUtility {
 			existingMessage.setXmlBinding(new Transfer().getXmlBinding());
 	        
 	        final DatatypeFactory factory = DatatypeFactory.newInstance();
+	        
 	        //timeout creation
 /*	        if(settings.getDefaultTimeout()>-1){
 	        	existingMessage.setTimeout(
@@ -171,7 +172,14 @@ public class TransferUtility {
 //	        if(contents!=null){//
 	           //mgmt.getBody().addDocument(contents);
 //	        }
-*/			
+*/
+	        
+	        if (settings.getFragment() != null && settings.getFragment().length() > 0) {
+	        	TransferExtensions transEx = new TransferExtensions(existingMessage);
+	        	transEx.setFragmentHeader(settings.getFragment(), settings.getFragmentDialect());
+	        	existingMessage = transEx;
+	        }
+	        
 		  return existingMessage;
 		}	
 }

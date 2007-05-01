@@ -21,6 +21,8 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
+import com.sun.ws.management.transfer.TransferMessageValues;
+import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
@@ -183,26 +185,20 @@ public class TransferExtensionsTest extends TestBase {
      */
     public void testFragmentGet() throws Exception {
         //setup Transfer object for request
-        final TransferExtensions transfer = new TransferExtensions();
-        transfer.addNamespaceDeclarations(NAMESPACES);
-        transfer.setAction(Transfer.GET_ACTION_URI);
-        transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        //xpath expression
-        final String expression = "//jb:foo/jb:bar";
-        //this call ensures the fragment header is initialized
-        transfer.setFragmentHeader(expression, null);
-        
-        //send request to server
-        final Management mgmt = new Management(transfer);
-        mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/fragment");
-        
+    	
+    	TransferMessageValues settings = new TransferMessageValues();
+    	settings.setNamespaceMap(NAMESPACES);
+    	settings.setFragment("//jb:foo/jb:bar");
+    	settings.setFragmentDialect(null);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/fragment");
+    	
+    	Transfer xf = TransferUtility.buildMessage(null, settings);
+
         //print contents of Transfer
-        mgmt.prettyPrint(logfile);
+        xf.prettyPrint(logfile);
         
-        final Addressing response = HttpClient.sendRequest(mgmt);
+        final Addressing response = HttpClient.sendRequest(xf);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
@@ -212,7 +208,7 @@ public class TransferExtensionsTest extends TestBase {
         //try to get the fragmenttransfer header
         final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
         assertNotNull(fragmentTransferHeader);
-        assertEquals(expression, fragmentTransferHeader.getTextContent());
+        assertEquals(settings.getFragment(), fragmentTransferHeader.getTextContent());
         assertNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
     }
     
@@ -272,29 +268,20 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentDelete() throws Exception {
         
         //setup Transfer object for request
-        final TransferExtensions transfer = new TransferExtensions();
-        if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
-            // skip this test if JAXB is not initialized with the foo.test package
-            return;
-        }
-        transfer.addNamespaceDeclarations(NAMESPACES);
-        transfer.setAction(Transfer.DELETE_ACTION_URI);
-        transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        //xpath expression
-        final String expression = "//jb:foo/jb:bar";
-        //this call ensures the fragment header is initialized
-        transfer.setFragmentHeader(expression, XPath.NS_URI);
-        
-        //send request to server
-        final Management mgmt = new Management(transfer);
-        mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/fragment");
+    	TransferMessageValues settings = new TransferMessageValues();
+    	settings.setNamespaceMap(NAMESPACES);
+    	settings.setFragment("//jb:foo/jb:bar");
+    	settings.setFragmentDialect(XPath.NS_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/fragment");
+    	settings.setTransferMessageActionType(Transfer.DELETE_ACTION_URI);
+    	
+    	Transfer xf = TransferUtility.buildMessage(null, settings);
+
         //print contents of Transfer
-        mgmt.prettyPrint(logfile);
+        xf.prettyPrint(logfile);
         
-        final Addressing response = HttpClient.sendRequest(mgmt);
+        final Addressing response = HttpClient.sendRequest(xf);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
@@ -302,7 +289,7 @@ public class TransferExtensionsTest extends TestBase {
         final TransferExtensions trans = new TransferExtensions(response);
         final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
         assertNotNull(fragmentTransferHeader);
-        assertEquals(expression, fragmentTransferHeader.getTextContent());
+        assertEquals(settings.getFragment(), fragmentTransferHeader.getTextContent());
         assertNotNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
         
     }
@@ -314,25 +301,20 @@ public class TransferExtensionsTest extends TestBase {
      */
     public void testFragmentDeleteFail() throws Exception {
         //setup Transfer object for request
-        final TransferExtensions transfer = new TransferExtensions();
-        transfer.addNamespaceDeclarations(NAMESPACES);
-        transfer.setAction(Transfer.DELETE_ACTION_URI);
-        transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        //xpath expression
-        final String expression = "//jb:foo";
-        //this call ensures the fragment header is initialized
-        transfer.setFragmentHeader(expression, XPath.NS_URI);
-        
-        //send request to server
-        final Management mgmt = new Management(transfer);
-        mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/fragment");
+    	TransferMessageValues settings = new TransferMessageValues();
+    	settings.setNamespaceMap(NAMESPACES);
+    	settings.setFragment("//jb:foo");
+    	settings.setFragmentDialect(XPath.NS_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/fragment");
+    	settings.setTransferMessageActionType(Transfer.DELETE_ACTION_URI);
+    	
+    	Transfer xf = TransferUtility.buildMessage(null, settings);
+    	
         //print contents of Transfer
-        mgmt.prettyPrint(logfile);
+        xf.prettyPrint(logfile);
         
-        final Addressing response = HttpClient.sendRequest(mgmt);
+        final Addressing response = HttpClient.sendRequest(xf);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             assertNotNull(response.getBody().getFault().getFaultString());
