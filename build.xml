@@ -15,13 +15,14 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.11 2007-05-01 17:17:22 nbeers Exp $
+ $Id: build.xml,v 1.12 2007-05-02 18:41:33 nbeers Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
 	<property name="dist.dir" value="dist"/>
 	<property name="lib.dir" value="${dist.dir}/lib"/>
 	<property name="lic.dir" value="${dist.dir}/licenses"/>
+	<property name="devdocs.dir" value="tools/docs/developer"/>
 	<property file="release.properties"/>
 	
 	<!-- Test that a valid ant version is being used -->
@@ -112,6 +113,7 @@
 				<include name="**/*.zip" />
 			</fileset>
 		</copy>
+      	<zip destfile="${dist.dir}/docs/third-party-client-samples.zip" basedir="${devdocs.dir}" includes="*.java"/>
 
 		<!-- Get the wiseman tooling -->
 		<copy todir="${dist.dir}/lib">
