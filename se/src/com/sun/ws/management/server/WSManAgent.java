@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.12 2007-04-10 15:48:37 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.13 2007-05-02 19:29:20 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server;
@@ -86,7 +86,8 @@ public abstract class WSManAgent {
     public static final String OPERATION_TIMEOUT =
             WSManAgent.class.getPackage().getName() + ".operation.timeout";
     private static final String WSMAN_PROPERTY_FILE_NAME = "/wsman.properties";
-    private static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
+    public static final String WSMAN_EXTENSIONS_PROPERTY_FILE_NAME = "/wsman-exts.properties";
+    public static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
     private static final String OPERATION_TIMEOUT_DEFAULT = "OperationTimeoutDefault";
     private static final String UUID_SCHEME = "uuid:";
     private static final String SCHEMA_PATH =
@@ -191,10 +192,22 @@ public abstract class WSManAgent {
     private static Source[] createStdSources() {
         // The returned list of schemas is already sorted
         String schemaNames = properties.get("schemas");
+        
+        //check if extensison being added then add to the schemas list.
+        final Map<String, String> propertySet = new HashMap<String, String>();
+        getProperties(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, propertySet);
+        if(!propertySet.isEmpty()&&
+        		(propertySet.containsKey("extensions.schemas"))){
+          String schemas = propertySet.get("extensions.schemas");	
+  	      StringTokenizer t = new StringTokenizer(schemas, ","); 
+		  while(t.hasMoreTokens()){
+			  schemaNames+=","+t.nextToken();
+		  }
+        }
+        //business as usual
         return newSources(schemaNames, SCHEMA_PATH);
     }
-    
-    
+
     protected WSManAgent() throws SAXException {
         this(null, null, null);
     }
@@ -585,4 +598,33 @@ public abstract class WSManAgent {
     public XmlBinding getXmlBinding() {
         return binding;
     }
+    
+    /**Locates the ./wsman-ext.properties file and looks for the extensions
+     * property.  Parses the contents and returns as a Map<String,String>
+     * where the key is the prefix and the value is the NS_URI.
+     * 
+     * @return
+     */
+    public static Map<String,String> locateExtensionNamespaces(){
+       //Hasmap for return	
+       Map<String,String> extensionNamespaces = new HashMap<String, String>();
+       //Temporary map
+       Map<String, String> propertySet = new HashMap<String, String>();
+       WSManAgent.getProperties(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, propertySet);
+		 if((!propertySet.isEmpty()&&
+				 (propertySet.containsKey("extensions.envelope.defs")))){
+		  String extensions = propertySet.get("extensions.envelope.defs");
+		  //Strip out each extension
+	      StringTokenizer t = new StringTokenizer(extensions, ","); 
+		  while(t.hasMoreTokens()){
+			 String map = t.nextToken();
+			 StringTokenizer m = new StringTokenizer(map,"#");
+			 if(m.countTokens()==2){
+				extensionNamespaces.put(m.nextToken(), m.nextToken()); 
+			 }
+		  }
+	     }
+	 return extensionNamespaces;
+    }
+
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManReflectiveAgent.java,v 1.1 2007-04-06 10:03:11 jfdenise Exp $
+ * $Id: WSManReflectiveAgent.java,v 1.2 2007-05-02 19:29:21 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server.reflective;
@@ -58,11 +58,34 @@ public class WSManReflectiveAgent extends WSManAgent {
     @Override
     protected RequestDispatcher createDispatcher(Management request, HandlerContext context) 
             throws SOAPException, JAXBException, IOException {
+    	request = processForMissingTrailingSlash(request);
         return new ReflectiveRequestDispatcher(request, context);
     }
     
     
-    public static Map<QName, String> getMetadataConfiguration(Map<String, String> propertySet) {
+    private Management processForMissingTrailingSlash(Management request) {
+    	String address = null;
+    	try {
+			if((request!=null)&&
+				((address = request.getTo())!=null)&&
+				(address.trim().length()>0)){
+				//does not have the trailing slash
+			   if(address.lastIndexOf("/")!= address.length()-1){
+				 request.setTo(address+"/");
+			   }
+			}
+		}
+    	/* Silently fail as this is only a nicety for the developers/clients if they forget to
+    	 * add the trailing slash to ensure servlet engine processing.  Not sure what the right
+    	 * WsManagement response should be here as it's really just a Wiseman-using servlet problem.
+    	 */
+    	catch (JAXBException e) {
+		} catch (SOAPException e) {
+		}
+		return request;
+	}
+
+	public static Map<QName, String> getMetadataConfiguration(Map<String, String> propertySet) {
         if(propertySet == null) {
             propertySet = new HashMap<String, String>();
             getProperties(METADATA_PROPERTY_FILE_NAME, propertySet);

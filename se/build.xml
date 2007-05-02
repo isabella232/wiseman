@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.60 2007-05-01 18:55:51 nbeers Exp $
+ $Id: build.xml,v 1.61 2007-05-02 19:29:20 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -83,8 +83,11 @@
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_08/eventing/*.java" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas/original" includes="transfer.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/xmlsoap/schemas/ws/_2004/_09/transfer/*.java" />
-            <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas/original" includes="management.xsd" />
-            <schema dir="${basedir}/etc/xsd" includes="metadata.xsd" />
+			<schema dir="${basedir}/src/com/sun/ws/management/resources/schemas/original" includes="management.xsd" />
+            <schema dir="${basedir}/ext-src/com/sun/ws/management/resources/schemas" includes="metadata.xsd" />
+            <schema dir="${basedir}/ext-src/com/sun/ws/management/resources/schemas" includes="metadata-payload.xsd" />
+        	<produces dir="${gen.src.dir}" includes="net.java.dev.wiseman.schemas.metadata.messagetypes/*.java" />
+<!--            <schema dir="${basedir}/etc/xsd" includes="metadata.xsd" /> -->
         </xjc>
     </target>
 
@@ -199,9 +202,13 @@
                 <include name="com/sun/ws/management/resources/**" />
             </fileset>
             <fileset dir="${src.ext.dir}">
+                <include name="com/sun/ws/management/resources/**" />
+            </fileset>
+            <fileset dir="${src.ext.dir}">
                 <include name="binding.properties" />
                 <include name="metadata.properties" />
                 <include name="metadata-handlers.properties" />
+                <include name="wsman-exts.properties" />
             </fileset>
             <fileset dir="etc/xsd">
                 <include name="metadata.xsd" />

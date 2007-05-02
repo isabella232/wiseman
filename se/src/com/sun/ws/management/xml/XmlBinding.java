@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.18 2007-03-28 14:23:09 jfdenise Exp $
+ * $Id: XmlBinding.java,v 1.19 2007-05-02 19:29:20 simeonpinder Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringTokenizer;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -41,15 +42,52 @@ import org.xml.sax.SAXException;
 
 public final class XmlBinding {
     
-    private static final String[] DEFAULT_PACKAGES = {
-        "org.w3._2003._05.soap_envelope",
-        "org.xmlsoap.schemas.ws._2004._08.addressing",
-        "org.xmlsoap.schemas.ws._2004._08.eventing",
-        "org.xmlsoap.schemas.ws._2004._09.enumeration",
-        "org.xmlsoap.schemas.ws._2004._09.transfer",
-        "org.dmtf.schemas.wbem.wsman._1.wsman"
-    };
-    
+	//This is the initial list of package bindings for Wiseman-core
+	private static String[] defaultPackageList = {
+	        "org.w3._2003._05.soap_envelope",
+	        "org.xmlsoap.schemas.ws._2004._08.addressing",
+	        "org.xmlsoap.schemas.ws._2004._08.eventing",
+	        "org.xmlsoap.schemas.ws._2004._09.enumeration",
+	        "org.xmlsoap.schemas.ws._2004._09.transfer",
+	        "org.dmtf.schemas.wbem.wsman._1.wsman"
+	};
+	
+	static{//determine whether additional packages should be added to default binding
+	  try{
+		 //parse for extensions, if they exist add them. 
+         Map<String, String> propertySet = new HashMap<String, String>();
+         WSManAgent.getProperties(WSManAgent.WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, 
+    		   propertySet);
+         //if the properties were located then located, proceed
+	     if((propertySet!=null)&&propertySet.containsKey("extensions.binding.packages")){
+		   String pkgs = propertySet.get("extensions.binding.packages");
+		   if((pkgs!=null)&&(!pkgs.trim().equals(""))){
+		      StringTokenizer t = new StringTokenizer(pkgs.trim(), ",");
+		      String[] additional = new String[t.countTokens()];
+		      int indx=0;
+		      while(t.hasMoreTokens()){
+		    	 additional[indx++] = t.nextToken(); 
+		      }
+			 String[] newDefaultPackageList = 
+					new String[defaultPackageList.length+additional.length];
+				 //copy all content into the new array
+				 System.arraycopy(defaultPackageList, 0, 
+						newDefaultPackageList, 0, defaultPackageList.length);
+				 System.arraycopy(additional, 0, newDefaultPackageList, 
+						defaultPackageList.length, additional.length);
+				 //reassignment 
+				 defaultPackageList = newDefaultPackageList;
+		   }
+	     }
+	  }catch(Exception ex){
+		ex.printStackTrace();  
+		//Then eat the exception. Should not take down the XMLBinding because of bad user data. 
+	  }
+	}
+	
+	//load the final list of packages that will be used by this binding.
+    private static final String[] DEFAULT_PACKAGES = defaultPackageList;
+        
     private static final String BINDING_PROPERTIES_FILE = "/binding.properties";
     public static final String CUSTOM_PACKAGE_NAMES =
             XmlBinding.class.getPackage().getName() + ".custom.packagenames";

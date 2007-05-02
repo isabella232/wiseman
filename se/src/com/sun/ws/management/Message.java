@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.11 2007-01-11 13:12:54 jfdenise Exp $
+ * $Id: Message.java,v 1.12 2007-05-02 19:29:21 simeonpinder Exp $
  */
 
 package com.sun.ws.management;
@@ -25,6 +25,7 @@ import com.sun.ws.management.transfer.Transfer;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.ContentType;
@@ -200,6 +201,21 @@ public abstract class Message {
         env.addNamespaceDeclaration(Enumeration.NS_PREFIX, Enumeration.NS_URI);
         env.addNamespaceDeclaration(Transfer.NS_PREFIX, Transfer.NS_URI);
         env.addNamespaceDeclaration(Management.NS_PREFIX, Management.NS_URI);
+        
+        //Check to see if there are additional namespaces to add
+        try{
+		  Map<String,String> extensionNamespaces = 
+			WSManAgent.locateExtensionNamespaces();  
+		  
+	      if((extensionNamespaces!=null)&&(extensionNamespaces.size()>0)){
+	       for(String key: extensionNamespaces.keySet()){	
+	         env.addNamespaceDeclaration(key.trim(), extensionNamespaces.get(key).trim());
+	       }
+	      }
+        }catch(Exception ex){
+          ex.printStackTrace();
+          //Eat the exception so as not to take down Message instantiation.
+        }
     }
     
     public void addNamespaceDeclarations(final Map<String, String> ns) throws SOAPException {
