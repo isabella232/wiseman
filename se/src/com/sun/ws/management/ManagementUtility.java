@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -16,19 +17,27 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPHeader;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
 
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
-//import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.xml.XmlBinding;
+import com.sun.xml.fastinfoset.sax.Properties;
 
 /** This class is meant to provide general utility functionality for
  *  Management instances and all of their related extensions.
@@ -39,12 +48,16 @@ public class ManagementUtility {
 	
 	//These values are final and static so that they can be uniformly used by many classes  
 	private static final Logger LOG = Logger.getLogger(ManagementUtility.class.getName());
+	private static final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory
+	   addressing_factory = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
 	private static final String uidScheme ="uuid:";
 	private static final long defaultTimeout =30000;
 	private static Management defautInst = null;
+	private static XmlBinding binding = null;
 	{
 		try{
-		  defautInst = new Management();	
+		  defautInst = new Management();
+		  binding = defautInst.getXmlBinding();
 		}catch(Exception ex){
 			//eat exception and move on.
 		}
@@ -140,66 +153,6 @@ public class ManagementUtility {
 		}
 		return located;
 	}
-	
-//	/** This method takes a GetResponse Management instance containing a 
-//	 *  a MetaDataExchange element.  An array of Management instances located
-//	 *  is returned in response.
-//	 * 
-//	 * @param metaDataResponse
-//	 * @return
-//	 */
-//	public static Management[] extractEmbeddedMetaDataElements(Management metaDataGetResponse){
-//		Management[] locatedMetaDataElements = null;
-//		ArrayList<Management> located = new ArrayList<Management>();
-//		
-//   		//Retrieve the MetaData response to build JAXB type
-//   		SOAPBody body = metaDataGetResponse.getBody();
-//   		
-//   		if((body!=null)&&(body.getFirstChild()!=null)){
-//	   	 //Normal processing to create/retrieve the Metadata object
-//	   	 Node metaDataNode = body.getFirstChild();
-//	   	 
-//			try {
-//			 //unmarshall the Metadata node content
-////				Object bound = binding.unmarshal(metaDataNode);
-//			 Object bound = metaDataGetResponse.getXmlBinding().unmarshal(metaDataNode);
-//			 if((bound!=null) && (bound instanceof Metadata)){
-//				 Metadata ob = (Metadata)bound;
-//				
-//				//Parse the MetadataSections that exist
-//				List<MetadataSection> metaDataSections = 
-//					ob.getMetadataSection();
-//				
-//				if(metaDataSections!=null){
-//				 for (Iterator iter = metaDataSections.iterator(); iter.hasNext();) {
-//					MetadataSection element = (MetadataSection) iter.next();
-//					if((element.getDialect()!=null)&&
-//							(element.getDialect().equals(AnnotationProcessor.NS_URI))){
-//						Management instance = new Management();
-//						//Now parse the Dialect specif component.
-//						instance = AnnotationProcessor.populateMetadataInformation(element, 
-//								instance);
-//						located.add(instance);	
-//					}
-//				}//end of for loop.
-//			 }//end of if metaDataSections exist
-//		    }
-//   		   }catch (JAXBException e) {
-//   			  //log and eat the exception
-//   			LOG.log(Level.FINE, "JAXBException occurred:"+e.getMessage());
-//   		   } catch (SOAPException e) {
-//			  //log and eat the exception
-//  			LOG.log(Level.FINE, "SOAPException occurred:"+e.getMessage());
-//   		   }
-//		}
-//   		
-//   		//Now populate the return array.
-//   		locatedMetaDataElements = new Management[located.size()];
-//   		System.arraycopy(located.toArray(), 0, 
-//   				locatedMetaDataElements, 0, located.size());
-//   		
-//	   return locatedMetaDataElements;
-//	}
 	
 	/**Attempts to build a message from the addressing instance passed in and with
 	 * the ManagementMessageValues passed in.  Only if the values has not already
@@ -321,86 +274,181 @@ public class ManagementUtility {
 		return message;
 	}
 	
-//	public static Management[] getExposedMetadata(String wisemanServerAddress,long timeout) 
-//		throws SOAPException, IOException, JAXBException, DatatypeConfigurationException{
-//		long timeoutValue = 30000;
-//		if(timeout>timeoutValue){
-//			timeoutValue = timeout;
-//		}
-//		Management[] metaDataValues = null;
-//		ManagementUtility.loadServerAccessCredentials(null);
-//		
-//		//Make identify request to the Wiseman server
-//        final Identify identify = new Identify();
-//        identify.setIdentify();
-//        //Send identify request
-//        final Addressing response = 
-//        	HttpClient.sendRequest(identify.getMessage(), 
-//        			wisemanServerAddress);
-//        
-//        //Parse the identify response
-//        final Identify id = new Identify(response);
-//        final SOAPElement idr = id.getIdentifyResponse();
-//        SOAPElement el = IdentifyUtility.locateElement(id, 
-//        		AnnotationProcessor.META_DATA_RESOURCE_URI);
-//
-//        //retrieve the MetaData ResourceURI
-//        String resUri=el.getTextContent();
-//        el = IdentifyUtility.locateElement(id, 
-//        		AnnotationProcessor.META_DATA_TO);
-//
-//        //retrieve the MetaData To/Destination
-//        String metTo=el.getTextContent();
-//    	
-//     //exercise the Enumeration annotation mechanism
-//        //############ REQUEST THE LIST OF METADATA AVAILABLE ######################
-// 	   //Build the GET request to be submitted for the metadata
-//        Management m = TransferUtility.createMessage(metTo, resUri,
-////        		Transfer.GET_ACTION_URI, null, null, 30000, null);
-//        		Transfer.GET_ACTION_URI, null, null, timeoutValue, null);
-//        
-//          //############ PROCESS THE METADATA RESPONSE ######################
-//          //Parse the getResponse for the MetaData
-//          final Addressing getResponse = HttpClient.sendRequest(m);
-//        Management mResp = new Management(getResponse);
-//        
-//        //retrieve all the metadata descriptions 
-//		metaDataValues = 
-//			ManagementUtility.extractEmbeddedMetaDataElements(mResp); 
-//		
-//		return metaDataValues;
-//	}
+	public static Management buildMessage(Management existing, 
+			Addressing subMessage,boolean trimAdditionalMetadata) throws SOAPException, JAXBException, 
+			DatatypeConfigurationException{
+		 //return reference
+		 Management message = null;
+		 //initialize if not already
+		 if(subMessage == null){
+			message = new Management();
+		 }else{//else use Addressing instance passed in.
+			message = new Management(subMessage);
+		 }
+		 //Populate the new message instance with the values
+		 if((existing!=null)&&(existing.getHeaders()!=null)){
+			 for(SOAPElement header: existing.getHeaders()){
+//				//Don't add the original Action header
+//				QName examine = null;
+//				if(((examine =header.getElementQName())!=null)&&
+//				   examine.getLocalPart().equals(Management.ACTION.getLocalPart())){
+//					//Bail out and do not add.
+//				   continue;	
+//				}
+				if(trimAdditionalMetadata){
+//				  if(!AnnotationProcessor.isDescriptiveMetadataElement(
+//						  header.getElementQName())){
+//				     Node located = containsHeader(message.getHeader(),header);	
+//					 if(located!=null){
+//					   message.getHeader().removeChild(located);  
+//					 }
+//					 message.getHeader().addChildElement(header);
+//				  }
+				}else{
+//					message.getHeader().addChildElement(header);
+				  Node located = containsHeader(message.getHeader(),header);	
+				  if(located!=null){
+					 message.getHeader().removeChild(located);  
+				  }
+				  message.getHeader().addChildElement(header);
+				}
+			}
+		 }
+		 message = buildMessage(message, ManagementMessageValues.newInstance());
+		return message;
+	}
 	
-//	public static void loadServerAccessCredentials(Properties properties){
-//		String wsmanDest="wsman.dest";
-//		String wsmanUser="wsman.user";
-//		String wsmanPassword="wsman.password";
-//	    String wsmanBasicAuthenticationEnabled="wsman.basicauthentication";
-////        <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
-////        <jvmarg value="-Dwsman.user=wsman" />
-////        <jvmarg value="-Dwsman.password=secret" />
-////        <jvmarg value="-Dwsman.basicauthentication=true" />
-//	    String key = null;
-//	    if((key=System.getProperty(wsmanDest))==null){
-//	    	System.setProperty(wsmanDest, "http://localhost:8080/wsman/");
-//	    }
-//	    if((key=System.getProperty(wsmanUser))==null){
-//	    	System.setProperty(wsmanUser, "wsman");
-//	    }
-//	    if((key=System.getProperty(wsmanPassword))==null){
-//	    	System.setProperty(wsmanPassword, "secret");
-//	    }
-//	    if((key=System.getProperty(wsmanBasicAuthenticationEnabled))==null){
-//	        System.setProperty(wsmanBasicAuthenticationEnabled, "true");
-//	    }
-//
-//	    final String basicAuth = System.getProperty("wsman.basicauthentication");
-//        if ("true".equalsIgnoreCase(basicAuth)) {
-//        	HttpClient.setAuthenticator(new transport.BasicAuthenticator());
-////            HttpClient.setAuthenticator(new SimpleHttpAuthenticator());
-//        }
-//	    
-//	}
+	/** Attempts to extract Selectors returned from a Management instance including
+	 * a CreateResponse type, as a Map<String,String> for convenience. 
+	 * 
+	 * @param managementMessage
+	 * @return
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 */
+	public static Map<String, String> extractSelectors(Management 
+			managementMessage) throws SOAPException, JAXBException {
+		//stores located selectors
+		Map<String,String> selectors = new HashMap<String,String>();
+		
+		//parse the Management instance passed in for ResourceCreated and 
+		//  embedded selectors
+		if(managementMessage!=null){
+			
+		 if((managementMessage.getBody()!=null)&&
+			(managementMessage.getBody().getFirstChild()!=null)){
+			 //Extract dom component
+			Node createContent = managementMessage.getBody().getFirstChild();
+			JAXBElement<EndpointReferenceType> unmarshal = 
+				(JAXBElement<EndpointReferenceType>) 
+				binding.unmarshal(createContent);
+			EndpointReferenceType crtType = 
+				(EndpointReferenceType) unmarshal.getValue();
+
+			if(crtType!=null){
+				//extract the CreateResponseType instance
+				EndpointReferenceType resCreatedElement = crtType;
+			    if((resCreatedElement!=null)&&(resCreatedElement.getReferenceParameters()!=null)&&
+			    	(resCreatedElement.getReferenceParameters().getAny()!=null)){
+			      List<Object> refContents = 
+			    	  resCreatedElement.getReferenceParameters().getAny();
+			      if((refContents!=null)&&(refContents.size()>0)){
+			    	  for(Object node: refContents){
+						JAXBElement eprElement = (JAXBElement) node;
+					  //locate the refParameter element that is the selectorSet	
+					  if(eprElement.getName().getLocalPart().equals(
+							Management.SELECTOR_SET.getLocalPart())){
+						Document nod = Management.newDocument();							
+							binding.marshal(node, nod );
+
+						JAXBElement<SelectorSetType> selSet = 
+							(JAXBElement<SelectorSetType>) binding
+										.unmarshal(nod);
+						SelectorSetType sels = (SelectorSetType) selSet.getValue();
+			    		if(sels!=null){
+					      //extract the SelectorSet contents
+					     selectors= ManagementUtility.extractSelectorsAsMap(
+					    		 selectors,sels.getSelector());	
+			    		}
+			    	  }//end of if
+			    	}
+			      }
+			    }
+			  }
+			}
+		}
+		
+		return selectors;
+	}
+    
+	/** Convenience method to locate a specific SOAPElement from within the SOAPHeader
+	 * instance.
+	 * 
+	 * @param header
+	 * @param element
+	 * @return
+	 */
+	private static Node containsHeader(SOAPHeader header, SOAPElement element) {
+		Node located = null;
+		  NodeList chNodes = header.getChildNodes();
+		  QName elementNode = element.getElementQName();
+		  for (int i = 0; i < header.getChildNodes().getLength(); i++) {
+			 Node elem = chNodes.item(i);
+			 if((elem.getLocalName().equals(elementNode.getLocalPart()))&&
+				(elem.getNamespaceURI().equals(elementNode.getNamespaceURI()))){
+				located = elem; 
+			 }
+		  }
+		return located;
+	}
+
+	/**Attempts to extract the addressing components from a Management message
+	 * as an EPR type.  
+	 * 
+	 * @param managementMesg
+	 * @return
+	 * @throws JAXBException
+	 * @throws SOAPException
+	 */
+	public static EndpointReferenceType extractEprType(Management managementMesg) 
+	throws JAXBException, SOAPException {
+	  EndpointReferenceType epr = null;
+	  epr = addressing_factory.createEndpointReferenceType();
+	   AttributedURI to = addressing_factory.createAttributedURI();
+	   to.setValue(managementMesg.getTo());
+	  epr.setAddress(to);
+	    //######## REF PARAMETERS		  
+	    ReferenceParametersType refParams = 
+		  addressing_factory.createReferenceParametersType();
+	    //add the resourceUri
+	     SOAPElement resourceURI = ManagementUtility.locateHeader(
+	    		managementMesg.getHeaders(), Management.RESOURCE_URI);
+	     if((resourceURI!=null)&&
+	    		(resourceURI.getTextContent().trim().length()>0)){
+	    	refParams.getAny().add(resourceURI);
+	     }
+	    //add the SelectorSet if defined
+	     SOAPElement selectorSet = ManagementUtility.locateHeader(
+	    		  managementMesg.getHeaders(), Management.SELECTOR_SET);
+	     if((selectorSet!=null)&&
+	    		 (selectorSet.hasChildNodes())){
+	        refParams.getAny().add(selectorSet);
+	     }
+	     //TODO: add for OptionSet processing.
+	    //######## REF PROPERTIES
+	    ReferencePropertiesType refProps = 
+	    	addressing_factory.createReferencePropertiesType();
+	    boolean hasReferenceProperties = false;
+	  //Populate the Reference* just populated.
+	  if((refParams.getAny()!=null)&&(refParams.getAny().size()>0)){  
+	   epr.setReferenceParameters(refParams);
+	  }
+	  if((refProps.getAny()!=null)&&(refProps.getAny().size()>0)){
+	    epr.setReferenceProperties(refProps);
+	  }
+	 return epr;
+	}
+	
 	
 	//###################### GETTERS/SETTERS for instance 
     /* Exposes the default uid scheme for the ManagementUtility instance.

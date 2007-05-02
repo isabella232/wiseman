@@ -19,6 +19,7 @@ import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
+import com.sun.ws.management.xml.XPath;
 
 /** This class is meant to provide general utility functionality for
  *  Transfer instances and all of their related extensions.  Management 
@@ -172,12 +173,20 @@ public class TransferUtility {
 //	        if(contents!=null){//
 	           //mgmt.getBody().addDocument(contents);
 //	        }
-*/
-	        
-	        if (settings.getFragment() != null && settings.getFragment().length() > 0) {
-	        	TransferExtensions transEx = new TransferExtensions(existingMessage);
-	        	transEx.setFragmentHeader(settings.getFragment(), settings.getFragmentDialect());
-	        	existingMessage = transEx;
+*/			
+	        //process the fragment request header
+	        if((settings.getFragment()!=null)&&(!settings.getFragment().trim().equals(""))){
+	            //xpath expression
+	            final String expression = settings.getFragment().trim();
+	            TransferExtensions trnx = new TransferExtensions(existingMessage);
+	            //process the fragment portion
+	            if((settings.getFragmentDialect()!=null)&&
+	            		(!settings.getFragmentDialect().trim().equals(""))){
+	              trnx.setFragmentHeader(expression,settings.getFragmentDialect().trim());	
+	            }else{
+	              trnx.setFragmentHeader(expression, XPath.NS_URI);
+	            }
+	            existingMessage = new Transfer(trnx);
 	        }
 	        
 		  return existingMessage;

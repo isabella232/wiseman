@@ -30,6 +30,7 @@ import foo.test.Foo;
 import foo.test.Is;
 import java.io.IOException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -189,7 +190,7 @@ public class TransferExtensionsTest extends TestBase {
     	TransferMessageValues settings = new TransferMessageValues();
     	settings.setNamespaceMap(NAMESPACES);
     	settings.setFragment("//jb:foo/jb:bar");
-    	settings.setFragmentDialect(null);
+    	settings.setFragmentDialect(XPath.NS_URI);
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/fragment");
     	
@@ -197,7 +198,6 @@ public class TransferExtensionsTest extends TestBase {
 
         //print contents of Transfer
         xf.prettyPrint(logfile);
-        
         final Addressing response = HttpClient.sendRequest(xf);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
@@ -207,9 +207,11 @@ public class TransferExtensionsTest extends TestBase {
         
         //try to get the fragmenttransfer header
         final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
-        assertNotNull(fragmentTransferHeader);
-        assertEquals(settings.getFragment(), fragmentTransferHeader.getTextContent());
-        assertNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
+        assertNotNull("The fragment header was not returned.",fragmentTransferHeader);
+        assertEquals("Values not equal.",settings.getFragment(), fragmentTransferHeader.getTextContent());
+        	Attr dialect = fragmentTransferHeader.getAttributeNode(TransferExtensions.DIALECT.getLocalPart());
+        assertNotNull("Unable to locate attribute.",dialect);
+        assertEquals("Dialect value was not correct.",XPath.NS_URI, dialect.getValue());
     }
     
     /**
@@ -288,9 +290,11 @@ public class TransferExtensionsTest extends TestBase {
         }
         final TransferExtensions trans = new TransferExtensions(response);
         final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
-        assertNotNull(fragmentTransferHeader);
-        assertEquals(settings.getFragment(), fragmentTransferHeader.getTextContent());
-        assertNotNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
+        assertNotNull("The fragment header was not returned.",fragmentTransferHeader);
+        assertEquals("Values not equal.",settings.getFragment(), fragmentTransferHeader.getTextContent());
+    	Attr dialect = fragmentTransferHeader.getAttributeNode(TransferExtensions.DIALECT.getLocalPart());
+        assertNotNull("Unable to locate attribute.",dialect);
+        assertEquals("Dialect value was not correct.",XPath.NS_URI, dialect.getValue());
         
     }
     

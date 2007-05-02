@@ -1,19 +1,38 @@
 package com.sun.ws.management.eventing;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.eventing.EventingMessageValues.CreationTypes;
+import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transfer.TransferMessageValues;
+import com.sun.ws.management.transfer.TransferUtility;
 
 /** This class is meant to provide general utility functionality for
  *  Eventing message instances and all of their related extensions.
@@ -33,7 +52,9 @@ import com.sun.ws.management.enumeration.EnumerationUtility;
 public class EventingUtility {
 	
 	private static final Logger LOG = 
-		Logger.getLogger(EnumerationUtility.class.getName());
+		Logger.getLogger(EventingUtility.class.getName());
+	private static final org.xmlsoap.schemas.ws._2004._08.eventing.ObjectFactory evt_factory=
+		new org.xmlsoap.schemas.ws._2004._08.eventing.ObjectFactory();
 	
 	public static Eventing buildMessage(Eventing existingEvent,
 			EventingMessageValues settings) 
@@ -78,6 +99,13 @@ public class EventingUtility {
 			existingEvent.setSubscriptionEnd(settings.getEndTo(), settings.getStatus(), settings.getReason());
 		}
 		
+		 //Processing ReplyTo
+		if((settings.getReplyTo()!=null)&&
+		    settings.getReplyTo().trim().length()>0){
+			existingEvent.setReplyTo(settings.getReplyTo());
+		}else{
+			existingEvent.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+		}
 		
 		 //Processing MessageId component
 		if((settings.getUidScheme()!=null)&&
@@ -103,6 +131,4 @@ public class EventingUtility {
 		
 		return existingEvent;
 	}
-	
-
 }
