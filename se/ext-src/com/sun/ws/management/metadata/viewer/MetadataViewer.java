@@ -4,6 +4,7 @@ import com.sun.ws.management.mex.MetadataUtility;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.StringWriter;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.util.ArrayList;
@@ -27,12 +28,31 @@ import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import net.java.dev.wiseman.schemas.metadata.messagetypes.InputType;
+import net.java.dev.wiseman.schemas.metadata.messagetypes.MessageDefinitions;
+import net.java.dev.wiseman.schemas.metadata.messagetypes.OperationNodeType;
+import net.java.dev.wiseman.schemas.metadata.messagetypes.OperationsType;
+import net.java.dev.wiseman.schemas.metadata.messagetypes.OutputType;
+import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemaType;
+import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemasType;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
@@ -43,6 +63,7 @@ import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XmlBinding;
 
 public class MetadataViewer extends JFrame {
 	
@@ -63,6 +84,11 @@ public class MetadataViewer extends JFrame {
 	  private static String BASE_AUTH = "wsman.basicauthentication";
 	  private static String BASE_USER = "wsman.user";
 	  private static String BASE_PASS = "wsman.password";
+	  private static 
+	  net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory 
+		metadataContent_fact = new 
+		net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory();
+	  private static XmlBinding binding = null;
 	  
 	  public MetadataViewer() {
 		//frame settings
@@ -361,6 +387,42 @@ public class MetadataViewer extends JFrame {
 			  else{
 				addNodeForElement(node, header);
 			  }
+		   }//End of SoapEnvelope processing
+		   //Now process for MessageDefinition details
+		   if(man.getBody().getFirstChild()!=null){
+			   if(binding==null){binding = man.getXmlBinding();}
+			   //Create JAXB type for the embedded node
+			   Document mesgDefinition = man.getBody().extractContentAsDocument();
+			   MessageDefinitions returnedMessage = null; 
+			   Object unmarshalled = binding.unmarshal(mesgDefinition);
+			   if(unmarshalled instanceof MessageDefinitions){
+				   returnedMessage = (MessageDefinitions) unmarshalled;
+			   }
+			  if(returnedMessage!=null){
+			     //Then add content for root meta-data definition
+					DefaultMutableTreeNode metDefNode = 
+						new DefaultMutableTreeNode("message-definitions");	
+		        //Then add child content for schemas
+				SchemasType schemas = returnedMessage.getSchemas();
+				DefaultMutableTreeNode schemNode = 
+					new DefaultMutableTreeNode("schemas[prefix=schemaLocation]");
+				for(SchemaType schema: schemas.getSchema()){
+					addNodeForSchemaType(schemNode, schema);
+				}
+			    //Then add child content for OperationsType
+				OperationsType opers = returnedMessage.getOperations();
+				DefaultMutableTreeNode operNode = 
+					new DefaultMutableTreeNode("operations");
+				for(OperationNodeType operation: opers.getOperation()){
+					addNodeForOperationNodeType(operNode, operation);
+				}
+				
+				//stitch it all together
+				metDefNode.add(schemNode);
+				metDefNode.add(operNode);
+				node.add(metDefNode);
+				
+			  }//end of IF messageDefinitionType successfully created
 		   }
 		 }
 	  }
@@ -397,6 +459,67 @@ public class MetadataViewer extends JFrame {
 		}
 	}
 
+	/** Adds the SchemaType's contents as a displayable leaf node of the node passed in. 
+	 * @param node 
+	 * @param schema
+	 */
+	private static void addNodeForSchemaType(DefaultMutableTreeNode node, 
+			SchemaType schema) {
+		DefaultMutableTreeNode newNode;
+		if(schema!=null){
+			newNode = new DefaultMutableTreeNode(
+					schema.getPrefix()+"="+
+					schema.getValue());
+			node.add(newNode);
+		}
+	}
+
+	/** Adds the OperationNodeType's contents as a displayable leaf node of 
+	 * the node passed in. 
+	 * @param node 
+	 * @param operation
+	 */
+	private static void addNodeForOperationNodeType(DefaultMutableTreeNode node, 
+			OperationNodeType operation) {
+		DefaultMutableTreeNode newNode;
+		if(operation!=null){
+			newNode = new DefaultMutableTreeNode(
+					operation.getName());
+		  //BUILD the input node
+		  String message="(Schema Type for Soap Action content)";	
+		  InputType input = operation.getInput();
+		  DefaultMutableTreeNode inpNode = 
+			  new DefaultMutableTreeNode("input"+message);
+		  DefaultMutableTreeNode inpMsgType = 
+			  new DefaultMutableTreeNode("xsdType="+
+				input.getMessage());
+		  DefaultMutableTreeNode inpSoapAction = 
+			  new DefaultMutableTreeNode("soapAction="+
+				input.getAction());
+		    inpNode.add(inpMsgType);
+		    inpNode.add(inpSoapAction);
+		  //BUILD the output node  
+		  OutputType output = operation.getOutput();
+		  DefaultMutableTreeNode outpNode = 
+			  new DefaultMutableTreeNode("output"+message);
+		  DefaultMutableTreeNode outpMsgType = 
+			  new DefaultMutableTreeNode("msgType="+
+				output.getMessage());
+		  DefaultMutableTreeNode outpSoapAction = 
+			  new DefaultMutableTreeNode("soapAction="+
+				output.getAction());
+		    outpNode.add(outpMsgType);
+		    outpNode.add(outpSoapAction);
+		  
+		  //Stitch it all together
+	      newNode.add(inpNode);  
+		  newNode.add(outpNode);  
+		    
+		  //Add all the new nodes to the root node
+		  node.add(newNode);
+		}
+	}
+	
 	/**To enable launch from command line.
 	 * @param args 
 	 */

@@ -12,6 +12,10 @@ import com.sun.ws.management.addressing.Addressing;
 
 public class Metadata extends Addressing{
 
+	    public static final String INITIALIZE_ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/transfer/Initialize";
+	    public static final String INITIALIZE_RESPONSE_URI = 
+	    	"http://schemas.xmlsoap.org/ws/2004/09/transfer/InitializeResponse";
+	
 	    public static final String NS_PREFIX = "mex";
 	    public static final String NS_URI = "http://schemas.xmlsoap.org/ws/2004/09/mex";
 	    

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WsManagementDefaultAddressingModelAnnotation.java,v 1.1 2007-04-06 10:03:08 jfdenise Exp $
+ * $Id: WsManagementDefaultAddressingModelAnnotation.java,v 1.2 2007-05-02 19:35:14 simeonpinder Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 
@@ -65,6 +65,34 @@ public @interface WsManagementDefaultAddressingModelAnnotation {
 	 */
 	public WsManagementAddressDetailsAnnotation getDefaultAddressDefinition();
 	
+	/** This defines the referenced schemas and their suggested namespace prefix.
+	 * 
+	 * Ex. schemaList("tl=http://localhost:8080/wsman/schemas/light.xsd",
+	 * 		"wxf="http://schemas.xmlsoap.org/ws/2004/09/transfer"
+	 *     )
+	 */
+	public String[] schemaList() default "";
+	
+	/** This defines the exposed operations for this resource, analagous to
+	 *  the wsdl:operationType except that the xml schema types are referenced
+	 *  directly.
+	 *  
+	 *  The operation<direction>TypeMap communicates 
+	 *  (schema defined type for payload)=(SoapAction expecting the defined type)
+	 *  
+	 * Ex.@WsManagementOperationDefinitionAnnotation(
+	 *		operationName="Create", 
+	 *		operationInputTypeMap="tl:TrafficLightTypeMessage=http://schemas.xmlsoap.org/ws/2004/09/transfer/Create", 
+	 *		operationOutputTypeMap="wxf:CreateResponseMessage=http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse") 
+	 *	  };
+	 */
+	public WsManagementOperationDefinitionAnnotation[] definedOperations() default { 
+		@WsManagementOperationDefinitionAnnotation(
+				operationName="", 
+				operationInputTypeMap="", 
+				operationOutputTypeMap="") 
+	};
+	
 	/**This is an optional flag that my be used by consumers to help organize metadata 
 	 * information into useful groups.
 	 * 
@@ -86,7 +114,8 @@ public @interface WsManagementDefaultAddressingModelAnnotation {
 	 *  
 	 * Ex. resourceMetaDataUniqueName="http://www.hp.com/resource/metadata/ldap/respository/2004" 
 	 */
-	public String resourceMetaDataUID() default "(INSERT UNIQUE IDENTIFIER)";
+//	public String resourceMetaDataUID() default "(INSERT UNIQUE IDENTIFIER)";
+	public String resourceMetaDataUID();
 	
 	/** This is an optional field for miscellaneous information. 
 	 *  
