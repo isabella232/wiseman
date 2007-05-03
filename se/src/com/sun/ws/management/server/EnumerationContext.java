@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.10 2007-04-06 09:57:13 jfdenise Exp $
+ * $Id: EnumerationContext.java,v 1.11 2007-05-03 05:10:59 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -54,7 +54,7 @@ final class EnumerationContext extends BaseContext {
         return this.iterator;
     }
     
-    void setDeleted() {
+    public void setDeleted() {
     	super.setDeleted();
     /*	synchronized (this.iterator) {
     	   this.iterator.release();

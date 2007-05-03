@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseContext.java,v 1.10 2007-03-02 16:12:27 denis_rachal Exp $
+ * $Id: BaseContext.java,v 1.11 2007-05-03 05:10:59 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -25,7 +25,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-class BaseContext {
+public class BaseContext {
 	
 	private class BaseNodeList implements NodeList {
 
@@ -57,7 +57,7 @@ class BaseContext {
     private boolean deleted;
     private final ContextListener listener;
     
-    BaseContext(final XMLGregorianCalendar expiry,
+    public BaseContext(final XMLGregorianCalendar expiry,
             final Filter filter,
 	        final ContextListener listener) {
         
@@ -67,19 +67,19 @@ class BaseContext {
         this.listener = listener;
     }
     
-    String getExpiration() {
+    public String getExpiration() {
         return expiration.toXMLFormat();
     }
     
-    ContextListener getListener() {
+    public ContextListener getListener() {
     	return this.listener;
     }
     
-    Filter getFilter() {
+    public Filter getFilter() {
     	return this.filter;
     }
     
-    boolean isExpired(final XMLGregorianCalendar now) {
+    public boolean isExpired(final XMLGregorianCalendar now) {
         if (expiration == null) {
             // no expiration defined, never expires
             return false;
@@ -87,15 +87,15 @@ class BaseContext {
         return now.compare(expiration) > 0;
     }
     
-    boolean isDeleted() {
+    public boolean isDeleted() {
     	return deleted;
     }
     
-    void setDeleted() {
+    public void setDeleted() {
     	this.deleted = true;
     }
     
-    NodeList evaluate(final Node content) throws Exception {
+    public NodeList evaluate(final Node content) throws Exception {
         // pass-thru if no filter is defined
         if (filter != null) {
             return filter.evaluate(content);
