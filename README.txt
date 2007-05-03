@@ -1,6 +1,6 @@
-WISEMAN 0.6
+WISEMAN 1.0RC1
 
-This is the second binary release of Wiseman, an implementation of the WS Management 
+This is the third binary release of Wiseman, an implementation of the WS Management 
 protocol for Java JDK 5.0.
 
 This release provides good coverage of the WS Man 1.0 specification
