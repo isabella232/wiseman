@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.15 2007-03-02 15:48:37 denis_rachal Exp $
+ * $Id: Addressing.java,v 1.16 2007-05-03 14:47:50 simeonpinder Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -29,6 +29,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
@@ -103,7 +105,15 @@ public class Addressing extends SOAP {
     
     protected void validateElementPresent(final Object element, final QName elementName) throws FaultException {
         if (element == null) {
-            throw new MessageInformationHeaderRequiredFault(elementName);
+//        	throw new MessageInformationHeaderRequiredFault(elementName);
+        	String text = "'"+elementName.getLocalPart()+"' element missing.";
+        	String faultDetail = elementName+" is required but was not found.";
+        	Object[] details = {
+        			"During validation the following ",
+        			"required element '"+elementName+"'",
+        			"could not be found. Unable to proceed with processing."};
+            throw new MessageInformationHeaderRequiredFault(text,faultDetail,
+            	null,elementName,details);
         }
     }
     
@@ -185,8 +195,22 @@ public class Addressing extends SOAP {
         final Node header = getHeader();
         for (final Object any : anyList) {
             if (any instanceof Node) {
-                final Node node = (Node) any;
+                Node node = (Node) any;
                 // TODO: can be a performance hog if the node is deeply nested
+//                header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
+                NodeList existingHeaders = null;
+                Node hNode =null;
+                //prevent duplicate additions. TODO? Use getHeaders() instead?
+                if(((existingHeaders = header.getChildNodes())!=null)
+                		&&(existingHeaders.getLength()>0)){
+                   for (int i = 0; i < existingHeaders.getLength(); i++) {
+					 hNode = existingHeaders.item(i);
+					 if((node.getNamespaceURI().equals(hNode.getNamespaceURI()))&
+						(node.getLocalName().equals(hNode.getLocalName()))){
+						header.removeChild(hNode); 
+					 }
+                   }
+                }
                 header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
             } else {
             	try {

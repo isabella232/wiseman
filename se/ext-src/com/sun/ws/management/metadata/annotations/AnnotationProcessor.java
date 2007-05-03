@@ -121,6 +121,8 @@ public class AnnotationProcessor {
 		  if(binding==null){	
 			Management man = new Management();
 			binding = man.getXmlBinding();
+			//loadServerCredentials
+			MetadataUtility.loadServerAccessCredentials(null);
 		  }
 		} catch (SOAPException e) {
 			LOG.severe(e.getMessage());
@@ -944,24 +946,56 @@ public class AnnotationProcessor {
 	/**Remove all metadata-ONLY elements.
 	 * 
 	 * @param existing
+	 * @param removeMetadataBody TODO
 	 * @return
 	 * @throws SOAPException
 	 */
-	public static Management stripMetadataContent(Management existing) throws SOAPException{
-		Management message = new Management();
+	public static Management stripMetadataContent(Management existing, 
+			boolean removeMetadataBody) throws SOAPException{
+//		Management message = new Management();
+//		if((existing!=null)&&(existing.getHeaders()!=null)){
+//			 for(SOAPElement header: existing.getHeaders()){
+//				  if(!AnnotationProcessor.isDescriptiveMetadataElement(
+//						  header.getElementQName())){
+//				     Node located = containsHeader(message.getHeader(),header);	
+//					 if(located!=null){
+//					   message.getHeader().removeChild(located);  
+//					 }
+//					 message.getHeader().addChildElement(header);
+//				  }
+//			}//End of iteratation through header list
+//			if(!removeMetadataBody){
+//			  if((message.getBody()!=null)&&
+//				(existing.getBody().getFirstChild()!=null)){
+//			   //TODO: does not work. Rework to remove from the Management instance passed in.	  
+////			   message.getBody().addDocument(existing.getBody().getFirstChild());
+//			  }
+//			}
+//		}
+//		return message;
 		if((existing!=null)&&(existing.getHeaders()!=null)){
 			 for(SOAPElement header: existing.getHeaders()){
-				  if(!AnnotationProcessor.isDescriptiveMetadataElement(
-						  header.getElementQName())){
-				     Node located = containsHeader(message.getHeader(),header);	
-					 if(located!=null){
-					   message.getHeader().removeChild(located);  
-					 }
-					 message.getHeader().addChildElement(header);
-				  }
-			}//End of iteratation through header list
+			  if(AnnotationProcessor.isDescriptiveMetadataElement(
+					  header.getElementQName())){
+				 existing.getHeader().removeChild(header); 
+//			     Node located = containsHeader(message.getHeader(),header);	
+//				 if(located!=null){
+//				   message.getHeader().removeChild(located);  
+//				 }
+//				 message.getHeader().addChildElement(header);
+			  }
+		     }//End of iteratation through header list
+			 if(removeMetadataBody){
+			  if((existing.getBody()!=null)&&
+				(existing.getBody().getFirstChild()!=null)){
+				existing.getBody().removeContents();  
+			   //TODO: does not work. Rework to remove from the Management instance passed in.	  
+//			   message.getBody().addDocument(existing.getBody().getFirstChild());
+			  }
+			 }
+			
 		}
-		return message;	 
+		return existing;
 	}
 	
 		/**

@@ -28,6 +28,7 @@ import com.sun.ws.management.framework.eventing.SubscriptionManagerInterface;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.identify.IdentifyUtility;
 import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
+//import com.sun.ws.management.server.handler.wsman.auth.eventcreator_Handler;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferMessageValues;
 import com.sun.ws.management.transfer.TransferUtility;
@@ -104,6 +105,7 @@ public class MetadataUtility extends ManagementUtility {
    		
 	   return locatedMetaDataElements;
 	}
+	
 	public static Management[] getExposedMetadata(String wisemanServerAddress,long timeout) 
 		throws SOAPException, IOException, JAXBException, DatatypeConfigurationException{
 		long timeoutValue = 30000;
@@ -211,8 +213,6 @@ public class MetadataUtility extends ManagementUtility {
 		
 		//locate the subscriptionManager instance
 		if(!eventSource.isAlsoTheSubscriptionManager()){
-			
-//			subManagerData = eventSource.getMetadataForSubscriptionManager();
 			subManagerData = eventSource.getMetadataForSubscriptionManager();
 			if(subManagerData==null){
 				String msg="SubscriptionManager metadata is null. Unable to proceed.";
@@ -317,16 +317,14 @@ public class MetadataUtility extends ManagementUtility {
 	        final Addressing response = HttpClient.sendRequest(subManagerData);
 	        if (response.getBody().hasFault())
 	        {
-//System.out.println("####REG_EVT_RESP:"+response.getBody().getFault().getFaultString());	        	
+System.out.println("####REG_EVT_RESP:"+response.getBody().getFault().getFaultString());	        	
 	//            fail(response.getBody().getFault().getFaultString());
 	        }else{
 	        	//extract the returned selectorSet
 	        	Management eventSourceRegistrationResp = new Management(response);
-//	        	System.out.println("REG_EVT_SRC_RESP:"+eventSourceRegistrationResp);
+	        	System.out.println("REG_EVT_SRC_RESP:"+eventSourceRegistrationResp);
 //		        	ManagementUtility.extractSelectorsAsMap(null,eventSourceRegistrationResp.getSelectors());
-	          Map<String,String> selectors=	
-//	        	  TransferUtility.extractSelectors(eventSourceRegistrationResp);
-	        	  ManagementUtility.extractSelectors(eventSourceRegistrationResp);
+	          Map<String,String> selectors=	ManagementUtility.extractSelectors(eventSourceRegistrationResp);
 //	          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){	
 //	        	  List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
 	          if(selectors.size()>0){	
@@ -385,24 +383,145 @@ public class MetadataUtility extends ManagementUtility {
 		return eventSourceUid;
 	}
 
-	public static String registerEventSinkWithSubscriptionManager(
-			String suggestionForEvtSinkId,
+//	public static String registerEventSinkWithSubscriptionManager(
+//			String suggestionForEvtSinkId,
+//			EventSourceInterface eventSource,Management message, boolean logException, 
+//			boolean throwException) throws SOAPException, JAXBException, 
+//			DatatypeConfigurationException, IOException {
+//		String eventSinkId = null;
+////######
+//		Management subManagerData = null;
+////			subManagerData = eventSource.getMetadataForSubscriptionManager();
+//			subManagerData = eventSource.getMetadataForSubscriptionManager();
+//		TransferMessageValues settings = TransferMessageValues.newInstance();
+//		Transfer tMessage = TransferUtility.buildMessage(null, settings);
+//		
+//		//locate the subscriptionManager instance
+//		if(!eventSource.isAlsoTheSubscriptionManager()){
+//			
+////			subManagerData = eventSource.getMetadataForSubscriptionManager();
+//			subManagerData = eventSource.getMetadataForSubscriptionManager();
+//			if(subManagerData==null){
+//				String msg="SubscriptionManager metadata is null. Unable to proceed.";
+//				if(logException){
+//					LOG.severe(msg);
+//				}
+//				if(throwException){
+//				  throw new IllegalArgumentException(msg);
+//				}
+//				return eventSinkId;
+//			}
+//
+//			//Now add the additional components to this message so that subman can proceed
+//			  //indicate for creating new subscriber
+//			subManagerData.addHeaders(Management.createReferenceParametersType(
+//					EventingMessageValues.EVENTING_CREATION_TYPES, 
+////					CreationTypes.SUBSCRIPTION_SOURCE.name()));
+//					CreationTypes.NEW_SUBSCRIBER.name()));
+//			Management evtSrcDetails = 
+//				eventSource.getMetadataForEventSource();
+//			//indicate which EventSource is responsible
+//			SOAPElement evtSrcMetDataId = ManagementUtility.locateHeader(
+//					evtSrcDetails.getHeaders(), 
+//					AnnotationProcessor.RESOURCE_META_DATA_UID);
+//			String metadataId = null;
+//			if((evtSrcMetDataId!=null)&&
+//				((metadataId = evtSrcMetDataId.getTextContent())!=null)){
+//				//do nothing already have the data
+//			}
+//			
+//			if((metadataId!=null)&&
+//					(metadataId.trim().length()>0)){
+//			  String evtMetadata = metadataId;
+//			  subManagerData.addHeaders(
+//					  Management.createReferenceParametersType(
+//				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+//				evtMetadata));
+//			  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
+//			}
+////			if((suggestionForEvtSinkId!=null)&&
+////					(suggestionForEvtSinkId.trim().length()>0)){
+////			  String evtMetadata = suggestionForEvtSinkId;
+////			  subManagerData.addHeaders(
+////					  Management.createReferenceParametersType(
+////				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+////				evtMetadata));
+////			  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
+////			}
+//			subManagerData = ManagementUtility.buildMessage(null, 
+//					subManagerData, true);
+////					subManagerData, false);
+//			
+//			//insert the body of the message from the message passed in.
+//			if((message!=null)&&(message.getBody()!=null)){
+//			   subManagerData.getBody().addDocument(
+//					   message.getBody().extractContentAsDocument());
+//			}
+////			subManagerData = 
+////				ManagementUtility.removeDescriptiveMetadataHeaders(subManagerData);
+//			
+//			
+//	    	
+////final Addressing response = HttpClient.sendRequest(mgmt);
+//	        final Addressing response = HttpClient.sendRequest(subManagerData);
+//	        if (response.getBody().hasFault())
+//	        {
+//System.out.println("@@@@ MetDUtil:registerEv");	        	
+//	//            fail(response.getBody().getFault().getFaultString());
+//	        }else{
+//	        	//extract the returned selectorSet
+//	        	Management eventSinkRegistrationResp = new Management(response);
+////		        	ManagementUtility.extractSelectorsAsMap(null,eventSourceRegistrationResp.getSelectors());
+//	          Map<String,String> selectors=	
+////	        	  TransferUtility.extractSelectors(eventSinkRegistrationResp);
+//	        	  ManagementUtility.extractSelectors(eventSinkRegistrationResp);
+////	          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){	
+////	        	  List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
+//	          if(selectors.size()>0){	
+////	        	List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
+////				Map<String, String> selectorsRetrieved = ManagementUtility.extractSelectorsAsMap(null,
+//////						(List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors()));
+////						selList);
+////	        	if(selectorsRetrieved.containsKey(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME)){
+////	        		eventSourceUid = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME;
+////	        		eventSourceUid+="="+selectorsRetrieved.get(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME);
+////	        	}
+//	        	if(selectors.containsKey(EventingMessageValues.EVENT_SINK_NODE_NAME)){
+//	        		eventSinkId = selectors.get(
+//	        			EventingMessageValues.EVENT_SINK_NODE_NAME);
+//	        	}
+//	          }
+//	        }
+////			}else{
+////				
+////			}
+//				
+//			return eventSinkId;
+//		}else{//Is one and the same handler.
+//		
+//		}
+//		
+////######		
+//		return eventSinkId;
+//	}
+
+	public static Management registerEventSinkWithSubscriptionManager(
 			EventSourceInterface eventSource,Management message, boolean logException, 
-			boolean throwException) throws SOAPException, JAXBException, 
-			DatatypeConfigurationException, IOException {
-		String eventSinkId = null;
-//######
-		Management subManagerData = null;
-//			subManagerData = eventSource.getMetadataForSubscriptionManager();
-			subManagerData = eventSource.getMetadataForSubscriptionManager();
-		TransferMessageValues settings = TransferMessageValues.newInstance();
-		Transfer tMessage = TransferUtility.buildMessage(null, settings);
+			boolean throwException) throws JAXBException, SOAPException, DatatypeConfigurationException, IOException {
 		
-		//locate the subscriptionManager instance
-		if(!eventSource.isAlsoTheSubscriptionManager()){
-			
-//			subManagerData = eventSource.getMetadataForSubscriptionManager();
-			subManagerData = eventSource.getMetadataForSubscriptionManager();
+	    Management subManagerData = null;
+//	    subManagerData = eventSource.getMetadataForSubscriptionManager();
+//	    if(subManagerData==null){
+//	    	String msg="The EventSource reference cannot be null.";
+//	    	throw new IllegalArgumentException(msg);
+//	    }
+	    
+//	    TransferMessageValues settings = TransferMessageValues.newInstance();
+//	    Transfer tMessage = TransferUtility.buildMessage(null, settings);
+	
+	    //locate the subscriptionManager instance
+	    if(!eventSource.isAlsoTheSubscriptionManager()){
+	    	subManagerData = eventSource.getMetadataForSubscriptionManager();
 			if(subManagerData==null){
 				String msg="SubscriptionManager metadata is null. Unable to proceed.";
 				if(logException){
@@ -411,82 +530,100 @@ public class MetadataUtility extends ManagementUtility {
 				if(throwException){
 				  throw new IllegalArgumentException(msg);
 				}
-				return eventSinkId;
+				return subManagerData;
 			}
-
+			
+			//Now insert the relevant parameters to tell the SubscriptionManager how to process
+				//Indicate that this is a NEW_SUBSCRIBER packet
 			subManagerData.addHeaders(Management.createReferenceParametersType(
 					EventingMessageValues.EVENTING_CREATION_TYPES, 
-//					CreationTypes.SUBSCRIPTION_SOURCE.name()));
 					CreationTypes.NEW_SUBSCRIBER.name()));
-			Management evtSrcDetails = 
-				eventSource.getMetadataForEventSource();
-			
-//			SOAPElement evtSrcMetDataId = ManagementUtility.locateHeader(
-//					evtSrcDetails.getHeaders(), 
-//					AnnotationProcessor.RESOURCE_META_DATA_UID);
-			if((suggestionForEvtSinkId!=null)&&
-					(suggestionForEvtSinkId.trim().length()>0)){
-			  String evtMetadata = suggestionForEvtSinkId;
+				Management evtSrcDetails = 
+					eventSource.getMetadataForEventSource();
+			//Indicate which EventSource this message comes from
+			SOAPElement evtSrcMetDataId = ManagementUtility.locateHeader(
+					evtSrcDetails.getHeaders(), 
+					AnnotationProcessor.RESOURCE_META_DATA_UID);
+			String srcMetadataKey = null;
+			if((evtSrcMetDataId!=null)&&((srcMetadataKey =evtSrcMetDataId.getTextContent())!=null)&&
+				!(srcMetadataKey.trim().equals(""))){
+				//do nothing already have the data
+			}
+			//Now take the content of the incoming message
+			if((srcMetadataKey!=null)&&
+			(srcMetadataKey.trim().length()>0)){
+			  String evtMetadata = srcMetadataKey;
 			  subManagerData.addHeaders(
 					  Management.createReferenceParametersType(
 				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
 				evtMetadata));
 			  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
 			}
-			subManagerData = ManagementUtility.buildMessage(null, 
-					subManagerData, true);
-//					subManagerData, false);
-			
-			//insert the body of the message from the message passed in.
-			if((message!=null)&&(message.getBody()!=null)){
-			   subManagerData.getBody().addDocument(
-					   message.getBody().extractContentAsDocument());
-			}
-//			subManagerData = 
-//				ManagementUtility.removeDescriptiveMetadataHeaders(subManagerData);
-			
-			
-	    	
-//final Addressing response = HttpClient.sendRequest(mgmt);
-	        final Addressing response = HttpClient.sendRequest(subManagerData);
-	        if (response.getBody().hasFault())
-	        {
-	//            fail(response.getBody().getFault().getFaultString());
-	        }else{
-	        	//extract the returned selectorSet
-	        	Management eventSinkRegistrationResp = new Management(response);
-//		        	ManagementUtility.extractSelectorsAsMap(null,eventSourceRegistrationResp.getSelectors());
-	          Map<String,String> selectors=	
-//	        	  TransferUtility.extractSelectors(eventSinkRegistrationResp);
-	        	  ManagementUtility.extractSelectors(eventSinkRegistrationResp);
-//	          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){	
-//	        	  List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
-	          if(selectors.size()>0){	
-//	        	List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
-//				Map<String, String> selectorsRetrieved = ManagementUtility.extractSelectorsAsMap(null,
-////						(List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors()));
-//						selList);
-//	        	if(selectorsRetrieved.containsKey(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME)){
-//	        		eventSourceUid = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME;
-//	        		eventSourceUid+="="+selectorsRetrieved.get(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME);
-//	        	}
-	        	if(selectors.containsKey(EventingMessageValues.EVENT_SINK_NODE_NAME)){
-	        		eventSinkId = selectors.get(
-	        			EventingMessageValues.EVENT_SINK_NODE_NAME);
-	        	}
-	          }
-	        }
-//			}else{
-//				
-//			}
-				
-			return eventSinkId;
-		}else{//Is one and the same handler.
 		
+//		if((suggestionForEvtSinkId!=null)&&
+//				(suggestionForEvtSinkId.trim().length()>0)){
+//		  String evtMetadata = suggestionForEvtSinkId;
+//		  subManagerData.addHeaders(
+//				  Management.createReferenceParametersType(
+//			EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+//			evtMetadata));
+//		  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
+//		}
+		subManagerData = ManagementUtility.buildMessage(null, 
+//				subManagerData, true);
+				subManagerData, false);
+		
+		//insert the body of the message from the message passed in.
+		if((message!=null)&&(message.getBody()!=null)){
+		   subManagerData.getBody().addDocument(
+				   message.getBody().extractContentAsDocument());
 		}
+//		subManagerData = 
+//			ManagementUtility.removeDescriptiveMetadataHeaders(subManagerData);
+System.out.println("@@@@ Newly completed piped mesg:"+subManagerData);		
 		
-//######		
-		return eventSinkId;
+    	
+//final Addressing response = HttpClient.sendRequest(mgmt);
+        final Addressing response = HttpClient.sendRequest(subManagerData);
+        if (response.getBody().hasFault())
+        {
+System.out.println("@@@@ A fault occurred:"+response.getBody().getFault().getFaultString());        	
+//            fail(response.getBody().getFault().getFaultString());
+        }else{
+//        	//extract the returned selectorSet
+//        	Management eventSinkRegistrationResp = new Management(response);
+////	        	ManagementUtility.extractSelectorsAsMap(null,eventSourceRegistrationResp.getSelectors());
+//          Map<String,String> selectors=	
+////        	  TransferUtility.extractSelectors(eventSinkRegistrationResp);
+//        	  ManagementUtility.extractSelectors(eventSinkRegistrationResp);
+////          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){	
+////        	  List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
+//          if(selectors.size()>0){	
+////        	List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
+////			Map<String, String> selectorsRetrieved = ManagementUtility.extractSelectorsAsMap(null,
+//////					(List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors()));
+////					selList);
+////        	if(selectorsRetrieved.containsKey(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME)){
+////        		eventSourceUid = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME;
+////        		eventSourceUid+="="+selectorsRetrieved.get(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME);
+////        	}
+//        	if(selectors.containsKey(EventingMessageValues.EVENT_SINK_NODE_NAME)){
+//        		eventSinkId = selectors.get(
+//        			EventingMessageValues.EVENT_SINK_NODE_NAME);
+//        	}
+//          }
+        	return subManagerData;
+        }
+		}else{
+			
+		}
+			
+////		return eventSinkId;
+//		}else{//Is one and the same handler.
+//		
+//		}
+
+	 return null;
 	}
 	
 }

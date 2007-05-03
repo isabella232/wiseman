@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MessageInformationHeaderRequiredFault.java,v 1.2 2006-05-01 23:32:20 akhilarora Exp $
+ * $Id: MessageInformationHeaderRequiredFault.java,v 1.3 2007-05-03 14:47:50 simeonpinder Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -33,6 +33,15 @@ public class MessageInformationHeaderRequiredFault extends SenderFault {
     public MessageInformationHeaderRequiredFault(final QName missingHeaderName) {
         this(SOAP.createFaultDetail(null, null, null, null, 
                 missingHeaderName.getPrefix() + SOAP.COLON + missingHeaderName.getLocalPart()));
+    }
+
+    public MessageInformationHeaderRequiredFault(final String text,
+    		final String faultDetail, final Throwable throwable, 
+    		final QName missingHeaderName,
+    		final Object[] details) {
+        this(SOAP.createFaultDetail(text, faultDetail, null, missingHeaderName, 
+//        		missingHeaderName.getPrefix() + SOAP.COLON + missingHeaderName.getLocalPart()));
+                details));
     }
     
     public MessageInformationHeaderRequiredFault(final Node... details) {

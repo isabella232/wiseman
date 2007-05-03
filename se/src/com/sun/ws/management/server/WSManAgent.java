@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.13 2007-05-02 19:29:20 simeonpinder Exp $
+ * $Id: WSManAgent.java,v 1.14 2007-05-03 14:47:51 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server;
@@ -599,6 +599,8 @@ public abstract class WSManAgent {
         return binding;
     }
     
+    private static Map<String, String> propertySet =null;
+    private static String extensionsFile = null;
     /**Locates the ./wsman-ext.properties file and looks for the extensions
      * property.  Parses the contents and returns as a Map<String,String>
      * where the key is the prefix and the value is the NS_URI.
@@ -609,8 +611,22 @@ public abstract class WSManAgent {
        //Hasmap for return	
        Map<String,String> extensionNamespaces = new HashMap<String, String>();
        //Temporary map
-       Map<String, String> propertySet = new HashMap<String, String>();
-       WSManAgent.getProperties(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, propertySet);
+       if(propertySet==null){
+    	   propertySet = new HashMap<String, String>();
+    	   try{
+    		 final InputStream ism = 
+    		  WSManAgent.class.getResourceAsStream(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME);
+    		 if(ism!=null){
+    			extensionsFile = ""; 
+    		 }
+    	   }catch(Exception ex){
+    		 //do nothing 
+    	   }
+       }
+       if((extensionsFile!=null)&&(propertySet.size()==0)){
+//    	 crud  
+         WSManAgent.getProperties(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, propertySet);
+       }
 		 if((!propertySet.isEmpty()&&
 				 (propertySet.containsKey("extensions.envelope.defs")))){
 		  String extensions = propertySet.get("extensions.envelope.defs");

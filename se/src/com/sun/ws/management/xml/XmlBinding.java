@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.19 2007-05-02 19:29:20 simeonpinder Exp $
+ * $Id: XmlBinding.java,v 1.20 2007-05-03 14:47:53 simeonpinder Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -147,6 +147,7 @@ public final class XmlBinding {
               customPackages);
     }
     
+    private static Map<String, String> bindingsPropertySet = null;
     private void init(Schema schema, Source[] customSchemas,
             Map<String, String> bindingConf,
             ClassLoader loader, boolean validation,
@@ -168,8 +169,13 @@ public final class XmlBinding {
             packageNamesHandled.add(p);
         }
         
-        final Map<String, String> propertySet = new HashMap<String, String>();
-        WSManAgent.getProperties(BINDING_PROPERTIES_FILE, propertySet);
+        Map<String, String> propertySet = new HashMap<String, String>();
+        if(bindingsPropertySet==null){
+          bindingsPropertySet =	new HashMap<String, String>();	
+          WSManAgent.getProperties(BINDING_PROPERTIES_FILE, bindingsPropertySet);
+        }
+        propertySet = bindingsPropertySet;
+        
         // Put all passed properties
         if(bindingConf != null)
             propertySet.putAll(bindingConf);

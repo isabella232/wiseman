@@ -17,6 +17,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.NamespaceContext;
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
@@ -43,6 +44,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
@@ -198,18 +200,22 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 								selectorMap);
 					xferResponse.setCreateResponse(epr);
 				}
-			}//Event source creation processing
+			}//End of Event source creation processing
 			Subscribe subscribeContent = null;
+			//Event sink creation
 			if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
 					(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
 				//attempt to extract the subscribe message sent if any
 				Transfer createRequest = new Transfer(request);
+//System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
 				Document createBodyDoc = 
 					createRequest.getBody().extractContentAsDocument();
+//System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
 				if(createBodyDoc!=null){
 //					Subscribe subscribeContent = env_factory.createSubscribe();
 					Object ob=	binding.unmarshal(createBodyDoc);
 				  subscribeContent = (Subscribe) ob;
+//System.out.println("@@@ Have the subcribe content:"+subscribeContent);				  
 //				  JAXBElement<Subscribe> unmarsh = 
 //					  (JAXBElement<Subscribe>) binding.unmarshal(createBodyDoc);
 ////					JAXBElement<UserType> unmarshal = (JAXBElement<UserType>) binding
@@ -282,14 +288,46 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 					  //locate the details to define the SubscriptionManager EPR
 //					 Management subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
 					 if(subscriptionManMetaData==null){
+//System.out.println("@@@ SubMan is null!!!");						 
 //						 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
-					   subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
-							 DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
+//subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
+//		DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
+					   subscriptionManMetaData = request;
+					   
 					 }
 					  if(subscriptionManMetaData!=null){
 					     //translate into subscription manager details
 					     EndpointReferenceType subscriptionManEpr = 
 						   ManagementUtility.extractEprType(subscriptionManMetaData);
+//TODO: add the ref params passed in					     
+  //extract epr from Subscribe/Mode/Notify
+///##########
+       //locate notify to
+        EndpointReferenceType notifyTo = null;					     
+		for (final Object content : subscribeContent.getDelivery().getContent()) {
+			final Class contentClass = content.getClass();
+			if (JAXBElement.class.equals(contentClass)) {
+				final JAXBElement<Object> element = (JAXBElement<Object>) content;
+				final QName name = element.getName();
+				final Object item = element.getValue();
+				if (item instanceof EndpointReferenceType) {
+					final EndpointReferenceType eprT = (EndpointReferenceType) item;
+					if (Eventing.NOTIFY_TO.equals(name)) {
+						notifyTo = eprT;
+//System.out.println("@@@@ Located eprNotifyType:"+notifyTo);						
+					}
+				}
+			}
+		}
+		ReferenceParametersType refs = notifyTo.getReferenceParameters();
+		refs.getAny();
+//System.out.println("@@@ RefParam list:"+refs.getAny());		
+		//iterate through and copy all over
+       for(Object param: refs.getAny() ){
+    	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
+//System.out.println("@@@@ Adding ref parameter:"+param);    	   
+       }
+///##########					     
 					     //populate subscribeResponseBody
 					     subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
 					     //handle the Expiration part of SubscribeResponse object
@@ -305,7 +343,6 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 					 //TODO: Generate the duration instance and stuff into custom header 
 					 //TODO: add header to the response object
 			   }				
-//			}//Event sink creation processing
 			}//End of CREATE action for new SUBSCRIBER
 			
 		}//End of CREATE ACTION processing

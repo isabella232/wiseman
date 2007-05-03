@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -48,8 +49,6 @@ import com.sun.ws.management.eventing.EventingUtility;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.eventing.EventingMessageValues.CreationTypes;
 import com.sun.ws.management.framework.eventing.EventSourceInterface;
-//import com.sun.ws.management.framework.enumeration.EventSourceInterface;
-//import com.sun.ws.management.framework.enumeration.SubscriptionManagerInterface;
 import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.metadata.annotations.WsManagementAddressDetailsAnnotation;
 import com.sun.ws.management.metadata.annotations.WsManagementDefaultAddressingModelAnnotation;
@@ -89,6 +88,7 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 	
 	//This should be NULL to start but is set upon successful initialization.
 	private static String subscription_source_id =null;
+	private static final Logger LOG = Logger.getLogger(eventcreator_Handler.class.getName());
 	private static NamespaceMap nsMap;
 	private static XmlBinding binding = null;
 	static{
@@ -181,28 +181,26 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 			//Then must locate the subscription manager details
 			//Send create request for EVENT_SOURCE to register with SUB_MAN
 			//Extract the created id and initalize the sub_source reference
-//			String srcId = EventingUtility.registerEventSourceWithSubscriptionManager(
 			String srcId = MetadataUtility.registerEventSourceWithSubscriptionManager(
 					this, true, true);
-//System.out.println("@@@@ SRC ID:"+srcId+":");
 			subscription_source_id = srcId;
 		}
 	}
 
 //	public void subscribe(HandlerContext context, Management eventRequest, 
 	public Management subscribe(HandlerContext context, Management eventRequest, 
-			Management eventResponse) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException {
+			Management eventResponse) throws SOAPException, JAXBException, 
+			DatatypeConfigurationException, IOException {
 
 		//call the initialize method which lazily instantiates
 		initialize(context, eventRequest, eventResponse);
 		//process and build subscription response.
-		Eventing evtResponse = new Eventing(eventRequest);
-//		Eventing evtRequest = new Eventing(eventRequest);
-		Eventing evtRequest = new Eventing(eventResponse);
+		Eventing evtResponse = new Eventing(eventResponse);
+		Eventing evtRequest = new Eventing(eventRequest);
 		evtResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
 		
 		//register this new subscriber with the sub_man
-		String suggestedEventSinkId = null;
+//		String suggestedEventSinkId = null;
 
 		//test that message processing components exist.
 		if(evtRequest!=null){
@@ -211,6 +209,7 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 			//Return insufficient information
 			String msg="Request did not have required [Subscribe] and/or [Delivery] information.";
 			msg+="This message is invalid and cannot be processed.";
+			 LOG.warning(msg);
 			throw new InvalidMessageFault(msg);
 		   }
 		}else{//Throw IllegalArgument
@@ -218,63 +217,83 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 		   throw new IllegalArgumentException(msg);	
 		}
 		
-	    //extract suggestedEventSinkId from the message	if one exist	
-	    DeliveryType delivery = evtRequest.getSubscribe().getDelivery();
-		EndpointReferenceType notifyTo = null;
-		for (final Object content : delivery.getContent()) {
-			final Class contentClass = content.getClass();
-			if (JAXBElement.class.equals(contentClass)) {
-				final JAXBElement<Object> element = (JAXBElement<Object>) content;
-				final QName name = element.getName();
-				final Object item = element.getValue();
-				if (item instanceof EndpointReferenceType) {
-					final EndpointReferenceType epr = (EndpointReferenceType) item;
-					if (Eventing.NOTIFY_TO.equals(name)) {
-						notifyTo = epr;
-					}
-				}
-			}
-		}
-//##########
-			if(notifyTo!=null){
-			  EndpointReferenceType resCreatedElement = notifyTo;
-			    if((resCreatedElement!=null)&&
-			    	(resCreatedElement.getReferenceParameters()!=null)&&
-			    	(resCreatedElement.getReferenceParameters().getAny()!=null)){
-			      //Parse the contents for suggestedEventSinkId	
-			      List<Object> refContents = 
-			    	  resCreatedElement.getReferenceParameters().getAny();
-			      if((refContents!=null)&&(refContents.size()>0)){
-			    	  for(Object node: refContents){
-						Node sugEvtSinkNode = (Node) node;
-					suggestedEventSinkId = sugEvtSinkNode.getTextContent();
-			    	}
-			      }
-			    }
-			  }
-		String evtSinkId = 
+//		//insert the elements signalling subman how to process
+//		//indicate that this is a NewSubscriber request
+//		eventRequest.addHeaders(Management.createReferenceParametersType(
+//				EventingMessageValues.EVENTING_CREATION_TYPES, 
+//				EventingMessageValues.CreationTypes.NEW_SUBSCRIBER.name()));
+////		//indicate which event source this is
+////		eventRequest.addHeaders(Management.createReferenceParametersType(
+////				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+////				e));
+	
+		
+//	    //extract suggestedEventSinkId from the message	if one exist	
+//	    DeliveryType delivery = evtRequest.getSubscribe().getDelivery();
+//		EndpointReferenceType notifyTo = null;
+//		for (final Object content : delivery.getContent()) {
+//			final Class contentClass = content.getClass();
+//			if (JAXBElement.class.equals(contentClass)) {
+//				final JAXBElement<Object> element = (JAXBElement<Object>) content;
+//				final QName name = element.getName();
+//				final Object item = element.getValue();
+//				if (item instanceof EndpointReferenceType) {
+//					final EndpointReferenceType epr = (EndpointReferenceType) item;
+//					if (Eventing.NOTIFY_TO.equals(name)) {
+//						notifyTo = epr;
+//					}
+//				}
+//			}
+//		}
+//		if(notifyTo!=null){
+//		  EndpointReferenceType resCreatedElement = notifyTo;
+//		    if((resCreatedElement!=null)&&
+//		    	(resCreatedElement.getReferenceParameters()!=null)&&
+//		    	(resCreatedElement.getReferenceParameters().getAny()!=null)){
+//		      //Parse the contents for suggestedEventSinkId	
+//		      List<Object> refContents = 
+//		    	  resCreatedElement.getReferenceParameters().getAny();
+//		      if((refContents!=null)&&(refContents.size()>0)){
+//		    	  for(Object node: refContents){
+//					Node sugEvtSinkNode = (Node) node;
+//				suggestedEventSinkId = sugEvtSinkNode.getTextContent();
+//		    	}
+//		      }
+//		    }
+//		  }
+		//pass the suggested event sink id and retrieve actual eventSinkId assigned
+		//?? should instead return a management instance with all relevant data?
+//		String evtSinkId = 
+//			MetadataUtility.registerEventSinkWithSubscriptionManager(
+//					suggestedEventSinkId,
+//					this,eventRequest,
+//					true, true);
+		Management subManResponse = 
 			MetadataUtility.registerEventSinkWithSubscriptionManager(
-				suggestedEventSinkId,
 				this,eventRequest,
 				true, true);
-		
-		//TODO: extract the eventSinkId from the sub_man resp
+System.out.println("@@@@ actual subManResponse:"+subManResponse);		
 		//TODO: put that eventSinkId in the subscribe response to subscriber
 		EventingMessageValues settings = EventingMessageValues.newInstance();
 		settings.setEventingMessageActionType(Eventing.SUBSCRIBE_RESPONSE_URI);
-		//Translate the metadata for SubMan into EPR type
+		//Translate the metadata from SubMan into EPR type
 			Management subManDet = getMetadataForSubscriptionManager();
+System.out.println("@@@ subManRep:"+subManDet);			
 			EndpointReferenceType subManEpr = ManagementUtility.extractEprType(subManDet);
+System.out.println("@@@ man->epr instance:"+subManEpr);			
 			settings.setSubscriptionManagerEpr(subManEpr);
 		Eventing eventResponseBase = 
 			EventingUtility.buildMessage(
 				evtResponse, settings);
+System.out.println("@@@ EventingIntMedMess:"+eventResponseBase);		
 		eventResponse = ManagementUtility.buildMessage(eventResponseBase, null);
 //		eventResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
 //		-Enumeration.
 //		evtResponse.getSubscribe().
 		SubscribeResponse subScribeResp = evtResponse.getSubscribeResponse();
-	return eventResponse;
+		subScribeResp.setSubscriptionManager(subManEpr);
+//		evtResponse.
+	  return eventResponse;
 	}
 
 	public boolean isAlsoTheSubscriptionManager() {

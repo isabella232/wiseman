@@ -68,12 +68,22 @@ public class EventingUtility {
 			settings = EventingMessageValues.newInstance();
 		}
 		
-	    //Process the EventingMessageValues instance passed in.
-		 //Processing endTo for the message
+		//Process the EventingConstants instance passed in.
+		 //Processing ACTION for the message
+		if (settings.getEventingMessageActionType() != null &&
+				settings.getEventingMessageActionType().trim().length() > 0){
+			existingEvent.setAction(settings.getEventingMessageActionType());
+		} else {
+			existingEvent.setAction(Eventing.SUBSCRIBE_ACTION_URI);
+		}
 		
+	    //Process the EventingMessageValues instance passed in.
+		 //Processing SUBSCRIBE action for the message
 		if (settings.getEventingMessageActionType() == Eventing.SUBSCRIBE_ACTION_URI) {
 			if (settings.getFilter() == null || settings.getFilter().length() <= 0) {
-				existingEvent.setSubscribe(settings.getEndTo(), settings.getDeliveryMode(), settings.getNotifyTo(), 
+				existingEvent.setSubscribe(settings.getEndTo(), 
+						settings.getDeliveryMode(), 
+						settings.getNotifyTo(), 
 					   settings.getExpires(), null);
 			} else {
 				final FilterType filter = Eventing.FACTORY.createFilterType();
@@ -83,8 +93,11 @@ public class EventingUtility {
 						   settings.getExpires(), filter);
 				
 			}
-		} else if (settings.getEventingMessageActionType() == Eventing.SUBSCRIBE_RESPONSE_URI) {
+		}//Processing SubscribeResponse Action. 
+		else if (settings.getEventingMessageActionType() == Eventing.SUBSCRIBE_RESPONSE_URI) {
 			existingEvent.setSubscribeResponse(settings.getEndTo(), settings.getExpires());
+//			existingEvent.setSubscribeResponse(settings.getSubscriptionManagerEpr(), settings.getExpires());
+			
 		} else if (settings.getEventingMessageActionType() == Eventing.RENEW_ACTION_URI) {
 			existingEvent.setRenew(settings.getExpires());
 		} else if (settings.getEventingMessageActionType() == Eventing.RENEW_RESPONSE_URI) {
@@ -117,12 +130,6 @@ public class EventingUtility {
 			  UUID.randomUUID().toString());
 		}
 		
-		if (settings.getEventingMessageActionType() != null &&
-				settings.getEventingMessageActionType().trim().length() > 0){
-			existingEvent.setAction(settings.getEventingMessageActionType());
-		} else {
-			existingEvent.setAction(Eventing.SUBSCRIBE_ACTION_URI);
-		}
 		
 		if (settings.getNamespaceMap() != null &&
 				settings.getNamespaceMap().size() > 0){

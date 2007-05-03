@@ -54,7 +54,7 @@ public class ManagementUtility {
 	private static final long defaultTimeout =30000;
 	private static Management defautInst = null;
 	private static XmlBinding binding = null;
-	{
+	static{
 		try{
 		  defautInst = new Management();
 		  binding = defautInst.getXmlBinding();
@@ -334,17 +334,21 @@ public class ManagementUtility {
 		//parse the Management instance passed in for ResourceCreated and 
 		//  embedded selectors
 		if(managementMessage!=null){
-			
+		 EndpointReferenceType crtType = null;	
 		 if((managementMessage.getBody()!=null)&&
 			(managementMessage.getBody().getFirstChild()!=null)){
 			 //Extract dom component
 			Node createContent = managementMessage.getBody().getFirstChild();
-			JAXBElement<EndpointReferenceType> unmarshal = 
+			try{
+			 JAXBElement<EndpointReferenceType> unmarshal = 
 				(JAXBElement<EndpointReferenceType>) 
 				binding.unmarshal(createContent);
-			EndpointReferenceType crtType = 
+			 crtType = 
 				(EndpointReferenceType) unmarshal.getValue();
-
+			}catch(Exception ex){
+				ex.printStackTrace();
+				LOG.warning(ex.getMessage());
+			}
 			if(crtType!=null){
 				//extract the CreateResponseType instance
 				EndpointReferenceType resCreatedElement = crtType;

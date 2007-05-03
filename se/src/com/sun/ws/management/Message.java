@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.12 2007-05-02 19:29:21 simeonpinder Exp $
+ * $Id: Message.java,v 1.13 2007-05-03 14:47:50 simeonpinder Exp $
  */
 
 package com.sun.ws.management;
@@ -73,6 +73,8 @@ public abstract class Message {
     private SOAPEnvelope env = null;
     private SOAPHeader hdr = null;
     private SOAPBody body = null;
+    
+    private static Map<String,String> extensionNamespaces =null;
     
     static {
         DEFAULT_SOAP_MIME_HEADER.setHeader("Content-Type", 
@@ -204,14 +206,16 @@ public abstract class Message {
         
         //Check to see if there are additional namespaces to add
         try{
-		  Map<String,String> extensionNamespaces = 
+          if(extensionNamespaces ==null){	
+//        	  Map<String,String> extensionNamespaces = 
+		   extensionNamespaces = 
 			WSManAgent.locateExtensionNamespaces();  
-		  
-	      if((extensionNamespaces!=null)&&(extensionNamespaces.size()>0)){
-	       for(String key: extensionNamespaces.keySet()){	
-	         env.addNamespaceDeclaration(key.trim(), extensionNamespaces.get(key).trim());
-	       }
-	      }
+          }
+         if((extensionNamespaces!=null)&&(extensionNamespaces.size()>0)){
+          for(String key: extensionNamespaces.keySet()){	
+           env.addNamespaceDeclaration(key.trim(), extensionNamespaces.get(key).trim());
+          }
+         }
         }catch(Exception ex){
           ex.printStackTrace();
           //Eat the exception so as not to take down Message instantiation.
