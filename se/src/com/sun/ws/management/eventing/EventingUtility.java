@@ -95,9 +95,7 @@ public class EventingUtility {
 			}
 		}//Processing SubscribeResponse Action. 
 		else if (settings.getEventingMessageActionType() == Eventing.SUBSCRIBE_RESPONSE_URI) {
-			existingEvent.setSubscribeResponse(settings.getEndTo(), settings.getExpires());
-//			existingEvent.setSubscribeResponse(settings.getSubscriptionManagerEpr(), settings.getExpires());
-			
+			existingEvent.setSubscribeResponse(settings.getNotifyTo(), settings.getExpires());
 		} else if (settings.getEventingMessageActionType() == Eventing.RENEW_ACTION_URI) {
 			existingEvent.setRenew(settings.getExpires());
 		} else if (settings.getEventingMessageActionType() == Eventing.RENEW_RESPONSE_URI) {

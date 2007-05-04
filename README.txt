@@ -10,7 +10,7 @@ is still under development for this product and will be updated soon.
 To begin learning about Wiseman look over the samples in the samples 
 directory and try the 'Creating Resources' tutorial in the docs directory.  
 NOTE: Some instructional areas of this tutorial are no longer valid with this release.
-Some of the generated artifacts have changed since the 0.5 release. The next binary 
+Some of the generated artifacts have changed since the 0.6 release. The 1.0 binary 
 release of this product will provide a comprehensive rework of the current 
 documentation. It was determined that further efforts to resynchronize the 
 documentation would better be spent on new features.

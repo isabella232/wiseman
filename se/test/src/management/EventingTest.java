@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingTest.java,v 1.16 2007-05-03 14:47:51 simeonpinder Exp $
+ * $Id: EventingTest.java,v 1.17 2007-05-04 02:00:46 simeonpinder Exp $
  */
 
 package management;
@@ -111,10 +111,10 @@ public class EventingTest extends TestBase {
         
         evt2.prettyPrint(System.out);
         final SubscribeResponse sr2 = evt2.getSubscribeResponse();
-//        assertNotNull("SubscriptionManager is null.",sr2.getSubscriptionManager());
-//        assertNotNull("Address is null.",sr2.getSubscriptionManager().getAddress());
-//        assertEquals(mgrAddress, sr2.getSubscriptionManager().getAddress().getValue());
-//        assertEquals(expires, sr2.getExpires());
+        assertNotNull("SubscriptionManager is null.",sr2.getSubscriptionManager());
+        assertNotNull("Address is null.",sr2.getSubscriptionManager().getAddress());
+        assertEquals(mgrAddress, sr2.getSubscriptionManager().getAddress().getValue());
+        assertEquals(expires, sr2.getExpires());
     }
     
     public void testRenewVisual() throws Exception {
