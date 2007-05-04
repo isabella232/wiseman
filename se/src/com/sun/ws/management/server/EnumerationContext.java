@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.11 2007-05-03 05:10:59 denis_rachal Exp $
+ * $Id: EnumerationContext.java,v 1.12 2007-05-04 10:52:50 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
 import javax.xml.datatype.XMLGregorianCalendar;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 
 final class EnumerationContext extends BaseContext {
@@ -61,5 +62,11 @@ final class EnumerationContext extends BaseContext {
     	   this.iterator.notifyAll();
     	}
      */
+    }
+    
+    protected void finalize () throws Throwable {
+        if (this.iterator != null) {
+        	this.iterator.release();     	
+        }
     }
 }
