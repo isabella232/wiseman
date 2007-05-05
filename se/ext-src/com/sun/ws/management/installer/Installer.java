@@ -28,7 +28,7 @@ public class Installer {
 	
 	public Installer(){
 		//Frame details
-		launcher = new JFrame("Wiseman 0.6 installer");
+		launcher = new JFrame("Wiseman 1.0_RC1 installer");
 		launcher.setSize(400,400);
 		launcher.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		launcher.setLocationRelativeTo(null);

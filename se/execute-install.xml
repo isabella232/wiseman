@@ -6,13 +6,15 @@
 	 Design spec:
 	 	-Consumers of the Wiseman 0.6 bundle be informed of the above. 
 	 	-Consumers would have to agree to both license agreements before this installer
-	 	   could successfully build a functional installation of Wiseman0.6.
+	 	   could successfully build a functional installation of Wiseman 1.0_RC1.
  -->
 <project name="Wiseman Installer" default="complete">
 	<!-- Project properties -->
-	<property name="jaxws.jar" value="JAXWS2.1FCS_20070202.jar"/>
-	<property name="jaxws.lib.dir" value="lib/jaxws"/>
+	<property name="wiseman.default.dir" value="wiseman"/>
+	<property name="jaxws.jar" value="${wiseman.default.dir}/JAXWS2.1FCS_20070202.jar"/>
+	<property name="jaxws.lib.dir" value="${wiseman.default.dir}/lib/jaxws"/>
 	<property name="jaxws.root" value="jaxws-ri"/>
+	<property name="wise.self.extract.jar" value="wiseman-1.0-rc1.jar"/>
 	
    	<!-- Test that a valid ant version is being used -->
 	<condition property="valid.ant.version">
@@ -25,7 +27,7 @@
 	      unless="valid.ant.version"/>
 
 	<!-- Root target that governs the installation steps. -->
-    <target name="complete" depends="copy-jaxws-libs-to-wiseman">
+    <target name="complete" depends="clean-up">
     	<condition property="completed.status">
 			<and>
 			 <istrue value="${wiseman.success}"/>	
@@ -34,32 +36,74 @@
 			</and>
     	</condition>
     	<fail unless="completed.status" 
-    		message="You declined a license agreement, or there was an error installing Wiseman 0.6."/>
-    	<echo message="You have successfully completed the installation of Wiseman 0.6"/>
+    		message="You declined a license agreement, or there was an error installing Wiseman 1.0_RC1."/>
+    	
+    	<echo message="You have successfully completed the installation of Wiseman 1.0_RC1"/>
+    	<echo/>
+    	<echo message="You may now delete the 'build.xml' file and the 'lib' directory to complete install cleanup."/>
+    	<echo>Thank you for using Wiseman.</echo>
+    	
     </target>
 
 	<!-- launch Wiseman file extraction -->
 	<target name="install-wiseman">
-		<java jar="lib/wiseman_0.6.jar" fork="true">
+		<java failonerror="true" jar="lib/${wise.self.extract.jar}" fork="true">
 		</java>
+		
+		<!-- Check whether they installed it to the right location -->
+		<available file="${wiseman.default.dir}" property="same.directory"/>
+	    <fail 
+	  	 message="		
+	    	You did not install the wiseman content to ${basedir}		 
+	    										OR 																				
+	    	there was an error running auto-extractable .jar for Wiseman 1.0_RC1 
+	    	">
+	     <condition>
+	       <not>
+	         <isset property="same.directory"/>
+	       </not>
+	     </condition>
+	    </fail>
+
 		<property name="wiseman.success" value="true"/>
+
 	</target>
 
 	<!-- launch Jaxws file extraction -->
 	<target name="install-jaxws" depends="install-wiseman">
-		<java jar="${jaxws.jar}" fork="true">
+		
+		<java jar="${jaxws.jar}" fork="true" 
+			errorproperty="jaxws.inst.err" 
+			resultproperty="successful.jaxws.exe" >
 		</java>
+		
+	    <fail 
+	  	 	message="
+	    	Either you declined the license agreement  
+	    										OR 												
+	    	there was an error running auto-extractable .jar for JAXWS. 
+	    	">
+	     <condition>
+	     	<not>
+	     		<equals arg1="0" arg2="${successful.jaxws.exe}" trim="true"/>
+	     	</not>	
+	     </condition>
+	    </fail> 
+		
 		<property name="jaxws.success" value="true"/>
 	</target>
 	
 	<!-- Copy the jaxws libraries into the wiseman project, as consumers have agreed to use them.  -->
     <target name="copy-jaxws-libs-to-wiseman" depends="install-jaxws">
-    	<condition property="inst.jaxws-.status">
-			 <istrue value="${jaxws.success}"/>	
-    	</condition>
-    	<fail unless="inst.jaxws-.status" 
-    		message="You declined a license agreement, or there was an error installing Wiseman 0.6."/>
-    	
+	    <fail 
+	  	 message="You declined a license agreement, or there was an error installing required JAXWS libraries.">
+	     <condition>
+	       <not>
+	         <isset property="jaxws.success"/>
+	       </not>
+	     </condition>
+	    </fail>
+
     	<mkdir dir="${jaxws.lib.dir}"/>
     	<copy todir="${jaxws.lib.dir}">
     	    <fileset dir="${jaxws.root}/lib">
@@ -68,5 +112,30 @@
     	</copy>
     	<property name="jaxws.lib.copy.success" value="true"/>
     </target>
+	
+	<!-- Clean up the additional files/dirs used when installing. What should remain is the original install
+		 bundle, the ${wiseman.default.dir} dir ready for use, this build.xml and ant jars running it. 
+	-->
+	<target name="clean-up" depends="copy-jaxws-libs-to-wiseman">
+	    <fail 
+	  	 message="There was an error copying required JAXWS libraries to your wiseman/lib/jaxws folder. Please copy them over for success.">
+	     <condition>
+	       <not>
+	         <isset property="jaxws.lib.copy.success"/>
+	       </not>
+	     </condition>
+	    </fail>
+		
+		<delete dir="jaxws-ri" quiet="true" failonerror="false"/>
+		<delete dir="com" quiet="true" failonerror="false"/>
+		<delete dir="META-INF" quiet="true" failonerror="false"/>
+		<delete file="lib/wiseman-1.0-rc1.jar" quiet="true" failonerror="false" deleteonexit="true"/>
+		<delete dir="build.xml" quiet="true" failonerror="false" deleteonexit="true"/>
+    	<property name="clean.up.success" value="true"/>
+	</target>
+	
+	<target name="check-clean-failure" unless="clean.up.success">
+	    <echo message="The installer was unable to clean up all install files for Wiseman 1.0_RC1. The install is still functional."/>
+	</target>
 	
 </project>

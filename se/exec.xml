@@ -7,8 +7,8 @@
  -->
 <project name="Generate Wiseman Install Bundle" default="gen-exec-jar" basedir=".">
  	 <!-- Project variables -->
-	<property name="executable.jar" value="wiseman_0.6.jar"/>
-	<property name="install.bundle.name" value="WISEMAN_0.6_FC-20070302.jar"/>
+	<property name="executable.jar" value="wiseman-1.0-rc1.jar"/>
+	<property name="install.bundle.name" value="WISEMAN_1.0_RC1-20070503.jar"/>
 	<property name="un.jar.dir" value="install-bundle"/>
 	<property name="install.build.file" value="execute-install.xml"/>
 	<!-- Intermediate executable jar file -->
@@ -17,6 +17,8 @@
 	<property name="install.ant.err" value="ant-error.txt"/>
 	
 	<target name="gen-exec-jar" >
+		<!--remove previous artifacts -->
+		<delete dir="${un.jar.dir}"/>
 		<mkdir dir="${un.jar.dir}"/>
 		<jar destfile="${wise.jar.name}">
 			<manifest>
@@ -32,13 +34,13 @@
 			<fileset dir="../ebin" casesensitive="true">
 				<include name="com/sun/ws/management/installer/*.class"/>
 			</fileset>
-			<fileset dir="src" casesensitive="true">
+			<fileset dir="ext-src" casesensitive="true">
 				<include name="com/sun/ws/management/installer/*.txt"/>				
 			</fileset>
 			<fileset dir="../tools" casesensitive="true">
 				<include name="**/lib/ant.jar"/>  
 				<include name="**/lib/ant-launcher.jar"/>
-				<include name="**/lib/wiseman_0.6.jar"/>
+				<include name="**/lib/${executable.jar}"/>
 			</fileset>
 			<fileset dir=".">
 			  <include name="${install.build.file}"/>
@@ -53,4 +55,10 @@
 		<zip basedir="${un.jar.dir}" excludes="${install.bundle.name}"
 			destfile="${un.jar.dir}/${install.bundle.name}"/>
 	</target>
+	
+<!--	<target name="cpToFtp" depends="gen-exec-jar">
+		<copyfile dest="C:/temp/FilezillaRoot/wiseman/${install.bundle.name}" 
+			src="${un.jar.dir}/${install.bundle.name}"/> 
+	</target> -->
+	
 </project>
