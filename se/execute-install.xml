@@ -15,6 +15,8 @@
 	<property name="jaxws.lib.dir" value="${wiseman.default.dir}/lib/jaxws"/>
 	<property name="jaxws.root" value="jaxws-ri"/>
 	<property name="wise.self.extract.jar" value="wiseman-1.0-rc1.jar"/>
+	<property name="wise.additional.dir" value="additional"/>
+	<property name="install.additional" value="additional.jar"/>
 	
    	<!-- Test that a valid ant version is being used -->
 	<condition property="valid.ant.version">
@@ -113,10 +115,22 @@
     	<property name="jaxws.lib.copy.success" value="true"/>
     </target>
 	
+	<!-- install additional components not included in the autoextractable jar-->
+	<target name="install-additional" depends="copy-jaxws-libs-to-wiseman">
+		<mkdir dir="${wise.additional.dir}"/>
+		<unjar dest="${wise.additional.dir}" src="${install.additional}" overwrite="true"/>
+    	<copy todir="${wiseman.default.dir}">
+    	    <fileset dir="${wise.additional.dir}">
+    	      <include name="**/*.doc"/>
+    	      <include name="**/*.java"/>
+    	    </fileset>
+    	</copy>
+	</target>
+	
 	<!-- Clean up the additional files/dirs used when installing. What should remain is the original install
 		 bundle, the ${wiseman.default.dir} dir ready for use, this build.xml and ant jars running it. 
 	-->
-	<target name="clean-up" depends="copy-jaxws-libs-to-wiseman">
+	<target name="clean-up" depends="install-additional">
 	    <fail 
 	  	 message="There was an error copying required JAXWS libraries to your wiseman/lib/jaxws folder. Please copy them over for success.">
 	     <condition>
@@ -131,6 +145,8 @@
 		<delete dir="META-INF" quiet="true" failonerror="false"/>
 		<delete file="lib/wiseman-1.0-rc1.jar" quiet="true" failonerror="false" deleteonexit="true"/>
 		<delete dir="build.xml" quiet="true" failonerror="false" deleteonexit="true"/>
+		<delete dir="${wise.additional.dir}" quiet="true" failonerror="false" deleteonexit="true"/>
+		<delete file="${install.additional}" quiet="true" failonerror="false" deleteonexit="true"/>
     	<property name="clean.up.success" value="true"/>
 	</target>
 	

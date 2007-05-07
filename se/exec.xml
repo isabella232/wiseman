@@ -8,18 +8,20 @@
 <project name="Generate Wiseman Install Bundle" default="gen-exec-jar" basedir=".">
  	 <!-- Project variables -->
 	<property name="executable.jar" value="wiseman-1.0-rc1.jar"/>
-	<property name="install.bundle.name" value="WISEMAN_1.0_RC1-20070503.jar"/>
+	<property name="install.bundle.name" value="WISEMAN_1.0_RC1-20070507.jar"/>
 	<property name="un.jar.dir" value="install-bundle"/>
 	<property name="install.build.file" value="execute-install.xml"/>
 	<!-- Intermediate executable jar file -->
 	<property name="wise.jar.name" value="exec-wise.jar"/>
 	<property name="install.lic.file" value="license-intro.txt"/>
 	<property name="install.ant.err" value="ant-error.txt"/>
+	<property name="install.additional" value="additional.jar"/>
 	
 	<target name="gen-exec-jar" >
 		<!--remove previous artifacts -->
 		<delete dir="${un.jar.dir}"/>
 		<mkdir dir="${un.jar.dir}"/>
+		<antcall target="additional"/>
 		<jar destfile="${wise.jar.name}">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
@@ -45,6 +47,9 @@
 			<fileset dir=".">
 			  <include name="${install.build.file}"/>
 			</fileset>
+			<fileset dir="${un.jar.dir}">
+			  <include name="${install.additional}"/>	
+			</fileset>
 		</jar>
 		<!-- Unbundle zip and rename the install-build-file to build.xml -->
 		<unzip src="${wise.jar.name}" dest="${un.jar.dir}"/>
@@ -55,10 +60,25 @@
 		<zip basedir="${un.jar.dir}" excludes="${install.bundle.name}"
 			destfile="${un.jar.dir}/${install.bundle.name}"/>
 	</target>
-	
-<!--	<target name="cpToFtp" depends="gen-exec-jar">
+<!--	
+	<target name="cpToFtp" depends="gen-exec-jar">
 		<copyfile dest="C:/temp/FilezillaRoot/wiseman/${install.bundle.name}" 
 			src="${un.jar.dir}/${install.bundle.name}"/> 
 	</target> -->
 	
+	<!-- Meant to build artifacts in addition to the standard bundled autoextractable components -->
+	<target name="additional">
+		<jar destfile="${un.jar.dir}/${install.additional}">
+			<!-- formal docs -->
+			<fileset dir="../tools">
+			  <include name="docs/server_guide.doc"/>
+			  <include name="docs/tutorial.doc"/>
+			</fileset>
+			<!-- developer docs -->
+			<fileset dir="../tools">
+				<include name="docs/developer/*.doc"/>
+				<include name="docs/developer/*.java"/>
+			</fileset>
+		</jar>
+	</target>
 </project>
