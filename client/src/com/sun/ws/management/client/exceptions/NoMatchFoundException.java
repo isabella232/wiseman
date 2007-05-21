@@ -1,6 +1,8 @@
 package com.sun.ws.management.client.exceptions;
 
-public class NoMatchFoundException extends Exception {
+import com.sun.ws.management.NoMatchFoundExceptionServer;
+
+public class NoMatchFoundException extends NoMatchFoundExceptionServer {
 
 	public NoMatchFoundException() {
 		super();

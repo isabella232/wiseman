@@ -22,6 +22,8 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementUtility;
+import com.sun.ws.management.ResourceStateServer;
 import com.sun.ws.management.transfer.TransferMessageValues;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
@@ -118,7 +120,6 @@ public class WsManBaseTestSupport extends TestCase {
 	            SOAPFault fault = response.getBody().getFault();
 	            throw new SOAPException(fault.getFaultString());
 	        }
-
 	        return new Management(response);
 	    }
 
@@ -148,6 +149,14 @@ public class WsManBaseTestSupport extends TestCase {
 	            throw new SOAPException(fault.getFaultString());
 	        }
 
+	        try {
+	        	ResourceStateServer rs = ManagementUtility.getAsResourceState(response);
+	        
+				System.out.println("age = " + rs.getValueText("//*[local-name()='age']"));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
 	        return new Management(response);
 	    }
 

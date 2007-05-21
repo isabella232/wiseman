@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
@@ -14,9 +13,9 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPFault;
 import javax.xml.soap.SOAPHeader;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
@@ -29,15 +28,12 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
-import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
-import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
 
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
-import com.sun.xml.fastinfoset.sax.Properties;
 
 /** This class is meant to provide general utility functionality for
  *  Management instances and all of their related extensions.
@@ -469,4 +465,35 @@ public class ManagementUtility {
 		return defaultTimeout;
 	}
 	
+	/**
+	 * Send an http request and return the response as a ResourceState
+	 * @param request SOAP request
+	 * @return SOAP response as a ResourceState
+	 * @throws Exception
+	 */
+	public static ResourceStateServer getAsResourceState(Addressing response) throws Exception {
+        return new ResourceStateServerImpl(response.getEnvelope().getOwnerDocument());
+	
+	}
+	
+	/**
+	 * Send an http request and return the response as a Addressing object
+	 * @param request SOAP request
+	 * @return SOAP response as a ResourceState
+	 * @throws Exception
+	 */
+	public static Addressing getRequest(Addressing request) throws Exception {
+        // Send the get request to the server
+        Addressing response = HttpClient.sendRequest(request);
+
+        // Look for returned faults
+        if (response.getBody().hasFault())
+        {
+            SOAPFault fault = response.getBody().getFault();
+            throw new SOAPException(fault.getFaultString());
+        }
+
+        return response;
+	
+	}
 }
