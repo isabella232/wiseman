@@ -24,7 +24,7 @@ import org.xml.sax.InputSource;
 public class Xsd2WsdlTask extends Task {
     private static final String TEMPLATES_PATH = "templates";
     private VelocityContext context = new VelocityContext();
-    private String outputDir = "wsdl";
+    private String outputDir = "wsdls";
     private String filePath=null;
     private String wsdlFileName=null;
     private String resourceURI=null;
