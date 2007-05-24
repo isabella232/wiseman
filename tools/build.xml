@@ -93,6 +93,11 @@
 	      		<include name="templates/**"/>
 	      	</fileset>
 	    </jar>
+		<copy todir="${project.root}/${dist.dir}/tools">
+			<fileset dir=".">
+				<include name="*.bat" />
+			</fileset>
+		</copy>
     </target>
 	  
     <target name="javadoc" depends="compile" description="Generate the javadocs">
