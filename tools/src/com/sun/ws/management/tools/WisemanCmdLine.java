@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.PasswordAuthentication;
+// import java.net.PasswordAuthentication;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,7 +18,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.stream.StreamSource;
 
-import net.java.dev.wiseman.traffic.light.client.TrafficAuthenticator;
+// import net.java.dev.wiseman.traffic.light.client.TrafficAuthenticator;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
