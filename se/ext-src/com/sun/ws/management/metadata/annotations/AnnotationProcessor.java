@@ -32,7 +32,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPathConstants;
 
 import net.java.dev.wiseman.schemas.metadata.messagetypes.InputType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.MessageDefinitions;
@@ -42,7 +41,6 @@ import net.java.dev.wiseman.schemas.metadata.messagetypes.OutputType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemaType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemasType;
 
-import org.apache.tools.ant.types.mappers.FilterMapper;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
@@ -56,18 +54,13 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
-import org.xmlsoap.schemas.ws._2004._09.mex.ObjectFactory;
 
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationMessageValues;
-import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.handler.wsman.metadata_Handler;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
@@ -435,7 +428,6 @@ public class AnnotationProcessor {
 			}
 		  }//end of defaultAddressDefinition
 	}
-
 	public static Vector<Annotation> 
 	  populateAnnotationsFromClass(Class element){
 		Vector<Annotation> allAnots = new Vector<Annotation>();
@@ -662,7 +654,6 @@ public class AnnotationProcessor {
 			return null;
 	}
 
-	
 	public static List<Management> extractMetaDataFromEnumerationMessage(
 			final List<EnumerationItem> items) throws SOAPException, JAXBException{
 		//return reference
@@ -731,7 +722,7 @@ public class AnnotationProcessor {
 	 * 
 	 * @param metaUidForAnnotatedResource  Ex. http://wiseman.dev.java.net/EventSource/eventcreator/uid-20000747652
 	 * @param wisemanServer Ex. http://localhost:8080/wsman/
-	 * @return
+	 * @return Management object
 	 * @throws JAXBException 
 	 * @throws SOAPException 
 	 * @throws DatatypeConfigurationException 
@@ -947,7 +938,7 @@ public class AnnotationProcessor {
 	 * 
 	 * @param existing
 	 * @param removeMetadataBody TODO
-	 * @return
+	 * @return Management object
 	 * @throws SOAPException
 	 */
 	public static Management stripMetadataContent(Management existing, 
@@ -1002,7 +993,7 @@ public class AnnotationProcessor {
 		 * 
 		 * @param header
 		 * @param element
-		 * @return
+		 * @return Node object
 		 */
 		private static Node containsHeader(SOAPHeader header, SOAPElement element) {
 			Node located = null;
@@ -1025,7 +1016,7 @@ public class AnnotationProcessor {
 	 * and core elements.
 	 * 
 	 * @param elementQName
-	 * @return
+	 * @return boolean indicating if this is a DescriptiveMetadataElement
 	 */
 	public static boolean isDescriptiveMetadataElement(QName elementQName) {
 		boolean isDescriptive = false;
