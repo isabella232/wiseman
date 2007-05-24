@@ -10,11 +10,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.sun.ws.management.NoMatchFoundExceptionServer;
-import com.sun.ws.management.ResourceStateServerImpl;
+import com.sun.ws.management.ResourceStateDocumentImpl;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 
-public class ResourceStateImpl extends ResourceStateServerImpl implements ResourceState {
+public class ResourceStateImpl extends ResourceStateDocumentImpl implements ResourceState {
 
 	public ResourceStateImpl(Document stateDocument) {
 		super(stateDocument);

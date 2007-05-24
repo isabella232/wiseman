@@ -21,12 +21,12 @@ import org.xml.sax.SAXException;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
-public class ResourceStateServerImpl implements ResourceStateServer {
+public class ResourceStateDocumentImpl implements ResourceStateDocument {
 
 	private Document stateDocument;
 	private XPath xpath;
 
-	public ResourceStateServerImpl(Document stateDocument) {
+	public ResourceStateDocumentImpl(Document stateDocument) {
 		this.stateDocument=stateDocument;
 		xpath = XPathFactory.newInstance().newXPath();
 	}

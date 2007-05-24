@@ -8,7 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 
-import com.sun.ws.management.ResourceStateServer;
+import com.sun.ws.management.ResourceStateDocument;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 
 
@@ -20,7 +20,7 @@ import com.sun.ws.management.client.exceptions.NoMatchFoundException;
  * @author wire
  *
  */
-public interface ResourceState extends ResourceStateServer{
+public interface ResourceState extends ResourceStateDocument{
 	/** 
 	 * Returns a list of nodes that match the provided XPath criteria.
 	 * 

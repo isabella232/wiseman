@@ -20,7 +20,7 @@ import org.w3c.dom.NodeList;
  * @author wire
  *
  */
-public interface ResourceStateServer {
+public interface ResourceStateDocument {
 
 	/**
 	 * Returns the underlying DOM model for the SOAP body of this resource.

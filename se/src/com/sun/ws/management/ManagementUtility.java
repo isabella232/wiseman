@@ -471,8 +471,8 @@ public class ManagementUtility {
 	 * @return SOAP response as a ResourceState
 	 * @throws Exception
 	 */
-	public static ResourceStateServer getAsResourceState(Addressing response) throws Exception {
-        return new ResourceStateServerImpl(response.getEnvelope().getOwnerDocument());
+	public static ResourceStateDocument getAsResourceState(Addressing response) throws Exception {
+        return new ResourceStateDocumentImpl(response.getEnvelope().getOwnerDocument());
 	
 	}
 	

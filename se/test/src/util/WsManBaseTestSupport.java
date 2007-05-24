@@ -23,7 +23,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
-import com.sun.ws.management.ResourceStateServer;
+import com.sun.ws.management.ResourceStateDocument;
 import com.sun.ws.management.transfer.TransferMessageValues;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
@@ -150,9 +150,9 @@ public class WsManBaseTestSupport extends TestCase {
 	        }
 
 	        try {
-	        	ResourceStateServer rs = ManagementUtility.getAsResourceState(response);
+	        	ResourceStateDocument rs = ManagementUtility.getAsResourceState(response);
 	        
-				System.out.println("age = " + rs.getValueText("//*[local-name()='age']"));
+//				System.out.println("age = " + rs.getValueText("//*[local-name()='age']"));
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
