@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.10 2007-01-14 17:52:35 denis_rachal Exp $
+ * $Id: EnumerationIterator.java,v 1.11 2007-05-24 13:23:11 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -58,20 +58,9 @@ public interface EnumerationIterator {
     /**
      * Supply the next element of the iteration. This is invoked to
      * satisfy a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
-     * request. The operation must return within the
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}
-     * specified in the
-     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull} request,
-     * otherwise {@link #release release} will
-     * be invoked and the current thread interrupted. When cancelled,
-     * the implementation can return the result currently
-     * accumulated (in which case no
-     * {@link com.sun.ws.management.soap.Fault Fault} is generated) or it can
-     * return {@code null} in which case a
-     * {@link com.sun.ws.management.enumeration.TimedOutFault TimedOutFault}
-     * is returned.
+     * request.
      *
-     * @return an {@link EnumerationElement Elements} that is used to
+     * @return an {@link EnumerationItem Element} that is used to
      * construct proper responses for a
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
