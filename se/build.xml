@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.61 2007-05-02 19:29:20 simeonpinder Exp $
+ $Id: build.xml,v 1.62 2007-05-24 13:20:44 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -205,9 +205,12 @@
                 <include name="com/sun/ws/management/resources/**" />
             </fileset>
             <fileset dir="${src.ext.dir}">
+            	<!-- Removed: These files need to be customized for each application
+            	              and placed in the warfile, not in the wiseman jarfile.
                 <include name="binding.properties" />
                 <include name="metadata.properties" />
                 <include name="metadata-handlers.properties" />
+                 -->
                 <include name="wsman-exts.properties" />
             </fileset>
             <fileset dir="etc/xsd">
@@ -494,19 +497,26 @@
             use="true"
             windowtitle="Wiseman API"
             source="1.5"
-            classpathref="compile.core.classpath">
-            <packageset dir="${src.dir}" 
-                defaultexcludes="yes">
+            classpathref="compile.ext.classpath">
+            <fileset dir="${src.dir}" defaultexcludes="yes">
                 <include name="com/sun/ws/management/**" />
-            </packageset>
-            <packageset dir="${src.ext.dir}" 
-                defaultexcludes="yes">
+            	<exclude name="com/sun/ws/management/resources/**"/>
+        	    <exclude name="**/*Impl.java"/>
+            	<exclude name="**/*.txt"/>
+            	<exclude name="**/*.xsd"/>
+            </fileset>
+            <fileset dir="${src.ext.dir}" defaultexcludes="yes">
                 <include name="com/sun/ws/management/**" />
-            </packageset>
-            <packageset dir="${gen.src.dir}" 
-                defaultexcludes="yes">
+        	    <exclude name="com/sun/ws/management/server/handler/**"/>
+            	<exclude name="com/sun/ws/management/resources/**"/>
+        	    <exclude name="**/*Impl.java"/>
+            	<exclude name="**/*.txt"/>
+            	<exclude name="**/*.xsd"/>
+            </fileset>
+            <fileset dir="${gen.src.dir}" defaultexcludes="yes">
                 <include name="org/**" />
-            </packageset>
+            	<exclude name="**/*.xsd"/>
+            </fileset>
         </javadoc>
         <zip destfile="${dist.dir}/wiseman-apidocs.zip" basedir="${doc.dist.dir}"/>
     </target>
