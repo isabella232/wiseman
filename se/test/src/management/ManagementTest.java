@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.20 2007-03-20 21:35:17 simeonpinder Exp $
+ * $Id: ManagementTest.java,v 1.21 2007-05-24 13:22:29 denis_rachal Exp $
  */
 
 package management;
@@ -395,7 +395,7 @@ public class ManagementTest extends TestBase {
         }
         long diff = end.getTimeInMillis()-start.getTimeInMillis();
         assertTrue((diff >= 2000));
-        assertTrue("Timeout was " + diff + " milliseconds, expected 2000 milliseconds.",(diff<= 3000)); // Should be reasonable
+        assertTrue("Timeout was " + diff + " milliseconds, expected 2000 milliseconds.",(diff<= 4000)); // Should be reasonable
         
         final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
