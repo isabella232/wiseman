@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.14 2007-05-03 14:47:51 simeonpinder Exp $
+ * $Id: WSManAgent.java,v 1.15 2007-05-25 09:56:23 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -605,7 +604,7 @@ public abstract class WSManAgent {
      * property.  Parses the contents and returns as a Map<String,String>
      * where the key is the prefix and the value is the NS_URI.
      * 
-     * @return
+     * @return extension namespaces
      */
     public static Map<String,String> locateExtensionNamespaces(){
        //Hasmap for return	

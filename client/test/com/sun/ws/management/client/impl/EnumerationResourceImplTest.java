@@ -9,6 +9,7 @@ import javax.xml.soap.SOAPException;
 
 import util.WsManBaseTestSupport;
 
+import com.sun.ws.management.Management;
 import com.sun.ws.management.client.EnumerationCtx;
 import com.sun.ws.management.client.Resource;
 import com.sun.ws.management.client.ResourceFactory;
@@ -24,6 +25,11 @@ public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
 	
 	protected void setUp() throws Exception {
 		super.setUp();
+		try {
+			new Management();
+		} catch (SOAPException e) {
+			fail("Can't init wiseman");
+		}
 		/*
 		try {
 			Message.initialize();
@@ -55,11 +61,15 @@ public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
 		assertTrue(enumerationResources.length>0);
 		assertNotNull(enumerationResources[0]);
 		Resource enumerationResource = enumerationResources[0];
+		assertNotNull(enumerationResource);
 		EnumerationCtx ticket = enumerationResource.enumerate(null, null, null, true, false);
 		assertNotNull(ticket);
 		ResourceState pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
+		assertNotNull(pullResult);
 		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
+		assertNotNull(pullResult);
 		pullResult = enumerationResource.pull(ticket, 30000, 20, -1);
+		assertNotNull(pullResult);
 		enumerationResource.release(ticket);
 	}
 	

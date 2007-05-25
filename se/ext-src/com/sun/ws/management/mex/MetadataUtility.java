@@ -50,8 +50,8 @@ public class MetadataUtility extends ManagementUtility {
 	 *  a MetaDataExchange element.  An array of Management instances located
 	 *  is returned in response.
 	 * 
-	 * @param metaDataResponse
-	 * @return
+	 * @param metaDataGetResponse
+	 * @return array of Management instances
 	 */
 	public static Management[] extractEmbeddedMetaDataElements(Management metaDataGetResponse){
 		Management[] locatedMetaDataElements = null;

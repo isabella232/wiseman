@@ -91,11 +91,22 @@
     </target>
 	  
     <target name="javadoc" depends="compile" description="Generate the javadocs">
-       <javadoc sourcepath="${src.dir}" destdir="${apidocs.dir}" packagenames="*">
+       <javadoc destdir="${apidocs.dir}"
+                access="public"
+                use="true"
+                windowtitle="Wiseman Client API"
+                source="1.5">
            <classpath>
                <path refid="compile.classpath" />
                <pathelement location="${build.classes.dir}" />
            </classpath>
+           <fileset dir="${src.dir}" defaultexcludes="yes">
+               <include name="com/sun/ws/management/client/**" />
+        	   <exclude name="com/sun/ws/management/client/impl/**"/>
+    	       <exclude name="**/*Impl.java"/>
+        	   <exclude name="**/*.txt"/>
+        	   <exclude name="**/*.xsd"/>
+           </fileset>
        </javadoc>
       	<zip destfile="${dist.dir}/wiseman-client-apidocs.zip" basedir="${apidocs.dir}"/>
     </target>

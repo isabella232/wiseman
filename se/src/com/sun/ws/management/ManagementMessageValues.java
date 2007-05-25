@@ -150,7 +150,7 @@ public class ManagementMessageValues {
 	}
 
 	/**
-	 * @param xmlBinding the xmlBinding to set
+	 * @param binding the xmlBinding to set
 	 */
 	public void setXmlBinding(XmlBinding binding) {
 		this.xmlBinding = binding;

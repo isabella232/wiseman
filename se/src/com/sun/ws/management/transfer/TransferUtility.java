@@ -14,10 +14,8 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.xml.XPath;
 
@@ -42,7 +40,7 @@ public class TransferUtility {
 	 * @param contents
 	 * @param timeout
 	 * @param uidScheme
-	 * @return
+	 * @return the message created
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws DatatypeConfigurationException

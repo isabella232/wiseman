@@ -26,8 +26,15 @@ import com.sun.ws.management.client.exceptions.FaultException;
  */
 public interface Resource extends EnumerableResource {
 
+	/**
+	 * XPath dialect.
+	 * <code>http://www.w3.org/TR/1999/REC-xpath-19991116</code>
+	 */
 	static final String XPATH_DIALECT = "http://www.w3.org/TR/1999/REC-xpath-19991116";
 
+	/**
+	 * Constant used to specify ignore MaxCharacters parameter.
+	 */
 	static final int IGNORE_MAX_CHARS = 0;
 
 	public ResourceState invoke(String action, Document document) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException;

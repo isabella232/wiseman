@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationSupport.java,v 1.49 2007-04-06 09:57:13 jfdenise Exp $
+ * $Id: EnumerationSupport.java,v 1.50 2007-05-25 09:56:23 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -106,7 +106,7 @@ public final class EnumerationSupport extends BaseSupport {
      * operation. Handlers calling this method must first register an
      * {@link IteratorFactory}.
      *
-     * @see EnumerationSupport.registerIteratorFactory().
+     * @see #registerIteratorFactory(String, IteratorFactory)
      *
      * @param context
      *            the handler context for this request
@@ -149,7 +149,7 @@ public final class EnumerationSupport extends BaseSupport {
      * operation. Handlers calling this method must first register an
      * {@link IteratorFactory}.
      *
-     * @see EnumerationSupport.registerIteratorFactory().
+     * @see #registerIteratorFactory(String, IteratorFactory)
      *
      * @param context
      *            the handler context for this request
@@ -162,7 +162,7 @@ public final class EnumerationSupport extends BaseSupport {
      *            The empty SOAP message that will contain the
      *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse EnumerateResponse}.
      *
-     * @listener will be called when the enumeration is successfully created and
+     * @param listener will be called when the enumeration is successfully created and
      *           when deleted.
      *
      * @throws FilteringNotSupportedFault

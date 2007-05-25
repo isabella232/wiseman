@@ -16,7 +16,7 @@ public @interface WsManagementAddressDetailsAnnotation {
 	 *   
 	 * <b>wsa:To (required):</b> the transport address of the service.
 	 * 
-	 * Ex: <wsa:To>http://123.99.222.36/wsman</wsa:To>
+	 * Ex: &lt;wsa:To&gt;http://123.99.222.36/wsman&lt;/wsa:To&gt;
 	 */
 	public String wsaTo();
 
@@ -35,10 +35,12 @@ public @interface WsManagementAddressDetailsAnnotation {
 	 *   
 	 * <b>wsman:SelectorSet (optional):</b> Identifies or "selects" the resource instance to be 
 	 * accessed if more than once instance of a resource class exists.
-	 * <wsman:SelectorSet> 
-	 *   <wsman:Selector Name="FirstName">James</wsman:Selector> 
-	 *   <wsman:Selector Name="LastName">Gosling</wsman:Selector> 
-	 * </wsman:SelectorSet>
+	 * <code><pre>
+	 * &lt;wsman:SelectorSet&gt; 
+	 *   &lt;wsman:Selector Name="FirstName"&gt;James&lt;/wsman:Selector&gt; 
+	 *   &lt;wsman:Selector Name="LastName"&gt;Gosling&lt;/wsman:Selector&gt; 
+	 * &lt;/wsman:SelectorSet&gt;
+	 * </pre></code>
 	 * 
 	 * Ex. wsmanSelectorSetContents={"FirstName=James","LastName=Gosling"}
 	 */
@@ -56,7 +58,7 @@ public @interface WsManagementAddressDetailsAnnotation {
 	 *  name=value pairs.
 	 *  
 	 *  Ex. referenceParametersContents={
-	 *  		@WsManagementQNamedNodeWithValueAnnotation(
+	 *  		&#64;WsManagementQNamedNodeWithValueAnnotation(
 	 *			localpart="", 
 	 *			namespaceURI="", 
 	 *			nodeValue="", 
@@ -74,7 +76,7 @@ public @interface WsManagementAddressDetailsAnnotation {
 	 *  name=value pairs.
 	 *  
 	 *  Ex. referencePropertiesContents={
-	 *  		@WsManagementQNamedNodeWithValueAnnotation(
+	 *  		&#64;WsManagementQNamedNodeWithValueAnnotation(
 	 *			localpart="", 
 	 *			namespaceURI="", 
 	 *			nodeValue="", 

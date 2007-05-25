@@ -32,7 +32,7 @@ public class DefaultAddressingModelUtility extends Management {
     /** Retrieve the selectors from a Management instance.
      * 
      * @param message
-     * @return
+     * @return a mapped set of selectors
      * @throws JAXBException
      * @throws SOAPException
      */

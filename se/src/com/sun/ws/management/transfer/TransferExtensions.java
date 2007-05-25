@@ -140,7 +140,7 @@ public class TransferExtensions extends Transfer {
     /**
      * Sets the fragment header for the specified exprssion & dialect.
      *
-     * @param query
+     * @param expression
      * @param dialect
      * @throws SOAPException
      * @throws JAXBException
@@ -384,7 +384,7 @@ public class TransferExtensions extends Transfer {
      * filter dialect in fragmentTransferHeader, if fragmentTransferHeader
      * is not null, otherwise a standard put response is done.
      *
-     * @param fragmentTransferHeader The Fragement Transfer Header
+     * @param fragmentHeader The Fragement Transfer Header
      * to be returned in the headers, if any
      * @param resource  Resource to be returned for this Get. The binding must be
      *                  able to marshall this object.

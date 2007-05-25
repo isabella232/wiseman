@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WsManagementOperationDefinitionAnnotation.java,v 1.1 2007-05-02 19:35:14 simeonpinder Exp $
+ * $Id: WsManagementOperationDefinitionAnnotation.java,v 1.2 2007-05-25 09:56:22 denis_rachal Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 
@@ -26,11 +26,13 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
  *  SOAP Operation node analagous to request-response-operation
  *  for wsdl:operationType.
  * 
- * Ex.       
+ * Ex.
+ * <code><pre>       
  * <operation name="Create">
- *    <input message="tns:TrafficLightTypeMessage" wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create"/>
- *    <output message="tns:CreateResponseMessage" wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse"/>
+ *    &lt;input message="tns:TrafficLightTypeMessage" wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create"/&gt;
+ *    &lt;output message="tns:CreateResponseMessage" wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse"/&gt;
  * </operation>
+ * </pre></code>
  */
 @Retention(RUNTIME)
 @Target(value=ANNOTATION_TYPE)

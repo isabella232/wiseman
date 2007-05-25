@@ -1,6 +1,5 @@
 package com.sun.ws.management;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -132,7 +131,7 @@ public class ManagementUtility {
 	 * 
 	 * @param headers
 	 * @param qualifiedName
-	 * @return
+	 * @return SOAPElement of the located header
 	 */
 	public static SOAPElement locateHeader(SOAPElement[] headers, QName qualifiedName) {
 		SOAPElement located = null;
@@ -157,7 +156,7 @@ public class ManagementUtility {
 	 * 
 	 * @param instance
 	 * @param settings
-	 * @return
+	 * @return message
 	 * @throws SOAPException
 	 * @throws JAXBException 
 	 * @throws DatatypeConfigurationException 
@@ -318,7 +317,7 @@ public class ManagementUtility {
 	 * a CreateResponse type, as a Map<String,String> for convenience. 
 	 * 
 	 * @param managementMessage
-	 * @return
+	 * @return extracted selectors
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 */
@@ -386,7 +385,7 @@ public class ManagementUtility {
 	 * 
 	 * @param header
 	 * @param element
-	 * @return
+	 * @return the node
 	 */
 	private static Node containsHeader(SOAPHeader header, SOAPElement element) {
 		Node located = null;
@@ -406,7 +405,7 @@ public class ManagementUtility {
 	 * as an EPR type.  
 	 * 
 	 * @param managementMesg
-	 * @return
+	 * @return the EPR
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
@@ -467,7 +466,7 @@ public class ManagementUtility {
 	
 	/**
 	 * Send an http request and return the response as a ResourceState
-	 * @param request SOAP request
+	 * @param response SOAP response
 	 * @return SOAP response as a ResourceState
 	 * @throws Exception
 	 */

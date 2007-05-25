@@ -10,7 +10,6 @@ import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementMessageValues;
@@ -127,7 +126,7 @@ public class TransferMessageValues extends ManagementMessageValues {
 	}
 
 	/**
-	 * @param transferMessageActionType the transferMessageActionType to set
+	 * @param transferMessageType the transferMessageType to set
 	 */
 	public void setTransferMessageActionType(String transferMessageType) {
 		this.transferMessageActionType = transferMessageType;
@@ -157,7 +156,7 @@ public class TransferMessageValues extends ManagementMessageValues {
 
 
 	/**
-	 * @param filter the filter to set
+	 * @param fragment the filter to set
 	 */
 	public void setFragment(String fragment) {
 		this.fragment = fragment;
@@ -205,7 +204,7 @@ public class TransferMessageValues extends ManagementMessageValues {
 	}
 
 	/**
-	 * @param customXmlBindingPackageList the customXmlBindingPackageList to set
+	 * @param customPackageList the customXmlBindingPackageList to set
 	 */
 	public void setCustomPackageList(String[] customPackageList) {
 		this.customXmlBindingPackageList = customPackageList;

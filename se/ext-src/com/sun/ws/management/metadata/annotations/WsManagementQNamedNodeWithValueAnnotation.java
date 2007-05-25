@@ -8,7 +8,7 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 /** This annotation provides a mechanism of defining a cutom
  *  QNamed node with a simple text value.
  * 
- * Ex. <id:SpecVersion>1.0.0a</id:SpecVersion>
+ * Ex. &lt;id:SpecVersion&gt;1.0.0a&lt;/id:SpecVersion&gt;
  */
 @Retention(RUNTIME)
 @Target(value=ANNOTATION_TYPE)

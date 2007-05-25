@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WsManagementEnumerationAnnotation.java,v 1.1 2007-04-06 10:03:08 jfdenise Exp $
+ * $Id: WsManagementEnumerationAnnotation.java,v 1.2 2007-05-25 09:56:22 denis_rachal Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 
@@ -31,9 +31,9 @@ public @interface WsManagementEnumerationAnnotation {
 	/** This defines the Addressing details for this specific EndPoint.
 	 * 
 	 *  Ex.
-	 *  @WsManagementDefaultAddressingModelAnnotation(
+	 *  &#64;WsManagementDefaultAddressingModelAnnotation(
 	 *		getDefaultAddressDefinition = 
-	 *			@WsManagementAddressDetailsAnnotation(
+	 *			&#64;WsManagementAddressDetailsAnnotation(
 	 *					referenceParametersContents={""}, 
 	 *					referencePropertiesContents={""}, 
 	 *					wsaTo="http://localhost:8080/wsman/", 

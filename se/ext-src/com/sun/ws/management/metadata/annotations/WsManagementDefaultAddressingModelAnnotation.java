@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WsManagementDefaultAddressingModelAnnotation.java,v 1.2 2007-05-02 19:35:14 simeonpinder Exp $
+ * $Id: WsManagementDefaultAddressingModelAnnotation.java,v 1.3 2007-05-25 09:56:22 denis_rachal Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 
-import java.lang.annotation.Retention;
-
-import javax.xml.namespace.QName;
-
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
 
 /** This annotation helps implementers describe useful metadata about their WS-Management 
  *  Server/Endpoint implementations.  This type is meant to encapsulate the 
  *  components/information for the Default Addressing Model as defined in the 
  *  WS-Management specification version A.
  *  
- *  Ex.
- *  @WsManagementDefaultAddressingModelAnnotation(
+ *  e.g.,
+ *  &#64;WsManagementDefaultAddressingModelAnnotation(
  *		getDefaultAddressDefinition = 
- *			@WsManagementAddressDetailsAnnotation(
+ *			&#64;WsManagementAddressDetailsAnnotation(
  *					referenceParametersContents={""}, 
  *					referencePropertiesContents={""}, 
  *					wsaTo="http://localhost:8080/wsman/", 
@@ -54,7 +52,8 @@ public @interface WsManagementDefaultAddressingModelAnnotation {
 	
 	/** This defines the Addressing details for this specific EndPoint.
 	 * 
-	 * Ex.@WsManagementAddressDetailsAnnotation(
+	 * e.g., 
+	 * &#64;WsManagementAddressDetailsAnnotation(
 	 *		referenceParametersContents={"nameA=val1","nameB=val2"}, 
 	 *		referencePropertiesContents={"colA=val3","colB=val4"}, 
 	 *		wsaTo="http://localhost:8080/wsman/", 
@@ -80,7 +79,8 @@ public @interface WsManagementDefaultAddressingModelAnnotation {
 	 *  The operation<direction>TypeMap communicates 
 	 *  (schema defined type for payload)=(SoapAction expecting the defined type)
 	 *  
-	 * Ex.@WsManagementOperationDefinitionAnnotation(
+	 * e.g.,
+	 *  &#64;WsManagementOperationDefinitionAnnotation(
 	 *		operationName="Create", 
 	 *		operationInputTypeMap="tl:TrafficLightTypeMessage=http://schemas.xmlsoap.org/ws/2004/09/transfer/Create", 
 	 *		operationOutputTypeMap="wxf:CreateResponseMessage=http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse") 

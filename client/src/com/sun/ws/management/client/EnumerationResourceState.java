@@ -20,7 +20,7 @@ public interface EnumerationResourceState extends ResourceState {
 	/**
 	 * Return a list of all the item elements contained in the resource
 	 * 
-	 * @return
+	 * @return a list of Nodes
 	 */
 	List<Node> getEnumerationItems();
 

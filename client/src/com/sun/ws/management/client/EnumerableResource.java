@@ -11,6 +11,12 @@ import javax.xml.xpath.XPathExpressionException;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 
+/**
+ * An abstract representation of a WSManagement resource that focuses on 
+ * WS-Enumeration. 
+ * 
+ * @see TransferableResource
+ */
 public interface EnumerableResource extends TransferableResource {
 
 	/**
@@ -19,10 +25,16 @@ public interface EnumerableResource extends TransferableResource {
 	 * enumeration.
 	 *
 	 * @param filter a filter expression to be applied against the enumeration.
-	 * @param dialect The dialect to be used in filter expressions. XPATH_DIALECT
-	 * can be used for XPath. 
-	 * @param useEprs  useEprs sets the EnumerateEpr Element causing subsequent pulls to
-	 * contain erps
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 *        can be used for XPath expressions. 
+	 * @param getEpr indicates that the EndpointReference (EPR) for each item is to
+	 *        returned in the pull.
+	 * @param getObject indicates that the individual items are to be returned in
+	 *        the pull.
 	 * @return An enumeration context
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -32,7 +44,7 @@ public interface EnumerableResource extends TransferableResource {
 	 */
 	public abstract EnumerationCtx enumerate(final Object filter, 
 			final Map<String, String> namespaces, final String dialect,
-			final boolean useEprs, final boolean useObjects) 
+			final boolean getEpr, final boolean getObject) 
 	throws SOAPException, JAXBException, IOException,
 			FaultException, DatatypeConfigurationException;
 	
@@ -40,14 +52,17 @@ public interface EnumerableResource extends TransferableResource {
 	 * Assumes the return type will contain EPR's. Each EPR that is found in the
 	 * returned resource state will be converted into its own Resource implementation.
 	 * This is very useful when the response is a collection of EPR's such as when
-	 * the UseEpr element is set.
+	 * the getEpr parameter is set in the {@link #enumerate(Object,
+	 * Map, String, boolean, boolean) enumerate()} call.
 	 * 
-	 * @param enumerationContext the context create in your call to enumerate
-	 * @param maxTime The maxium timeout you are willing to wait for a response
+	 * @param enumerationContext the context created in your call to enumerate
+	 * @param maxTime the maxium timeout you are willing to wait for a response
 	 * @param maxElements the maximum number of elements which should be returned
-	 * @param maxCharacters the total size of the characters to be contained in
-	 * @param endpointUrl
-	 * @return
+	 * @param maxCharacters the total number of the characters to be contained in
+	 *        the returned message. If &lt;= 0 this parameter is ignored.
+	 *        NOTE: Not all servers support this feature. 
+	 * @param endpointUrl URL address of the service.
+	 * @return array of Resources pulled
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
@@ -68,11 +83,12 @@ public interface EnumerableResource extends TransferableResource {
 	 * a resource state and you will have to extract the EPRs yourself. Use pullResources
 	 * for better access to EPRs.
 	 * 
-	 * @param enumerationContext The context created from a previous enumerate call.
-	 * @param maxTime The maxium timeout you are willing to wait for a response
+	 * @param enumerationContext the context created in your call to enumerate
+	 * @param maxTime the maxium timeout you are willing to wait for a response
 	 * @param maxElements the maximum number of elements which should be returned
-	 * @param maxCharacters the total size of the characters to be contained in
-	 * the response
+	 * @param maxCharacters the total number of the characters to be contained in
+	 *        the returned message. If &lt;= 0 this parameter is ignored.
+	 *        NOTE: Not all servers support this feature. 
 	 * @return A resource state representing the returned complex type of the pull. 
 	 * Often this state will contain multiple entries from a number of resources.
 	 * 
@@ -91,7 +107,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * Releases a context for enumeration.
 	 * 
 	 * @param enumerationContext
-	 *            Nameof the context to release
+	 *            ID of the context to release
 	 * @throws DatatypeConfigurationException
 	 * @throws FaultException
 	 * @throws IOException
@@ -103,17 +119,17 @@ public interface EnumerableResource extends TransferableResource {
 			DatatypeConfigurationException;
 	
 	/**
-	 * Releases a context for enumeration.
+	 * Renew a context for enumeration.
 	 * 
 	 * @param enumerationContext
-	 *            Nameof the context to release
+	 *            ID of the context to renew
 	 * @throws DatatypeConfigurationException
 	 * @throws FaultException
 	 * @throws IOException
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
-	public abstract void renew(final EnumerationCtx EnumerationCtx) throws SOAPException,
+	public abstract void renew(final EnumerationCtx enumerationContext) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 

@@ -10,7 +10,6 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import com.sun.ws.management.client.exceptions.FaultException;
-import com.sun.ws.management.client.impl.JAXBResourceImpl;
 import com.sun.ws.management.client.impl.JAXBResourceImpl.ResourceEnumerator;
 import com.sun.ws.management.xml.XmlBinding;
 

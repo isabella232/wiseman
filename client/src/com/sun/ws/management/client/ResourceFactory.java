@@ -43,7 +43,14 @@ import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
- * Creates and configures Resources for use by a client.
+ * Factory to create and configure {@link Resource}
+ * objects for use by a client. Provides additional support
+ * methods to obtain the {@link ServerIdentity} metadata.
+ * 
+ * @see Resource
+ * @see EnumerableResource
+ * @see TransferableResource
+ * @see ServerIdentity
  * 
  * @author spinder
  * 
@@ -75,14 +82,14 @@ public class ResourceFactory {
 	}
 
 	/**
-	 * Creates a new resource instance from of a resource on the server.
+	 * Creates a new resource instance on the server.
 	 *  
 	 * @param destination A URL for the destination port of this service.
 	 * @param resourceURI A resource URI indicating the type of resource to create 
 	 * @param timeoutInMilliseconds Time to wait before giving up on creation
 	 * @param content a w3c document representing the inital resource state 
 	 * @param specVersion The wsman spec version of the client to create. You can 
-	 * use null or the constant LATEST. 
+	 * use null or the constant #LATEST. 
 	 * @return A Resource class representing the new resource created on the server. 
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -99,14 +106,14 @@ public class ResourceFactory {
 	}
 	
 	/**
-	 * Creates a new resource instance from of a resource on the server.
+	 * Creates a new resource instance on the server.
 	 *  
 	 * @param destination A URL for the destination port of this service.
 	 * @param resourceURI A resource URI indicating the type of resource to create 
 	 * @param timeoutInMilliseconds Time to wait before giving up on creation
 	 * @param content a w3c document representing the inital resource state 
 	 * @param specVersion The wsman spec version of the client to create. You can 
-	 * use null or the constant LATEST. 
+	 * use null or the constant #LATEST. 
 	 * @param optionSet set of user defined options to use during the create operation 
 	 * @return A Resource class representing the new resource created on the server. 
 	 * @throws SOAPException
@@ -173,9 +180,12 @@ public class ResourceFactory {
 		// parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors
 		SOAPBody body = response.getBody();
-		JAXBElement element=(JAXBElement) response.getXmlBinding().unmarshal(body.getFirstChild());
-		EndpointReferenceType createResponse = (EndpointReferenceType) element.getValue();
-		ReferenceParametersType refParams = createResponse.getReferenceParameters();
+		JAXBElement element = (JAXBElement) response.getXmlBinding().unmarshal(
+				body.getFirstChild());
+		EndpointReferenceType createResponse = (EndpointReferenceType) element
+				.getValue();
+		ReferenceParametersType refParams = createResponse
+				.getReferenceParameters();
 		List<Object> parmList = refParams.getAny();
 		AttributableURI uriType = null;
 		for (Object parameterObj : parmList) {
@@ -184,41 +194,39 @@ public class ResourceFactory {
 				uriType = (AttributableURI) parameter2.getValue();
 			}
 		}
-		EndpointReferenceType rcEpr = createResponse;
-		//setResourceEpr(rcEpr);
 
-		// Locate and populate SelectorSet if it's available
-		Set<SelectorType> sels = mgmt.getSelectors();
-		if (sels != null) {
-			//TODO: retrieve the SelectorSet when stored in Mgmt object.
-//			for (Iterator iter = sels.entrySet().iterator(); iter.hasNext();) {
-//				String element = (String) iter.next();
-//				Object value = sels.get(element);
-//				System.out.println("K:V::"+element+":"+value);
-			throw new FaultException();
-//			}
-		}else{
-			String returnedResourceUri = "";
-			if(uriType !=null){
-				returnedResourceUri = uriType.getValue();
-			}else{
-			   returnedResourceUri = resourceURI;
-			}
-			ResourceImpl resource = new ResourceImpl(destination,returnedResourceUri,populateSelectorSet( createResponse));
-			resource.setMessageTimeout(timeoutInMilliseconds);
-			return resource;
-
+		String returnedResourceUri = "";
+		if (uriType != null) {
+			returnedResourceUri = uriType.getValue();
+		} else {
+			returnedResourceUri = resourceURI;
 		}
+		ResourceImpl resource = new ResourceImpl(destination,
+				returnedResourceUri, populateSelectorSet(createResponse));
+		resource.setMessageTimeout(timeoutInMilliseconds);
+		return resource;
+	}
 		
-			
-//			return create(destination,resourceURI, timeoutInMilliseconds,
-//					content,specVersion,null,null);
-		}
 		
-		
-		/* (non-Javadoc)
-		 * @see com.sun.ws.management.client.Resource#create(java.lang.String, java.lang.String, long, org.w3c.dom.Document)
-		 */
+        /**
+         * Create a fragment resource on the server.
+         * 
+         * @param destination A URL for the destination port of this service.
+	     * @param resourceURI A resource URI indicating the type of resource to create 
+         * @param existingResourceId selector set identifying the resource
+	     * @param timeoutInMilliseconds Time to wait before giving up on creation
+	     * @param content a w3c document representing the fragment to create 
+	     * @param specVersion The wsman spec version of the client to create. You can 
+	     *        use null or the constant #LATEST. 
+         * @param fragmentExp the fragment expression
+         * @param dialect the fragment expression dialect
+         * @return TransferableResource referencing the resource created
+         * @throws SOAPException
+         * @throws JAXBException
+         * @throws IOException
+         * @throws FaultException
+         * @throws DatatypeConfigurationException
+         */
 		public static Resource createFragment(String destination,
 				String resourceURI, SelectorSetType existingResourceId,
 				long timeoutInMilliseconds,Document content,
@@ -308,42 +316,13 @@ public class ResourceFactory {
 			ReferenceParametersType refParams = resCreated.getReferenceParameters();
 			List<Object> parmList = refParams.getAny();
 			AttributableURI uriType =null;
-			SelectorSetType selType = null;
 			for (Object parameterObj : parmList) {
 				JAXBElement<AttributableURI> parameter2=(JAXBElement<AttributableURI>)parameterObj;
 				if(parameter2.getName().toString().indexOf("ResourceURI")>-1 ){
 					uriType = (AttributableURI)parameter2.getValue();
 				}
-				if(parameter2.getName().toString().indexOf("SelectorSet")>-1 ){
-				  Object obj = parameterObj;
-				  JAXBElement<SelectorSetType> parameter3=(JAXBElement<SelectorSetType>)parameterObj;
-				  selType = (SelectorSetType)parameter3.getValue();
-//				  selType = (SelectorSetType)parameterObj;
-				}
 			}
-			//EndpointReferenceType rcEpr = createResponse.getResourceCreated();
-			//setResourceEpr(rcEpr);
-			
-			//Locate and populate SelectorSet if it's available
-//			Set<SelectorType> sels = mgmt.getSelectors();
-			Set<SelectorType> sels = null;
-			if((selType!=null)&&(!selType.getSelector().isEmpty())){
-				sels=new HashSet<SelectorType>();
-				for (Iterator iter = selType.getSelector().iterator(); iter.hasNext();) {
-					SelectorType element = (SelectorType) iter.next();
-					sels.add(element);
-				}
-			}
-			sels = null;
-//			Set<SelectorType> sels = mgmt.getSelectors();
-			if(sels!=null){
-				//TODO: retrieve the SelectorSet when stored in Mgmt object.
-//				for (Iterator iter = sels.entrySet().iterator(); iter.hasNext();) {
-//					String element = (String) iter.next();
-//					Object value = sels.get(element);
-//					System.out.println("K:V::"+element+":"+value);
-			throw new FaultException();
-		} else {
+
 			String returnedResourceUri = "";
 			if (uriType != null) {
 				returnedResourceUri = uriType.getValue();
@@ -355,15 +334,12 @@ public class ResourceFactory {
 					populateSelectorSet(resCreated));
 			resource.setMessageTimeout(timeoutInMilliseconds);
 			return resource ;
-		}
-
 	}
 
 	/**
 	 * Extracts and builds a selector set from the response from create. 
 	 * @param createResponse
-	 * @param rcEpr
-	 * @return
+	 * @return the SelectorSetType created
 	 */
 	private static SelectorSetType populateSelectorSet(
 			EndpointReferenceType createResponse) {
@@ -421,6 +397,17 @@ public class ResourceFactory {
 		return null;
 	}
 
+	/**
+	 * Delete the specified resource on the server.
+	 * @see TransferableResource#delete()
+	 * 
+	 * @param res resource to delete.
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
 	public static void delete(Resource res) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
@@ -428,14 +415,25 @@ public class ResourceFactory {
 	}
 
 	/**
-	 * Static method for locating existing exposed resource(s). If SelectorSet
-	 * is null, then an EnumerationResource is returned by default.
+	 * Static method for locating existing exposed resource(s).
+	 * This method returns a single Resource object in the first
+	 * element of an array. It may be used as an 
+	 * {@link EnumerableResource EnumerableResource} or
+	 * {@link TransferableResource TransferableResource},
+	 * depending upon the desired operation.
 	 * 
-	 * @param destination
-	 * @param resourceURI
-	 * @param timeout
-	 * @param selectors
-	 * @return
+	 * @param destination URL of the target service
+	 * @param resourceURI URI identifying the resource
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time the client is willing to wait
+	 *        for the operation to complete.
+	 * @param selectors set of selectors used to identify a single
+	 *        or subset of resources at the target service.
+	 * @return an array containing a single Resource object.
+	 *         It may be used as an 
+	 *         {@link EnumerableResource EnumerableResource} or
+	 *         {@link TransferableResource TransferableResource},
+	 *         depending upon the desired operation.
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
@@ -456,6 +454,32 @@ public class ResourceFactory {
 			return resourceList;
 	}
 
+	/**
+	 * Static method for locating existing exposed resource(s).
+	 * This method returns a single Resource object in the first
+	 * element of an array. It may be used as an 
+	 * {@link EnumerableResource EnumerableResource} or
+	 * {@link TransferableResource TransferableResource},
+	 * depending upon the desired operation.
+	 * 
+	 * @param destination URL of the target service
+	 * @param resourceURI URI identifying the resource
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time the client is willing to wait
+	 *        for the operation to complete.
+	 * @param selectors set of selectors used to identify a single
+	 *        or subset of resources at the target service.
+	 * @return an array containing a single Resource object.
+	 *         It may be used as an 
+	 *         {@link EnumerableResource EnumerableResource} or
+	 *         {@link TransferableResource TransferableResource},
+	 *         depending upon the desired operation.
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
 	public static Resource[] find(String destination, String resourceURI,
 			long timeout, Map<String,String> selectors) throws SOAPException,JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
@@ -476,8 +500,7 @@ public class ResourceFactory {
 		return find( destination,  resourceURI, timeout,  selectorsSetType);
 	}
 	
-	//TODO: Once this method included in next build use that version
-    public static void setFragmentHeader(final String expression, final String dialect,
+    private static void setFragmentHeader(final String expression, final String dialect,
     		Management mgmt) throws SOAPException, JAXBException {
 
 		        // remove existing, if any
@@ -504,6 +527,16 @@ public class ResourceFactory {
 		        new Addressing().getXmlBinding().marshal(fragmentTransfer, mgmt.getHeader());
 		    }
 
+    /**
+     * Gets the server identity.
+     * @see ServerIdentity
+     * 
+     * @param destination URL of the target service
+     * @return {@link ServerIdentity ServerIdentity}
+     * @throws SOAPException
+     * @throws IOException
+     * @throws JAXBException
+     */
 	public static ServerIdentity getIdentity(String destination) throws SOAPException, IOException, JAXBException{
         try {
 			return getIdentity(destination, -1);
@@ -514,10 +547,43 @@ public class ResourceFactory {
 		}
 	}
 	
+	/**
+     * Gets the server identity.
+     * @see ServerIdentity
+     * 
+     * @param destination URL of the target service
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time the client is willing to wait
+	 *        for the operation to complete.
+	 * @return {@link ServerIdentity ServerIdentity}
+	 * @throws SOAPException
+	 * @throws IOException
+	 * @throws JAXBException
+	 * @throws InterruptedException
+	 * @throws TimeoutException
+	 */
 	public static ServerIdentity getIdentity(final String destination,int timeout) throws SOAPException, IOException, JAXBException, InterruptedException, TimeoutException{
-		return getIdentity(destination, timeout,null);
+		Map.Entry<String, String>[] map = null;
+		ServerIdentity identity = getIdentity(destination, timeout, map);
+		return identity;
 	}
 	
+	/**
+     * Gets the server identity.
+     * @see ServerIdentity
+     * 
+     * @param destination URL of the target service
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time the client is willing to wait
+	 *        for the operation to complete.
+	 * @param headers additional SOAP headers to set on the request
+	 * @return {@link ServerIdentity ServerIdentity}
+	 * @throws SOAPException
+	 * @throws IOException
+	 * @throws JAXBException
+	 * @throws InterruptedException
+	 * @throws TimeoutException
+	 */
 	public static ServerIdentity getIdentity(final String destination,int timeout, final
     		Entry<String, String>... headers) throws SOAPException, IOException, JAXBException, InterruptedException, TimeoutException{
 		
@@ -539,6 +605,26 @@ public class ResourceFactory {
         return identifyTask.servIdent;
 	}
 
+	/**
+	 * Creates a new resource instance on the server.
+	 *  
+	 * @param destination A URL for the destination port of this service.
+	 * @param resourceURI A resource URI indicating the type of resource to create 
+	 * @param timeoutInMilliseconds Time to wait before giving up on creation
+	 * @param content object to be marshaled into the SOAP document that represents
+	 *        the resource to be created. 
+	 * @param specVersion The wsman spec version of the client to create. You can 
+	 * use null or the constant #LATEST.
+	 * @param binding {@link XmlBinding XmlBinding}
+	 *        to use to marshal and unmarshal the SOAP documents
+	 *        sent over the wire.
+	 * @return A Resource class representing the new resource created on the server. 
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
 	public static JAXBResource createJAXB(String destination, String resourceURI,
 			long timeoutInMilliseconds, Object content, String specVersion,XmlBinding binding)
 	throws SOAPException, JAXBException, IOException, FaultException,
@@ -559,6 +645,29 @@ public class ResourceFactory {
 		
 	}
 	
+	/**
+	 * Creates a new resource instance on the server.
+	 *  
+	 * @param destination A URL for the destination port of this service.
+	 * @param resourceURI A resource URI indicating the type of resource to create 
+	 * @param timeoutInMilliseconds Time to wait before giving up on creation
+	 * @param content object to be marshaled into the SOAP document that represents
+	 *        the resource to be created. 
+	 * @param specVersion The wsman spec version of the client to create. You can 
+	 * use null or the constant #LATEST.
+	 * @param packageNames names of packages to be used to construct an
+	 *        {@link XmlBinding XmlBinding} object that will be used to marshal
+	 *        the resource into the SOAP document. NOTE: For performance reasons
+	 *        it is highly recommended to use 
+	 *        {@link #createJAXB(String, String, long, Object, String, XmlBinding)}
+	 *        instead of this method and reuse the {@link XmlBinding} object.
+	 * @return A Resource class representing the new resource created on the server. 
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
 	public static JAXBResource createJAXB(String destination, String resourceURI,
 			long timeoutInMilliseconds, Object content,String specVersion, final String... packageNames)
 	throws SOAPException, JAXBException, IOException, FaultException,

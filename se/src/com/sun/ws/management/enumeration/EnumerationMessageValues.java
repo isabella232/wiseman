@@ -139,7 +139,7 @@ public class EnumerationMessageValues extends ManagementMessageValues{
 	}
 
 	/**
-	 * @param enumerationMessageActionType the enumerationMessageActionType to set
+	 * @param enumerationMessageType the enumerationMessageType to set
 	 */
 	public void setEnumerationMessageActionType(String enumerationMessageType) {
 		this.enumerationMessageActionType = enumerationMessageType;
@@ -263,7 +263,7 @@ public class EnumerationMessageValues extends ManagementMessageValues{
 	}
 
 	/**
-	 * @param customXmlBindingPackageList the customXmlBindingPackageList to set
+	 * @param customPackageList the customPackageList to set
 	 */
 	public void setCustomPackageList(String[] customPackageList) {
 		this.customXmlBindingPackageList = customPackageList;
