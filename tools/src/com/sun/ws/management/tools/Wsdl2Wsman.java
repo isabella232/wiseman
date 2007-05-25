@@ -3,7 +3,7 @@ package com.sun.ws.management.tools;
 import java.io.File;
 
 /**
- * Commandline Client for {@see Wsdl2WsmanGenerator}
+ * Commandline Client for {@link Wsdl2WsmanGenerator}
  * 
  */
 public class Wsdl2Wsman

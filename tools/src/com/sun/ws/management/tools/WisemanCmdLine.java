@@ -7,6 +7,7 @@ import java.io.OutputStream;
 // import java.net.PasswordAuthentication;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -128,7 +129,8 @@ public class WisemanCmdLine {
         mgmt.getBody().addDocument(docIn);
 
         // Send request
-        Addressing response = HttpClient.sendRequest(mgmt);
+        Map.Entry<String, String>[] entry = null;
+        Addressing response = HttpClient.sendRequest(mgmt, entry);
 		printResponse(response);
 	}
 
@@ -150,7 +152,8 @@ public class WisemanCmdLine {
     	}
 
         // Send request
-        Addressing response = HttpClient.sendRequest(mgmt);
+        Map.Entry<String, String>[] entry = null;
+        Addressing response = HttpClient.sendRequest(mgmt, entry);
         
         // Look for returned faults
         if (response.getBody().hasFault())
@@ -178,7 +181,8 @@ public class WisemanCmdLine {
     	final Transfer mgmt = TransferUtility.buildMessage(null, settings);
 
 		// Send request
-        Addressing response = HttpClient.sendRequest(mgmt);
+        Map.Entry<String, String>[] entry = null;
+        Addressing response = HttpClient.sendRequest(mgmt, entry);
 
         // Look for returned faults
         if (response.getBody().hasFault())
@@ -206,7 +210,8 @@ public class WisemanCmdLine {
     	settings.setRequestForOptimizedEnumeration(true);
     	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
     	
-        final Addressing response = HttpClient.sendRequest(enu);
+        Map.Entry<String, String>[] entry = null;
+        final Addressing response = HttpClient.sendRequest(enu, entry);
 
         if (response.getBody().hasFault())
         {
@@ -312,7 +317,8 @@ public class WisemanCmdLine {
     	final Transfer mgmt = TransferUtility.buildMessage(null, settings);
 
         // Send the get request to the server
-        Addressing response = HttpClient.sendRequest(mgmt);
+        Map.Entry<String, String>[] entry = null;
+        Addressing response = HttpClient.sendRequest(mgmt, entry);
 
         // Look for returned faults
         if (response.getBody().hasFault())

@@ -64,7 +64,7 @@ public interface ResourceStateDocument {
 	 * A conveneince method. Assumes your document is simple having a wrapper element
 	 * and a set of child state value elements. This method returns the QNames of the
 	 * child elements of the first wrapper element in the body of the SOAP document.
-	 * @return
+	 * @return the QNames of the child elements of the first wrapper element in the body.
 	 */
 	public QName[] getWrappedFieldNames();
 
