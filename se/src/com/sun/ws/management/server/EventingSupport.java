@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.20 2007-03-06 08:08:11 denis_rachal Exp $
+ * $Id: EventingSupport.java,v 1.21 2007-05-28 09:36:16 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,7 +27,6 @@ import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -72,7 +71,6 @@ import com.sun.ws.management.transport.HttpClient;
 public final class EventingSupport extends BaseSupport {
 	
 	public static final int DEFAULT_QUEUE_SIZE = 1024;
-	public static final int DEFAULT_EXPIRATION_MILLIS = 60000;
 	
     // TODO: add more delivery modes as they are implemented
     private static final String[] SUPPORTED_DELIVERY_MODES = {
@@ -82,12 +80,6 @@ public final class EventingSupport extends BaseSupport {
     
     private static Map<String, EventingIteratorFactory> registeredIterators =
         new HashMap<String, EventingIteratorFactory>();
-    
-	private static Duration defaultExpiration = null;
-	
-    static {
-        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
-    }
     
     private EventingSupport() {}
     
@@ -146,8 +138,6 @@ public final class EventingSupport extends BaseSupport {
         
         if (deliveryMode.equals(EventingExtensions.PULL_DELIVERY_MODE)) {
         	// this is a pull event mode subscribe request so setup an enumeration
-			final EventingExtensions evtxRequest = new EventingExtensions(
-					request);
 
 			EnumerationIterator iterator = newIterator(handlerContext, 
 					                                   request, 
@@ -211,7 +201,7 @@ public final class EventingSupport extends BaseSupport {
 			for (final Object content : delivery.getContent()) {
 				final Class contentClass = content.getClass();
 				if (JAXBElement.class.equals(contentClass)) {
-					final JAXBElement<Object> element = (JAXBElement<Object>) content;
+					final JAXBElement element = (JAXBElement) content;
 					final QName name = element.getName();
 					final Object item = element.getValue();
 					if (item instanceof EndpointReferenceType) {
@@ -325,11 +315,15 @@ public final class EventingSupport extends BaseSupport {
 		}
         
         final EndpointReferenceType notifyTo = ctx.getNotifyTo();
-        final ReferencePropertiesType refp = notifyTo.getReferenceProperties();
-        if (refp != null) {
-            msg.addHeaders(refp);
-        }
         msg.setTo(notifyTo.getAddress().getValue());
+        final ReferenceParametersType refparams = notifyTo.getReferenceParameters();
+        if (refparams != null) {
+            msg.addHeaders(refparams);
+        }
+        final ReferencePropertiesType refprops = notifyTo.getReferenceProperties();
+        if (refprops != null) {
+            msg.addHeaders(refprops);
+        }
         msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         HttpClient.sendResponse(msg);
         return true;
@@ -429,7 +423,7 @@ public final class EventingSupport extends BaseSupport {
 			final int queueSize) throws SOAPException, JAXBException {
     	final Management mgmt = new Management(request);
     	final EventingIteratorFactory factory = registeredIterators.get(mgmt.getResourceURI());
-		DocumentBuilder db = response.getDocumentBuilder();
+		final DocumentBuilder db = response.getDocumentBuilder();
 		
     	if (factory == null) {
 			// Build a default iterator for pull
@@ -481,8 +475,8 @@ public final class EventingSupport extends BaseSupport {
             msg.setAction(Management.EVENT_URI);
             
             if (ctx.getFilter() == null) {
-            	if (content instanceof Document)
-            	    msg.getBody().addDocument((Document)content);
+            	if (content instanceof Node)
+            	    msg.getBody().appendChild(msg.getBody().getOwnerDocument().importNode((Node)content, true));
             	else {
             		msg.getXmlBinding().marshal(content, msg.getBody());
             	}
@@ -539,7 +533,7 @@ public final class EventingSupport extends BaseSupport {
 						msg.getBody().addDocument(doc);
 					} else {
 						// Fragment(s) selected
-						JAXBElement<MixedDataType> fragment = createXmlFragment(filteredContent);
+						final JAXBElement<MixedDataType> fragment = createXmlFragment(filteredContent);
 						msg.getXmlBinding().marshal(fragment, msg.getBody());
 					}
 					final String nsURI = item.getNamespaceURI();
@@ -552,11 +546,15 @@ public final class EventingSupport extends BaseSupport {
 				}
             }
             final EndpointReferenceType notifyTo = ctx.getNotifyTo();
-            final ReferenceParametersType refp = notifyTo.getReferenceParameters();
-            if (refp != null) {
-                msg.addHeaders(refp);
-            }
             msg.setTo(notifyTo.getAddress().getValue());
+            final ReferenceParametersType refparams = notifyTo.getReferenceParameters();
+            if (refparams != null) {
+                msg.addHeaders(refparams);
+            }
+            final ReferencePropertiesType refprops = notifyTo.getReferenceProperties();
+            if (refprops != null) {
+                msg.addHeaders(refprops);
+            }
             msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
             HttpClient.sendResponse(msg);
             return true;

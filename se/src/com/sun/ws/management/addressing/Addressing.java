@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.16 2007-05-03 14:47:50 simeonpinder Exp $
+ * $Id: Addressing.java,v 1.17 2007-05-28 09:36:16 denis_rachal Exp $
  */
 
 package com.sun.ws.management.addressing;
-
-import com.sun.ws.management.Management;
-import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.xml.XmlBinding;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,7 +24,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -50,6 +44,11 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.Relationship;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ServiceNameType;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.xml.XmlBinding;
 
 public class Addressing extends SOAP {
     
@@ -196,11 +195,9 @@ public class Addressing extends SOAP {
         for (final Object any : anyList) {
             if (any instanceof Node) {
                 Node node = (Node) any;
-                // TODO: can be a performance hog if the node is deeply nested
-//                header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
                 NodeList existingHeaders = null;
                 Node hNode =null;
-                //prevent duplicate additions. TODO? Use getHeaders() instead?
+                //prevent duplicate additions.
                 if(((existingHeaders = header.getChildNodes())!=null)
                 		&&(existingHeaders.getLength()>0)){
                    for (int i = 0; i < existingHeaders.getLength(); i++) {
@@ -211,7 +208,8 @@ public class Addressing extends SOAP {
 					 }
                    }
                 }
-                header.appendChild(header.getOwnerDocument().adoptNode(node.cloneNode(true)));
+                // NOTE: can be a performance hog if the node is deeply nested
+                header.appendChild(header.getOwnerDocument().importNode(node, true));
             } else {
             	try {
                     binding.marshal(any, header);
@@ -334,21 +332,21 @@ public class Addressing extends SOAP {
         final Relationship[] relationships = new Relationship[relations.length];
         for (int i=0; i < relations.length; i++) {
             final Object relation = getXmlBinding().unmarshal(relations[i]);
-            relationships[i] = ((JAXBElement<Relationship>) relation).getValue();
+            relationships[i] = (Relationship)(((JAXBElement) relation).getValue());
         }
         return relationships;
     }
     
     public EndpointReferenceType getEndpointReference(final SOAPElement parent, final QName... qname) throws JAXBException, SOAPException {
         final Object value = unbind(parent, qname);
-        return value == null ? null : ((JAXBElement<EndpointReferenceType>) value).getValue();
+        return value == null ? null : (EndpointReferenceType)(((JAXBElement) value).getValue());
     }
     
     // get helpers
     
     private String getAttributedURI(final QName qname) throws JAXBException, SOAPException {
-        final Object value = unbind(getHeader(), qname);
-        return value == null ? null : ((JAXBElement<AttributedURI>) value).getValue().getValue().trim();
+        final JAXBElement value = (JAXBElement)unbind(getHeader(), qname);
+        return value == null ? null : ((AttributedURI)(value.getValue())).getValue().trim();
     }
     
     private EndpointReferenceType getEndpointReference(final QName... qname) throws JAXBException, SOAPException {

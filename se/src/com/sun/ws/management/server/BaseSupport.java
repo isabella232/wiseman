@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.16 2007-03-29 12:38:53 jfdenise Exp $
+ * $Id: BaseSupport.java,v 1.17 2007-05-28 09:36:16 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -37,6 +37,7 @@ import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
@@ -171,18 +172,31 @@ public class BaseSupport {
      * @return XmlFragment JAXBElement object.
      */
 	public static JAXBElement<MixedDataType> createXmlFragment(List<Node> nodes) {
-		final MixedDataType mixedDataType = Management.FACTORY
-				.createMixedDataType();
+		final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+		final StringBuffer buf = new StringBuffer();
+		
 		for (int j = 0; j < nodes.size(); j++) {
 			// Check if it is a text node from text() function
-			if (nodes.get(j) instanceof Text)
-				mixedDataType.getContent().add(nodes.get(j).getTextContent());
-			else 
-			    mixedDataType.getContent().add(nodes.get(j));
+			if (nodes.get(j) instanceof Element) {
+				if (buf.length() > 0) {
+					mixedDataType.getContent().add(buf.toString());
+					buf.setLength(0);
+				}
+				mixedDataType.getContent().add(nodes.get(j));
+			} else if (nodes.get(j) instanceof Text) {
+				buf.append(nodes.get(j).getTextContent());
+			}
 		}
-		// create the XmlFragmentElement
-		JAXBElement<MixedDataType> fragment = Management.FACTORY
+		if (buf.length() > 0) {
+			mixedDataType.getContent().add(buf.toString());
+			buf.setLength(0);
+		}
+		final JAXBElement<MixedDataType> fragment = Management.FACTORY
 				.createXmlFragment(mixedDataType);
+        //if there was no content, then this is NIL
+        if (nodes.size() <= 0) {
+        	fragment.setNil(true);
+        }
 		return fragment;
 	}
 	
@@ -194,18 +208,43 @@ public class BaseSupport {
      */
 	public static JAXBElement<MixedDataType> createXmlFragment(NodeList nodes) {
 		final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+		final StringBuffer buf = new StringBuffer();
+		
 		for (int j = 0; j < nodes.getLength(); j++) {
 			// Check if it is a text node from text() function
-			if (nodes.item(j) instanceof Text)
-				mixedDataType.getContent().add(nodes.item(j).getTextContent());
-			else 
-			    mixedDataType.getContent().add(nodes.item(j));
+			if (nodes.item(j) instanceof Element) {
+				if (buf.length() > 0) {
+					mixedDataType.getContent().add(buf.toString());
+					buf.setLength(0);
+				}
+				mixedDataType.getContent().add(nodes.item(j));
+			} else if (nodes.item(j) instanceof Text) {
+				buf.append(nodes.item(j).getTextContent());
+			}
 		}
-		// create the XmlFragmentElement
-		JAXBElement<MixedDataType> fragment = Management.FACTORY
+		if (buf.length() > 0) {
+			mixedDataType.getContent().add(buf.toString());
+			buf.setLength(0);
+		}
+		final JAXBElement<MixedDataType> fragment = Management.FACTORY
 				.createXmlFragment(mixedDataType);
+        //if there was no content, then this is NIL
+        if (nodes.getLength() <= 0) {
+        	fragment.setNil(true);
+        }
 		return fragment;
 	}
+	
+	/* The following code was a test as a possible replacement for createXmlFragment()
+	public static Element createXmlFragmentElement(NodeList nodes) {
+		final Document doc = Message.newDocument();
+		final Element fragment = doc.createElementNS(Management.NS_URI, "XmlFragment");
+		doc.appendChild(fragment);
+		for (int j = 0; j < nodes.getLength(); j++) {
+			fragment.appendChild(doc.adoptNode(nodes.item(j)));
+		}
+		return fragment;
+	} */
     
     protected static XMLGregorianCalendar initExpiration(final String expires)
     throws InvalidExpirationTimeFault {

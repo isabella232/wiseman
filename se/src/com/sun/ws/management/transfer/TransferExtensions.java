@@ -311,12 +311,23 @@ public class TransferExtensions extends Transfer {
     private JAXBElement<MixedDataType> buildXmlFragment(final List<Object> content) throws SOAPException {
         //build the JAXB Wrapper Element
         final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+		final StringBuffer buf = new StringBuffer();
+		
 		for (int j = 0; j < content.size(); j++) {
 			// Check if it is a text node from text() function
-			if (content.get(j) instanceof Text)
-				mixedDataType.getContent().add(((Text)content.get(j)).getTextContent());
-			else 
+			if (content.get(j) instanceof Text) {
+				buf.append(((Text)content.get(j)).getTextContent());
+			} else {
+				if (buf.length() > 0) {
+					mixedDataType.getContent().add(buf.toString());
+					buf.setLength(0);
+				}
 			    mixedDataType.getContent().add(content.get(j));
+			}
+		}
+		if (buf.length() > 0) {
+			mixedDataType.getContent().add(buf.toString());
+			buf.setLength(0);
 		}
         //create the XmlFragmentElement
         final JAXBElement<MixedDataType> xmlFragment = 
@@ -597,16 +608,7 @@ public class TransferExtensions extends Transfer {
      * @return XmlFragment JAXBElement object.
      */
 	public static JAXBElement<MixedDataType> createXmlFragment(List<Node> nodes) {
-		final MixedDataType mixedDataType = Management.FACTORY
-				.createMixedDataType();
-		for (int j = 0; j < nodes.size(); j++) {
-			mixedDataType.getContent().add(
-					nodes.get(j));
-		}
-		// create the XmlFragmentElement
-		JAXBElement<MixedDataType> fragment = Management.FACTORY
-				.createXmlFragment(mixedDataType);
-		return fragment;
+		return BaseSupport.createXmlFragment(nodes);
 	}
 	
     /**
@@ -616,15 +618,6 @@ public class TransferExtensions extends Transfer {
 	 * @return XmlFragment JAXBElement object.
 	 */
 	public static JAXBElement<MixedDataType> createXmlFragment(NodeList nodes) {
-		final MixedDataType mixedDataType = Management.FACTORY
-				.createMixedDataType();
-		for (int j = 0; j < nodes.getLength(); j++) {
-			mixedDataType.getContent().add(nodes.item(j));
-		}
-		// create the XmlFragmentElement
-		JAXBElement<MixedDataType> fragment = Management.FACTORY
-				.createXmlFragment(mixedDataType);
-		return fragment;
-
+		return BaseSupport.createXmlFragment(nodes);
 	}
 }
