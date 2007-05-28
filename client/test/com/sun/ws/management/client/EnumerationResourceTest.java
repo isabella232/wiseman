@@ -1,4 +1,4 @@
-package com.sun.ws.management.client.impl;
+package com.sun.ws.management.client;
 
 import java.io.IOException;
 import java.util.Map;
@@ -16,7 +16,7 @@ import com.sun.ws.management.client.ResourceFactory;
 import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.FaultException;
 
-public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
+public class EnumerationResourceTest extends WsManBaseTestSupport  {
 
 	private static final String destUrl = "http://localhost:8080/wsman/";
 	private static final String resourceUri = "wsman:auth/userenum";
@@ -82,7 +82,7 @@ public class EnumerationResourceImplTest extends WsManBaseTestSupport  {
 		Resource enumerationResource = enumerationResources[0];
 		EnumerationCtx ticket = enumerationResource.enumerate("Simpson", null, USER_CUSTOM_DIALECT, true, false);
 		assertNotNull(ticket);
-		ResourceState pullResult = enumerationResource.pull(ticket, 30000, 4, -1);
+		enumerationResource.pull(ticket, 30000, 4, -1);
 		enumerationResource.release(ticket);
 
 	}

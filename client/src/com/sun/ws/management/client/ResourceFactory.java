@@ -62,6 +62,7 @@ public class ResourceFactory {
 	public static final String LATEST = "LATEST";
 	
     private static Logger log = Logger.getLogger(ResourceFactory.class.getName());
+    private static XmlBinding xmlBinding = null;
 
     /*
     {
@@ -134,16 +135,19 @@ public class ResourceFactory {
 			throw new IllegalArgumentException(msg);
 		}
 
+		if (xmlBinding == null) {
+			xmlBinding = new XmlBinding(null);
+		}
 
 		// Build the document
 		final Transfer xf = new Transfer();
+		xf.setXmlBinding(xmlBinding);
 		xf.setAction(Transfer.CREATE_ACTION_URI);
 		// Replying to creator
 		xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); 
 		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
 
 		final Management mgmt = new Management(xf);
-		mgmt.setXmlBinding(xf.getXmlBinding());
 		mgmt.setTo(destination);
 		mgmt.setResourceURI(resourceURI);
 		final Duration timeout = DatatypeFactory.newInstance().newDuration(
@@ -167,6 +171,7 @@ public class ResourceFactory {
 		log.info("REQUEST:\n"+mgmt+"\n");
 		// Send the request
 		final Addressing response = HttpClient.sendRequest(mgmt);
+		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
@@ -189,9 +194,12 @@ public class ResourceFactory {
 		List<Object> parmList = refParams.getAny();
 		AttributableURI uriType = null;
 		for (Object parameterObj : parmList) {
-			JAXBElement<AttributableURI> parameter2 = (JAXBElement<AttributableURI>) parameterObj;
-			if (parameter2.getName().toString().indexOf("ResourceURI") > -1) {
-				uriType = (AttributableURI) parameter2.getValue();
+			if (parameterObj instanceof JAXBElement) {
+				final JAXBElement parameterJaxb = (JAXBElement) parameterObj;
+				if ((parameterJaxb.getValue() instanceof AttributableURI)
+						&& (parameterJaxb.getName().toString().equals("ResourceURI"))) {
+					uriType = (AttributableURI) parameterJaxb.getValue();
+				}
 			}
 		}
 
@@ -202,7 +210,7 @@ public class ResourceFactory {
 			returnedResourceUri = resourceURI;
 		}
 		ResourceImpl resource = new ResourceImpl(destination,
-				returnedResourceUri, populateSelectorSet(createResponse));
+				returnedResourceUri, populateSelectorSet(createResponse), xmlBinding);
 		resource.setMessageTimeout(timeoutInMilliseconds);
 		return resource;
 	}
@@ -246,15 +254,18 @@ public class ResourceFactory {
 				throw new IllegalArgumentException(msg);
 			}
 			
+			if (xmlBinding == null) {
+				xmlBinding = new XmlBinding(null);
+			}
 
 			//Build the document
 			final Transfer xf = new Transfer();
+			xf.setXmlBinding(xmlBinding);
 			xf.setAction(Transfer.CREATE_ACTION_URI);
 			xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); //Replying to creator
 			xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
 			
 			final Management mgmt = new Management(xf);
-			mgmt.setXmlBinding(xf.getXmlBinding());
 			mgmt.setTo(destination);
 			mgmt.setResourceURI(resourceURI);
 			final Duration timeout = 
@@ -295,9 +306,7 @@ public class ResourceFactory {
 			log.info("REQUEST:\n"+mgmt+"\n");
 			//Send the request
 			final Addressing response = HttpClient.sendRequest(mgmt);
-			
-			//Process the response to extract useful information.
-			log.info("RESPONSE:\n"+response+"\n");
+			response.setXmlBinding(mgmt.getXmlBinding());
 
 			//Check for fault during message generation
 			if (response.getBody().hasFault()) {
@@ -317,9 +326,12 @@ public class ResourceFactory {
 			List<Object> parmList = refParams.getAny();
 			AttributableURI uriType =null;
 			for (Object parameterObj : parmList) {
-				JAXBElement<AttributableURI> parameter2=(JAXBElement<AttributableURI>)parameterObj;
-				if(parameter2.getName().toString().indexOf("ResourceURI")>-1 ){
-					uriType = (AttributableURI)parameter2.getValue();
+				if (parameterObj instanceof JAXBElement) {
+					final JAXBElement parameterJaxb = (JAXBElement) parameterObj;
+					if ((parameterJaxb.getValue() instanceof AttributableURI)
+							&& (parameterJaxb.getName().toString().equals("ResourceURI"))) {
+						uriType = (AttributableURI) parameterJaxb.getValue();
+					}
 				}
 			}
 
@@ -331,7 +343,7 @@ public class ResourceFactory {
 			}
 			ResourceImpl resource = new ResourceImpl(destination,
 					returnedResourceUri,
-					populateSelectorSet(resCreated));
+					populateSelectorSet(resCreated), xmlBinding);
 			resource.setMessageTimeout(timeoutInMilliseconds);
 			return resource ;
 	}
@@ -367,8 +379,7 @@ public class ResourceFactory {
 						if (element.getDeclaredType().equals(
 								SelectorSetType.class)) {
 							// Extract, populate, set flag
-							return ((JAXBElement<SelectorSetType>) element)
-									.getValue();
+							return (SelectorSetType)(element.getValue());
 						}
 					}
 				}
@@ -386,8 +397,7 @@ public class ResourceFactory {
 							// Extract, populate, set flag
 							// this.selectorSet =
 							// ((JAXBElement<SelectorSetType>)element).getValue();
-							return ((JAXBElement<SelectorSetType>) element)
-									.getValue();
+							return (SelectorSetType)(element.getValue());
 
 						}
 					}
@@ -444,10 +454,13 @@ public class ResourceFactory {
 			long timeout, SelectorSetType selectors) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
+		if (xmlBinding == null) {
+			xmlBinding = new XmlBinding(null);
+		}
 		Resource[] resourceList = null;
 			resourceList = new Resource[1];
 			// lazy instantiation
-			Resource enumerationResource = new ResourceImpl(destination, resourceURI,selectors);
+			Resource enumerationResource = new ResourceImpl(destination, resourceURI, selectors, xmlBinding);
 			enumerationResource.setMessageTimeout(timeout);
 			resourceList[0] = enumerationResource;
 
@@ -502,6 +515,9 @@ public class ResourceFactory {
 	
     private static void setFragmentHeader(final String expression, final String dialect,
     		Management mgmt) throws SOAPException, JAXBException {
+		if (xmlBinding == null) {
+			xmlBinding = new XmlBinding(null);
+		}
 
 		        // remove existing, if any
 //		        removeChildren(mgmt.getHeader(), FRAGMENT_TRANSFER);
@@ -524,7 +540,7 @@ public class ResourceFactory {
 		                Management.FACTORY.createFragmentTransfer(dialectableMixedDataType);
 		        
 		        //set the SOAP Header for Fragment Transfer
-		        new Addressing().getXmlBinding().marshal(fragmentTransfer, mgmt.getHeader());
+		        xmlBinding.marshal(fragmentTransfer, mgmt.getHeader());
 		    }
 
     /**
@@ -605,6 +621,23 @@ public class ResourceFactory {
         return identifyTask.servIdent;
 	}
 
+	/**
+	 * Sets the XmlBinding that will be used for marshalling and unmarshalling.
+	 * 
+	 * @param binding
+	 */
+	public static void setBinding(XmlBinding binding) {
+		xmlBinding = binding;
+	}
+	
+	/**
+	 * Gets the XmlBinding that is used for marshaling and unmarshaling.
+	 * @return the XmlBinding.
+	 */
+	public static XmlBinding getBinding() {
+		return xmlBinding;
+	}
+	
 	/**
 	 * Creates a new resource instance on the server.
 	 *  

@@ -1,4 +1,4 @@
-package com.sun.ws.management.client.impl;
+package com.sun.ws.management.client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,9 +49,9 @@ public class Interop20060801Test extends WsManBaseTestSupport {
 	        handlers[index].setLevel( Level.FINE );
 	      }
 
-	     Logger loggerXfer = Logger.getLogger(TransferableResourceImpl.class.getName());
+	     Logger loggerXfer = Logger.getLogger(TransferableResource.class.getName());
 	     loggerXfer.setLevel(Level.FINE);
-	     Logger loggerEnum = Logger.getLogger(EnumerationResourceImpl.class.getName());
+	     Logger loggerEnum = Logger.getLogger(EnumerableResource.class.getName());
 	     loggerEnum.setLevel(Level.FINE);
 	     
 		if(System.getProperty("wsman.dest")!=null){

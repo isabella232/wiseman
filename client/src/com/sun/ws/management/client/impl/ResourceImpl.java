@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
@@ -25,6 +24,7 @@ import com.sun.ws.management.client.ResourceState;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XmlBinding;
 
 public class ResourceImpl extends EnumerationResourceImpl implements Resource {
 	
@@ -32,16 +32,16 @@ public class ResourceImpl extends EnumerationResourceImpl implements Resource {
     private static Logger log = Logger.getLogger(ResourceImpl.class.getName());
 
 	
-	public ResourceImpl(String destination, String resourceURI,SelectorSetType selectors) throws SOAPException, JAXBException{
-		super(destination, resourceURI,selectors);//
+	public ResourceImpl(String destination, String resourceURI, SelectorSetType selectors, XmlBinding binding) throws SOAPException, JAXBException{
+		super(destination, resourceURI, selectors, binding);//
 	}
 
-	public ResourceImpl(String destination, String resourceURI) throws SOAPException, JAXBException {
-		super(destination, resourceURI, null);
+	public ResourceImpl(String destination, String resourceURI, XmlBinding binding) throws SOAPException, JAXBException {
+		super(destination, resourceURI, null, binding);
 	}
 
-	public ResourceImpl(Element eprElement, String endpointUrl) throws SOAPException, JAXBException {
-		super(eprElement, endpointUrl);
+	public ResourceImpl(Element eprElement, String endpointUrl, XmlBinding binding) throws SOAPException, JAXBException {
+		super(eprElement, endpointUrl, binding);
 	}
 
 	public ResourceState invoke(String action, Document document) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {

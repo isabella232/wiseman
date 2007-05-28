@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: JAXBResourceImpl.java,v 1.1 2006-08-07 22:30:13 obiwan314 Exp $
+ * $Id: JAXBResourceImpl.java,v 1.2 2007-05-28 09:46:27 denis_rachal Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -60,27 +60,23 @@ import com.sun.ws.management.xml.XmlBinding;
 public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 	protected Resource resourceImpl = null;
 	private EndpointReferenceType epr = new EndpointReferenceType();
-	private XmlBinding binding = null;
 	private static Logger log = Logger.getLogger(JAXBResourceImpl.class.getName());
 
 
 	public JAXBResourceImpl(String destination, String resourceURI,SelectorSetType selectors, XmlBinding b) throws SOAPException, JAXBException{
-		super(destination, resourceURI,selectors);
-		binding = b;
+		super(destination, resourceURI,selectors,b);
 	}
 
 	JAXBResourceImpl(String destination, String resourceURI,XmlBinding b) throws SOAPException, JAXBException {
 		super(destination, resourceURI, null);
-		binding = b;
 	}
 
 	JAXBResourceImpl(Element eprElement, String endpointUrl, XmlBinding b) throws SOAPException, JAXBException {
-		super(eprElement, endpointUrl);
-		binding = b;
+		super(eprElement, endpointUrl, b);
 	}
 
 	JAXBResourceImpl(String destination, String resourceURI,SelectorSetType selectors, final String... packageNames) throws SOAPException, JAXBException{
-		super(destination, resourceURI,selectors);
+		super(destination, resourceURI,selectors, null);
 		setBinding(packageNames);
 	}
 
@@ -90,7 +86,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 	}
 
 	JAXBResourceImpl(Element eprElement, String endpointUrl, final String... packageNames) throws SOAPException, JAXBException {
-		super(eprElement, endpointUrl);
+		super(eprElement, endpointUrl, null);
 		setBinding(packageNames);
 	}
 	
@@ -454,27 +450,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 			}
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see com.sun.ws.management.client.impl.JAXBResource#getBinding()
-	 */
-	public XmlBinding getBinding() {
-		return binding;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.sun.ws.management.client.impl.JAXBResource#setBinding(com.sun.ws.management.xml.XmlBinding)
-	 */
-	public void setBinding(XmlBinding binding) {
-		this.binding = binding;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.sun.ws.management.client.impl.JAXBResource#setBinding(java.lang.String)
-	 */
-	public void setBinding(final String... packageNames) throws JAXBException {
-		this.binding = new XmlBinding(null, packageNames);
-	}
+	
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.JAXBResource#enumerate(java.lang.String[], java.lang.String, org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType)
 	 */

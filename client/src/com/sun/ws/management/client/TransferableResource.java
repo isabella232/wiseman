@@ -16,6 +16,7 @@ import org.w3c.dom.Document;
 import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
+import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * An abstract representation of a WSManagement resource that focuses on 
@@ -233,7 +234,7 @@ public interface TransferableResource {
 	 * @param name option name
 	 * @param value option value
 	 */
-	public void addOption(String name, Object value);
+	public abstract void addOption(String name, Object value);
 	
 	/**
 	 * Add an option to the option set
@@ -242,7 +243,7 @@ public interface TransferableResource {
 	 * @param value option value
 	 * @param mustComply option must comply flag
 	 */
-	public void addOption(String name, Object value, boolean mustComply);
+	public abstract void addOption(String name, Object value, boolean mustComply);
 	
 	/**
 	 * Add an option to the option set
@@ -252,7 +253,7 @@ public interface TransferableResource {
 	 * @param type qualified type of the option
 	 * @param mustComply option must comply flag
 	 */
-	public void addOption(String name, Object value, QName type, boolean mustComply);
+	public abstract void addOption(String name, Object value, QName type, boolean mustComply);
 	
 	/**
 	 * Add an option to the option set
@@ -261,20 +262,32 @@ public interface TransferableResource {
 	 * @param value option value
 	 * @param type qualified type of the option
 	 */
-	public void addOption(String name, Object value, QName type);
+	public abstract void addOption(String name, Object value, QName type);
 	
 	/**
 	 * Get the current option set
 	 * 
 	 * @return Returns the optionSet.
 	 */
-	public HashSet<OptionType> getOptionSet();
+	public abstract HashSet<OptionType> getOptionSet();
 
 	/**
 	 * Remove all of the current options from the option set
 	 * 
 	 */
-	public void resetOptionSet();
+	public abstract void resetOptionSet();
+	
+    /**
+     * Gets the XmlBinding used by this Resource.
+     * 
+     * @return the XmlBinding used by this Resource
+     */
+	public abstract XmlBinding getBinding();
 
-
+    /**
+     * Sets the XmlBinding used by this Resource.
+     * 
+     * @param binding the XmlBinding used by this Resource
+     */
+	public abstract void setBinding(XmlBinding binding);
 }

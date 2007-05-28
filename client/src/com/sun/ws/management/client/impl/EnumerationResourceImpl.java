@@ -2,7 +2,7 @@ package com.sun.ws.management.client.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +28,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.client.EnumerableResource;
 import com.sun.ws.management.client.EnumerationCtx;
 import com.sun.ws.management.client.EnumerationResourceState;
 import com.sun.ws.management.client.Resource;
@@ -41,259 +42,184 @@ import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
+import com.sun.ws.management.xml.XmlBinding;
 
-public class EnumerationResourceImpl extends TransferableResourceImpl  {
+public class EnumerationResourceImpl extends TransferableResourceImpl implements EnumerableResource {
+	
 	private static final String XPATH_TO_EPRS = "//*[namespace-uri()=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" and local-name()=\"EndpointReference\"]";
 
-	public ArrayList<String> reqResList = new ArrayList<String>();
-	
 	protected Long itemCount = null;
-	
 	protected List<EnumerationItem> enumItems = null;
 
-//	protected static final String UUID_SCHEME = "uuid:";
-
+	private boolean endOfSequence = false;
 	private static Logger log = Logger.getLogger(EnumerationResourceImpl.class
 			.getName());
 
 	public EnumerationResourceImpl(String destination, String resourceURI,
-			 SelectorSetType selectors) throws SOAPException,
-			JAXBException {
-		super(destination, resourceURI, selectors);
+			SelectorSetType selectors, XmlBinding binding) throws SOAPException, JAXBException {
+		super(destination, resourceURI, selectors, binding);
 	}
 
-	public EnumerationResourceImpl(Element eprElement, String endpointUrl)
+	public EnumerationResourceImpl(Element eprElement, String endpointUrl, XmlBinding binding)
 			throws SOAPException, JAXBException {
-		super(eprElement, endpointUrl);
+		super(eprElement, endpointUrl, binding);
 	}
 
 	// attributes
 	// ******************* WS Enumeration *************************************
-	
-	/**
-	 * Starts an enumeration transaction by obtaining an enumeration context.
-	 * This is a ticket which must be used in all future calls to access this
-	 * enumeration.
-	 * 
-	 * @param filters
-	 *            and array of filter expressions to be applied to the
-	 *            enumeration.
-	 * @param dialect
-	 *            The dialect to be used in filter expressions. XPATH_DIALECT
-	 *            can be used for XPath.
-	 * @param useEprs
-	 *            useEprs sets the EnumerateEpr Element causing subsequent pulls
-	 *            to contain erps only
-	 * @param timeout
-	 * 			  Timeout value for the enumerate request in milliseconds
-	 * @return An enumeration context
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 * @throws FaultException
-	 * @throws DatatypeConfigurationException
-	 */
-	public EnumerationCtx enumerate(final Object filter, final Map<String, String> map, final String dialect,
-			final boolean useEprs, final boolean useObjects, final long timeout)
-			throws SOAPException, JAXBException, IOException, FaultException,
-			DatatypeConfigurationException 
-	{
-		
-		// Set the timeout on the base class
-		this.setMessageTimeout(timeout);
-		return enumerate(filter, map, dialect, useEprs, useObjects);
-		
-	}
-	
-	/**
-	 * Starts an enumeration transaction by obtaining an enumeration context.
-	 * This is a ticket which must be used in all future calls to access this
-	 * enumeration.
-	 * 
-	 * @param filters
-	 *            and array of filter expressions to be applied to the
-	 *            enumeration.
-	 * @param dialect
-	 *            The dialect to be used in filter expressions. XPATH_DIALECT
-	 *            can be used for XPath.
-	 * @param useEprs
-	 *            useEprs sets the EnumerateEpr Element causing subsequent pulls
-	 *            to contain erps only
-	 * @param timeout
-	 * 			  Timeout value for the enumerate request in milliseconds
-	 * @param getItemCount 
-	 * 			  TRUE = return an estimated count of the items in the enumeration
-	 * @return An enumeration context
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 * @throws FaultException
-	 * @throws DatatypeConfigurationException
-	 */
-	public EnumerationCtx enumerate(final Object filter, final Map<String, String> map, final String dialect,
-			final boolean useEprs, final boolean useObjects, final long timeout, final boolean getItemCount)
-			throws SOAPException, JAXBException, IOException, FaultException,
-			DatatypeConfigurationException 
-	{
-		
-		// Set the timeout on the base class
-		this.setMessageTimeout(timeout);
-		return enumerate(filter, map, dialect, useEprs, useObjects, getItemCount, null, null, false, 0);
-		
-	}
-	/**
-	 * Starts an enumeration transaction by obtaining an enumeration context.
-	 * This is a ticket which must be used in all future calls to access this
-	 * enumeration.
-	 * 
-	 * @param filters
-	 *            and array of filter expressions to be applied to the
-	 *            enumeration.
-	 * @param dialect
-	 *            The dialect to be used in filter expressions. XPATH_DIALECT
-	 *            can be used for XPath.
-	 * @param useEprs
-	 *            useEprs sets the EnumerateEpr Element causing subsequent pulls
-	 *            to contain erps only
-	 * @param timeout
-	 * 			  Timeout value for the enumerate request in milliseconds
-	 * @return An enumeration context
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 * @throws FaultException
-	 * @throws DatatypeConfigurationException
-	 */
-	public EnumerationCtx enumerate(final Object filter, final Map<String, String> map, final String dialect,
-			final boolean useEprs, final boolean useObjects, final long timeout, final Object... params)
-			throws SOAPException, JAXBException, IOException, FaultException,
-			DatatypeConfigurationException 
-	{
-		
-		// Set the timeout on the base class
-		this.setMessageTimeout(timeout);
-		return enumerate(filter, map, dialect, useEprs, useObjects, false, null, null, false, 0, params);
-		
-	}	
 
+	/**
+	 * Initiates an enumeration transaction by obtaining an enumeration context.
+	 * This is a ticket which must be used in all future calls to access this
+	 * enumeration.
+	 * 
+	 * @param filter a filter expression to be applied against the enumeration.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 *        can be used for XPath expressions. 
+	 * @param getEpr indicates that the EndpointReference (EPR) for each item is to
+	 *        returned in the pull.
+	 * @param getResource indicates that the individual items are to be returned in
+	 *        the pull.
+	 * @return an enumeration context
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public EnumerationCtx enumerate(final Object filter,
+			final Map<String, String> namespaces, final String dialect,
+			final boolean getEpr, final boolean getResource)
+			throws SOAPException, JAXBException, IOException, FaultException,
+			DatatypeConfigurationException {
+		Object[] params = new Object[]{};
+		return enumerate(filter, namespaces, dialect, getEpr, getResource,
+				true, false, 0, 0, params);
+
+	}
 	
 	/**
-	 * Starts an enumeration transaction by obtaining an enumeration context.
+	 * Initiates an enumeration transaction by obtaining an enumeration context.
 	 * This is a ticket which must be used in all future calls to access this
 	 * enumeration.
 	 * 
-	 * @param filters
-	 *            and array of filter expressions to be applied to the
-	 *            enumeration.
-	 * @param dialect
-	 *            The dialect to be used in filter expressions. XPATH_DIALECT
-	 *            can be used for XPath.
-	 * @param useEprs
-	 *            useEprs sets the EnumerateEpr Element causing subsequent pulls
-	 *            to contain erps only
-	 * @param timeout
-	 * 			  Timeout value for the enumerate request in milliseconds
-	 * @param getItemCount 
-	 * 			  TRUE = return an estimated count of the items in the enumeration
-	 * @return An enumeration context
+	 * @param filter a filter expression to be applied against the enumeration.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 *        can be used for XPath expressions. 
+	 * @param getEpr indicates that the EndpointReference (EPR) for each item is to
+	 *        returned in the pull.
+	 * @param getResource indicates that the individual items are to be returned in
+	 *        the pull.
+	 * @param getItemCount if true indicates that the estimated item count should be returned
+	 * @param optimized if true the EnumerationItems will be requested to be returned
+	 *        in the enumerate call. Call {@link #getEnumerationItems()} to get the
+	 *        list of resources returned in this call.
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
+	 * @param maxElements
+	 *        the maximum number of elements which should be returned.
+	 *        Ignored if optimized is false.
+	 * @return an enumeration context
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final Object filter, final Map<String, String> namespaces, final String dialect,
-			final boolean useEprs, final boolean useObjects, final long timeout, final boolean getItemCount, final Object... params)
-			throws SOAPException, JAXBException, IOException, FaultException,
-			DatatypeConfigurationException 
-	{
-		
-		// Set the timeout on the base class
-		this.setMessageTimeout(timeout);
-		return enumerate(filter, namespaces, dialect, useEprs, useObjects, getItemCount, null, null, false, 0, params);
-		
-	}	
-	/**
-	 * Starts an enumeration transaction by obtaining an enumeration context.
-	 * This is a ticket which must be used in all future calls to access this
-	 * enumeration.
-	 * 
-	 * @param filters
-	 *            and array of filter expressions to be applied to the
-	 *            enumeration.
-	 * @param dialect
-	 *            The dialect to be used in filter expressions. XPATH_DIALECT
-	 *            can be used for XPath.
-	 * @param useEprs
-	 *            useEprs sets the EnumerateEpr Element causing subsequent pulls
-	 *            to contain erps only
-	 * @return An enumeration context
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 * @throws FaultException
-	 * @throws DatatypeConfigurationException
-	 */
-	public EnumerationCtx enumerate(final Object filter, final Map<String, String> namespaces, final String dialect,
-			final boolean useEprs, final boolean useObjects)
+	public EnumerationCtx enumerate(final Object filter,
+			final Map<String, String> namespaces, final String dialect,
+			final boolean getEpr, final boolean getResource,
+			final boolean getItemCount, final boolean optimized,
+			final long timeout, final long maxElements)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
-		return enumerate(filter, namespaces, dialect, useEprs, useObjects, false, null, null, false, 0, new Object[0]);
+		Object[] params = new Object[]{};
+		return enumerate(filter, namespaces, dialect, getEpr, getResource,
+				         getItemCount, optimized, timeout, maxElements, params);
 	}
+	
 	/**
-	 * Starts an enumeration transaction by obtaining an enumeration context.
+	 * Initiates an enumeration transaction by obtaining an enumeration context.
 	 * This is a ticket which must be used in all future calls to access this
 	 * enumeration.
 	 * 
-	 * @param filters
-	 *            and array of filter expressions to be applied to the
-	 *            enumeration.
-	 * @param dialect
-	 *            The dialect to be used in filter expressions. XPATH_DIALECT
-	 *            can be used for XPath.
-	 * @param useEprs
-	 *            useEprs sets the EnumerateEpr Element causing subsequent pulls
-	 *            to contain erps only
-	 * @param getItemCount 
-	 * 			  TRUE = return an estimated count of the items in the enumeration
-	 * @return An enumeration context
+	 * @param filter a filter expression to be applied against the enumeration.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 *        can be used for XPath expressions. 
+	 * @param getEpr indicates that the EndpointReference (EPR) for each item is to
+	 *        returned in the pull.
+	 * @param getResource indicates that the individual items are to be returned in
+	 *        the pull.
+	 * @param getItemCount if true indicates that the estimated item count should be returned
+	 * @param optimized if true the EnumerationItems will be requested to be returned
+	 *        in the enumerate call. Call {@link #getEnumerationItems()} to get the
+	 *        list of resources returned in this call.
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
+	 * @param maxElements
+	 *        the maximum number of elements which should be returned
+	 * @param params additional parameters to be marshalled into the <code>Enumerate</code>
+	 *        element in the Body of the request.
+	 * @return an enumeration context
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationCtx enumerate(final Object filter, final Map<String, String> namespaces, final String dialect,
-			final boolean useEprs, final boolean useObjects, final boolean getItemCount, 
-			final String fragmentRequest, final String fragmentDialect, final boolean optimized, final long maxElem, final Object... params)
+	public EnumerationCtx enumerate(final Object filter,
+			final Map<String, String> namespaces, final String dialect,
+			final boolean getEpr, final boolean getResource,
+			final boolean getItemCount, final boolean optimized,
+			final long timeout, final long maxElements, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
-		
+
 		String enumerationContextId = "";
 
-		final Transfer xf = setTransferProperties(Enumeration.ENUMERATE_ACTION_URI);		
+		this.setMessageTimeout(timeout);
+		final Transfer xf = setTransferProperties(Enumeration.ENUMERATE_ACTION_URI);
 		final Management mgmt = setManagementProperties(xf);
 		addOptionSetHeader(mgmt);
+		if (getMessageTimeout() > 0) {
+			final Duration duration = DatatypeFactory.newInstance()
+					.newDuration(getMessageTimeout());
+			mgmt.setTimeout(duration);
+		}
 		final EnumerationExtensions enu = new EnumerationExtensions(mgmt);
-		
+
 		// Enum Mode
 		Mode enumerationMode = null;
-		if (useEprs) {
+		if (getEpr) {
 			enumerationMode = EnumerationExtensions.Mode.EnumerateEPR;
 		}
 
-		if (useEprs && useObjects) {
+		if (getEpr && getResource) {
 			enumerationMode = EnumerationExtensions.Mode.EnumerateObjectAndEPR;
 		}
 
-	    // If xpathExpression is not null then generate fragment GET 
-	    if((fragmentRequest!=null)&&(fragmentRequest.trim().length()>0)){
-	    	// Add the Fragement Header
-	    	setFragmentHeader(fragmentRequest,fragmentDialect,mgmt);
-	    }
-	    	
-	    //final DatatypeFactory factory = DatatypeFactory.newInstance();
-		
 		if (filter != null) {
 			final DialectableMixedDataType filterType = Management.FACTORY
 					.createDialectableMixedDataType();
@@ -303,17 +229,17 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 				filterType.setDialect(dialect);
 			filterType.getContent().add(filter);
 
-			enu.setEnumerate(null, getItemCount, optimized, (int)maxElem, null, filterType, enumerationMode, params);
+			enu.setEnumerate(null, getItemCount, optimized, (int) maxElements,
+					null, filterType, enumerationMode, params);
 			enu.setFilterNamespaces(namespaces);
 		} else {
-			enu.setEnumerate(null, getItemCount, optimized, (int)maxElem, null, null, enumerationMode, params);
+			enu.setEnumerate(null, getItemCount, optimized, (int) maxElements,
+					null, null, enumerationMode, params);
 		}
 
-		// store away request and response for display purposes only
-		reqResList = new ArrayList<String>();
-		reqResList.add(mgmt.toString());
 		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
+		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
@@ -323,36 +249,49 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		}
 		log.info("RESPONSE:\n" + response + "\n");
 
-		final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
-		
-		reqResList.add(enuResponse.toString());
+		final EnumerationExtensions enuResponse = new EnumerationExtensions(
+				response);
 		final EnumerateResponse enr = enuResponse.getEnumerateResponse();
 
 		enumerationContextId = (String) enr.getEnumerationContext()
 				.getContent().get(0);
-		
+
 		if (getItemCount) {
 			if (enuResponse.getTotalItemsCountEstimate() != null)
-			   itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
+				itemCount = enuResponse.getTotalItemsCountEstimate().getValue()
+						.longValue();
 		}
-		
+
+		EnumerationCtx context = new EnumerationCtx(enumerationContextId);
 		if (optimized) {
-			enumItems = new ArrayList<EnumerationItem>();
-			
 			// Save the returned values from the optimized enumeration
-			 List <EnumerationItem> items = enuResponse.getItems();
-             if (items == null) {
-            	 // Server side does not support 'optimize'
-            	 // TODO: fetch the data for the caller.
-             } else {
-				Iterator iter = items.iterator();
-				while (iter.hasNext()) {
-					Object item = iter.next();
-					enumItems.add((EnumerationItem) item);
+			enumItems = enuResponse.getItems();
+			endOfSequence = enuResponse.isEndOfSequence();
+
+			if (enumItems == null) {
+				// Server side does not support 'optimize'
+				// Try to fetch the data for the caller.
+				if (endOfSequence == false) {
+					int maxTime = 0;
+					int maxEnvelopeSize = 0;
+					if (mgmt.getTimeout() != null) {
+						final GregorianCalendar now = new GregorianCalendar();
+						maxTime = (int) mgmt.getTimeout().getTimeInMillis(now);
+					}
+					if (mgmt.getMaxEnvelopeSize() != null) {
+						maxEnvelopeSize = (int) mgmt.getMaxEnvelopeSize()
+								.getValue().longValue();
+					}
+					// pull the data
+					executePull(context, maxTime, (int) maxElements,
+							maxEnvelopeSize, getItemCount);
+				} else {
+					// Set an empty list
+					enumItems = new ArrayList<EnumerationItem>(0);
 				}
 			}
 		}
-		return new EnumerationCtx(enumerationContextId);
+		return context;
 	}
 
 	/**
@@ -363,12 +302,14 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * 
 	 * @param enumerationContext
 	 *            the context create in your call to enumerate
-	 * @param maxTime
-	 *            The maxium timeout you are willing to wait for a response
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
 	 * @param maxElements
-	 *            the maximum number of elements which should be returned
-	 * @param maxCharacters
-	 *            the total size of the characters to be contained in
+	 *        the maximum number of elements which should be returned
+	 * @param maxEnvelopeSize the desired maximum envelope size for the returned SOAP
+	 *        envelope. If &lt;= 0 this parameter is ignored.
 	 * @param endpointUrl
 	 * @return
 	 * @throws SOAPException
@@ -382,18 +323,18 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws NoMatchFoundException
 	 */
 	public Resource[] pullResources(EnumerationCtx enumerationContext,
-			int maxTime, int maxElements, int maxCharacters, String endpointUrl)
-			throws SOAPException, JAXBException, IOException, FaultException,
-			DatatypeConfigurationException, XPathExpressionException,
-			NoMatchFoundException {
-		ResourceState resState = pull(enumerationContext, maxTime, maxElements,
-				maxCharacters);
+			int timeout, int maxElements, int maxEnvelopeSize,
+			String endpointUrl) throws SOAPException, JAXBException,
+			IOException, FaultException, DatatypeConfigurationException,
+			XPathExpressionException, NoMatchFoundException {
+		ResourceState resState = pull(enumerationContext, timeout, maxElements,
+				maxEnvelopeSize);
 		NodeList eprNodes = null;
 		eprNodes = resState.getValues(XPATH_TO_EPRS);
 		Vector<ResourceImpl> ret = new Vector<ResourceImpl>();
 		for (int index = 0; index < eprNodes.getLength(); index++) {
 			Element eprElement = (Element) eprNodes.item(index);
-			ret.add(new ResourceImpl(eprElement, endpointUrl));
+			ret.add(new ResourceImpl(eprElement, endpointUrl, getBinding()));
 		}
 		return (Resource[]) ret.toArray(new Resource[] {});
 	}
@@ -406,13 +347,14 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * 
 	 * @param enumerationContext
 	 *            The context created from a previous enumerate call.
-	 * @param maxTime
-	 *            The maxium timeout you are willing to wait for a response
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
 	 * @param maxElements
-	 *            the maximum number of elements which should be returned
-	 * @param maxCharacters
-	 *            the total size of the characters to be contained in the
-	 *            response
+	 *        the maximum number of elements which should be returned
+	 * @param maxEnvelopeSize the desired maximum envelope size for the returned SOAP
+	 *        envelope. If &lt;= 0 this parameter is ignored.
 	 * @return A resource state representing the returned complex type of the
 	 *         pull. Often this state will contain multiple entries from a
 	 *         number of resources.
@@ -423,12 +365,13 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationResourceState pull(EnumerationCtx enumerationContext, int maxTime,
-			int maxElements, int maxCharacters) throws SOAPException,
-			JAXBException, IOException, FaultException,
+	public EnumerationResourceState pull(EnumerationCtx enumerationContext,
+			int timeout, int maxElements, int maxEnvelopeSize)
+			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
 
-		return pull(enumerationContext, maxTime, maxElements, maxCharacters, false, null, null);
+		return pull(enumerationContext, timeout, maxElements, maxEnvelopeSize,
+				false);
 	}
 
 	/**
@@ -439,13 +382,16 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * 
 	 * @param enumerationContext
 	 *            The context created from a previous enumerate call.
-	 * @param maxTime
-	 *            The maxium timeout you are willing to wait for a response
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
 	 * @param maxElements
-	 *            the maximum number of elements which should be returned
-	 * @param maxCharacters
-	 *            the total size of the characters to be contained in the
-	 *            response
+	 *        the maximum number of elements which should be returned
+	 * @param maxEnvelopeSize the desired maximum envelope size for the returned SOAP
+	 *        envelope. If &lt;= 0 this parameter is ignored.
+	 * @param getItemCount
+	 *            Retrieve the total number of enumerated items
 	 * @return A resource state representing the returned complex type of the
 	 *         pull. Often this state will contain multiple entries from a
 	 *         number of resources.
@@ -456,32 +402,33 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationResourceState pull(EnumerationCtx enumerationContext, int maxTime,
-			int maxElements, int maxCharacters, String fragmentRequest, String fragmentDialect) throws SOAPException,
-			JAXBException, IOException, FaultException,
-			DatatypeConfigurationException {
+	public EnumerationResourceState pull(EnumerationCtx enumerationContext,
+			int timeout, int maxElements, int maxEnvelopeSize,
+			boolean getItemCount) throws SOAPException, JAXBException,
+			IOException, FaultException, DatatypeConfigurationException {
 
-		return pull(enumerationContext, maxTime, maxElements, maxCharacters, false, fragmentRequest, fragmentDialect);
-	}	/**
-	 * Requests a list of erps or objects. If you request EPRs or some fragment
-	 * of the state of an object this version of pull will just return them as a
-	 * resource state and you will have to extract the EPRs yourself. Use
-	 * pullResources for better access to EPRs.
+		SOAPBody body = executePull(enumerationContext, timeout, maxElements,
+				maxEnvelopeSize, getItemCount);
+		return new EnumerationResourceStateImpl(body.extractContentAsDocument());
+	}
+
+	/**
+	 * Requests a list of EnumerationItem objects. Depending on the request
+	 * options specified in the {@link #enumerate(Object, Map, String, boolean, boolean)}
+	 * call this may return the resource, its EPR or both.
 	 * 
 	 * @param enumerationContext
 	 *            The context created from a previous enumerate call.
-	 * @param maxTime
-	 *            The maxium timeout you are willing to wait for a response
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
 	 * @param maxElements
-	 *            the maximum number of elements which should be returned
-	 * @param maxCharacters
-	 *            the total size of the characters to be contained in the
-	 *            response
-	 * @param getItemCount
-	 * 			Retrieve the total number of enumerated items
-	 * @return A resource state representing the returned complex type of the
-	 *         pull. Often this state will contain multiple entries from a
-	 *         number of resources.
+	 *        the maximum number of elements which should be returned
+	 * @param maxEnvelopeSize the desired maximum envelope size for the returned SOAP
+	 *        envelope. If &lt;= 0 this parameter is ignored.
+	 * @param getItemCount if true indicates that the estimated item count should be returned
+	 * @return a list of EnumerationItem objects
 	 * 
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -489,37 +436,35 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public EnumerationResourceState pull(EnumerationCtx enumerationContext, int maxTime,
-			int maxElements, int maxCharacters, boolean getItemCount, String fragmentRequest, String fragmentDialect) throws SOAPException,
-			JAXBException, IOException, FaultException,
-			DatatypeConfigurationException {
+	public List<EnumerationItem> pullItems(EnumerationCtx enumerationContext, int timeout, int maxElements, int maxEnvelopeSize, boolean getItemCount) throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
+		executePull(enumerationContext, timeout, maxElements, maxEnvelopeSize, getItemCount);
+		return enumItems;
+	}
+	
+	private SOAPBody executePull(EnumerationCtx enumerationContext,
+			int maxTime, int maxElements, int maxEnvelopeSize,
+			boolean getItemCount) throws SOAPException, JAXBException,
+			IOException, FaultException, DatatypeConfigurationException {
 
 		// Now generate the request for an EnumCtxId with parameters passed in
 		final EnumerationExtensions enu = setEnumerationProperties(Enumeration.PULL_ACTION_URI);
 		Duration timeout = null;
-		if(maxTime>0)
+		if (maxTime > 0)
 			timeout = DatatypeFactory.newInstance().newDuration(maxTime);
-		enu.setPull(enumerationContext.toString(), maxCharacters, maxElements,
-				timeout);
+		enu.setPull(enumerationContext.toString(), maxEnvelopeSize,
+				maxElements, timeout);
 		final Management mgmt = setManagementProperties(enu);
-		
-	    // Add any user defined options to the header
+
+		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
-		
-		if (getItemCount){
+
+		if (getItemCount) {
 			enu.setRequestTotalItemsCountEstimate();
 		}
-		
-	    // If xpathExpression is not null then generate fragment pull 
-	    if((fragmentRequest!=null)&&(fragmentRequest.trim().length()>0)){
-	    	// Add the Fragement Header
-	    	setFragmentHeader(fragmentRequest,fragmentDialect,mgmt);
-	    }
-	    
-	    reqResList = new ArrayList<String>();
-		reqResList.add(mgmt.toString());
+
 		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
+		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
@@ -530,26 +475,32 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 
 		log.info("RESPONSE:\n" + response + "\n");
 
-		final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
-		reqResList.add(enuResponse.toString());
+		final EnumerationExtensions enuResponse = new EnumerationExtensions(
+				response);
 
 		updateEnumContext(enuResponse, enumerationContext);
 
-		SOAPBody body = response.getBody();
-
 		if (getItemCount) {
-			AttributableNonNegativeInteger countElement = enuResponse.getTotalItemsCountEstimate();
+			AttributableNonNegativeInteger countElement = enuResponse
+					.getTotalItemsCountEstimate();
 			if (countElement != null) {
-			    itemCount = enuResponse.getTotalItemsCountEstimate().getValue().longValue();
+				itemCount = enuResponse.getTotalItemsCountEstimate().getValue()
+						.longValue();
 			}
 		}
-			
-		return new EnumerationResourceStateImpl(body.extractContentAsDocument());
+
+		// Save a reference to the enumItems
+		enumItems = enuResponse.getItems();
+		endOfSequence = enuResponse.isEndOfSequence();
+		return response.getBody();
 	}
-	
-	private EnumerationExtensions setEnumerationProperties(String action) throws JAXBException, SOAPException {
-		final EnumerationExtensions enu= new EnumerationExtensions();
-		
+
+	private EnumerationExtensions setEnumerationProperties(String action)
+			throws JAXBException, SOAPException {
+		final EnumerationExtensions enu = new EnumerationExtensions();
+
+		if (getBinding() != null)
+			enu.setXmlBinding(getBinding());
 		enu.setAction(action);
 		enu.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 		enu.setMessageId("uuid:" + UUID.randomUUID().toString());
@@ -585,8 +536,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	/**
 	 * Releases a context for enumeration.
 	 * 
-	 * @param enumerationContext
-	 *            Nameof the context to release
+	 * @param enumerationContext ID of the context to release
 	 * @throws DatatypeConfigurationException
 	 * @throws FaultException
 	 * @throws IOException
@@ -603,11 +553,12 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 
 		final Management mgmt = setManagementProperties(enu);
 
-	       // Add any user defined options to the header
+		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
-		
+
 		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
+		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
@@ -621,8 +572,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 	/**
 	 * Releases a context for enumeration.
 	 * 
-	 * @param enumerationContext
-	 *            Nameof the context to release
+	 * @param enumerationContext ID of the context to release
 	 * @throws DatatypeConfigurationException
 	 * @throws FaultException
 	 * @throws IOException
@@ -634,15 +584,17 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 			DatatypeConfigurationException {
 
 		// Now generate the request for an EnumCtxId with parameters passed in
-		final Enumeration enu =setEnumerationProperties(Enumeration.RENEW_ACTION_URI);
+		final Enumeration enu = setEnumerationProperties(Enumeration.RENEW_ACTION_URI);
 		enu.setRelease(enumerationContext);
 
 		final Management mgmt = setManagementProperties(enu);
 
-	       // Add any user defined options to the header
+		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
-		
+
+		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
+		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
@@ -653,70 +605,15 @@ public class EnumerationResourceImpl extends TransferableResourceImpl  {
 		log.info("RESPONSE:\n" + response + "\n");
 	}
 
-
-	/**
-	 * @return Returns the reqResList.
-	 */
-	public ArrayList getReqResList() {
-		return reqResList;
-	}
-
 	public Long getItemCount() {
 		return itemCount;
 	}
 
-	public List<EnumerationItem> getEnumItems() {
+	public List<EnumerationItem> getEnumerationItems() {
 		return enumItems;
 	}
-	
-	/**
-	 * @return Returns the destination.
-	 */
-//	public String getDestination() {
-//		return destination;
-//	}
 
-	/**
-	 * @param destination
-	 *            The destination to set.
-	 */
-//	public void setDestination(String destination) {
-//		this.destination = destination;
-//	}
-
-	/**
-	 * @return Returns the resourceURI.
-	 */
-//	public String getResourceUri() {
-//		return resourceURI;
-//	}
-//
-	/**
-	 * @param resourceURI
-	 *            The resourceURI to set.
-	 */
-//	public void setResourceUri(String resourceURI) {
-//		this.resourceURI = resourceURI;
-//	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.sun.ws.management.client.impl.ResourceImpl#getMessageTimeout()
-	 */
-	// @Override
-//	public long getMessageTimeout() {
-//		return this.messageTimeout;
-//	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.sun.ws.management.client.impl.ResourceImpl#getSelectorSet()
-	 */
-	// @Override
-//	public SelectorSetType getSelectorSet() {
-//		return this.selectorSet;
-//	}
-
+	public boolean isEndOfSequence() {
+		return endOfSequence;
+	}
 }

@@ -59,8 +59,9 @@ public class TransferableResourceImpl implements TransferableResource {
     public static final QName FRAGMENT_TRANSFER =
         new QName(Management.NS_URI, "FragmentTransfer", Management.NS_PREFIX);
 
-	public static final QName DIALECT =
-	        new QName("Dialect");
+	public static final QName DIALECT = new QName("Dialect");
+	
+	public XmlBinding binding = null;
     
     //Attributes
 	/**
@@ -101,10 +102,11 @@ public class TransferableResourceImpl implements TransferableResource {
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 */
-	TransferableResourceImpl(String destination, String resourceURI,SelectorSetType selectors) throws SOAPException, JAXBException{
+	TransferableResourceImpl(String destination, String resourceURI,SelectorSetType selectors,XmlBinding binding) throws SOAPException, JAXBException{
 		setDestination(destination);
 		setResourceUri(resourceURI);
 		this.selectorSet=selectors;
+		this.binding=binding;
 		
 		initJAXB();
 	}
@@ -118,11 +120,13 @@ public class TransferableResourceImpl implements TransferableResource {
 	 * @throws JAXBException
 	 */
 	@SuppressWarnings("unchecked")
-	TransferableResourceImpl(Element eprElement, String endpointUrl) throws SOAPException, JAXBException {
+	TransferableResourceImpl(Element eprElement, String endpointUrl,XmlBinding binding) throws SOAPException, JAXBException {
 		initJAXB();
-		XmlBinding binding=new XmlBinding(null);
+		if (binding == null)
+			binding = new XmlBinding(null);
+		this.binding = binding;
 		EndpointReferenceType epr = null;
-		epr = ((JAXBElement<EndpointReferenceType>)binding.unmarshal(eprElement)).getValue();
+		epr = ((JAXBElement<EndpointReferenceType>)this.binding.unmarshal(eprElement)).getValue();
 		
 		// Determine callers return address. If anonymous, then use calling ERP's address
 		this.destination=epr.getAddress().getValue();
@@ -344,6 +348,8 @@ public class TransferableResourceImpl implements TransferableResource {
 		}
 
 		Transfer xf=new Transfer();
+		if (binding != null)
+		    xf.setXmlBinding(binding);
 		xf.setAction(action);
 		xf.setReplyTo(replyTo); //Replying to creator
 		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -354,7 +360,8 @@ public class TransferableResourceImpl implements TransferableResource {
 	
 	protected Management setManagementProperties(Addressing xf) throws SOAPException, JAXBException, DatatypeConfigurationException {
 		final Management mgmt = new Management(xf);
-		mgmt.setXmlBinding(xf.getXmlBinding());
+		if ((xf.getXmlBinding() == null) && (binding != null))
+			mgmt.setXmlBinding(binding);
 		mgmt.setTo(destination);
 		mgmt.setResourceURI(resourceURI);
 		
@@ -631,5 +638,32 @@ public class TransferableResourceImpl implements TransferableResource {
 		optionSet = null;
 	}
 
+    /**
+     * Gets the XmlBinding used by this Resource.
+     * 
+     * @return the XmlBinding used by this Resource
+     */
+	public XmlBinding getBinding() {
+		return binding;
+	}
 
+    /**
+     * Sets the XmlBinding used by this Resource.
+     * 
+     * @param binding the XmlBinding used by this Resource
+     */
+	public void setBinding(XmlBinding binding) {
+		this.binding = binding;
+	}
+	
+
+    /**
+     * Sets the XmlBinding given a list of package names.
+     * 
+     * @param packageNames
+     * @throws JAXBException
+     */
+	public void setBinding(final String... packageNames) throws JAXBException {
+		this.binding = new XmlBinding(null, packageNames);
+	}
 }

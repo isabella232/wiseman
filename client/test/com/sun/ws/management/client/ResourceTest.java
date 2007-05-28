@@ -1,41 +1,27 @@
-package com.sun.ws.management.client.impl;
+package com.sun.ws.management.client;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringWriter;
-import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.TimeZone;
-import java.util.Vector;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.Duration;
-import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.SOAPElement;
-import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPFault;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -46,27 +32,16 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathExpressionException;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
-import org.w3._2003._05.soap_envelope.Envelope;
-import org.w3._2003._05.soap_envelope.Header;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import util.WsManBaseTestSupport;
 
@@ -76,37 +51,20 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.client.EnumerationCtx;
-import com.sun.ws.management.client.EnumerationResourceState;
-import com.sun.ws.management.client.Resource;
-import com.sun.ws.management.client.ResourceFactory;
-import com.sun.ws.management.client.ResourceState;
-import com.sun.ws.management.client.ServerIdentity;
-import com.sun.ws.management.client.TransferableResource;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingMessageValues;
 import com.sun.ws.management.eventing.EventingUtility;
-import com.sun.ws.management.eventing.EventingMessageValues.CreationTypes;
 import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
-import com.sun.ws.management.metadata.annotations.WsManagementAddressDetailsAnnotation;
-import com.sun.ws.management.metadata.annotations.WsManagementQNamedNodeWithValueAnnotation;
-import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.server.EnumerationSupport;
-import com.sun.ws.management.server.NamespaceMap;
-import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.server.handler.wsman.eventsubman_Handler;
 import com.sun.ws.management.server.handler.wsman.auth.eventcreator_Handler;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
-import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
@@ -118,10 +76,10 @@ import com.sun.ws.management.xml.XmlBinding;
  * @author wire
  *
  */
-public class ResourceImplTest extends WsManBaseTestSupport {
+public class ResourceTest extends WsManBaseTestSupport {
 
 	private static ObjectFactory userFactory = new ObjectFactory();
-	private static Logger LOG = Logger.getLogger(ResourceImplTest.class.getName());
+	private static Logger LOG = Logger.getLogger(ResourceTest.class.getName());
 //	public static String destUrl = "http://localhost:8080/wsman/";
 	public static String destUrl = ManagementMessageValues.WSMAN_DESTINATION;
 
@@ -243,9 +201,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 		binding.marshal(userElement, content);
 
-		Resource resource = ResourceFactory.create(ResourceImplTest.destUrl,
-				ResourceImplTest.resourceUri,
-				ResourceImplTest.timeoutInMilliseconds, content,
+		Resource resource = ResourceFactory.create(ResourceTest.destUrl,
+				ResourceTest.resourceUri,
+				ResourceTest.timeoutInMilliseconds, content,
 				ResourceFactory.LATEST);
 
 		resource.addOption("opt1", "value1", new QName(XMLConstants.W3C_XML_SCHEMA_NS_URI, "string"));
@@ -303,9 +261,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement =userFactory.createUser(user);
 		binding.marshal(userElement,content);
 
-		Resource resource = ResourceFactory.create(ResourceImplTest.destUrl,
-				ResourceImplTest.resourceUri,
-				ResourceImplTest.timeoutInMilliseconds,
+		Resource resource = ResourceFactory.create(ResourceTest.destUrl,
+				ResourceTest.resourceUri,
+				ResourceTest.timeoutInMilliseconds,
 				content,ResourceFactory.LATEST);
 
 		
@@ -344,8 +302,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 	DatatypeConfigurationException, FaultException {
 		
 		// Now create an instance and test it's contents
-		String dest = ResourceImplTest.destUrl;
-		String resource = ResourceImplTest.resourceUri;
+		String dest = ResourceTest.destUrl;
+		String resource = ResourceTest.resourceUri;
 
 		UserType user = userFactory.createUserType();
 		user.setLastname("Finkle");
@@ -360,9 +318,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 		binding.marshal(userElement, stateDocument);
 		
-		Resource newResource = ResourceFactory.create(ResourceImplTest.destUrl,
-				ResourceImplTest.resourceUri,
-				ResourceImplTest.timeoutInMilliseconds, stateDocument,
+		Resource newResource = ResourceFactory.create(ResourceTest.destUrl,
+				ResourceTest.resourceUri,
+				ResourceTest.timeoutInMilliseconds, stateDocument,
 				ResourceFactory.LATEST, null);
 		
 		ResourceState response = newResource.invoke("http://unit.test.org/customaction", stateDocument);
@@ -381,8 +339,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 			DatatypeConfigurationException, FaultException {
 
 		// Now create an instance and test it's contents
-		String dest = ResourceImplTest.destUrl;
-		String resource = ResourceImplTest.resourceUri;
+		String dest = ResourceTest.destUrl;
+		String resource = ResourceTest.resourceUri;
 
 		UserType user = userFactory.createUserType();
 		user.setLastname("Finkle");
@@ -406,9 +364,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		opt.setValue("abcd");
 		options.add(opt);
 
-		Resource newResource = ResourceFactory.create(ResourceImplTest.destUrl,
-				ResourceImplTest.resourceUri,
-				ResourceImplTest.timeoutInMilliseconds, stateDocument,
+		Resource newResource = ResourceFactory.create(ResourceTest.destUrl,
+				ResourceTest.resourceUri,
+				ResourceTest.timeoutInMilliseconds, stateDocument,
 				ResourceFactory.LATEST, options);
 
 		assertEquals("Values not identical.", dest, newResource
@@ -416,7 +374,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		assertEquals("Values not identical.", resource, newResource
 				.getResourceUri());
 		assertEquals("Values not identical.",
-				ResourceImplTest.timeoutInMilliseconds, newResource
+				ResourceTest.timeoutInMilliseconds, newResource
 						.getMessageTimeout());
 
 		// test contents of the selectors returned. Anything beyond EPR is
@@ -440,8 +398,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 			 DatatypeConfigurationException, FaultException {
 
 		// Now create an instance and test it's contents
-		String dest = ResourceImplTest.destUrl;
-		String resource = ResourceImplTest.resourceUri;
+		String dest = ResourceTest.destUrl;
+		String resource = ResourceTest.resourceUri;
 
 		String lastName ="Finkle-Fragment"+Calendar.getInstance().getTimeInMillis();
 		UserType user = userFactory.createUserType();
@@ -457,13 +415,13 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement =userFactory.createUser(user);
 		binding.marshal(userElement,stateDocument);
 
-		Resource newResource = ResourceFactory.create(ResourceImplTest.destUrl, ResourceImplTest.resourceUri,
-				ResourceImplTest.timeoutInMilliseconds, stateDocument,ResourceFactory.LATEST);
+		Resource newResource = ResourceFactory.create(ResourceTest.destUrl, ResourceTest.resourceUri,
+				ResourceTest.timeoutInMilliseconds, stateDocument,ResourceFactory.LATEST);
 
 		assertEquals("Values not identical.", dest, newResource.getDestination());
 		assertEquals("Values not identical.", resource, newResource
 				.getResourceUri());
-		assertEquals("Values not identical.", ResourceImplTest.timeoutInMilliseconds, newResource
+		assertEquals("Values not identical.", ResourceTest.timeoutInMilliseconds, newResource
 				.getMessageTimeout());
 
 		// DONE: test contents of the selectors returned. Anything beyond EPR is
@@ -502,10 +460,10 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		    stateDocument.appendChild(element);
 		  userElement =userFactory.createUser(user);
 //		 binding.marshal(userElement,stateDocument);
-		Resource newFragResource = ResourceFactory.createFragment(ResourceImplTest.destUrl,
-				ResourceImplTest.resourceUri,
+		Resource newFragResource = ResourceFactory.createFragment(ResourceTest.destUrl,
+				ResourceTest.resourceUri,
 				newResource.getSelectorSet(),
-				ResourceImplTest.timeoutInMilliseconds,
+				ResourceTest.timeoutInMilliseconds,
 				stateDocument,ResourceFactory.LATEST,
 				fragmentRequest,
 				XPath.NS_URI);
@@ -513,7 +471,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		assertEquals("Values not identical.", dest, newResource.getDestination());
 		assertEquals("Values not identical.", resource, newResource
 				.getResourceUri());
-		assertEquals("Values not identical.", ResourceImplTest.timeoutInMilliseconds, newResource
+		assertEquals("Values not identical.", ResourceTest.timeoutInMilliseconds, newResource
 				.getMessageTimeout());
 
 		resourceState = newResource.get();
@@ -538,9 +496,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 	 */
 	public void testDelete() throws JAXBException, SOAPException, IOException,
 			FaultException, DatatypeConfigurationException {
-		String dest = ResourceImplTest.destUrl;
-		String resource = ResourceImplTest.resourceUri;
-		long timeoutInMilliseconds = ResourceImplTest.timeoutInMilliseconds;
+		String dest = ResourceTest.destUrl;
+		String resource = ResourceTest.resourceUri;
+		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 		Document content = null;
 
 		// now build Create XML body contents.
@@ -586,9 +544,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	public void testFragmentDelete() throws JAXBException, SOAPException, IOException,
 			FaultException, DatatypeConfigurationException {
-		String dest = ResourceImplTest.destUrl;
-		String resource = ResourceImplTest.resourceUri;
-		long timeoutInMilliseconds = ResourceImplTest.timeoutInMilliseconds;
+		String dest = ResourceTest.destUrl;
+		String resource = ResourceTest.resourceUri;
+		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 
 		Document content = null;
 		// now build Create XML body contents.
@@ -608,7 +566,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		content = loadUserTypeToDocument(content, user, binding);
 
 //		Resource created = ResourceFactory.create(dest, resource,
-		TransferableResourceImpl created = (TransferableResourceImpl) ResourceFactory.create(dest, resource,
+		TransferableResource created = (TransferableResource) ResourceFactory.create(dest, resource,
 				timeoutInMilliseconds, content,ResourceFactory.LATEST);
 		// pull out Epr and parse for selectors
 		// EndpointReferenceType retrievedEpr = created.getResourceEpr();
@@ -640,9 +598,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 	public void testPut() throws SOAPException, JAXBException, IOException,
 			FaultException, DatatypeConfigurationException {
 		// Now create an instance and test it's contents
-		String dest = ResourceImplTest.destUrl;
-		String resource = ResourceImplTest.resourceUri;
-		long timeoutInMilliseconds = ResourceImplTest.timeoutInMilliseconds;
+		String dest = ResourceTest.destUrl;
+		String resource = ResourceTest.resourceUri;
+		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 		Document content = null;
 
 		// now build Create XML body contents.
@@ -704,9 +662,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 
 	public void testFragmentPut() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
 		// Now create an instance and test it's contents
-		String dest = ResourceImplTest.destUrl;
-		String resource = ResourceImplTest.resourceUri;
-		long timeoutInMilliseconds = ResourceImplTest.timeoutInMilliseconds;
+		String dest = ResourceTest.destUrl;
+		String resource = ResourceTest.resourceUri;
+		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 		Document content = null;
 
 		// now build Create XML body contents.
@@ -781,8 +739,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		String resUri = "";
 		HashMap<String,String> selectors=null;
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceImplTest.destUrl, ResourceImplTest.resourceUri,
-				ResourceImplTest.timeoutInMilliseconds, selectors);
+				ResourceTest.destUrl, ResourceTest.resourceUri,
+				ResourceTest.timeoutInMilliseconds, selectors);
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
 		// TODO: write test for specific resource retrieval.
 		// Source src = null;
@@ -799,14 +757,14 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 SelectorSetType selectors = null;
 		 //test that Find works to retrieve the Enumeration instance.
 		 Resource[] enumerableResources = ResourceFactory.find(
-		 ResourceImplTest.destUrl,
+		 ResourceTest.destUrl,
 		 resourceUri,
-		 ResourceImplTest.timeoutInMilliseconds,
+		 ResourceTest.timeoutInMilliseconds,
 		 selectors);
 		 
 		 assertEquals("Expected one resource.",1,enumerableResources.length);
 		 Resource retrieved = enumerableResources[0];
-		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		 assertTrue(retrieved instanceof EnumerableResource);
 		
 		 retrieved.addOption("opt1", "value1");
 		 retrieved.addOption("opt2", new Integer(7));
@@ -831,8 +789,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 userChildNode2.setTextContent("9999");
 		 
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, timeout, 
-				 new Object[] {userChildNode, userChildNode2});
+		 Object[] params = new Object[] {userChildNode, userChildNode2};
+		 EnumerationCtx enumContext = retrieved.enumerate(xpathFilter,namespaces,XPath.NS_URI, 
+				 false, false, false, false, timeout, 0, params);
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		
@@ -882,15 +841,18 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		
 		 //Now do a find again to make sure that correct context is retrieved.
 		 Resource[] enumResources = ResourceFactory.find(
-				 ResourceImplTest.destUrl,
+				 ResourceTest.destUrl,
 				 resourceUri,
-				 ResourceImplTest.timeoutInMilliseconds,
+				 ResourceTest.timeoutInMilliseconds,
 				 selectors);
 		 //Only resource retrieved should be the enumerable resource
 		 Resource retEnumRes = enumResources[0];
 		 retrievedValues = retEnumRes.pull(enumContext,maxTime,
 		 maxElements,maxChar);
 		
+		 // Check the end of context
+		 assertFalse("EndOfContext should not be set to true.", retrieved.isEndOfSequence());
+		 
 		 //DONE: test release
 		 retrieved.release(enumContext);
 		 try{
@@ -911,14 +873,14 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 SelectorSetType selectors = null;
 		 //test that Find works to retrieve the Enumeration instance.
 		 Resource[] enumerableResources = ResourceFactory.find(
-		 ResourceImplTest.destUrl,
+		 ResourceTest.destUrl,
 		 resourceUri,
-		 ResourceImplTest.timeoutInMilliseconds,
+		 ResourceTest.timeoutInMilliseconds,
 		 selectors);
 		 
 		 assertEquals("Expected one resource.",1,enumerableResources.length);
 		 Resource retrieved = enumerableResources[0];
-		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		 assertTrue(retrieved instanceof EnumerableResource);
 		
 		 retrieved.addOption("opt1", "value1");
 		 retrieved.addOption("opt2", new Integer(7));
@@ -945,7 +907,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 
 		 String dialect = "http://examples.hp.com/ws/wsman/user/filter/custom";
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(filterElem,namespaces,dialect,false,false, timeout, 
+		 EnumerationCtx enumContext = retrieved.enumerate(filterElem, namespaces, dialect,
+				 false, false, false, false, timeout, 0,
 				 new Object[] {userChildNode, userChildNode2});
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
@@ -988,7 +951,9 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 			 }
 		 }
 		 
-	
+		 // Check the end of context
+		 assertFalse("EndOfContext should not be set to true.", retrieved.isEndOfSequence());
+		 
 		 //DONE: test release
 		 retrieved.release(enumContext);
 
@@ -1002,14 +967,14 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 SelectorSetType selectors = null;
 		 //test that Find works to retrieve the Enumeration instance.
 		 Resource[] enumerableResources = ResourceFactory.find(
-		 ResourceImplTest.destUrl,
+		 ResourceTest.destUrl,
 		 resourceUri,
-		 ResourceImplTest.timeoutInMilliseconds,
+		 ResourceTest.timeoutInMilliseconds,
 		 selectors);
 		 
 		 assertEquals("Expected one resource.",1,enumerableResources.length);
 		 Resource retrieved = enumerableResources[0];
-		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		 assertTrue(retrieved instanceof EnumerableResource);
 		
 		 retrieved.addOption("opt1", "value1");
 		 retrieved.addOption("opt2", new Integer(7));
@@ -1034,21 +999,20 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 userChildNode2.setTextContent("9999");
 		 
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,
-				 false, timeout, true, new Object[] {userChildNode, userChildNode2});
+		 EnumerationCtx enumContext = retrieved.enumerate(xpathFilter, namespaces,XPath.NS_URI, false,
+				 false, true, false, timeout, 0, new Object[] {userChildNode, userChildNode2});
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		  
-		  assertTrue("Item count null", ((EnumerationResourceImpl)retrieved).getItemCount() != null);
-		  assertTrue("Item count <= 0", ((EnumerationResourceImpl)retrieved).getItemCount().longValue() > 0);
+		  assertTrue("Item count null", retrieved.getItemCount() != null);
+		  assertTrue("Item count <= 0", retrieved.getItemCount().longValue() > 0);
 		
 		 //DONE: now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 5;
 		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		 
-		 ResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
-				 maxElements,maxChar, true, null, null);
+		 ResourceState retrievedValues = retrieved.pull(enumContext, maxTime, maxElements, maxChar);
 		 //Navigate down to retrieve Items children
 		 	//Document Children
 		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
@@ -1063,7 +1027,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 assertEquals("Incorrect number of elements returned!",
 				 maxElements, children.getLength());
 		 
-		  assertTrue("Item count <= 0", ((EnumerationResourceImpl)retrieved).getItemCount() > 0);
+		  assertTrue("Item count <= 0", retrieved.getItemCount() > 0);
 		 //DONE: iterate through to make sure that 
 		 for(int i=0;i<children.getLength();i++){
 			 Node node = children.item(i);
@@ -1094,14 +1058,14 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 SelectorSetType selectors = null;
 		 //test that Find works to retrieve the Enumeration instance.
 		 Resource[] enumerableResources = ResourceFactory.find(
-		 ResourceImplTest.destUrl,
+		 ResourceTest.destUrl,
 		 resourceUri,
-		 ResourceImplTest.timeoutInMilliseconds,
+		 ResourceTest.timeoutInMilliseconds,
 		 selectors);
 		 
 		 assertEquals("Expected one resource.",1,enumerableResources.length);
 		 Resource retrieved = enumerableResources[0];
-		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		 assertTrue(retrieved instanceof EnumerableResource);
 		
 		 //Build the filters
 		 final String testName = "James";//See users.store for more valid search values
@@ -1113,8 +1077,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 String xPathReq = null; // TODO: "//*[local-name()='age']";
 		
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, false, 
-				 xPathReq, null, false, 0);
+		 EnumerationCtx enumContext = retrieved.enumerate(xpathFilter, namespaces, XPath.NS_URI, 
+				 false, false, true, false, 0, 0);
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		
@@ -1123,8 +1087,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 int maxElements = 10;
 		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		 
-		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
-				 maxElements,maxChar, xPathReq, null);
+		 EnumerationResourceState retrievedValues = (EnumerationResourceState)retrieved.pull(enumContext, maxTime, maxElements, maxChar);
 		 //Navigate down to retrieve Items children
 		 	//Document Children
 		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
@@ -1167,14 +1130,14 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 SelectorSetType selectors = null;
 		 //test that Find works to retrieve the Enumeration instance.
 		 Resource[] enumerableResources = ResourceFactory.find(
-		 ResourceImplTest.destUrl,
+		 ResourceTest.destUrl,
 		 resourceUri,
-		 ResourceImplTest.timeoutInMilliseconds,
+		 ResourceTest.timeoutInMilliseconds,
 		 selectors);
 		 
 		 assertEquals("Expected one resource.",1,enumerableResources.length);
 		 Resource retrieved = enumerableResources[0];
-		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		 assertTrue(retrieved instanceof EnumerableResource);
 		
 		 
 		 //Build the filters
@@ -1187,7 +1150,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 long timeout = 1000000; 
 		 
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, timeout);
+		 EnumerationCtx enumContext = retrieved.enumerate(xpathFilter, namespaces, XPath.NS_URI,
+				 false, false, true, false, timeout, 0);
 		  assertNotNull("Enum context retrieval problem.",enumContext);
 		  assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		
@@ -1196,7 +1160,7 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 int maxElements = 5;
 		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		 
-		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
+		 EnumerationResourceState retrievedValues = (EnumerationResourceState)retrieved.pull(enumContext,maxTime,
 				 maxElements,maxChar);
 		 //Navigate down to retrieve Items children
 		 	//Document Children
@@ -1242,14 +1206,14 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 SelectorSetType selectors = null;
 		 //test that Find works to retrieve the Enumeration instance.
 		 Resource[] enumerableResources = ResourceFactory.find(
-		 ResourceImplTest.destUrl,
+		 ResourceTest.destUrl,
 		 resourceUri,
-		 ResourceImplTest.timeoutInMilliseconds,
+		 ResourceTest.timeoutInMilliseconds,
 		 selectors); 
 		 
 		 assertEquals("Expected one resource.",1,enumerableResources.length);
 		 Resource retrieved = enumerableResources[0];
-		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		 assertTrue(retrieved instanceof EnumerableResource);
 		
 		 //Build the filters
 		 final String testName = "James";//See users.store for more valid search values
@@ -1262,43 +1226,42 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 int maxElements = 10;
 		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		
-		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, false, 
-				 null, null, true, maxElements);
+		 //Retrieve the Enumeration context (optimized enumerate).
+		 EnumerationCtx enumContext = retrieved.enumerate(xpathFilter, namespaces, XPath.NS_URI,
+				 false, false, true, true, 0, maxElements);
 		 assertNotNull("Enum context retrieval problem.",enumContext);
 		 assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		
-		 List<EnumerationItem> enumItems = ((EnumerationResourceImpl)retrieved).getEnumItems();
+		 List<EnumerationItem> enumItems = retrieved.getEnumerationItems();
 		 assertNotNull("No items returned in optimized enumeration", enumItems);
 		 assertTrue("Wrong number of optimized enum items returned", enumItems.size() == maxElements);
 		 
 		 //iterate through to make sure that the correct fragment nodes are returned
-		 for(int i=0;i<enumItems.size();i++){
-			 EnumerationItem node = enumItems.get(i);
-			 JAXBElement<UserType> item = (JAXBElement<UserType>) node.getItem();
-			 assertTrue(item != null);
-			 UserType user = item.getValue();
-			 assertTrue(user.getFirstname().trim().equalsIgnoreCase(testName.trim()));
-			 }
+		 for (int i = 0; i < enumItems.size(); i++) {
+			EnumerationItem node = enumItems.get(i);
+			JAXBElement<UserType> item = (JAXBElement<UserType>) node.getItem();
+			assertTrue(item != null);
+			UserType user = item.getValue();
+			assertTrue(user.getFirstname().trim().equalsIgnoreCase(
+					testName.trim()));
+		}
 		 
-		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
-				 maxElements,maxChar, null, null);
-		 //Navigate down to retrieve Items children
-		 	//Document Children
-		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
-		  //PullResponse node
-		 assertNotNull("No root node for PullResponse.",rootChildren);
-		 Node child = rootChildren.item(0);
-		 //Items node
-		 assertNotNull("No child node for PullResponse found.",child);
-		 //Check number of enumerated values returned.
-		 NodeList children = child.getChildNodes().item(1).getChildNodes();
-		 assertEquals("Incorrect number of elements returned!",
-				 maxElements, children.getLength());
-		 
-		
-		 //DONE: test release
-		 retrieved.release(enumContext);
+		 while (retrieved.isEndOfSequence() == false) {
+			enumItems = retrieved.pullItems(enumContext, 0, maxElements, 0,
+					true);
+			assertNotNull("No items returned in optimized enumeration", enumItems);
+			assertTrue("Wrong number of optimized enum items returned", 
+					(0 < enumItems.size()) && (enumItems.size() <= maxElements));
+			for (int i = 0; i < enumItems.size(); i++) {
+				EnumerationItem node = enumItems.get(i);
+				JAXBElement<UserType> item = (JAXBElement<UserType>) node
+						.getItem();
+				assertTrue(item != null);
+				UserType user = item.getValue();
+				assertTrue(user.getFirstname().trim().equalsIgnoreCase(
+						testName.trim()));
+			}
+		}
 	 }
 		 	 
 	
@@ -1311,14 +1274,14 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 SelectorSetType selectors = null;
 		 //test that Find works to retrieve the Enumeration instance.
 		 Resource[] enumerableResources = ResourceFactory.find(
-		 ResourceImplTest.destUrl,
+		 ResourceTest.destUrl,
 		 resourceUri,
-		 ResourceImplTest.timeoutInMilliseconds,
+		 ResourceTest.timeoutInMilliseconds,
 		 selectors); 
 		 
 		 assertEquals("Expected one resource.",1,enumerableResources.length);
 		 Resource retrieved = enumerableResources[0];
-		 assertTrue(retrieved instanceof EnumerationResourceImpl);
+		 assertTrue(retrieved instanceof EnumerableResource);
 		
 		 //Build the filters
 		 final String testName = "James";//See users.store for more valid search values
@@ -1326,20 +1289,21 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		 final Map<String, String> namespaces = new HashMap<String, String>(1);
 		 namespaces.put("user", USER_NS);
 
-	     //Now build the XPath expression for fragment GET
-		 String xPathReq = null; // TODO: "//*[local-name()='age']";
 		 //now test the pull mechanism
 		 int maxTime =1000*60*15;
 		 int maxElements = 10;
 		 int maxChar = 0; // 20000; //random limit. NOT yet supported.
 		
 		 //Retrieve the Enumeration context.
-		 EnumerationCtx enumContext = ((EnumerationResourceImpl)retrieved).enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, false, 
-				 xPathReq, null, true, maxElements);
+		 EnumerationCtx enumContext = retrieved.enumerate(xpathFilter, namespaces, XPath.NS_URI, 
+				 false, false, true, true, 0, maxElements);
+		 // retrieved.enumerate(xpathFilter,namespaces,XPath.NS_URI,false,false, false, 
+		 //		 xPathReq, null, true, maxElements);
+		 
 		 assertNotNull("Enum context retrieval problem.",enumContext);
 		 assertTrue("Context id is empty.",(enumContext.getContext().trim().length()>0));
 		
-		 List<EnumerationItem> enumItems = ((EnumerationResourceImpl)retrieved).getEnumItems();
+		 List<EnumerationItem> enumItems = retrieved.getEnumerationItems();
 		 
 		 assertNotNull("No items returned in optimized enumeration", enumItems);
 		 assertTrue("Wrong number of optimized enum items returned", enumItems.size() == maxElements);
@@ -1362,8 +1326,8 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 			 }
 		 }
 		 
-		 EnumerationResourceState retrievedValues = ((EnumerationResourceImpl)retrieved).pull(enumContext,maxTime,
-				 maxElements,maxChar, xPathReq, null);
+		 EnumerationResourceState retrievedValues = (EnumerationResourceState)retrieved.pull(enumContext,maxTime,
+				 maxElements,maxChar);
 		 //Navigate down to retrieve Items children
 		 	//Document Children
 		 NodeList rootChildren = retrievedValues.getDocument().getChildNodes();
@@ -1443,24 +1407,6 @@ public class ResourceImplTest extends WsManBaseTestSupport {
 		user = (UserType) ob.getValue();
 
 		return user;
-	}
-
-	public void locateClass(String className){
-		 if (!className.startsWith("/")) {
-	         className = "/" + className;
-	       }
-	       className = className.replace('.', '/');
-	       className = className + ".class";
-	      java.net.URL classUrl =
-	        EnumerationResourceImpl.class.getResource(className);
-	      if(classUrl != null) {
-	        System.out.println("\nClass '" + className +
-	          "' found in \n'" + classUrl.getFile() + "'");
-	      } else {
-	        System.out.println("\nClass '" + className +
-	          "' not found in \n'" +
-	          System.getProperty("java.class.path") + "'");
-	      }
 	}
 	
 	public void testEventingSubscriptionManager() throws JAXBException, 
