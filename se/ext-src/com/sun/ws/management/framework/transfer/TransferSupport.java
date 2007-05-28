@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferSupport.java,v 1.1 2007-04-06 10:03:12 jfdenise Exp $
+ * $Id: TransferSupport.java,v 1.2 2007-05-28 09:24:27 denis_rachal Exp $
  *
  */
 package com.sun.ws.management.framework.transfer;
@@ -25,13 +25,11 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
-import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
@@ -90,6 +88,7 @@ public class TransferSupport implements Transferable {
 	 * @param selectors
 	 * @throws JAXBException 
 	 */
+	@SuppressWarnings("static-access")
 	protected void appendCreateResponse(Management response, String resourceUri,Map<String,String> selectors) throws JAXBException  {
 		EndpointReferenceType epr=null;
 		epr = response.createEndpointReference(Addressing.ANONYMOUS_ENDPOINT_URI, null,null,null,null);
@@ -120,17 +119,14 @@ public class TransferSupport implements Transferable {
         
         paramList.add(managementFactory.createSelectorSet(selectorSetType));
        XmlBinding xmlBinding = response.getXmlBinding(); 
-        Document responseDoc = Management.newDocument();
+        /// Document responseDoc = Management.newDocument();
 		try {
-			xmlBinding.marshal(resp, responseDoc );
+			xmlBinding.marshal(resp, response.getBody());
 		} catch (JAXBException e) {
-			throw new InternalErrorFault();
-		}
-
-		try {
-			response.getBody().addDocument(responseDoc );
-		} catch (SOAPException e) {
-			throw new InternalErrorFault();
+			final String explanation = 
+				 "XML Binding marshall failed for object of type: "
+                + resp.getClass().getName();
+			throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
 		}
 	}
 
