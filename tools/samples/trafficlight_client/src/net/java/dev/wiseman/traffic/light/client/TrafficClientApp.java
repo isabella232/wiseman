@@ -129,14 +129,14 @@ public class TrafficClientApp extends javax.swing.JFrame {
 			EnumerableResource enumResource = (EnumerableResource) resources[0];
 			final String filter = null;
 			final Map<String, String> namespaces = null;
-			final boolean useEprs = true;
+			final boolean getEpr = true;
 			EnumerationCtx context = enumResource.enumerate(filter, namespaces,
-					Resource.XPATH_DIALECT, useEprs, false);
+					Resource.XPATH_DIALECT, getEpr, false);
 			int timeout = 30000;
 			int numberOfRecords = 5;
 
 			// Work in batches of 5
-			while (true) {
+			while (enumResource.isEndOfSequence() == false) {
 				Resource[] lightsObs = null;
 				try {
 					lightsObs = enumResource.pullResources(context, timeout,
