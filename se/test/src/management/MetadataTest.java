@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MetadataTest.java,v 1.6 2007-05-02 19:35:16 simeonpinder Exp $
+ * $Id: MetadataTest.java,v 1.7 2007-05-30 15:35:47 simeonpinder Exp $
  */
 
 package management;
@@ -531,19 +531,22 @@ public class MetadataTest extends TestBase {
     	//retrieve the exposed metadata where Schema and
     	//  operations are already defined.
     	Management metaDataInstance = null;
+//    	metaDataInstance = AnnotationProcessor.findAnnotatedResourceByUID(
+//    			MetadataTest.embeddedAnnotResourceMetUID, 
+//    			DESTINATION);
+    	QName[] headers = null;
     	metaDataInstance = AnnotationProcessor.findAnnotatedResourceByUID(
     			 MetadataTest.embeddedAnnotResourceMetUID, 
-//    			 eventcreator_Handler.UID, 
-    			 DESTINATION);
+    			 DESTINATION,false,headers);
 //TODO: RETURN AND DEBUG THIS, ODD BUG!!! Access to Vector.instance randomly fails. ???    	
     	 assertNotNull("Unable to locate correct instance.",metaDataInstance);
-
+//System.out.println("@@@ MetadataReturned:"+metaDataInstance); 
     	//Test that a body is returned in the metadata Management insts
     	assertNotNull("No Metadata body found.",metaDataInstance.getBody());
     	assertNotNull("No Metadata payload found.",metaDataInstance.getBody().getFirstChild());
     	Node payload = metaDataInstance.getBody().getFirstChild();
     	 
-     	//Make sure that shemas are returned correctly
+     	//Make sure that schemas are returned correctly
     	 
      	//Make sure that the Operations are returned correctly
     	 
@@ -594,6 +597,57 @@ public class MetadataTest extends TestBase {
 		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
 		
 	}
+    
+    /* Tests whether the metadataLocator mechanism works 
+     * and can filter unwanted headers and remove
+     * descriptive metadata body elements.
+     */
+    public void testMetaDataLocatorMechanism() throws SOAPException,
+    JAXBException, DatatypeConfigurationException, IOException{
+    	
+    	//request a specific metadata instance
+    	QName[] headersToPrune = null;
+    	Management userMet = AnnotationProcessor.findAnnotatedResourceByUID(
+    			embeddedAnnotResourceMetUID, ManagementMessageValues.WSMAN_DESTINATION,
+    			false,headersToPrune); 	
+    	assertNotNull("The metadata element was not found.",userMet);
+
+    	//locate it's identifier to verify that it was successfully located.
+    	SOAPElement headerElement = 
+    		ManagementUtility.locateHeader(userMet.getHeaders(), 
+    			AnnotationProcessor.RESOURCE_META_DATA_UID);
+    	assertNotNull("MetResUid not located.",headerElement);
+    	assertEquals("Values did not match.",embeddedAnnotResourceMetUID, 
+    			headerElement.getTextContent());
+    	
+    	//now verify that this metadataElement being exercised has body content
+    	assertNotNull("Body of metadata exists",userMet.getBody());
+    	assertNotNull("Body is empty.",userMet.getBody().getFirstChild());
+    	
+    	//Store away the header count for later comparison
+    	int fullHeaderCount = userMet.getHeaders().length;
+    	
+    	//Now request the same metadata instance, but exclude a few headers
+    	// and exclude the metadata body content
+    	  //identify headers to trim out
+		  QName[] trim = {
+				  AnnotationProcessor.META_DATA_CATEGORY,
+				  AnnotationProcessor.META_DATA_DESCRIPTION,
+				  AnnotationProcessor.RESOURCE_MISC_INFO};
+    	Management filteredMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
+    			embeddedAnnotResourceMetUID, 
+    			ManagementMessageValues.WSMAN_DESTINATION,
+    			true,trim); 	
+    	assertNotNull("The metadata element was not found.",filteredMetaData);
+    	//Now verify that count is correct
+    	assertEquals("Incorrect amount returned.",
+    			filteredMetaData.getHeaders().length, 
+    			(fullHeaderCount - trim.length));
+    	//Now verify that body is not longer present
+    	assertNotNull("Body of metadata exists",filteredMetaData.getBody());
+    	assertNull("Body is not empty",filteredMetaData.getBody().getFirstChild());
+    	
+    }
     
     private boolean checkDocument(final String url,
     		                      final String parseString) throws IOException {

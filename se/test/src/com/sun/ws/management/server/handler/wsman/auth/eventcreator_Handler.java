@@ -55,6 +55,7 @@ import com.sun.ws.management.metadata.annotations.WsManagementDefaultAddressingM
 import com.sun.ws.management.metadata.annotations.WsManagementEnumerationAnnotation;
 import com.sun.ws.management.metadata.annotations.WsManagementOperationDefinitionAnnotation;
 import com.sun.ws.management.metadata.annotations.WsManagementQNamedNodeWithValueAnnotation;
+import com.sun.ws.management.mex.Metadata;
 import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EventingSupport;
 import com.sun.ws.management.server.Handler;
@@ -67,6 +68,7 @@ import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
 import com.sun.xml.ws.addressing.model.ActionNotSupportedException;
+//import com.sun.xml.ws.api.model.wsdl.WSDLBoundOperation.ANONYMOUS;
 
 @WsManagementDefaultAddressingModelAnnotation(
 	getDefaultAddressDefinition=
@@ -105,23 +107,7 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 	public eventcreator_Handler() throws SOAPException, JAXBException, 
 		DatatypeConfigurationException, IOException{
 		//register this handler in the metadata directory
-//		Eventing registerMessage = EventingUtility.buildMessage(null, null);
-//System.out.println("############In eventCreator constructor");		
-//		if(subscription_source_id==null){
-//System.out.println("############In eventCreator constructor: Before register");			
-//		  String regEvtSrcId=
-//			  EventingUtility.registerEventSourceWithSubscriptionManager(this,true,true);
-//		  if((regEvtSrcId!=null)&&(regEvtSrcId.trim().length()>0)){
-//			 subscription_source_id = regEvtSrcId; 
-//		  }
-//		}
-
-//        if (nsMap == null) {
-////            final Map<String, String> map = new HashMap<String, String>();
-////            map.put(NS_PREFIX, NS_URI);
-////            nsMap = new NamespaceMap(map);
-//        }
-		
+		//TODO: integrate call to the Transfer.Initialize mechanism.
 	}
 	
 	private Management subscriptionManager;
@@ -131,22 +117,19 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 			//pipe the request processing to 
 			//  subscribe(context, request, response);
 			response = subscribe(context, request, response);
+//			response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+//System.out.println("@@@@ response->subscribe-evtc:"+response);
 		}
 		else if(action.equals(Transfer.CREATE_ACTION_URI)){
 			create(context, request, response);
 		}
-//		else if(action.equals(Transfer.INITIALIZE_ACTION_URI)){
 		else if(action.equals(com.sun.ws.management.mex.Metadata.INITIALIZE_ACTION_URI)){
 			//Lazy instantiation
-//			if(subscription_source_id==null){
-//System.out.println("############In eventCreator handle: TransferInitialize");			
-//		  String regEvtSrcId=
-//			  EventingUtility.registerEventSourceWithSubscriptionManager(this,true,true);
-//			  if((regEvtSrcId!=null)&&(regEvtSrcId.trim().length()>0)){
-//				 subscription_source_id = regEvtSrcId; 
-//			  }
-//		    }
-		  initialize(context, request, response);	
+//System.out.println("@@@@ In initialize action portion:Request:"+request);			
+//System.out.println("@@@@ In initialize action portion:Response:"+response);			
+//			initialize(context, request, response);
+		  response = initialize(context, request, response);
+//System.out.println("@@@@ In initialize action portion:"+response);		  
 		}else{
 			throw new ActionNotSupportedException(action);
 		}
@@ -174,17 +157,31 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 	 * @throws JAXBException 
 	 * @throws SOAPException 
 	 */
-	public void initialize(HandlerContext context, Management request, 
+//	public void initialize(HandlerContext context, Management request, 
+	public Management initialize(HandlerContext context, Management request, 
 			Management response) throws SOAPException, JAXBException, 
 			DatatypeConfigurationException, IOException {
+//System.out.println("@@@ in initialize meth:subSrcId:"+subscription_source_id);		
 		if(subscription_source_id==null){
 			//Then must locate the subscription manager details
 			//Send create request for EVENT_SOURCE to register with SUB_MAN
 			//Extract the created id and initalize the sub_source reference
+//System.out.println("@@@ in init: before regEvSrcWSubMan:"+response);
+			//?? Wrap in it's own thread?
 			String srcId = MetadataUtility.registerEventSourceWithSubscriptionManager(
 					this, true, true);
 			subscription_source_id = srcId;
+////System.out.println("@@@ subSrcId:"+subscription_source_id);			
+//			response.setAction(Metadata.INITIALIZE_RESPONSE_URI);
+//			response.setMessageId(ManagementMessageValues.DEFAULT_UID_SCHEME+UUID.randomUUID());
+//			response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+////			response.set
+////System.out.println("@@@ response before init:return:"+response);			
 		}
+		response.setAction(Metadata.INITIALIZE_RESPONSE_URI);
+		response.setMessageId(ManagementMessageValues.DEFAULT_UID_SCHEME+UUID.randomUUID());
+		response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+	  return response;
 	}
 
 //	public void subscribe(HandlerContext context, Management eventRequest, 
@@ -193,29 +190,27 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 			DatatypeConfigurationException, IOException {
 
 		//call the initialize method which lazily instantiates
-		initialize(context, eventRequest, eventResponse);
-		//process and build subscription response.
-		Eventing evtResponse = new Eventing(eventResponse);
-		Eventing evtRequest = new Eventing(eventRequest);
-		evtResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-		
-		//register this new subscriber with the sub_man
-//		String suggestedEventSinkId = null;
+//		initialize(context, eventRequest, eventResponse);
+//System.out.println("@@@ subscribe req after init:"+eventRequest);		
+//System.out.println("@@@ subscribe res after init:"+eventResponse);
 
-		//test that message processing components exist.
-		if(evtRequest!=null){
-		   if((evtRequest.getSubscribe()==null)||
-		      (evtRequest.getSubscribe().getDelivery()==null)){
-			//Return insufficient information
-			String msg="Request did not have required [Subscribe] and/or [Delivery] information.";
-			msg+="This message is invalid and cannot be processed.";
-			 LOG.warning(msg);
-			throw new InvalidMessageFault(msg);
-		   }
-		}else{//Throw IllegalArgument
-		   String msg = "The Event request message cannot be null.";
-		   throw new IllegalArgumentException(msg);	
-		}
+//		//process and build subscription response.
+//		Eventing evtRequest = new Eventing(eventRequest);
+//		
+//		//test that message processing components exist.
+//		if(evtRequest!=null){
+//		   if((evtRequest.getSubscribe()==null)||
+//		      (evtRequest.getSubscribe().getDelivery()==null)){
+//			//Return insufficient information
+//			String msg="Request did not have required [Subscribe] and/or [Delivery] information.";
+//			msg+="This message is invalid and cannot be processed.";
+//			 LOG.warning(msg);
+//			throw new InvalidMessageFault(msg);
+//		   }
+//		}else{//Throw IllegalArgument
+//		   String msg = "The Event request message cannot be null.";
+//		   throw new IllegalArgumentException(msg);	
+//		}
 		
 //		//insert the elements signalling subman how to process
 //		//indicate that this is a NewSubscriber request
@@ -272,27 +267,36 @@ public class eventcreator_Handler implements Handler, EventSourceInterface {
 			MetadataUtility.registerEventSinkWithSubscriptionManager(
 				this,eventRequest,
 				true, true);
-System.out.println("@@@@ actual subManResponse:"+subManResponse);		
-		//TODO: put that eventSinkId in the subscribe response to subscriber
-		EventingMessageValues settings = EventingMessageValues.newInstance();
-		settings.setEventingMessageActionType(Eventing.SUBSCRIBE_RESPONSE_URI);
-		//Translate the metadata from SubMan into EPR type
-			Management subManDet = getMetadataForSubscriptionManager();
-System.out.println("@@@ subManRep:"+subManDet);			
-			EndpointReferenceType subManEpr = ManagementUtility.extractEprType(subManDet);
-System.out.println("@@@ man->epr instance:"+subManEpr);			
-			settings.setSubscriptionManagerEpr(subManEpr);
-		Eventing eventResponseBase = 
-			EventingUtility.buildMessage(
-				evtResponse, settings);
-System.out.println("@@@ EventingIntMedMess:"+eventResponseBase);		
-		eventResponse = ManagementUtility.buildMessage(eventResponseBase, null);
-//		eventResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
-//		-Enumeration.
-//		evtResponse.getSubscribe().
-		SubscribeResponse subScribeResp = evtResponse.getSubscribeResponse();
-		subScribeResp.setSubscriptionManager(subManEpr);
-//		evtResponse.
+//System.out.println("@@@@ actual subManRegistrationResponse:"+subManResponse);		
+//		//TODO: put that eventSinkId in the subscribe response to subscriber
+//		EventingMessageValues settings = EventingMessageValues.newInstance();
+//		settings.setEventingMessageActionType(Eventing.SUBSCRIBE_RESPONSE_URI);
+//		//Translate the metadata from SubMan into EPR type
+//			Management subManDet = getMetadataForSubscriptionManager();
+//System.out.println("@@@ subManRep:"+subManDet);			
+//			EndpointReferenceType subManEpr = ManagementUtility.extractEprType(subManDet);
+//System.out.println("@@@ man->epr instance:"+subManEpr);			
+//			settings.setSubscriptionManagerEpr(subManEpr);
+//		Eventing eventResponseBase = 
+//			EventingUtility.buildMessage(
+//				evtResponse, settings);
+//System.out.println("@@@ EventingIntMedMess:"+eventResponseBase);		
+//eventResponse = ManagementUtility.buildMessage(eventResponseBase, null);
+////		eventResponse = ManagementUtility.buildMessage(subManResponse, null);
+////		eventResponse.setAction(Eventing.SUBSCRIBE_RESPONSE_URI);
+////		-Enumeration.
+////		evtResponse.getSubscribe().
+//		SubscribeResponse subScribeResp = evtResponse.getSubscribeResponse();
+//		subScribeResp.setSubscriptionManager(subManEpr);
+		
+//System.out.println("@@@ evtCr->resp:"+subManResponse);		
+		eventResponse = new Management(subManResponse);
+		eventResponse.setMessageId(EventingMessageValues.DEFAULT_UID_SCHEME+UUID.randomUUID());
+		//Make sure that has the right elements
+//System.out.println("@@@ evtCr->Man:"+eventResponse);
+		eventResponse.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+//		eventResponse.addRelatesTo(eventRequest.getMessageId());
+		
 	  return eventResponse;
 	}
 
@@ -303,9 +307,17 @@ System.out.println("@@@ EventingIntMedMess:"+eventResponseBase);
 	public Management getMetadataForEventSource() throws SOAPException, JAXBException, 
 	DatatypeConfigurationException, IOException {
 		Management eventSourceInfo =null;
-		eventSourceInfo = AnnotationProcessor.findAnnotatedResourceByUID(
-				eventcreator_Handler.UID, 
-				ManagementMessageValues.WSMAN_DESTINATION);
+//		eventSourceInfo = AnnotationProcessor.findAnnotatedResourceByUID(
+//				eventcreator_Handler.UID, 
+//				ManagementMessageValues.WSMAN_DESTINATION);
+		eventSourceInfo = ManagementUtility.buildMessage(null, null);
+		eventSourceInfo.setTo(TO);
+		eventSourceInfo.setResourceURI(RESOURCE_URI);
+		eventSourceInfo.addHeaders(Management.createReferenceParametersType(
+//				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+				AnnotationProcessor.RESOURCE_META_DATA_UID, 
+				UID));
+		
 		if(eventSourceInfo==null){
 			String msg="Unable to locate metadata for event source.";
 			throw new IllegalArgumentException(msg);
@@ -319,9 +331,12 @@ System.out.println("@@@ EventingIntMedMess:"+eventResponseBase);
 		Management subscriptionManagerDet = null;
 		
 		if(subscriptionManager==null){
-			subscriptionManagerDet = AnnotationProcessor.findAnnotatedResourceByUID(
-					eventsubman_Handler.DEFAULT_SUBSCRIPTION_MANAGER_UID, 
-					ManagementMessageValues.WSMAN_DESTINATION);
+//			subscriptionManagerDet = AnnotationProcessor.findAnnotatedResourceByUID(
+//					eventsubman_Handler.DEFAULT_SUBSCRIPTION_MANAGER_UID, 
+//					ManagementMessageValues.WSMAN_DESTINATION);
+			subscriptionManagerDet = ManagementUtility.buildMessage(null, null);
+			subscriptionManagerDet.setTo(ManagementMessageValues.WSMAN_DESTINATION);
+			subscriptionManagerDet.setResourceURI(eventsubman_Handler.RESOURCE_URI);
 		}else{
 			subscriptionManagerDet = subscriptionManager;
 		}

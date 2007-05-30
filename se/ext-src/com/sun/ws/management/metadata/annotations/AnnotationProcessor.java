@@ -32,6 +32,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.ws.soap.SOAPFaultException;
+import javax.xml.xpath.XPathConstants;
 
 import net.java.dev.wiseman.schemas.metadata.messagetypes.InputType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.MessageDefinitions;
@@ -41,6 +43,7 @@ import net.java.dev.wiseman.schemas.metadata.messagetypes.OutputType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemaType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemasType;
 
+import org.apache.tools.ant.types.mappers.FilterMapper;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
@@ -54,14 +57,21 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
+import org.xmlsoap.schemas.ws._2004._09.mex.ObjectFactory;
 
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationMessageValues;
+import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.Handler;
+import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.server.handler.wsman.metadata_Handler;
+import com.sun.ws.management.server.servlet.WSManServlet;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferUtility;
@@ -125,6 +135,12 @@ public class AnnotationProcessor {
 	
 	//Define default namespace context for Metadata processing
 	private static NamespaceContext META_DATA_NAMESPACE_CONTEXT = null;
+
+//	private static Object metadataIsStaticRef;
+//
+//	private static Boolean metadataContentIsStatic;
+//
+//	private static Management[] cachedMetadataList;
 	
 	/** Method takes a defaultAddressingModelAnnotation instance and places
 	 * all of the values into a Management instance. 
@@ -722,16 +738,18 @@ public class AnnotationProcessor {
 	 * 
 	 * @param metaUidForAnnotatedResource  Ex. http://wiseman.dev.java.net/EventSource/eventcreator/uid-20000747652
 	 * @param wisemanServer Ex. http://localhost:8080/wsman/
+	 * @param emptyPayload Ex. true
 	 * @return Management object
-	 * @throws JAXBException 
 	 * @throws SOAPException 
-	 * @throws DatatypeConfigurationException 
 	 * @throws IOException 
+	 * @throws DatatypeConfigurationException 
+	 * @throws JAXBException 
 	 */
 	public static Management findAnnotatedResourceByUID(String metaUidForAnnotatedResource,
-			String wisemanServer) 
-		throws SOAPException, 
-		JAXBException, DatatypeConfigurationException, IOException{
+			String wisemanServer, boolean emptyPayload, QName... headersToPrune  ) throws SOAPException, 
+			JAXBException, 
+			DatatypeConfigurationException, IOException 
+		{
 		Management locatedResource= null;
 		
 //		//build the XPath expression for the filtered enumeration
@@ -835,15 +853,165 @@ public class AnnotationProcessor {
 //	     }//END of if has body	
 		
 		//#####################################
-        Management m = null; 
+//		if(metadataIsStaticRef==null){
+//			String value = WSManServlet.getMetadataProperty("metadata.content.dynamic");
+////System.out.println("@@@ metadata.content.dynamic:"+value+":");			
+//			if((value!=null)&&(!value.trim().equals(""))){
+//			  try{
+//				metadataContentIsStatic = !Boolean.valueOf(value); 
+//				metadataIsStaticRef = new Object();
+//			  }catch(Exception ex){
+//				 //eat exception. 
+//			  }
+//			}
+//		}
+//		if(metadataContentIsStatic){
+//			if(cachedMetadataList!=null){
+//				for(Management meta: cachedMetadataList){
+//	 	        	SOAPElement uid = ManagementUtility.locateHeader(meta.getHeaders(), 
+//		        			AnnotationProcessor.RESOURCE_META_DATA_UID);
+//	 	        	if((uid!=null)&&(!uid.getTextContent().trim().equals(""))){
+//	 	        	 if(uid.getTextContent().trim().equals(metaUidForAnnotatedResource)){
+//		        		locatedResource = meta;
+//		        	 }
+//	 	        	}
+//				}
+//			}else{
+//			  try{	
+//				//Now make calls to initially populate the list
+//		         locatedResource = 
+//		        	 getExposedMetadataForInstance(metaUidForAnnotatedResource, 
+//		        		wisemanServer, locatedResource);
+//			  }catch(IOException iex){
+//				  String msg = "An attempt to access the Metadata repository at '";
+//				  msg+=wisemanServer+"' failed.\n Check that the server details are correct and" +
+//				  " examine the following failure details:\n";
+//				  msg+=iex.getMessage();
+//				  if(iex.getCause()!=null){
+//					iex.getCause().getMessage();  
+//				  }
+//				 throw new RuntimeException(msg);
+//			  }
+//			}
+//		}else{
+		  try{	
+            locatedResource = 
+        	 getExposedMetadataForInstance(metaUidForAnnotatedResource, 
+        		wisemanServer, locatedResource);
+		  }catch(IOException iex){
+			  String msg = "An attempt to access the Metadata repository at '";
+			  msg+=wisemanServer+"' failed.\n Check that the server details are correct and" +
+			  " examine the following failure details:\n";
+			  msg+=iex.getMessage();
+			  if(iex.getCause()!=null){
+				iex.getCause().getMessage();  
+			  }
+			 throw new RuntimeException(msg);
+		  }
+//		}
+		
+		//####################################
+		if(locatedResource==null){
+			String msg = "Metadata with the ResourceID '"+metaUidForAnnotatedResource+
+				"' could not be found.";
+			throw new RuntimeException(msg);
+		}else{//Successfully located the Metadata for the service
+
+			//figure out whether to remove additional elements
+			if(emptyPayload){
+				locatedResource.getBody().removeContents();
+			}
+			//mechanism to remove arbitrary Header elements.
+			if((headersToPrune!=null)&&(headersToPrune.length>0)){
+				//Existing headers
+			  SOAPElement[] headerList = locatedResource.getHeaders();
+			   //The new header list
+			  ArrayList<SOAPElement> retainList = new ArrayList<SOAPElement>();
+			   //populate prune list.
+			  ArrayList<QName> pruneList = new ArrayList<QName>();
+			  for(QName tmp:headersToPrune){
+				  pruneList.add(tmp);
+			  }
+			  
+			  //iterate through the header and find elements to retain.
+			  for (int i = 0; i < headerList.length; i++) {
+				  SOAPElement header = headerList[i];
+				if(!pruneList.contains(header.getElementQName())){
+				  //add if it's not already been added.	
+				  if(!retainList.contains(header)){
+				    retainList.add(header);
+				  }
+				}
+			  }
+			  //Reassign the header list if necessary
+			 if(!retainList.isEmpty()){
+			   //purge old	 
+			   locatedResource.getHeader().removeContents();
+			   //replace with the retain content
+			   for (Iterator iter = retainList.iterator(); iter.hasNext();) {
+				 SOAPElement element = (SOAPElement) iter.next();
+				 locatedResource.getHeader().addChildElement(element);
+			   }
+			 }
+			}
+		}
+		return locatedResource;
+	}
+	
+	/** Method automates the task of locating the MetaData information for a single 
+	 * annotated resource. The metaUidForAnnotatedResource is the UID 
+	 * field(wsmeta:ResourceMetaDataUID) for a known Resource intance.  This may 
+	 * be known or discovered before submission.  The returned MetaData/Management 
+	 * instance has all of the fields for locating/specifying a handler prepopulated.
+	 *
+	 * Steps taken to extract this data:
+	 * i)Contact the Wiseman server passed in via identify to wisemanServer parameter.
+	 * ii)Parse the Identify response to locate the metadata handler details
+	 * iii)Submit optimized enumerate request filtering on the wsmeta:ResourceMetaDataUID
+	 * 		field.
+	 * iv)Convert the returned values back to Management instance
+	 * v) Return that prepopulated Management message.   
+	 * 
+	 * @param metaUidForAnnotatedResource  Ex. http://wiseman.dev.java.net/EventSource/eventcreator/uid-20000747652
+	 * @param wisemanServer Ex. http://localhost:8080/wsman/
+	 * @return
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws DatatypeConfigurationException
+	 * @throws IOException
+	 */
+	public static Management findAnnotatedResourceByUID(
+			String metaUidForAnnotatedResource,
+			String wisemanServer) throws SOAPException, JAXBException, 
+			DatatypeConfigurationException, IOException 
+	{
+	  return findAnnotatedResourceByUID(metaUidForAnnotatedResource, 
+			  wisemanServer, true, null);	
+	}
+
+
+	/**
+	 * @param metaUidForAnnotatedResource
+	 * @param wisemanServer
+	 * @param locatedResource
+	 * @return
+	 * @throws DatatypeConfigurationException 
+	 * @throws JAXBException 
+	 * @throws SOAPException 
+	 * @throws IOException 
+	 */
+	private static Management getExposedMetadataForInstance(
+			String metaUidForAnnotatedResource, String wisemanServer, 
+			Management locatedResource) throws SOAPException, JAXBException, 
+			DatatypeConfigurationException, IOException  {
+		Management m = null; 
         	m =TransferUtility.createMessage(wisemanServer, 
         		metadata_Handler.wsaResourceURI,
         		Transfer.GET_ACTION_URI, null, null, 30000, null);
         //Parse the getResponse for the MetaData
         final Addressing response = HttpClient.sendRequest(m);
-	     if((response!=null)&&(response.getBody()!=null)&&
-	    		 (!response.getBody().hasFault())){
-
+	     if((response!=null)&&(response.getBody()!=null)){
+	       if(!response.getBody().hasFault()){
 	    	 Management mResp = new Management(response);
 	    	 Management[] metaDataList = 
 	    		 MetadataUtility.extractEmbeddedMetaDataElements(mResp);
@@ -868,9 +1036,13 @@ public class AnnotationProcessor {
 				   }
 			    }	    	 
 	    	 }
+//	    	 if(metadataContentIsStatic){
+//	    		 cachedMetadataList=metaDataList; 
+//	    	 }
+	       }else{//response has fault in it
+	    	  throw new SOAPFaultException(response.getBody().getFault());    
+	       }
 	     }
-		//####################################
-        
 		return locatedResource;
 	}
 	

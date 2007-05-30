@@ -1,27 +1,41 @@
 package com.sun.ws.management.client;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
+import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Properties;
+import java.util.TimeZone;
+import java.util.Vector;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.UUID;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.SOAPElement;
+import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPFault;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -32,16 +46,27 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
+import org.w3._2003._05.soap_envelope.Envelope;
+import org.w3._2003._05.soap_envelope.Header;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import util.WsManBaseTestSupport;
 
@@ -51,20 +76,38 @@ import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.client.EnumerationCtx;
+import com.sun.ws.management.client.EnumerationResourceState;
+import com.sun.ws.management.client.Resource;
+import com.sun.ws.management.client.ResourceFactory;
+import com.sun.ws.management.client.ResourceState;
+import com.sun.ws.management.client.ServerIdentity;
+import com.sun.ws.management.client.TransferableResource;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingMessageValues;
 import com.sun.ws.management.eventing.EventingUtility;
+import com.sun.ws.management.eventing.EventingMessageValues.CreationTypes;
 import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
+import com.sun.ws.management.metadata.annotations.WsManagementAddressDetailsAnnotation;
+import com.sun.ws.management.metadata.annotations.WsManagementQNamedNodeWithValueAnnotation;
+import com.sun.ws.management.mex.Metadata;
+import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.server.EnumerationSupport;
+import com.sun.ws.management.server.NamespaceMap;
+import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.server.handler.wsman.eventsubman_Handler;
 import com.sun.ws.management.server.handler.wsman.auth.eventcreator_Handler;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
+import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
+import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
@@ -1534,6 +1577,18 @@ public class ResourceTest extends WsManBaseTestSupport {
 		Management eventSource = AnnotationProcessor.findAnnotatedResourceByUID(
 		  eventcreator_Handler.UID,destUrl);
 		assertNotNull("Unable to locate the eventSource resource.",eventSource);
+//####
+		Management init = MetadataUtility.buildMessage(eventSource, null, false);
+		//add the INIITIALIZE Action request
+		init.setAction(Metadata.INITIALIZE_ACTION_URI);
+	    Addressing initResp = HttpClient.sendRequest(init);
+//System.out.println("InitRes:"+initResp);
+//		 	      if (response2.getBody().hasFault()) {
+//		 	          response2.prettyPrint(System.err);
+//		 	          fail(response2.getBody().getFault().getFaultString());
+//		 	      }
+//####
+		
 		String eventSinkDestination = "http://localhost:8080/wsman/eventsink";
 		
 		//Send a subscribe request to the eventSource
@@ -1553,23 +1608,6 @@ public class ResourceTest extends WsManBaseTestSupport {
 				 eventSinkDestination, 
 				 null, refParam, null, null);
 		 evset.setNotifyTo(notifyTo);
-//		 EndpointReferenceType notifyTo = addFactory.createEndpointReferenceType();
-//		   AttributedURI destination = addFactory.createAttributedURI();
-//		     destination.setValue(eventSinkDestination);
-//		   notifyTo.setAddress(destination);
-//		   notifyTo.getReferenceParameters().
-//		   Management.
-		   
-//		 evset.setExpires(expires);
-//		 Map<String,String> selectorMap = new HashMap<String, String>();
-//		 	selectorMap.put(
-//		 		EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID.getLocalPart(),
-//		 		paramValue);
-//		 SelectorSetType selectorSet = ManagementUtility.createSelectorSet(selectorMap);
-//		 ReferenceParametersType ref = Management.createReferenceParametersType(selectorSet);
-//		 evset.setEventSinkReferenceParameterType(ref);
-////		 	ref.getAny().add(o)
-////		 evset.getEventSinkReferenceParameterType().getAny().add(selectorSet);	
 		 
 		Eventing ev = EventingUtility.buildMessage(null,evset);
 		Management subscribe = ManagementUtility.buildMessage(eventSource
@@ -1581,12 +1619,13 @@ public class ResourceTest extends WsManBaseTestSupport {
 //System.out.println("SubReq:"+subscribe);
 		 Addressing response2 = HttpClient.sendRequest(subscribe);
 //System.out.println("SubScrRes:"+response2);
-		 //Send the request.
-//	      if (response2.getBody().hasFault()) {
-//	          response2.prettyPrint(System.err);
-//	          fail(response2.getBody().getFault().getFaultString());
-//	      }
-	   
+	      if (response2.getBody().hasFault()) {
+	          response2.prettyPrint(System.err);
+	          fail(response2.getBody().getFault().getFaultString());
+	      }
+	    //test that return action is correct
+//	    assertEquals("Correct action was not located.",
+//	    		Eventing.SUBSCRIBE_RESPONSE_URI, response2.getAction());
 
 		//Store away reference to SubscriptionManager
 		//Create an event on the event source
@@ -1622,6 +1661,32 @@ public class ResourceTest extends WsManBaseTestSupport {
 //      Management subscribeResp = new Management(response);
 //System.out.println("SUBSCRIBE RES:"+subscribeResp.toString());
       
+	}
+
+	public void testEventSourceInitialize() throws Exception{
+		//Use the eventSource implementation that's already defined in eventsubman
+	    //Get the metadata and the Management details for the eventsource		
+		Management eventSource = AnnotationProcessor.findAnnotatedResourceByUID(
+		  eventcreator_Handler.UID,destUrl);
+		assertNotNull("Unable to locate the eventSource resource.",eventSource);
+//System.out.println("@@@ EvtSource beforManBuldMsg:"+eventSource);		
+//eventSource = ManagementUtility.buildMessage(eventSource, null, true);
+		eventSource = MetadataUtility.buildMessage(eventSource, null, false);
+		//add the INIITIALIZE Action request
+		eventSource.setAction(Metadata.INITIALIZE_ACTION_URI);
+		
+//System.out.println("@@@ Initialize:"+eventSource);
+		 Addressing response = HttpClient.sendRequest(eventSource);
+//System.out.println("@@@ InitializeResp:"+response);
+		if (response.getBody().hasFault()) {
+			response.prettyPrint(System.err);
+			fail(response.getBody().getFault().getFaultString());
+		}
+		
+		//Check that initialize response was returned
+		assertEquals("Did not have correct action response.",
+				Metadata.INITIALIZE_RESPONSE_URI, response.getAction());
+
 	}
 	
 //	public void testAnnot() throws InstantiationException, IllegalAccessException{

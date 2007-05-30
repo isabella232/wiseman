@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -204,16 +205,13 @@ public class MetadataUtility extends ManagementUtility {
 		}
 		
 		//Retrieve the SubscriptionManager details
-		SubscriptionManagerInterface eventSubManager = null;
 		Management subManagerData = null;
 
-		//??
-		TransferMessageValues settings = TransferMessageValues.newInstance();
-		Transfer tMessage = TransferUtility.buildMessage(null, settings);
-		
 		//locate the subscriptionManager instance
 		if(!eventSource.isAlsoTheSubscriptionManager()){
 			subManagerData = eventSource.getMetadataForSubscriptionManager();
+			//component ananlysis. 
+			//TODO: insert check for ADDRESSING.TO as this must be set. All others variable.
 			if(subManagerData==null){
 				String msg="SubscriptionManager metadata is null. Unable to proceed.";
 				if(logException){
@@ -224,162 +222,76 @@ public class MetadataUtility extends ManagementUtility {
 				}
 				return eventSourceUid;
 			}
-
-//			//locate EPR/Addressing details 
-//			WsManagementDefaultAddressingModelAnnotation subManMetadata = null;
-//			WsManagementAddressDetailsAnnotation smConnectionDetails = null;
-//			subManMetadata = subManagerData.getDefaultAddressModelDefinition();
-//			if(subManMetadata!=null){
-//			  smConnectionDetails= subManMetadata.getDefaultAddressDefinition();
-//			}
-
-			//Parameter checking
-//			if((subManMetadata==null)||(smConnectionDetails==null)){
-//				String msg="The Addressing details for the SubscriptionManager metadata";
-//				msg+=" is NULL. Unable to proceed.";
-//				if(logException){
-//					LOG.severe(msg);
-//				}
-//				if(throwException){
-//				  throw new IllegalArgumentException(msg);
-//				}
-//				return eventSourceUid;
-//			}
 			
-//			if(smConnectionDetails!=null){
-			//Extract MetaData information and register this Event Source with the SubMan
-			  //Build the message to CREATE a new SUBSCRIPTION_SOURCE in the SubscripMan
-//	    	ManagementMessageValues manSettings = 
-//	    		ManagementMessageValues.newInstance();
-//	    	if((smConnectionDetails.wsaTo()!=null)&&
-//	    		(smConnectionDetails.wsaTo().trim().length()>0)){
-//	    		manSettings.setTo(smConnectionDetails.wsaTo().trim());
-//	    	}
-//	    	if((smConnectionDetails.wsmanResourceURI()!=null)&&
-//	    		(smConnectionDetails.wsmanResourceURI().trim().length()>0)){
-//	    		manSettings.setResourceUri(
-//	    			smConnectionDetails.wsmanResourceURI().trim());
-//	    	}
-//	    	manSettings.setXmlBinding(tMessage.getXmlBinding());
-//			manSettings.addCustomHeader(EventingMessageValues.EVENTING_CREATION_TYPES,
-//					CreationTypes.SUBSCRIPTION_SOURCE.name());
+//System.out.println("@@@ regSrcWSubMan:submanMetadata:"+subManagerData);
+			//Add the specific headers to the message to ensure correct processing.
 			subManagerData.addHeaders(Management.createReferenceParametersType(
 					EventingMessageValues.EVENTING_CREATION_TYPES, 
 					CreationTypes.SUBSCRIPTION_SOURCE.name()));
-//	    	manSettings.addCustomHeader(EventingMessageValues.EVENTING_CREATION_TYPES,
-//	    			CreationTypes.SUBSCRIPTION_SOURCE.name());
 	    	
 	    	//Retrieve the Event Source details
-//			WsManagementDefaultAddressingModelAnnotation evtSrcDetails = 
-//				eventSource.getMetadataForEventSource();
-//			if(evtSrcDetails==null){
-//				String msg = "Metadata information for EventSource is NULL. This is not allowed.";
-//				if(logException){
-//					LOG.severe(msg);
-//				}
-//				if(throwException){
-//				  throw new IllegalArgumentException(msg);
-//				}
-//				return eventSourceUid;
-//			}
 			Management evtSrcDetails = 
 				eventSource.getMetadataForEventSource();
+//System.out.println("@@@ regEvSrcWSubMan:evsrcMetaData:"+evtSrcDetails);			
 			
-			//Locate the EventSource Metadata UID and add as custom header
-//			String evtMetadata = evtSrcDetails.resourceMetaDataUID();
-//			//TODO: insert null check.
-//			manSettings.addCustomHeader(EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID,
-//					evtMetadata);
+			//Continue to add required elements to indicate correct processing path..
+			 //Locate the MetaDataUID for the event source(should be unique across server)
 			SOAPElement evtSrcMetDataId = ManagementUtility.locateHeader(
 					evtSrcDetails.getHeaders(), 
 					AnnotationProcessor.RESOURCE_META_DATA_UID);
-			String evtMetadata = evtSrcMetDataId.getTextContent();
-			subManagerData.addHeaders(Management.createReferenceParametersType(
-				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
-				evtMetadata));
-			subManagerData.setAction(Transfer.CREATE_ACTION_URI);
+			if(evtSrcMetDataId!=null){
+			  String evtMetadata = evtSrcMetDataId.getTextContent();
+			  if((evtMetadata!=null)&&!(evtMetadata.trim().equals(""))){
+				//Located an event source requested ID. Add as header  
+			    subManagerData.addHeaders(Management.createReferenceParametersType(
+				 EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+				 evtMetadata));
+			  }
+			}
 			
+			//set correct action
+			subManagerData.setAction(Transfer.CREATE_ACTION_URI);
+			//set the reply to to be anonymous
+			subManagerData.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+			
+			//populate the other required elements of message
 			subManagerData = ManagementUtility.buildMessage(null, 
 //					subManagerData, true);
 					subManagerData, false);
-
-//			//Locate the EventSource destination and add as custom header
-//			String evtSinkLocation = evtSrcDetails.resourceMetaDataUID();
-//			//TODO: insert null check.
-//	    	manSettings.addCustomHeader(EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID,
-//	    			evtMetadata);
-//	    	manSettings.setTimeout(1000*60*2);
-//	    	final Management mgmt = ManagementUtility.buildMessage(tMessage,manSettings);
-//			System.out.println("#####REG_EVT_SRC request:"+mgmt.toString());
-//System.out.println("#####REG_EVT_SRC request:"+subManagerData);
+			
+			//Reset the message to new UID to prevent message misdirection??? 
+			subManagerData.setMessageId(EventingMessageValues.DEFAULT_EVT_SINK_UUID_SCHEME+
+					UUID.randomUUID());
+			
+//System.out.println("#####MetUtility.REG_EVT_SRCwSubMan toal request:"+subManagerData);
 	    	
-//final Addressing response = HttpClient.sendRequest(mgmt);
 	        final Addressing response = HttpClient.sendRequest(subManagerData);
 	        if (response.getBody().hasFault())
 	        {
-System.out.println("####REG_EVT_RESP:"+response.getBody().getFault().getFaultString());	        	
-	//            fail(response.getBody().getFault().getFaultString());
+//System.out.println("####metUti.regEvtSrcWSubMan_RESP-FAULT:"+
+		response.getBody().getFault().getFaultString();
+
 	        }else{
 	        	//extract the returned selectorSet
 	        	Management eventSourceRegistrationResp = new Management(response);
-	        	System.out.println("REG_EVT_SRC_RESP:"+eventSourceRegistrationResp);
-//		        	ManagementUtility.extractSelectorsAsMap(null,eventSourceRegistrationResp.getSelectors());
-	          Map<String,String> selectors=	ManagementUtility.extractSelectors(eventSourceRegistrationResp);
-//	          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){	
-//	        	  List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
+	        	
+//System.out.println("metUtil.regEvtSrcWSubMan.RESP:"+eventSourceRegistrationResp);
+
+	          Map<String,String> selectors=	
+	        	  ManagementUtility.extractSelectors(eventSourceRegistrationResp);
 	          if(selectors.size()>0){	
-//	        	List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
-//				Map<String, String> selectorsRetrieved = ManagementUtility.extractSelectorsAsMap(null,
-////						(List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors()));
-//						selList);
-//	        	if(selectorsRetrieved.containsKey(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME)){
-//	        		eventSourceUid = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME;
-//	        		eventSourceUid+="="+selectorsRetrieved.get(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME);
-//	        	}
 	        	if(selectors.containsKey(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME)){
 	        		eventSourceUid = selectors.get(
 	        			EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME);
 	        	}
 	          }
-//System.out.println("@@@EventSrcID::"+eventSourceUid);	        	
 	        }
-//			}else{
-//				
-//			}
 				
-			return eventSourceUid;
+//			return eventSourceUid;
 		}else{//Is one and the same handler.
-		
+//System.out.println("@@@ EVT_SRC is ALSO SUBSCRIPTION_MANAGER!!!!!!!!!!!!!!!!!!!!!");		
 		}
 		
-//		WsManagementDefaultAddressingModelAnnotation eventSrcMetadata = 
-//			eventSource.getMetadataForEventSource();
-//		WsManagementAddressDetailsAnnotation connectionDetails = null;
-//		if(eventSrcMetadata!=null){
-//		  connectionDetails= eventSrcMetadata.getDefaultAddressDefinition();
-//		}
-//		
-//		if(connectionDetails!=null){
-//	    	ManagementMessageValues manSettings = 
-//	    		ManagementMessageValues.newInstance();
-//	    	if((connectionDetails.wsaTo()!=null)&&
-//	    			(connectionDetails.wsaTo().trim().length()>0)){
-//	    		manSettings.setTo(connectionDetails.wsaTo().trim());
-//	    	}
-//	    	if((connectionDetails.wsmanResourceURI()!=null)&&
-//	    		(connectionDetails.wsmanResourceURI().trim().length()>0)){
-//	    		manSettings.setResourceUri(connectionDetails.wsmanResourceURI().trim());
-//	    	}
-//	    	manSettings.setXmlBinding(tMessage.getXmlBinding());
-//	    	
-//	    	final Management mgmt = ManagementUtility.buildMessage(tMessage,manSettings);
-//	    	
-//	        final Addressing response = HttpClient.sendRequest(mgmt);
-//	        if (response.getBody().hasFault())
-//	        {
-//	//            fail(response.getBody().getFault().getFaultString());
-//	        }
-//		}
 		return eventSourceUid;
 	}
 
@@ -508,19 +420,11 @@ System.out.println("####REG_EVT_RESP:"+response.getBody().getFault().getFaultStr
 	public static Management registerEventSinkWithSubscriptionManager(
 			EventSourceInterface eventSource,Management message, boolean logException, 
 			boolean throwException) throws JAXBException, SOAPException, DatatypeConfigurationException, IOException {
-		
+		//The reference to be returned
 	    Management subManagerData = null;
-//	    subManagerData = eventSource.getMetadataForSubscriptionManager();
-//	    if(subManagerData==null){
-//	    	String msg="The EventSource reference cannot be null.";
-//	    	throw new IllegalArgumentException(msg);
-//	    }
-	    
-//	    TransferMessageValues settings = TransferMessageValues.newInstance();
-//	    Transfer tMessage = TransferUtility.buildMessage(null, settings);
 	
 	    //locate the subscriptionManager instance
-	    if(!eventSource.isAlsoTheSubscriptionManager()){
+	  if(!eventSource.isAlsoTheSubscriptionManager()){
 	    	subManagerData = eventSource.getMetadataForSubscriptionManager();
 			if(subManagerData==null){
 				String msg="SubscriptionManager metadata is null. Unable to proceed.";
@@ -545,85 +449,57 @@ System.out.println("####REG_EVT_RESP:"+response.getBody().getFault().getFaultStr
 					evtSrcDetails.getHeaders(), 
 					AnnotationProcessor.RESOURCE_META_DATA_UID);
 			String srcMetadataKey = null;
-			if((evtSrcMetDataId!=null)&&((srcMetadataKey =evtSrcMetDataId.getTextContent())!=null)&&
-				!(srcMetadataKey.trim().equals(""))){
-				//do nothing already have the data
+			if(evtSrcMetDataId!=null){
+				srcMetadataKey =evtSrcMetDataId.getTextContent();
 			}
 			//Now take the content of the incoming message
 			if((srcMetadataKey!=null)&&
-			(srcMetadataKey.trim().length()>0)){
+			      (srcMetadataKey.trim().length()>0)){
 			  String evtMetadata = srcMetadataKey;
 			  subManagerData.addHeaders(
 					  Management.createReferenceParametersType(
 				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
 				evtMetadata));
 			  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
+			  subManagerData.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 			}
+			
+			//build the message to be sent
+			subManagerData.setMessageId(EventingMessageValues.DEFAULT_UID_SCHEME+UUID.randomUUID());
+			subManagerData = ManagementUtility.buildMessage(null, 
+	//				subManagerData, true);
+					subManagerData, false);
 		
-//		if((suggestionForEvtSinkId!=null)&&
-//				(suggestionForEvtSinkId.trim().length()>0)){
-//		  String evtMetadata = suggestionForEvtSinkId;
-//		  subManagerData.addHeaders(
-//				  Management.createReferenceParametersType(
-//			EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
-//			evtMetadata));
-//		  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
-//		}
-		subManagerData = ManagementUtility.buildMessage(null, 
-//				subManagerData, true);
-				subManagerData, false);
-		
-		//insert the body of the message from the message passed in.
-		if((message!=null)&&(message.getBody()!=null)){
-		   subManagerData.getBody().addDocument(
-				   message.getBody().extractContentAsDocument());
-		}
-//		subManagerData = 
-//			ManagementUtility.removeDescriptiveMetadataHeaders(subManagerData);
-System.out.println("@@@@ Newly completed piped mesg:"+subManagerData);		
-		
-    	
-//final Addressing response = HttpClient.sendRequest(mgmt);
+			//insert the body of the message from the message passed in.
+			if((message!=null)&&(message.getBody()!=null)){
+			   subManagerData.getBody().addDocument(
+					   message.getBody().extractContentAsDocument());
+			}
+			subManagerData.setMessageId(
+					EventingMessageValues.DEFAULT_EVT_SINK_UUID_SCHEME+UUID.randomUUID());
+
+//System.out.println("@@@@ Newly completed piped mesg:"+subManagerData);
+
+		//submit the request to the subscription manager
         final Addressing response = HttpClient.sendRequest(subManagerData);
-        if (response.getBody().hasFault())
-        {
-System.out.println("@@@@ A fault occurred:"+response.getBody().getFault().getFaultString());        	
+//System.out.println("@@@@ MetaDatUtil:piped messResp:"+response);        
+        
+        if (response.getBody().hasFault()){
+//System.out.println("@@@@ A fault occurred:"+response.getBody().getFault().getFaultString());        	
 //            fail(response.getBody().getFault().getFaultString());
         }else{
-//        	//extract the returned selectorSet
-//        	Management eventSinkRegistrationResp = new Management(response);
-////	        	ManagementUtility.extractSelectorsAsMap(null,eventSourceRegistrationResp.getSelectors());
-//          Map<String,String> selectors=	
-////        	  TransferUtility.extractSelectors(eventSinkRegistrationResp);
-//        	  ManagementUtility.extractSelectors(eventSinkRegistrationResp);
-////          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){	
-////        	  List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
-//          if(selectors.size()>0){	
-////        	List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
-////			Map<String, String> selectorsRetrieved = ManagementUtility.extractSelectorsAsMap(null,
-//////					(List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors()));
-////					selList);
-////        	if(selectorsRetrieved.containsKey(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME)){
-////        		eventSourceUid = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME;
-////        		eventSourceUid+="="+selectorsRetrieved.get(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME);
-////        	}
-//        	if(selectors.containsKey(EventingMessageValues.EVENT_SINK_NODE_NAME)){
-//        		eventSinkId = selectors.get(
-//        			EventingMessageValues.EVENT_SINK_NODE_NAME);
-//        	}
-//          }
-        	return subManagerData;
+//System.out.println("@@@@ no fault detected:response is:"+response);
+ 			subManagerData = new Management(response);
+//        	return subManagerData;
+//        	return new Management(response);
         }
-		}else{
-			
-		}
-			
-////		return eventSinkId;
-//		}else{//Is one and the same handler.
-//		
-//		}
-
-	 return null;
+	  }//End of is NOT also a subscription manager loop.
+	  else{
+//System.out.println("@@@@ in the IS also a subscription manager route.");			
+	  }
+	  
+	  subManagerData.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+	 return subManagerData;
 	}
 	
 }

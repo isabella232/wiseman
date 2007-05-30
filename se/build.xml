@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.62 2007-05-24 13:20:44 denis_rachal Exp $
+ $Id: build.xml,v 1.63 2007-05-30 15:35:47 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -198,6 +198,9 @@
             <fileset dir="${build.classes.ext.dir}">
                 <exclude name="com/sun/ws/management/server/handler/**" />
             </fileset>
+            <fileset dir="${build.classes.ext.dir}">
+                <include name="com/sun/ws/management/server/handler/wsman/*metadata_Handler*" />
+            </fileset>
             <fileset dir="${src.dir}">
                 <include name="com/sun/ws/management/resources/**" />
             </fileset>
@@ -283,6 +286,29 @@
                 <include name="NOTICE" />
             </metainf>
         </jar>
+    	
+    	<!--  ===================================================================  -->
+    	<!--   builds the executable mViewer jar               -->
+    	<!--  ===================================================================  -->
+		<jar destfile="${basedir}/${dist.dir}/mViewer.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Built-At" value="${DSTAMP}" />
+				<attribute name="Specification-Title" value="WS-Management" />
+				<attribute name="Specification-Version" value="1.0.0a" />
+				<attribute name="Implementation-Title" value="Swing Metadata Viewer" />
+				<attribute name="Implementation-Version" value="1.0" />
+				<attribute name="Sealed" value="false" />
+				<attribute name="Main-Class" value="com.sun.ws.management.metadata.viewer.MetadataViewer" />
+				<attribute name="Class-Path" value="wiseman-core.jar wiseman.jar wiseman-tools.jar 
+					jaxws/activation.jar jaxws/jaxb-api.jar jaxws/jaxb-impl.jar jaxws/jaxb-xjc.jar
+					jaxws/jaxws-api.jar jaxws/jaxws-rt.jar jaxws/jaxws-tools.jar
+					jaxws/jsr173_api.jar jaxws/jsr181-api.jar jaxws/jsr250-api.jar jaxws/saaj-api.jar 
+					jaxws/saaj-impl.jar jaxws/resolver.jar" />
+			</manifest>
+			<fileset dir="${basedir}/${build.classes.dir}"/>
+			<fileset dir="${basedir}/${build.classes.ext.dir}"/>
+		</jar>
     </target>
   
     <target name="war-jaxws" depends="test-compile,compile">
@@ -526,6 +552,10 @@
         <fileset dir="${test.lib.dir}">
             <include name="**/*.jar"/>
         </fileset>
+        <fileset dir="${dist.dir}">
+           <include name="wiseman.jar"/>
+           <include name="wiseman-tools.jar"/>
+       </fileset>
     </path>
 
     <target name="test-init" depends="init">

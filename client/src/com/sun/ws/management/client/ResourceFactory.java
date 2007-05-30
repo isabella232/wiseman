@@ -148,6 +148,7 @@ public class ResourceFactory {
 		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
 
 		final Management mgmt = new Management(xf);
+		mgmt.setXmlBinding(xf.getXmlBinding());
 		mgmt.setTo(destination);
 		mgmt.setResourceURI(resourceURI);
 		final Duration timeout = DatatypeFactory.newInstance().newDuration(
@@ -266,6 +267,7 @@ public class ResourceFactory {
 			xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
 			
 			final Management mgmt = new Management(xf);
+			mgmt.setXmlBinding(xf.getXmlBinding());
 			mgmt.setTo(destination);
 			mgmt.setResourceURI(resourceURI);
 			final Duration timeout = 
