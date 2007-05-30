@@ -66,6 +66,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.EventingMessageValues;
 import com.sun.ws.management.eventing.EventingMessageValues.CreationTypes;
 import com.sun.ws.management.framework.eventing.EventSourceInterface;
@@ -138,6 +139,7 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 		 DEFAULT_SUBSCRIPTION_DURATION_FLOOR = 
 			 DatatypeFactory.newInstance().newDuration(
 					 EventingMessageValues.DEFAULT_SUBSCRIPTION_TIMEOUT_FLOOR);
+		 //locate this Metadata 
 		} catch (SOAPException e) {
 			e.printStackTrace();
 		} catch (DatatypeConfigurationException e) {
@@ -146,7 +148,7 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 	}
 	//Share the Xpath instance
 	private static XPath xpath = XPathFactory.newInstance().newXPath();
-	{
+	static{
 		xpath.setNamespaceContext(AnnotationProcessor.getMetaDataNamespaceContext());
 	}
 	//This is the Metadata description of this Management instance which is lazily instantiated.
@@ -171,181 +173,203 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 	        EnumerationSupport.enumerate(context, enuRequest, enuResponse);
 		}
 		if(action.equals(Transfer.CREATE_ACTION_URI)){
-			//locate the CreationSubType
-			SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(), 
-					EventingMessageValues.EVENTING_CREATION_TYPES);
-			String type =null;
-			if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
-					(CreationTypes.SUBSCRIPTION_SOURCE.name().equals(type.trim()))){
-				//locate the EventSourceId if sent.
-				SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(), 
-						EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
-				String eventSourceUID = null;
-				if(eventSrcId!=null){
-					eventSourceUID = eventSrcId.getTextContent();
-					//Check that this id is not already used. If generate new otherwise use suggested.
-					if(eventSources.containsKey(eventSourceUID)){
-						eventSourceUID = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME+
-						UUID.randomUUID();
-					}
-					
-					//Now populate the ResourceCreated value for the response object
-					HashMap<String, String> selectorMap = new HashMap<String,String>();
-					selectorMap.put(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME,
-							eventSourceUID);
-					TransferExtensions xferResponse = new TransferExtensions(response);
-					EndpointReferenceType epr = 
-						TransferExtensions.createEndpointReference(
-								request.getTo(), request.getResourceURI(), 
-								selectorMap);
-					xferResponse.setCreateResponse(epr);
-				}
-			}//End of Event source creation processing
-			Subscribe subscribeContent = null;
-			//Event sink creation
-			if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
-					(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
-				//attempt to extract the subscribe message sent if any
-				Transfer createRequest = new Transfer(request);
-//System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
-				Document createBodyDoc = 
-					createRequest.getBody().extractContentAsDocument();
-//System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
-				if(createBodyDoc!=null){
-//					Subscribe subscribeContent = env_factory.createSubscribe();
-					Object ob=	binding.unmarshal(createBodyDoc);
-				  subscribeContent = (Subscribe) ob;
-//System.out.println("@@@ Have the subcribe content:"+subscribeContent);				  
-//				  JAXBElement<Subscribe> unmarsh = 
-//					  (JAXBElement<Subscribe>) binding.unmarshal(createBodyDoc);
-////					JAXBElement<UserType> unmarshal = (JAXBElement<UserType>) binding
-////					.unmarshal(resourceStateDom);
-////				JAXBElement<UserType> userReturnedElement = unmarshal;
-////				  UserType returnedUser = (UserType) userReturnedElement.getValue();
-//				  if((unmarsh!=null)&&(unmarsh.getValue()!=null)){
-//					  subscribeContent = (Subscribe) unmarsh.getValue();
-//					  
+			response = create(context,request,response);
+//			//locate the CreationSubType
+//			SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(), 
+//					EventingMessageValues.EVENTING_CREATION_TYPES);
+//			String type =null;
+//			if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
+//					(CreationTypes.SUBSCRIPTION_SOURCE.name().equals(type.trim()))){
+//				//locate the EventSourceId if sent.
+//				SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//						EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
+//				String eventSourceUID = null;
+//				if(eventSrcId!=null){
+//					eventSourceUID = eventSrcId.getTextContent();
+//					//Check that this id is not already used. If generate new otherwise use suggested.
+//					if(eventSources.containsKey(eventSourceUID)){
+//						eventSourceUID = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME+
+//						UUID.randomUUID();
+//					}
+//					
+//					//Now populate the ResourceCreated value for the response object
+//					HashMap<String, String> selectorMap = new HashMap<String,String>();
+//					selectorMap.put(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME,
+//							eventSourceUID);
+//					TransferExtensions xferResponse = new TransferExtensions(response);
+//					EndpointReferenceType epr = 
+//						TransferExtensions.createEndpointReference(
+//								request.getTo(), request.getResourceURI(), 
+//								selectorMap);
+//					xferResponse.setCreateResponse(epr);
+//					xferResponse.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+//				}
+//			}//End of Event source creation processing
+//			Subscribe subscribeContent = null;
+//			//Event sink creation
+//			if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
+//					(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
+//				//attempt to extract the subscribe message sent if any
+//				Transfer createRequest = new Transfer(request);
+////System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
+//				Document createBodyDoc = 
+//					createRequest.getBody().extractContentAsDocument();
+////System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
+//				if(createBodyDoc!=null){
+////					Subscribe subscribeContent = env_factory.createSubscribe();
+//					Object ob=	binding.unmarshal(createBodyDoc);
+//				  subscribeContent = (Subscribe) ob;
+////System.out.println("@@@ Have the subcribe content:"+subscribeContent);				  
+////				  JAXBElement<Subscribe> unmarsh = 
+////					  (JAXBElement<Subscribe>) binding.unmarshal(createBodyDoc);
+//////					JAXBElement<UserType> unmarshal = (JAXBElement<UserType>) binding
+//////					.unmarshal(resourceStateDom);
+//////				JAXBElement<UserType> userReturnedElement = unmarshal;
+//////				  UserType returnedUser = (UserType) userReturnedElement.getValue();
+////				  if((unmarsh!=null)&&(unmarsh.getValue()!=null)){
+////					  subscribeContent = (Subscribe) unmarsh.getValue();
+////					  
+////				  }
+//				}
+//				//locate the EventSinkId if sent.
+//				SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//						EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
+//				String eventSinkUID = null;
+//				if(eventSinkId!=null){
+//					eventSinkUID = eventSinkId.getTextContent();
+////System.out.println("###########subscriptionManagerCreateProcessing:"+eventSrcId.getNodeName()+":"+eventSourceUID);
+//				  //Check that this id is not already used. If generate new otherwise use suggested.
+////TODO: EventSinkId					
+//				  if(eventSinks.containsKey(eventSinkUID)){
+//					  eventSinkUID = EventingMessageValues.EVENT_SINK_NODE_NAME+
+//					    UUID.randomUUID();
+////					  cridget
 //				  }
-				}
-				//locate the EventSinkId if sent.
-				SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(), 
-						EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
-				String eventSinkUID = null;
-				if(eventSinkId!=null){
-					eventSinkUID = eventSinkId.getTextContent();
-//System.out.println("###########subscriptionManagerCreateProcessing:"+eventSrcId.getNodeName()+":"+eventSourceUID);
-				  //Check that this id is not already used. If generate new otherwise use suggested.
-//TODO: EventSinkId					
-				  if(eventSinks.containsKey(eventSinkUID)){
-					  eventSinkUID = EventingMessageValues.EVENT_SINK_NODE_NAME+
-					    UUID.randomUUID();
-//					  cridget
-				  }
-				  //Now populate the ResourceCreated value for the response object
-					HashMap<String, String> selectorMap = new HashMap<String,String>();
-					selectorMap.put(EventingMessageValues.EVENT_SINK_NODE_NAME,
-							eventSinkUID);
-					TransferExtensions xferResponse = new TransferExtensions(response);
-					EndpointReferenceType epr = 
-						TransferExtensions.createEndpointReference(
-								request.getTo(), request.getResourceURI(), 
-								selectorMap);
-					xferResponse.setCreateResponse(epr);
-				
-					//Handle/generate the subcription expiration details
-					Duration requestedExpiration = null;
-					 //attempt to locate the expiration request details
-					 if(subscribeContent!=null){
-						String expiresContent = subscribeContent.getExpires();
-						if((expiresContent!=null)&&(expiresContent.trim().length()>0)){
-//							DatatypeFactory.newInstance().newDuration(300000).toString();							
-						  
-						  try{
-						   requestedExpiration =
-							  DatatypeFactory.newInstance().newDuration(
-									  expiresContent.trim());
-						  }catch (IllegalArgumentException isex){
-						  }
-						  //decide whether to honor that expiration request information
-						  if(requestedExpiration!=null){
-							 if(requestedExpiration.isLongerThan(
-									 DEFAULT_SUBSCRIPTION_DURATION_FLOOR)){
-							   //for now as we're only accepting durations then proceed
-							   //TODO: add additional processing for specific time instances	 
-							   //   where invalid expiration time.
-							 }else{//Insert the default timeout value
-								requestedExpiration =DEFAULT_SUBSCRIPTION_DURATION;
-							 }
-						  }else{//attempt to parse the requested expiration timeout but null 
-							 //set to default expiration timeout value
-							 requestedExpiration = DEFAULT_SUBSCRIPTION_DURATION;
-						  }
-						}
-					 }
-					 //TODO: now generate the subscribeResponse object and return it as body of CreateResponse.
-					 SubscribeResponse subscribeResponseBody = 
-						 env_factory.createSubscribeResponse();
-					  //locate the details to define the SubscriptionManager EPR
-//					 Management subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
-					 if(subscriptionManMetaData==null){
+//				  //Now populate the ResourceCreated value for the response object
+//					HashMap<String, String> selectorMap = new HashMap<String,String>();
+//					selectorMap.put(EventingMessageValues.EVENT_SINK_NODE_NAME,
+//							eventSinkUID);
+//					TransferExtensions xferResponse = new TransferExtensions(response);
+//					EndpointReferenceType epr = 
+//						TransferExtensions.createEndpointReference(
+//								request.getTo(), request.getResourceURI(), 
+//								selectorMap);
+//					xferResponse.setCreateResponse(epr);
+//				
+//					//Handle/generate the subcription expiration details
+//					Duration requestedExpiration = null;
+//					 //attempt to locate the expiration request details
+//					 if(subscribeContent!=null){
+//						String expiresContent = subscribeContent.getExpires();
+//						if((expiresContent!=null)&&(expiresContent.trim().length()>0)){
+////							DatatypeFactory.newInstance().newDuration(300000).toString();							
+//						  
+//						  try{
+//						   requestedExpiration =
+//							  DatatypeFactory.newInstance().newDuration(
+//									  expiresContent.trim());
+//						  }catch (IllegalArgumentException isex){
+//						  }
+//						  //decide whether to honor that expiration request information
+//						  if(requestedExpiration!=null){
+//							 if(requestedExpiration.isLongerThan(
+//									 DEFAULT_SUBSCRIPTION_DURATION_FLOOR)){
+//							   //for now as we're only accepting durations then proceed
+//							   //TODO: add additional processing for specific time instances	 
+//							   //   where invalid expiration time.
+//							 }else{//Insert the default timeout value
+//								requestedExpiration =DEFAULT_SUBSCRIPTION_DURATION;
+//							 }
+//						  }else{//attempt to parse the requested expiration timeout but null 
+//							 //set to default expiration timeout value
+//							 requestedExpiration = DEFAULT_SUBSCRIPTION_DURATION;
+//						  }
+//						}
+//					 }
+//					 //TODO: now generate the subscribeResponse object and return it as body of CreateResponse.
+//					 SubscribeResponse subscribeResponseBody = 
+//						 env_factory.createSubscribeResponse();
+//					  //locate the details to define the SubscriptionManager EPR
+////					 Management subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
+//					 if(subscriptionManMetaData==null){
 //System.out.println("@@@ SubMan is null!!!");						 
-//						 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
-//subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
-//		DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
-					   subscriptionManMetaData = request;
-					   
-					 }
-					  if(subscriptionManMetaData!=null){
-					     //translate into subscription manager details
-					     EndpointReferenceType subscriptionManEpr = 
-						   ManagementUtility.extractEprType(subscriptionManMetaData);
-//TODO: add the ref params passed in					     
-  //extract epr from Subscribe/Mode/Notify
-///##########
-       //locate notify to
-        EndpointReferenceType notifyTo = null;					     
-		for (final Object content : subscribeContent.getDelivery().getContent()) {
-			final Class contentClass = content.getClass();
-			if (JAXBElement.class.equals(contentClass)) {
-				final JAXBElement<Object> element = (JAXBElement<Object>) content;
-				final QName name = element.getName();
-				final Object item = element.getValue();
-				if (item instanceof EndpointReferenceType) {
-					final EndpointReferenceType eprT = (EndpointReferenceType) item;
-					if (Eventing.NOTIFY_TO.equals(name)) {
-						notifyTo = eprT;
-//System.out.println("@@@@ Located eprNotifyType:"+notifyTo);						
-					}
-				}
-			}
+////						 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
+////subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
+////		DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
+////subscriptionManMetaData = request;
+//System.out.println("@@@ SubMan self ref init-before:"+request);
+//					   subscriptionManMetaData = AnnotationProcessor.stripMetadataContent(request, true);
+//System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);					   
+//					 }
+//					  if(subscriptionManMetaData!=null){
+//					     //translate into subscription manager details
+//					     EndpointReferenceType subscriptionManEpr = 
+//						   ManagementUtility.extractEprType(subscriptionManMetaData);
+////add the ref params passed in					     
+////extract epr from Subscribe/Mode/Notify
+/////##########
+//       //locate notify to
+//        EndpointReferenceType notifyTo = null;					     
+//		for (final Object content : subscribeContent.getDelivery().getContent()) {
+//			final Class contentClass = content.getClass();
+//			if (JAXBElement.class.equals(contentClass)) {
+//				final JAXBElement<Object> element = (JAXBElement<Object>) content;
+//				final QName name = element.getName();
+//				final Object item = element.getValue();
+//				if (item instanceof EndpointReferenceType) {
+//					final EndpointReferenceType eprT = (EndpointReferenceType) item;
+//					if (Eventing.NOTIFY_TO.equals(name)) {
+//						notifyTo = eprT;
+////System.out.println("@@@@ Located eprNotifyType:"+notifyTo);						
+//					}
+//				}
+//			}
+//		}
+//		ReferenceParametersType refs = notifyTo.getReferenceParameters();
+//		refs.getAny();
+////System.out.println("@@@ RefParam list:"+refs.getAny());		
+//		//iterate through and copy all over
+////		for(Object param: refs.getAny() ){
+//       if((refs.getAny()!=null)&&(refs.getAny().size()>0)){
+////    	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
+//    	   subscriptionManEpr.setReferenceParameters(refs);
+//    	   
+//System.out.println("@@@@ Adding ref parameters:");    	   
+////System.out.println("@@@@ Adding ref parameter:"+param);    	   
+//       }
+/////##########					     
+//					     //populate subscribeResponseBody
+////       subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
+////       EventingExtensions evext = new EventingExtensions();
+//                         EventingExtensions evext = new EventingExtensions(subscriptionManMetaData);
+//                         evext.setSubscribeResponse(subscriptionManEpr, requestedExpiration.toString());
+//                         SubscribeResponse subScrResEl = evext.getSubscribeResponse();
+//System.out.println("@@@@ EventingExt:"+evext);                         
+////					     subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
+////					     //handle the Expiration part of SubscribeResponse object
+////					     subscribeResponseBody.setExpires(requestedExpiration.toString());
+//					     //set the populated subscribeResponse as the CreateResponse.body
+//					     Document createRespBody = Management.newDocument();
+////					     binding.marshal(subscribeResponseBody, createRespBody);
+//					     binding.marshal(subScrResEl, createRespBody);
+////					     if(createRespBody!=null){
+////					    	 xferResponse.getBody().addDocument(createRespBody);
+////					     }
+////					    	 xferResponse = new TransferExtensions(evext);
+//					    	 response = new Management(evext);
+//System.out.println("@@@@ SubscribeResponse at end:"+response);					    	 
+//					  }
+////					 this.getClass().
+//					 //TODO: Generate the duration instance and stuff into custom header 
+//					 //TODO: add header to the response object
+//			   }
+//System.out.println("@@@@ SubscribeResponse at end-2:"+response);				
+//			}//End of CREATE action for new SUBSCRIBER
+//System.out.println("@@@@ SubscribeResponse at end-3:"+response);			
+//		}//End of CREATE ACTION processing
+//System.out.println("@@@@ SubscribeResponse at end-4:"+response);
+//		response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 		}
-		ReferenceParametersType refs = notifyTo.getReferenceParameters();
-		refs.getAny();
-//System.out.println("@@@ RefParam list:"+refs.getAny());		
-		//iterate through and copy all over
-       for(Object param: refs.getAny() ){
-    	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
-//System.out.println("@@@@ Adding ref parameter:"+param);    	   
-       }
-///##########					     
-					     //populate subscribeResponseBody
-					     subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
-					     //handle the Expiration part of SubscribeResponse object
-					     subscribeResponseBody.setExpires(requestedExpiration.toString());
-					     //set the populated subscribeResponse as the CreateResponse.body
-					     Document createRespBody = Management.newDocument();
-					     binding.marshal(subscribeResponseBody, createRespBody);
-					     if(createRespBody!=null){
-					    	 xferResponse.getBody().addDocument(createRespBody);
-					     }
-					  }
-//					 this.getClass().
-					 //TODO: Generate the duration instance and stuff into custom header 
-					 //TODO: add header to the response object
-			   }				
-			}//End of CREATE action for new SUBSCRIBER
-			
-		}//End of CREATE ACTION processing
 	}
 
 	public String getSubscriptionManagerAddress() {
@@ -412,10 +436,372 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 	 * @see com.sun.ws.management.framework.handlers.DelegatingHandler#create(com.sun.ws.management.server.HandlerContext, com.sun.ws.management.Management, com.sun.ws.management.Management)
 	 */
 //	@Override
-	public void create(HandlerContext context, Management request, Management response) {
-		// TODO Auto-generated method stub
-//		super.create(context, request, response);
-	}
+//	public Management create(HandlerContext context, Management request, Management response) {
+//		//locate the CreationSubType
+//		SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(), 
+//				EventingMessageValues.EVENTING_CREATION_TYPES);
+//		String type =null;
+//		if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
+//				(CreationTypes.SUBSCRIPTION_SOURCE.name().equals(type.trim()))){
+//			//locate the EventSourceId if sent.
+//			SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
+//			String eventSourceUID = null;
+//			if(eventSrcId!=null){
+//				eventSourceUID = eventSrcId.getTextContent();
+//				//Check that this id is not already used. If generate new otherwise use suggested.
+//				if(eventSources.containsKey(eventSourceUID)){
+//					eventSourceUID = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME+
+//					UUID.randomUUID();
+//				}
+//				
+//				//Now populate the ResourceCreated value for the response object
+//				HashMap<String, String> selectorMap = new HashMap<String,String>();
+//				selectorMap.put(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME,
+//						eventSourceUID);
+//				TransferExtensions xferResponse = new TransferExtensions(response);
+//				EndpointReferenceType epr = 
+//					TransferExtensions.createEndpointReference(
+//							request.getTo(), request.getResourceURI(), 
+//							selectorMap);
+//				xferResponse.setCreateResponse(epr);
+//				xferResponse.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+//			}
+//		}//End of Event source creation processing
+//		Subscribe subscribeContent = null;
+//		//Event sink creation
+//		if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
+//				(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
+//			//attempt to extract the subscribe message sent if any
+//			Transfer createRequest = new Transfer(request);
+////System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
+//			Document createBodyDoc = 
+//				createRequest.getBody().extractContentAsDocument();
+////System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
+//			if(createBodyDoc!=null){
+////				Subscribe subscribeContent = env_factory.createSubscribe();
+//				Object ob=	binding.unmarshal(createBodyDoc);
+//			  subscribeContent = (Subscribe) ob;
+////System.out.println("@@@ Have the subcribe content:"+subscribeContent);				  
+////			  JAXBElement<Subscribe> unmarsh = 
+////				  (JAXBElement<Subscribe>) binding.unmarshal(createBodyDoc);
+//////				JAXBElement<UserType> unmarshal = (JAXBElement<UserType>) binding
+//////				.unmarshal(resourceStateDom);
+//////			JAXBElement<UserType> userReturnedElement = unmarshal;
+//////			  UserType returnedUser = (UserType) userReturnedElement.getValue();
+////			  if((unmarsh!=null)&&(unmarsh.getValue()!=null)){
+////				  subscribeContent = (Subscribe) unmarsh.getValue();
+////				  
+////			  }
+//			}
+//			//locate the EventSinkId if sent.
+//			SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
+//			String eventSinkUID = null;
+//			if(eventSinkId!=null){
+//				eventSinkUID = eventSinkId.getTextContent();
+////System.out.println("###########subscriptionManagerCreateProcessing:"+eventSrcId.getNodeName()+":"+eventSourceUID);
+//			  //Check that this id is not already used. If generate new otherwise use suggested.
+////TODO: EventSinkId					
+//			  if(eventSinks.containsKey(eventSinkUID)){
+//				  eventSinkUID = EventingMessageValues.EVENT_SINK_NODE_NAME+
+//				    UUID.randomUUID();
+////				  cridget
+//			  }
+//			  //Now populate the ResourceCreated value for the response object
+//				HashMap<String, String> selectorMap = new HashMap<String,String>();
+//				selectorMap.put(EventingMessageValues.EVENT_SINK_NODE_NAME,
+//						eventSinkUID);
+//				TransferExtensions xferResponse = new TransferExtensions(response);
+//				EndpointReferenceType epr = 
+//					TransferExtensions.createEndpointReference(
+//							request.getTo(), request.getResourceURI(), 
+//							selectorMap);
+//				xferResponse.setCreateResponse(epr);
+//			
+//				//Handle/generate the subcription expiration details
+//				Duration requestedExpiration = null;
+//				 //attempt to locate the expiration request details
+//				 if(subscribeContent!=null){
+//					String expiresContent = subscribeContent.getExpires();
+//					if((expiresContent!=null)&&(expiresContent.trim().length()>0)){
+////						DatatypeFactory.newInstance().newDuration(300000).toString();							
+//					  
+//					  try{
+//					   requestedExpiration =
+//						  DatatypeFactory.newInstance().newDuration(
+//								  expiresContent.trim());
+//					  }catch (IllegalArgumentException isex){
+//					  }
+//					  //decide whether to honor that expiration request information
+//					  if(requestedExpiration!=null){
+//						 if(requestedExpiration.isLongerThan(
+//								 DEFAULT_SUBSCRIPTION_DURATION_FLOOR)){
+//						   //for now as we're only accepting durations then proceed
+//						   //TODO: add additional processing for specific time instances	 
+//						   //   where invalid expiration time.
+//						 }else{//Insert the default timeout value
+//							requestedExpiration =DEFAULT_SUBSCRIPTION_DURATION;
+//						 }
+//					  }else{//attempt to parse the requested expiration timeout but null 
+//						 //set to default expiration timeout value
+//						 requestedExpiration = DEFAULT_SUBSCRIPTION_DURATION;
+//					  }
+//					}
+//				 }
+//				 //TODO: now generate the subscribeResponse object and return it as body of CreateResponse.
+//				 SubscribeResponse subscribeResponseBody = 
+//					 env_factory.createSubscribeResponse();
+//				  //locate the details to define the SubscriptionManager EPR
+////				 Management subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
+//				 if(subscriptionManMetaData==null){
+//System.out.println("@@@ SubMan is null!!!");						 
+////					 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
+////subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
+////	DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
+////subscriptionManMetaData = request;
+//System.out.println("@@@ SubMan self ref init-before:"+request);
+//				   subscriptionManMetaData = AnnotationProcessor.stripMetadataContent(request, true);
+//System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);					   
+//				 }
+//				  if(subscriptionManMetaData!=null){
+//				     //translate into subscription manager details
+//				     EndpointReferenceType subscriptionManEpr = 
+//					   ManagementUtility.extractEprType(subscriptionManMetaData);
+////add the ref params passed in					     
+////extract epr from Subscribe/Mode/Notify
+/////##########
+//   //locate notify to
+//    EndpointReferenceType notifyTo = null;					     
+//	for (final Object content : subscribeContent.getDelivery().getContent()) {
+//		final Class contentClass = content.getClass();
+//		if (JAXBElement.class.equals(contentClass)) {
+//			final JAXBElement<Object> element = (JAXBElement<Object>) content;
+//			final QName name = element.getName();
+//			final Object item = element.getValue();
+//			if (item instanceof EndpointReferenceType) {
+//				final EndpointReferenceType eprT = (EndpointReferenceType) item;
+//				if (Eventing.NOTIFY_TO.equals(name)) {
+//					notifyTo = eprT;
+////System.out.println("@@@@ Located eprNotifyType:"+notifyTo);						
+//				}
+//			}
+//		}
+//	}
+//	ReferenceParametersType refs = notifyTo.getReferenceParameters();
+//	refs.getAny();
+////System.out.println("@@@ RefParam list:"+refs.getAny());		
+//	//iterate through and copy all over
+////	for(Object param: refs.getAny() ){
+//   if((refs.getAny()!=null)&&(refs.getAny().size()>0)){
+////	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
+//	   subscriptionManEpr.setReferenceParameters(refs);
+//	   
+//System.out.println("@@@@ Adding ref parameters:");    	   
+////System.out.println("@@@@ Adding ref parameter:"+param);    	   
+//   }
+/////##########					     
+//				     //populate subscribeResponseBody
+////   subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
+////   EventingExtensions evext = new EventingExtensions();
+//                     EventingExtensions evext = new EventingExtensions(subscriptionManMetaData);
+//                     evext.setSubscribeResponse(subscriptionManEpr, requestedExpiration.toString());
+//                     SubscribeResponse subScrResEl = evext.getSubscribeResponse();
+//System.out.println("@@@@ EventingExt:"+evext);                         
+////				     subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
+////				     //handle the Expiration part of SubscribeResponse object
+////				     subscribeResponseBody.setExpires(requestedExpiration.toString());
+//				     //set the populated subscribeResponse as the CreateResponse.body
+//				     Document createRespBody = Management.newDocument();
+////				     binding.marshal(subscribeResponseBody, createRespBody);
+//				     binding.marshal(subScrResEl, createRespBody);
+////				     if(createRespBody!=null){
+////				    	 xferResponse.getBody().addDocument(createRespBody);
+////				     }
+////				    	 xferResponse = new TransferExtensions(evext);
+//				    	 response = new Management(evext);
+//System.out.println("@@@@ SubscribeResponse at end:"+response);					    	 
+//				  }
+////				 this.getClass().
+//				 //TODO: Generate the duration instance and stuff into custom header 
+//				 //TODO: add header to the response object
+//		   }
+//System.out.println("@@@@ SubscribeResponse at end-2:"+response);				
+//		}//End of CREATE action for new SUBSCRIBER
+//System.out.println("@@@@ SubscribeResponse at end-3:"+response);			
+//	}//End of CREATE ACTION processing
+//System.out.println("@@@@ SubscribeResponse at end-4:"+response);
+//	response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+//		
+//		return response;
+//	}
+
+	private synchronized Management create(HandlerContext context, Management request, Management response) throws SOAPException, JAXBException, DatatypeConfigurationException {
+		
+		//locate the CreationSubType
+		SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(), 
+				EventingMessageValues.EVENTING_CREATION_TYPES);
+		String type =null;
+		//Create section for SUBSCRIPTION_SOURCES
+		if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
+				(CreationTypes.SUBSCRIPTION_SOURCE.name().equals(type.trim()))){
+			
+			//locate the EventSourceId if sent.
+			SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(), 
+					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
+			String eventSourceUID = null;
+			if(eventSrcId!=null){
+				eventSourceUID = eventSrcId.getTextContent();
+				//Check that this id is not already used. If generate new otherwise use suggested.
+				if(eventSources.containsKey(eventSourceUID)){
+					eventSourceUID = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME+
+					UUID.randomUUID();
+				}
+				
+				//Now populate the ResourceCreated value for the response object
+				HashMap<String, String> selectorMap = new HashMap<String,String>();
+				selectorMap.put(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME,
+						eventSourceUID);
+				TransferExtensions xferResponse = new TransferExtensions(response);
+				EndpointReferenceType epr = 
+					TransferExtensions.createEndpointReference(
+							request.getTo(), request.getResourceURI(), 
+							selectorMap);
+				xferResponse.setCreateResponse(epr);
+				xferResponse.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+				response = new Management(xferResponse);
+			}
+		}//End of Event source creation processing
+		
+		Subscribe subscribeContent = null;
+		//Create portion for EVENT_SINK creation
+		if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
+				(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
+			//attempt to extract the subscribe message sent if any
+			Transfer createRequest = new Transfer(request);
+//System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
+			Document createBodyDoc = 
+				createRequest.getBody().extractContentAsDocument();
+//System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
+			if(createBodyDoc!=null){
+//				Subscribe subscribeContent = env_factory.createSubscribe();
+				Object ob=	binding.unmarshal(createBodyDoc);
+			  subscribeContent = (Subscribe) ob;
+			}
+			//locate the EventSinkId if sent.
+			SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(), 
+					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
+			String eventSinkUID = null;
+			if(eventSinkId!=null){
+				eventSinkUID = eventSinkId.getTextContent();
+			  //Check that this id is not already used. If generate new otherwise use suggested.
+			  if(eventSinks.containsKey(eventSinkUID)){
+				  eventSinkUID = EventingMessageValues.EVENT_SINK_NODE_NAME+
+				    UUID.randomUUID();
+			  }
+			  //Now populate the ResourceCreated value for the response object
+				HashMap<String, String> selectorMap = new HashMap<String,String>();
+				selectorMap.put(EventingMessageValues.EVENT_SINK_NODE_NAME,
+						eventSinkUID);
+				TransferExtensions xferResponse = new TransferExtensions(response);
+				EndpointReferenceType epr = 
+					TransferExtensions.createEndpointReference(
+							request.getTo(), request.getResourceURI(), 
+							selectorMap);
+				xferResponse.setCreateResponse(epr);
+			
+				//Handle/generate the subcription expiration details
+				Duration requestedExpiration = null;
+				 //attempt to locate the expiration request details
+				 if(subscribeContent!=null){
+					String expiresContent = subscribeContent.getExpires();
+					if((expiresContent!=null)&&(expiresContent.trim().length()>0)){
+					  try{
+					   requestedExpiration =
+						  DatatypeFactory.newInstance().newDuration(
+								  expiresContent.trim());
+					  }catch (IllegalArgumentException isex){
+					  }
+					  //decide whether to honor that expiration request information
+					  if(requestedExpiration!=null){
+						 if(requestedExpiration.isLongerThan(
+								 DEFAULT_SUBSCRIPTION_DURATION_FLOOR)){
+						   //for now as we're only accepting durations then proceed
+						   //TODO: add additional processing for specific time instances	 
+						   //   where invalid expiration time.
+						 }else{//Insert the default timeout value
+							requestedExpiration =DEFAULT_SUBSCRIPTION_DURATION;
+						 }
+					  }else{//attempt to parse the requested expiration timeout but null 
+						 //set to default expiration timeout value
+						 requestedExpiration = DEFAULT_SUBSCRIPTION_DURATION;
+					  }
+					}
+				 }
+				 //generate the subscribeResponse object and return it as body of CreateResponse.
+				 SubscribeResponse subscribeResponseBody = 
+					 env_factory.createSubscribeResponse();
+				  //locate the details to define the SubscriptionManager EPR
+				 if(subscriptionManMetaData==null){
+System.out.println("@@@ SubMan is null!!!");						 
+//					 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
+//subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
+//	DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
+//subscriptionManMetaData = request;
+System.out.println("@@@ SubMan self ref init-before:"+request);
+				   subscriptionManMetaData = AnnotationProcessor.stripMetadataContent(request, true);
+System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);					   
+				 }
+				 if(subscriptionManMetaData!=null){
+				     //translate into subscription manager details
+				     EndpointReferenceType subscriptionManEpr = 
+					   ManagementUtility.extractEprType(subscriptionManMetaData);
+					//add the ref params passed in					     
+					//extract epr from Subscribe/Mode/Notify
+					///##########
+					   //locate notify to
+					    EndpointReferenceType notifyTo = null;					     
+						for (final Object content : subscribeContent.getDelivery().getContent()) {
+							final Class contentClass = content.getClass();
+							if (JAXBElement.class.equals(contentClass)) {
+								final JAXBElement<Object> element = (JAXBElement<Object>) content;
+								final QName name = element.getName();
+								final Object item = element.getValue();
+								if (item instanceof EndpointReferenceType) {
+									final EndpointReferenceType eprT = (EndpointReferenceType) item;
+									if (Eventing.NOTIFY_TO.equals(name)) {
+										notifyTo = eprT;
+									}
+								}
+							}
+						}
+						ReferenceParametersType refs = notifyTo.getReferenceParameters();
+						refs.getAny();
+					//System.out.println("@@@ RefParam list:"+refs.getAny());		
+						//iterate through and copy all over
+					//	for(Object param: refs.getAny() ){
+					   if((refs.getAny()!=null)&&(refs.getAny().size()>0)){
+					//	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
+						   subscriptionManEpr.setReferenceParameters(refs);
+						   
+System.out.println("@@@@ Adding ref parameters:");    	   
+					   }
+                     EventingExtensions evext = new EventingExtensions(subscriptionManMetaData);
+                     evext.setSubscribeResponse(subscriptionManEpr, requestedExpiration.toString());
+//                     SubscribeResponse subScrResEl = evext.getSubscribeResponse();
+System.out.println("@@@@ EventingExt:"+evext);                         
+//				     //set the populated subscribeResponse as the CreateResponse.body
+//				     Document createRespBody = Management.newDocument();
+//				     binding.marshal(subScrResEl, createRespBody);
+				    	 response = new Management(evext);
+System.out.println("@@@@ SubscribeResponse at end:"+response);					    	 
+				  }
+		   }//End of event sink id !=null
+		}//End of CREATE action for new SUBSCRIBER
+		response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+System.out.println("@@@ create:returned response:"+response);		
+	  return response;
+	}//End of CREATE ACTION processing
 
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.framework.handlers.DelegatingHandler#delete(com.sun.ws.management.server.HandlerContext, com.sun.ws.management.Management, com.sun.ws.management.Management)

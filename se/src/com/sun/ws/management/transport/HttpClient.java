@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.17 2007-03-02 16:06:28 denis_rachal Exp $
+ * $Id: HttpClient.java,v 1.18 2007-05-30 15:30:05 simeonpinder Exp $
  */
 
 package com.sun.ws.management.transport;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,15 +41,26 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.JAXBException;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
+//import org.apache.commons.httpclient.HttpClient;
+//import org.apache.commons.httpclient.HttpException;
+//import org.apache.commons.httpclient.UsernamePasswordCredentials;
+//import org.apache.commons.httpclient.auth.AuthScope;
+//import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
+//import org.apache.commons.httpclient.methods.PostMethod;
+
+import com.sun.ws.management.Management;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 
 public final class HttpClient {
     
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
+//    private static boolean useApacheCommonsHttpClient = true;
+    private static boolean useApacheCommonsHttpClient = false;
     
     private HttpClient() {}
     
@@ -115,7 +128,12 @@ public final class HttpClient {
     public static Addressing sendRequest(final SOAPMessage msg, final String destination)
     throws IOException, SOAPException, JAXBException {
         
-        log(msg);
+//    	if(useApacheCommonsHttpClient){
+//        	Addressing message = new Addressing(msg);
+//        	message.setTo(destination);
+//       	 return sendHttpRequest(message);
+//    	}
+////        log(msg);
         
         final HttpURLConnection http = initRequest(destination,
                 ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
@@ -126,7 +144,10 @@ public final class HttpClient {
     public static Addressing sendRequest(final SOAPMessage msg, final String destination,Entry<String, String>... headers)
     throws IOException, SOAPException, JAXBException {
         
-        log(msg);
+//    	if(useApacheCommonsHttpClient){
+//    		return sendHttpRequest(msg,destination);
+//    	}
+////        log(msg);
         
         final HttpURLConnection http = initRequest(destination,
                 ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
@@ -145,7 +166,10 @@ public final class HttpClient {
     		Entry<String, String>... headers)
     throws IOException, JAXBException, SOAPException {
         
-        log(msg);
+//    	if(useApacheCommonsHttpClient){
+//    		return sendHttpRequest(msg, headers);	
+//    	}
+////        log(msg);
         
         final HttpURLConnection http = initRequest(msg.getTo(), msg.getContentType());
         
@@ -159,7 +183,109 @@ public final class HttpClient {
         final Addressing response = readResponse(http);
         response.setXmlBinding(msg.getXmlBinding());
         return response;
+//    	return sendHttpRequest(msg, headers);
     }
+    
+//    public static Addressing sendHttpRequest(final Addressing msg,
+//    		Entry<String,String>... headers) throws SOAPException, 
+//    		JAXBException, IOException{
+//    	Addressing response = buildCommonsHttpRequest(msg,msg.getTo());
+//    	return response;
+//    }
+//
+//    public static Addressing sendHttpRequest(final SOAPMessage msg,
+//    		String destination) throws SOAPException, 
+//    		JAXBException, IOException{
+//    	Addressing message = new Addressing(msg);
+//    	Addressing response = buildCommonsHttpRequest(message,destination);
+////    	message.
+////        final HttpURLConnection http = initRequest(destination,
+////                ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
+////        transfer(http, msg);
+////        return readResponse(http);
+//    	
+//    	return response;
+//    }
+
+    public static HttpURLConnection createHttpConnection(
+    				String destination,Object data) throws SOAPException, 
+    				JAXBException, IOException{
+    	InputStream response = null;
+        final HttpURLConnection http = initRequest(destination, null);
+//        transfer(http, data);
+        
+//    	Addressing message = new Addressing(msg);
+//    	Addressing response = buildCommonsHttpRequest(message,destination);
+//    	message.
+//        final HttpURLConnection http = initRequest(destination,
+//                ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
+//        transfer(http, msg);
+//        return readResponse(http);
+
+        return http;
+    }
+
+//    private static org.apache.commons.httpclient.HttpClient client = null;
+//	/**
+//	 * @param msg
+//	 * @return
+//	 * @throws IOException
+//	 * @throws SOAPException
+//	 * @throws JAXBException
+//	 * @throws HttpException
+//	 */
+//	private static Addressing buildCommonsHttpRequest(final Addressing msg,String destination) throws IOException, SOAPException, JAXBException, HttpException {
+////		log(msg);
+////    	org.apache.commons.httpclient.HttpClient client = null;
+//        PostMethod method = null;
+//        Addressing response = null;
+//	      try{  
+//	//        final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
+//	       if(client==null){	  
+//	          client = new org.apache.commons.httpclient.HttpClient();
+//	       }
+////	        method = new PostMethod(msg.getTo());
+//	        method = new PostMethod(destination);
+//	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//	        SOAPMessage message = msg.getMessage();
+//	        message.writeTo(baos);
+//	        method.setRequestEntity(new InputStreamRequestEntity(
+//	        		new ByteArrayInputStream(baos.toByteArray())));
+//	        if((msg.getContentType()==null)||
+//	        		(msg.getContentType().toString().trim().length()==0)){
+//	            msg.setContentType(ContentType.DEFAULT_CONTENT_TYPE);
+//	        }
+////	        if(msg.getContentType()){
+////	        	
+////	        }
+//	        method.setRequestHeader("Content-Type", 
+////	        		ContentType.DEFAULT_CONTENT_TYPE.toString());
+//	        		msg.getContentType().toString());
+//	        method.setRequestHeader("User-Agent", "https://wiseman.dev.java.net");
+//	        method.setFollowRedirects(false);
+//	        method.setRequestHeader("Accept", ContentType.ACCEPTABLE_CONTENT_TYPES);
+//	        
+//	        final String user = System.getProperty("wsman.user", "");
+//	        final String password = System.getProperty("wsman.password", "");
+//	        
+//	        client.getState().setCredentials(
+//	//        		new AuthScope("www.verisign.com", 443, "realm"),
+//	        		AuthScope.ANY,
+//	//                new UsernamePasswordCredentials("username", "password")
+////	        		new UsernamePasswordCredentials("wsman", "secret")
+//	                new UsernamePasswordCredentials(user, password)
+//	        );
+//	        
+//	        method.setDoAuthentication(true);
+//	        int result = client.executeMethod(method);
+//	        response = new Addressing(method.getResponseBodyAsStream());
+//	        response.setXmlBinding(msg.getXmlBinding());
+//	        response.setContentType(msg.getContentType());
+//	      }finally{
+//	    	  method.releaseConnection();
+//	      }
+//		return response;
+//    }
     
     private static HttpURLConnection initRequest(final String destination, final ContentType contentType)
     throws IOException {
@@ -210,51 +336,59 @@ public final class HttpClient {
         }
         
         addr.setContentType(contentType);
-        log(addr);
+//        log(addr);
         
         return addr;
     }
     
     public static int sendResponse(final String to, final byte[] bits, final ContentType contentType)
     throws IOException, SOAPException, JAXBException {
-        log(bits);
+//        log(bits);
         final HttpURLConnection http = initConnection(to, contentType);
         transfer(http, bits);
         return http.getResponseCode();
     }
     
     public static int sendResponse(final Addressing msg) throws IOException, SOAPException, JAXBException {
-        log(msg);
+//        log(msg);
         final HttpURLConnection http = initConnection(msg.getTo(), msg.getContentType());
         transfer(http, msg);
         return http.getResponseCode();
     }
     
-    private static void log(final Addressing msg) throws IOException, SOAPException {
-        // expensive serialization ahead, so check first
-        if (LOG.isLoggable(Level.FINE)) {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            msg.writeTo(baos);
-            final byte[] content = baos.toByteArray();
-            final ContentType type = msg.getContentType();
-            LOG.fine(type == null ? new String(content) : new String(content, type.getEncoding()));
-        }
-    }
-    
-    private static void log(final SOAPMessage msg) throws IOException, SOAPException {
-        // expensive serialization ahead, so check first
-        if (LOG.isLoggable(Level.FINE)) {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            msg.writeTo(baos);
-            final byte[] content = baos.toByteArray();
-            final String encoding = (String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING);
-            LOG.fine(encoding == null ? new String(content) : new String(content, encoding));
-        }
-    }
-    
-    private static void log(final byte[] bits) {
-        if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine(new String(bits));
-        }
-    }
+//    private static void log(final Addressing msg) throws IOException, SOAPException {
+//        // expensive serialization ahead, so check first
+//        if (LOG.isLoggable(Level.FINE)) {
+//            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//            msg.writeTo(baos);
+//            final byte[] content = baos.toByteArray();
+//            final ContentType type = msg.getContentType();
+//            LOG.fine(type == null ? new String(content) : new String(content, type.getEncoding()));
+//        }
+//    }
+//    
+//    private static void log(final SOAPMessage msg) throws IOException, SOAPException {
+//        // expensive serialization ahead, so check first
+//        if (LOG.isLoggable(Level.FINE)) {
+//            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//            msg.writeTo(baos);
+//            final byte[] content = baos.toByteArray();
+//            final String encoding = (String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING);
+//            LOG.fine(encoding == null ? new String(content) : new String(content, encoding));
+//        }
+//    }
+//    
+//    private static void log(final byte[] bits) {
+//        if (LOG.isLoggable(Level.FINE)) {
+//            LOG.fine(new String(bits));
+//        }
+//    }
+	public static boolean isUseApacheCommonsHttpClient() {
+		return useApacheCommonsHttpClient;
+	}
+
+	public static void setUseApacheCommonsHttpClient(
+			boolean useApacheCommonsHttpClient) {
+		HttpClient.useApacheCommonsHttpClient = useApacheCommonsHttpClient;
+	}
 }

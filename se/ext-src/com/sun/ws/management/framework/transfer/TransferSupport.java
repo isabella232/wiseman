@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * $Id: TransferSupport.java,v 1.4 2007-05-30 15:30:05 simeonpinder Exp $
  ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
  **
  ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/05/30 13:57:30  nbeers
+ **Add HP copyright header
  **
- * $Id: TransferSupport.java,v 1.3 2007-05-30 13:57:30 nbeers Exp $
+ **
+ * $Id: TransferSupport.java,v 1.4 2007-05-30 15:30:05 simeonpinder Exp $
  *
  */
 package com.sun.ws.management.framework.transfer;
@@ -32,11 +36,13 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
+import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
@@ -125,15 +131,21 @@ public class TransferSupport implements Transferable {
 		}
 
         paramList.add(managementFactory.createSelectorSet(selectorSetType));
-       XmlBinding xmlBinding = response.getXmlBinding();
-        /// Document responseDoc = Management.newDocument();
+       XmlBinding xmlBinding = response.getXmlBinding(); 
+        Document responseDoc = Management.newDocument();
 		try {
-			xmlBinding.marshal(resp, response.getBody());
+			xmlBinding.marshal(resp, responseDoc );
 		} catch (JAXBException e) {
 			final String explanation =
 				 "XML Binding marshall failed for object of type: "
                 + resp.getClass().getName();
 			throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
+		}
+
+		try {
+			response.getBody().addDocument(responseDoc );
+		} catch (SOAPException e) {
+			throw new InternalErrorFault();
 		}
 	}
 

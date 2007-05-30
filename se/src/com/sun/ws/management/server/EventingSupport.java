@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.21 2007-05-28 09:36:16 denis_rachal Exp $
+ * $Id: EventingSupport.java,v 1.22 2007-05-30 15:30:05 simeonpinder Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,6 +27,7 @@ import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -71,6 +72,7 @@ import com.sun.ws.management.transport.HttpClient;
 public final class EventingSupport extends BaseSupport {
 	
 	public static final int DEFAULT_QUEUE_SIZE = 1024;
+	public static final int DEFAULT_EXPIRATION_MILLIS = 60000;
 	
     // TODO: add more delivery modes as they are implemented
     private static final String[] SUPPORTED_DELIVERY_MODES = {
@@ -80,6 +82,12 @@ public final class EventingSupport extends BaseSupport {
     
     private static Map<String, EventingIteratorFactory> registeredIterators =
         new HashMap<String, EventingIteratorFactory>();
+    
+	private static Duration defaultExpiration = null;
+	
+    static {
+        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
+    }
     
     private EventingSupport() {}
     
@@ -138,6 +146,8 @@ public final class EventingSupport extends BaseSupport {
         
         if (deliveryMode.equals(EventingExtensions.PULL_DELIVERY_MODE)) {
         	// this is a pull event mode subscribe request so setup an enumeration
+			final EventingExtensions evtxRequest = new EventingExtensions(
+					request);
 
 			EnumerationIterator iterator = newIterator(handlerContext, 
 					                                   request, 

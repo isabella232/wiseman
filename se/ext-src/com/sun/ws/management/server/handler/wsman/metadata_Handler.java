@@ -257,7 +257,7 @@ public class metadata_Handler implements Handler {
 					bag.add(anot);
 				}
 			} catch (ClassNotFoundException e) {
-            	LOG.log(Level.FINE, "The class '"+className+"' loaded from "+
+            	LOG.log(Level.WARNING, "The class '"+className+"' loaded from "+
             			ANNOTATED_LIST+" could not be found.");
 				e.printStackTrace();
 			}

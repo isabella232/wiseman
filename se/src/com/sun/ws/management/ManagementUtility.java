@@ -1,10 +1,15 @@
 package com.sun.ws.management;
 
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
@@ -12,10 +17,19 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.soap.SOAPHeader;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
@@ -27,12 +41,17 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
+import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
+import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
 
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
+//import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
+import com.sun.xml.fastinfoset.sax.Properties;
 
 /** This class is meant to provide general utility functionality for
  *  Management instances and all of their related extensions.
@@ -79,6 +98,39 @@ public class ManagementUtility {
 		        selectorList.add(nameSelector);			
 			}
 	    return selectorContainer;
+	}
+	
+	/**Takes a Map<String,String> of selector values and returns
+	 * a container Set<SelectorType> which has the selectors 
+	 * passed in. 
+	 * Ex. Map<String,String> selectors = new HashMap<String,String>();
+	 * 	     selectors.put("firstname","Get");
+	 * 	     selectors.put("lastname","Guy");
+	 * 
+	 *    is wrapped in the appropriate type that will look like
+	 *    
+	 *  <wsman:SelectorSet>
+     * 	 <wsman:Selector Name="firstname">Get</wsman:Selector>
+     *    <wsman:Selector Name="lastname">Guy</wsman:Selector>
+     *  </wsman:SelectorSet>
+	 *
+	 * @param selectorsAsProperties
+	 * @return
+	 */
+	public static Set<SelectorType> createSelectorType(
+			Map<String,String> selectorsAsProperties){
+		Set<SelectorType> selectors = null;
+		if((selectorsAsProperties!=null)&&(selectorsAsProperties.size()>0)){
+			selectors =  new HashSet<SelectorType>();
+			Set<String> keyList = selectorsAsProperties.keySet();
+			for(String key: keyList){
+				SelectorType selector = new SelectorType();
+				selector.setName(key);
+				selector.getContent().add(selectorsAsProperties.get(key));
+				selectors.add(selector);
+			}
+		}
+		return selectors;
 	}
 	
 	/**The method takes a SelectorSetType instance and returns the Selectors defined
@@ -220,8 +272,8 @@ public class ManagementUtility {
 		   message.setMessageId(settings.getUidScheme() +
 				   UUID.randomUUID().toString());
 		}else{
-			message.setMessageId(EnumerationMessageValues.DEFAULT_UID_SCHEME +
-			  UUID.randomUUID().toString());
+		   message.setMessageId(ManagementMessageValues.DEFAULT_UID_SCHEME +
+			UUID.randomUUID().toString());
 		}
 
 		
@@ -283,13 +335,20 @@ public class ManagementUtility {
 		 //Populate the new message instance with the values
 		 if((existing!=null)&&(existing.getHeaders()!=null)){
 			 for(SOAPElement header: existing.getHeaders()){
-//				//Don't add the original Action header
-//				QName examine = null;
-//				if(((examine =header.getElementQName())!=null)&&
-//				   examine.getLocalPart().equals(Management.ACTION.getLocalPart())){
-//					//Bail out and do not add.
-//				   continue;	
-//				}
+				 //Don't add the original Action header
+				 QName examine = null;
+				 if(((examine =header.getElementQName())!=null)&&
+						 examine.getLocalPart().equals(Management.ACTION.getLocalPart())){
+					 //Bail out and do not add.
+					 continue;	
+				 }
+  				 //Don't add the original MessageId if one exists
+				 QName mesgId = null;
+				 if(((mesgId =header.getElementQName())!=null)&&
+					mesgId.getLocalPart().equals(Management.MESSAGE_ID.getLocalPart())){
+					//Bail out and do not add.
+				   continue;	
+				 }
 				if(trimAdditionalMetadata){
 //				  if(!AnnotationProcessor.isDescriptiveMetadataElement(
 //						  header.getElementQName())){
@@ -466,7 +525,7 @@ public class ManagementUtility {
 	
 	/**
 	 * Send an http request and return the response as a ResourceState
-	 * @param response SOAP response
+	 * @param request SOAP request
 	 * @return SOAP response as a ResourceState
 	 * @throws Exception
 	 */
@@ -495,4 +554,22 @@ public class ManagementUtility {
         return response;
 	
 	}
+	
+	 public static String xmlToString(Node node) {
+		try {
+			Source source = new DOMSource(node);
+			StringWriter stringWriter = new StringWriter();
+			Result result = new StreamResult(stringWriter);
+			TransformerFactory factory = TransformerFactory.newInstance();
+			Transformer transformer = factory.newTransformer();
+			transformer.transform(source, result);
+			return stringWriter.getBuffer().toString();
+		} catch (TransformerConfigurationException e) {
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 }
