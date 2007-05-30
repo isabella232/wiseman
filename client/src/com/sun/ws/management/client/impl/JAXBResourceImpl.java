@@ -13,7 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: JAXBResourceImpl.java,v 1.2 2007-05-28 09:46:27 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ *
+ * $Id: JAXBResourceImpl.java,v 1.3 2007-05-30 13:29:44 nbeers Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -49,12 +57,12 @@ import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * NOTE: This class has not yet been tested and is not ready for use yet.
- * 
+ *
  * WS-Management Resource client handler, providing client side access to a
  * WS-Management service.
- * 
+ *
  * @author APL
- * 
+ *
  */
 
 public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
@@ -89,8 +97,8 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 		super(eprElement, endpointUrl, null);
 		setBinding(packageNames);
 	}
-	
-	
+
+
 
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.JAXBResource#getObject()
@@ -116,10 +124,10 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 	 * ResourceEnumerator provides WS-Enumeration support for WS-Management
 	 * endpoints enumeration sessions. Instances of the resource enumerator are
 	 * created using
-	 * 
+	 *
 	 * @see enumerate.
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public class ResourceEnumerator {
 		protected EnumerationCtx enumerationContextId;
@@ -129,18 +137,18 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 		protected Resource enumerateImpl = null;
 
 		/**
-		 * 
+		 *
 		 */
 		protected ResourceEnumerator() {
 		}
 
 		/**
 		 * Internal constructor for the ResourceEnumerator
-		 * 
+		 *
 		 * @param impl
 		 * @param id
 		 * @param timeout
-		 * @param mode 
+		 * @param mode
 		 * 		Either null (Enumerate Objects), ENUMERATE_EPR or EnumerateObjectAndEPR
 		 */
 		protected ResourceEnumerator(Resource impl, EnumerationCtx id, long timeout, EnumerationModeType enumModeType) {
@@ -148,13 +156,13 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 			enumerationContextId = id;
 			enumerationTimeout = timeout;
 			// Object[] mode = {factory.createEnumerationMode(EnumerationModeType.ENUMERATE_OBJECT_AND_EPR)};
-			org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory factory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();			
+			org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory factory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
 			this.mode = factory.createEnumerationMode(enumModeType);//mode;
 		}
 
 		/**
 		 * Simple iterator for the collection
-		 * 
+		 *
 		 * @param timeout -
 		 *            timeout for each fetch from the WS-Management Resource
 		 * @param maxElements -
@@ -170,7 +178,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 		/**
 		 * Simple iterator for the collection.
-		 * 
+		 *
 		 * @param maxElements -
 		 *            number of elements to be fetched at a time
 		 * @return an iterator.
@@ -182,8 +190,8 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 		/**
 		 * Implements the Iterator for the WS-Management ResoureEnumerator.
-		 * 
-		 * 
+		 *
+		 *
 		 */
 		public class ResourceIterator implements Iterator {
 			protected boolean end = false;
@@ -199,7 +207,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 			/**
 			 * Constructor for ResourceIterator. Invoked for ResourceEnumerator
 			 * iterator().
-			 * 
+			 *
 			 * @param timeout -
 			 *            Timeout for each fetch from the WS-Management
 			 *            endpoint.
@@ -218,7 +226,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 			/*
 			 * (non-Javadoc)
-			 * 
+			 *
 			 * @see java.util.Iterator#hasNext()
 			 */
 			public boolean hasNext() {
@@ -238,7 +246,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 			/*
 			 * (non-Javadoc)
-			 * 
+			 *
 			 * @see java.util.Iterator#next()
 			 */
 			public Object next() {
@@ -257,7 +265,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 			/**
 			 * Not supported. Throws UnsupportedOperationException
-			 * 
+			 *
 			 * @see java.util.Iterator#remove()
 			 */
 			public void remove() {
@@ -267,7 +275,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 		/**
 		 * Pulls next enumeration set from the WS-Management endpoint.
-		 * 
+		 *
 		 * @param timeout -
 		 *            Timeout for each fetch from the WS-Management endpoint.
 		 * @param maxElements -
@@ -282,13 +290,13 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 		 * @throws DatatypeConfigurationException
 		 */
 		public List pull(long timeout, int maxElements, int maxCharacters)
-								throws SOAPException, 
-									   JAXBException, 
+								throws SOAPException,
+									   JAXBException,
 									   IOException,
-									   FaultException, 
+									   FaultException,
 									   DatatypeConfigurationException {
-			
-			ResourceState rs = enumerateImpl.pull( enumerationContextId, 
+
+			ResourceState rs = enumerateImpl.pull( enumerationContextId,
 											(int)timeout,maxElements, maxCharacters);
 
 			PullResponse pullResponse = (PullResponse) binding.unmarshal(rs
@@ -298,14 +306,14 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 			List<Object> items = returnedItemsContainer.getAny();
 			List<Object> beans = new ArrayList<Object>(items.size());
 			for (Object object : items) {
-				
+
 				if (object instanceof JAXBElement) {
 					JAXBElement e = (JAXBElement) object;
 					object = e.getValue();
 				} else  if (object instanceof Element) {
 					object = binding.unmarshal((Element)object);
-				} 
-				
+				}
+
 				beans.add(object);
 			}
 			return beans;
@@ -313,7 +321,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 		/**
 		 * Pulls next enumeration set from the WS-Management endpoint.
-		 * 
+		 *
 		 * @param timeout -
 		 *            Timeout for each fetch from the WS-Management endpoint.
 		 * @param maxElements -
@@ -336,7 +344,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 		/**
 		 * Releases the enumeration session.
-		 * 
+		 *
 		 * @throws SOAPException
 		 * @throws JAXBException
 		 * @throws IOException
@@ -351,7 +359,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 
 		/**
 		 * Renews the period of the enumeration session.
-		 * 
+		 *
 		 * @throws SOAPException
 		 * @throws JAXBException
 		 * @throws IOException
@@ -450,7 +458,7 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.sun.ws.management.client.impl.JAXBResource#enumerate(java.lang.String[], java.lang.String, org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType)
 	 */
@@ -466,9 +474,9 @@ public class JAXBResourceImpl extends ResourceImpl implements JAXBResource {
 	 * @see com.sun.ws.management.client.impl.JAXBResource#enumerate(java.lang.String[], org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType)
 	 */
 	public ResourceEnumerator enumerate( String[] filters, EnumerationModeType mode)
-										 throws SOAPException, JAXBException, 
+										 throws SOAPException, JAXBException,
 										 IOException, FaultException, DatatypeConfigurationException {
-		
+
 		return enumerate(filters, Resource.XPATH_DIALECT, mode);
 	}
 
