@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationContext.java,v 1.12 2007-05-04 10:52:50 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EnumerationContext.java,v 1.13 2007-05-30 20:31:04 nbeers Exp $
  */
 
 package com.sun.ws.management.server;
@@ -23,11 +30,11 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 
 final class EnumerationContext extends BaseContext {
-    
-    
+
+
     private final EnumerationIterator iterator;
     private final EnumerationModeType mode;
-    
+
     EnumerationContext(final XMLGregorianCalendar expiration,
             final Filter filter,
             final EnumerationModeType mode,
@@ -37,7 +44,7 @@ final class EnumerationContext extends BaseContext {
         this.iterator = iterator;
         this.mode = mode;
     }
-    
+
     /**
      * Returns the EnumerationMode
      * @return the EnumerationModeType, null if the mode was not set
@@ -48,13 +55,13 @@ final class EnumerationContext extends BaseContext {
 
     /**
      * Returns the iterator associated with this enumeration.
-     * 
+     *
      * @return the iterator associated with this enumeration
      */
     EnumerationIterator getIterator() {
         return this.iterator;
     }
-    
+
     public void setDeleted() {
     	super.setDeleted();
     /*	synchronized (this.iterator) {
@@ -63,10 +70,10 @@ final class EnumerationContext extends BaseContext {
     	}
      */
     }
-    
+
     protected void finalize () throws Throwable {
         if (this.iterator != null) {
-        	this.iterator.release();     	
+        	this.iterator.release();
         }
     }
 }

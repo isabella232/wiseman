@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ *
+ * $Id: metadata_Handler.java,v 1.4 2007-05-30 20:30:27 nbeers Exp $
+ */
 package com.sun.ws.management.server.handler.wsman;
 
 import java.io.IOException;
@@ -69,14 +95,14 @@ import com.sun.ws.management.xml.XmlBinding;
 /** This handler is meant to expose metaData information for annotated
  *  handlers. First priority is a simplistic implementation of MetadataExchange1.1,
  *  where metadata for Wiseman is returned in response to simple Transfer.Get
- *  and Metadata.GET reqeusts.  The exposed metadata is represented via a custom 
- *  metadata filter dialect.  The embedded metadata representation are just 
+ *  and Metadata.GET reqeusts.  The exposed metadata is represented via a custom
+ *  metadata filter dialect.  The embedded metadata representation are just
  *  instances of Management messages with all of the addressing details prepopulated
  *  by the service implementors.
- * 
+ *
  *  Enumeration and Optimized enumeration functionality is be added to allow users
  *  to filter the requested Enumeration values.
- * 
+ *
  * @author Simeon Pinder
  *
  */
@@ -85,13 +111,13 @@ import com.sun.ws.management.xml.XmlBinding;
 		@WsManagementDefaultAddressingModelAnnotation(
 			getDefaultAddressDefinition=
 				@WsManagementAddressDetailsAnnotation(
-					wsaTo=metadata_Handler.wsaTo, 
-					wsmanResourceURI=metadata_Handler.wsaResourceURI), 
+					wsaTo=metadata_Handler.wsaTo,
+					wsmanResourceURI=metadata_Handler.wsaResourceURI),
 			resourceMetaDataUID = metadata_Handler.resourceMetaUID
 		),
-	resourceEnumerationAccessRecipe = 
+	resourceEnumerationAccessRecipe =
 		"Enumerate and Optimized Enumeration with no arguments returns all available Event Sources.",
-	resourceFilterUsageDescription = 
+	resourceFilterUsageDescription =
 		"Filtering via RESOURCE_META_DATA_UID. Ex. env:Envelope/env:Header/wsmeta:ResourceMetaDataUID/text()='"+
 		metadata_Handler.resourceMetaUID+"' to isolate a particular resource."
 )
@@ -108,13 +134,13 @@ public class metadata_Handler implements Handler {
 	private static String ANNOTATED_LIST="/metadata-handlers.properties";
 	//handler list.
 	private static HashMap<String,String> handlerList = new HashMap<String,String>();
-	
+
 	//Define the JAXB object factory references for un/marshalling
 	private static ObjectFactory metaFactory = new ObjectFactory();
 	private static final Vector<Management> metaDataValues = new Vector<Management>();
 	private static XmlBinding binding = null;
 	private static boolean metaDataInitialized =false;
-	
+
 	//Static initialization block.
 	static{
 		//load list of customPackages to the XmlBinding instance.
@@ -126,20 +152,20 @@ public class metadata_Handler implements Handler {
 			binding=new XmlBinding(null,custPackages);
 			LOG.log(Level.FINE, "Custom JAXB packages loaded.");
 		} catch (JAXBException e) {
-			LOG.log(Level.SEVERE, "Error loading Custom JAXB packages defined.");			
+			LOG.log(Level.SEVERE, "Error loading Custom JAXB packages defined.");
 			throw new InternalErrorFault(e.getMessage());
 		}
-		
+
 		//Load the metadata.refresh.interval from the properties file.
 		boolean refreshEnabled = false;
-		long refreshInterval =0; 
+		long refreshInterval =0;
 		 try{
 		  refreshEnabled=Boolean.valueOf(System.getProperty("metadata.refresh.enabled"));
 		  refreshInterval=Long.valueOf(System.getProperty("metadata.refresh.interval"));
 		 }catch(NumberFormatException nfex){
 		 }
 		if(refreshInterval>60*1000*5){timeout = refreshInterval;}
-		
+
 		//launch a task to repeatedly/periodically launch the refreshMetaDataInformation method
         final TimerTask ttask = new TimerTask() {
             public void run() {
@@ -152,18 +178,18 @@ public class metadata_Handler implements Handler {
 				}
             }
         };
-        
+
         //launch timer that will die with the enclosing thread.
         final Timer timeoutTimer = new Timer(true);
         if(refreshEnabled){
           timeoutTimer.schedule(ttask,5000, timeout);
         }
-		
+
         initializeAnnotationProcessing();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private static void initializeAnnotationProcessing() {
 		// load subsystem properties and save them in a type-safe map
@@ -181,7 +207,7 @@ public class metadata_Handler implements Handler {
 	}
 
 	/**Takes an container with Class instances, parses for relevant annotations
-	 * and then populates the master list of annotation data maintained by this 
+	 * and then populates the master list of annotation data maintained by this
 	 * handler
 	 * @param bag ArrayList<Class> containing list of annnotated classes.
 	 */
@@ -191,11 +217,11 @@ public class metadata_Handler implements Handler {
 		Vector<WsManagementEnumerationAnnotation> allEnumerationAnnots = null;
 		Vector<Annotation> annotated = null;
 		Vector<Annotation> allAnnotations = new Vector<Annotation>();
-		
+
 		//iterate through list of classes passed in.
 		for (Iterator iter = bag.iterator(); iter.hasNext();) {
 			Class element = (Class) iter.next();
-			
+
 			LOG.log(Level.FINE, "Populating annotations for '"+element.getCanonicalName()+".");
 			annotated = AnnotationProcessor.populateAnnotationsFromClass(element);
 			if(annotated!=null){
@@ -205,30 +231,30 @@ public class metadata_Handler implements Handler {
 					allAnnotations.add(aEl);
 				}
 			}
-				
+
 		}
 		if((allAnnotations!=null)&&(allAnnotations.size()>0)){
 			LOG.log(Level.FINE, "Located "+allAnnotations.size()+" annotation(s).");
 		}
 		//For correctly annotated instances...
-	  try{	
+	  try{
 		 for (Iterator iter = allAnnotations.iterator(); iter.hasNext();) {
 			Annotation element = (Annotation) iter.next();
 			if(element instanceof WsManagementDefaultAddressingModelAnnotation){
-				WsManagementDefaultAddressingModelAnnotation anotElement = 
+				WsManagementDefaultAddressingModelAnnotation anotElement =
 					(WsManagementDefaultAddressingModelAnnotation)element;
 				Management wsmanMetaData = null;
-				wsmanMetaData = 
+				wsmanMetaData =
 					AnnotationProcessor.populateManagementInstance(anotElement);
 				if(wsmanMetaData !=null){
 					metaDataValues.add(wsmanMetaData);
 				}
 			}
 			if(element instanceof WsManagementEnumerationAnnotation){
-				WsManagementEnumerationAnnotation anotElement = 
+				WsManagementEnumerationAnnotation anotElement =
 				  (WsManagementEnumerationAnnotation)element;
 			  Management wsmanMetaData = null;
-				wsmanMetaData = 
+				wsmanMetaData =
 					AnnotationProcessor.populateManagementInstance(anotElement);
 			  if(wsmanMetaData !=null){
 				  metaDataValues.add(wsmanMetaData);
@@ -264,14 +290,14 @@ public class metadata_Handler implements Handler {
 		}
 		return bag;
 	}
-	
-	public void handle(String action, String resource, HandlerContext context, 
+
+	public void handle(String action, String resource, HandlerContext context,
 			Management request, Management response) throws Exception {
-		//if action is Transfer.GET or MetaDataExchange.GetMetaData then process 
+		//if action is Transfer.GET or MetaDataExchange.GetMetaData then process
 		// else ActionNotSupported
 		if(Transfer.GET_ACTION_URI.equals(action)){
 			//refresh metaDataInformation
-			
+
 			// Create an empty DOM document for marshalling metadata content.
 	        Document responseDoc = Management.newDocument();
 
@@ -283,14 +309,14 @@ public class metadata_Handler implements Handler {
 				Management element = (Management) iter.next();
 				AnnotationProcessor.populateMetaDataElement(metaElement, element);
 			}
-	
+
 	        try {
 			  binding.marshal(metaElement, responseDoc );
 			} catch (Exception e) {
 				LOG.log(Level.SEVERE,"Error marshalling content :"+e.getMessage());
 //				  System.out.println("Exception:"+e.getMessage());
 				throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
-			} 	         
+			}
 
 	        response.getBody().addDocument(responseDoc);
 		}
@@ -312,10 +338,10 @@ public class metadata_Handler implements Handler {
 //		else if(Transfer.INITIALIZE_ACTION_URI.equals(action)){
 		else if(com.sun.ws.management.mex.Metadata.INITIALIZE_ACTION_URI.equals(action)){
 		   if(!metaDataInitialized){
-			   
+
 			initializationMetaDataHandlerFunctionality();
-			   
-			//Completed static initialization   
+
+			//Completed static initialization
 			metaDataInitialized = true;
 //			response.setAction(Transfer.INITIALIZE_RESPONSE_URI);
 			response.setAction(com.sun.ws.management.mex.Metadata.INITIALIZE_RESPONSE_URI);
@@ -327,19 +353,19 @@ public class metadata_Handler implements Handler {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void initializationMetaDataHandlerFunctionality() {
 //		//Load the metadata.refresh.interval from the properties file.
 //		boolean refreshEnabled = false;
-//		long refreshInterval =0; 
+//		long refreshInterval =0;
 //		 try{
 //		  refreshEnabled=Boolean.valueOf(System.getProperty("metadata.refresh.enabled"));
 //		  refreshInterval=Long.valueOf(System.getProperty("metadata.refresh.interval"));
 //		 }catch(NumberFormatException nfex){
 //		 }
 //		if(refreshInterval>60*1000*5){timeout = refreshInterval;}
-//		
+//
 //		//launch a task to repeatedly/periodically launch the refreshMetaDataInformation method
 //		final TimerTask ttask = new TimerTask() {
 //		    public void run() {
@@ -352,13 +378,13 @@ public class metadata_Handler implements Handler {
 //				}
 //		    }
 //		};
-//		
+//
 //		//launch timer that will die with the enclosing thread.
 //		final Timer timeoutTimer = new Timer(true);
 //		if(refreshEnabled){
 //		  timeoutTimer.schedule(ttask,5000, timeout);
 //		}
-		
+
 //		initializeAnnotationProcessing();
 	}
 
@@ -366,7 +392,7 @@ public class metadata_Handler implements Handler {
 		//Find classes from classpath that implement Handler and have annotations
 		//parse the classes list to update the list of metadata information
 		//Each get will return the current state of the known metadata.
-	       initializeAnnotationProcessing();		 
+	       initializeAnnotationProcessing();
 	 }
 
 	/**
@@ -395,7 +421,7 @@ public class metadata_Handler implements Handler {
 //             properties = Collections.unmodifiableMap(propertySet);
          }
 	}
-	
+
 	public static String domToString(Node node) {
 		try {
 			Source source = new DOMSource(node);
@@ -412,26 +438,26 @@ public class metadata_Handler implements Handler {
 		}
 		return null;
 	}
-	
+
 	private static XPath xpath = null;
-	
+
 	public class MetaDataIteratorFactory implements IteratorFactory{
-		
+
 		public final String RESOURCE_URI;
 		protected MetaDataIteratorFactory(String resource) {
 			RESOURCE_URI = resource;
 		}
-		public EnumerationIterator newIterator(HandlerContext context, Enumeration request, 
-				DocumentBuilder db, boolean includeItem, 
-				boolean includeEPR) 
+		public EnumerationIterator newIterator(HandlerContext context, Enumeration request,
+				DocumentBuilder db, boolean includeItem,
+				boolean includeEPR)
 		throws UnsupportedFeatureFault, FaultException {
-			return new MetaDataIterator(context, RESOURCE_URI, 
-					request, 
+			return new MetaDataIterator(context, RESOURCE_URI,
+					request,
 					db, includeItem, includeEPR);
 		}
-		
+
 		public class MetaDataIterator implements EnumerationIterator {
-			
+
 			private java.util.Enumeration<Object> keys;
 			private Management[] allMetadataSources;
 			private final DocumentBuilder db;
@@ -439,7 +465,7 @@ public class metadata_Handler implements Handler {
 			private final String requestPath;
 			private final String resourceURI;
 			int iterCount = 0;
-			
+
 			public MetaDataIterator(final HandlerContext hcontext,
 					final String resource,
 					final Enumeration request, final DocumentBuilder db,
@@ -456,7 +482,7 @@ public class metadata_Handler implements Handler {
 					 if(type.getContent()!=null){
 						 String filterValue ="";
 						 for(Object filterArg : type.getContent()){
-							filterValue+= filterArg; 
+							filterValue+= filterArg;
 						 }
 						xpathFilterString = filterValue;
 						if(xpath==null){
@@ -465,27 +491,27 @@ public class metadata_Handler implements Handler {
 					 }
 				  }
 				  allMetadataSources = filterMetadataList(xpathFilterString);
-//System.out.println("@@@@ In Enum instance, filtered :"+allMetadataSources.length);				  
+//System.out.println("@@@@ In Enum instance, filtered :"+allMetadataSources.length);
 				}catch (Exception ex){
 				  LOG.severe("There was an error filtering the Metatadata instances : "+ex.getMessage());
 				  ex.printStackTrace();
-//System.out.println("@@@@ In Enum instance, exception :"+ex.toString());				  
-				  allMetadataSources = new Management[0];	
+//System.out.println("@@@@ In Enum instance, exception :"+ex.toString());
+				  allMetadataSources = new Management[0];
 				}
 			}
 
-			private Management[] filterMetadataList(String xpathFilterString) throws SOAPException, 
+			private Management[] filterMetadataList(String xpathFilterString) throws SOAPException,
 				IOException, JAXBException, DatatypeConfigurationException {
 				Management[] eventSrces = null;
 				int indx=0;
-				
+
 //				for(Management m: metaDataValues){
-////				for (Iterator iter = metaDataValues.iterator(); iter.hasNext();) {				
-//System.out.println("Enum metaList:"+(indx++)+":"+m);				
-////System.out.println("Enum metaList:"+(indx++)+":"+(Management)iter.next());				
+////				for (Iterator iter = metaDataValues.iterator(); iter.hasNext();) {
+//System.out.println("Enum metaList:"+(indx++)+":"+m);
+////System.out.println("Enum metaList:"+(indx++)+":"+(Management)iter.next());
 //				}
 				Management[] metaDataList = new Management[metaDataValues.size()];
-							 metaDataList =	metaDataValues.toArray(metaDataList); 
+							 metaDataList =	metaDataValues.toArray(metaDataList);
 			        ArrayList<Management> metaDataBag = new ArrayList<Management>();
 			        for (int i = 0; i < metaDataList.length; i++) {
 						Management metaDescription = metaDataList[i];
@@ -498,8 +524,8 @@ public class metadata_Handler implements Handler {
 							NamespaceContext nsContext = new NameSpacer();
 							xpath.setNamespaceContext(nsContext);
 						  	try {
-							  Object nodes = xpath.evaluate(xpathFilterString, 
-								metaDescription.getEnvelope().getOwnerDocument(), 
+							  Object nodes = xpath.evaluate(xpathFilterString,
+								metaDescription.getEnvelope().getOwnerDocument(),
 								XPathConstants.BOOLEAN);
 							  if(nodes!=null){
 							   Boolean located = (Boolean) nodes;
@@ -509,14 +535,14 @@ public class metadata_Handler implements Handler {
 							 }
 							} catch (XPathExpressionException e) {
 								e.printStackTrace();
-							} 
+							}
 						}else{
 						  metaDataBag.add(metaDescription);
 						}
 					}
 			        eventSrces = new Management[metaDataBag.size()];
 			        if(metaDataBag.size()>0){
-			        	System.arraycopy(metaDataBag.toArray(), 0, eventSrces, 0, 
+			        	System.arraycopy(metaDataBag.toArray(), 0, eventSrces, 0,
 			        	  metaDataBag.size());
 			        }
 				return eventSrces;
@@ -562,12 +588,12 @@ public class metadata_Handler implements Handler {
 			}
 		}//End of MetaDataIterator
 	}
-	
+
 	class NameSpacer implements NamespaceContext{
 		public String getNamespaceURI(String prefix) {
 		   if ( prefix.equals( "wsmeta")) {
 		      return "http://schemas.dmtf.org/wbem/wsman/1/wsman/version1.0.0.a/default-addressing-model.xsd";
-		   } 
+		   }
 		   else if(prefix.equals("env")){
 			   return "http://www.w3.org/2003/05/soap-envelope";
 		   }
@@ -581,10 +607,10 @@ public class metadata_Handler implements Handler {
 		}
 
 		public String getPrefix(String namespaceURI) {
-		   if ( namespaceURI.equals( 
+		   if ( namespaceURI.equals(
 				   "http://schemas.dmtf.org/wbem/wsman/1/wsman/version1.0.0.a/default-addressing-model.xsd")) {
 		      return "wsmeta";
-		   } 
+		   }
 		   else if(namespaceURI.equals("http://www.w3.org/2003/05/soap-envelope")){
 			   return "env";
 		   }

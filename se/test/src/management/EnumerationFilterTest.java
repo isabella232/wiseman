@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationFilterTest.java,v 1.5 2007-04-23 19:18:11 nbeers Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EnumerationFilterTest.java,v 1.6 2007-05-30 20:30:24 nbeers Exp $
  */
 
 package management;
@@ -52,16 +59,16 @@ import framework.models.UserFilterFactory;
  * Unit test for WS-Enumeration extensions in WS-Management
  */
 public class EnumerationFilterTest extends TestBase {
-	
+
 	XmlBinding binding;
 
 	protected void setUp() throws Exception {
 		super.setUp();
 	}
-    
+
     public EnumerationFilterTest(final String testName) {
         super(testName);
-        
+
 		// Set the system property to always create bindings with our package
 		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
 				"com.hp.examples.ws.wsman.user");
@@ -71,12 +78,12 @@ public class EnumerationFilterTest extends TestBase {
 			fail(e.getMessage());
 		}
     }
-    
+
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite(EnumerationFilterTest.class);
         return suite;
     }
-    
+
     public void testFilterEnumeration() throws Exception {
     	String xpath = XPath.NS_URI;
     	String custom = UserFilterFactory.DIALECT;
@@ -87,7 +94,7 @@ public class EnumerationFilterTest extends TestBase {
     	// TODO: The following XPath does not really work: "/user:user[last()]"
     	//       This is because the XPath is run against a single user element and
     	//       not the entire docuemnt. Therefore the last() returns every element.
-    	//       This is a bug, as the specification shows that you may select 
+    	//       This is a bug, as the specification shows that you may select
     	//       any element from the entire SOAP document, e.g.
     	//       "/env:Envelope/env:Body/user:user" should be valid. The envelope
     	//       is the root, which makes several of the following tests wrong.
@@ -105,34 +112,34 @@ public class EnumerationFilterTest extends TestBase {
     	filterEnumerationTest(custom, "Ritter");
 
     }
-    
+
     public void filterEnumerationTest(final String dialect, final String expression) throws Exception {
-    	
+
     	final String resource = "wsman:auth/userenum";
     	final int max = 10;
 
-    	
+
     	Set<OptionType> handlerFiltered = new HashSet<OptionType>();
 		OptionType element = new OptionType();
 		element.setName("useHandlerFilter");
 		element.setValue("true");
         element.setMustComply(true);
         handlerFiltered.add(element);
-    	
+
         // first do the tests with EPRs turned off
     	optimizedEnumerationTest(null, max, resource, dialect, expression, null);
     	optimizedEnumerationTest(null, max, resource, dialect, expression, handlerFiltered);
-        
+
         // now repeat the same tests with EPRs turned on
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, null);
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, handlerFiltered);
-    	
+
         // finally, repeat the same tests with only EPRs (no items)
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, null);
     	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, handlerFiltered);
-    	
+
     }
-    
+
     public void optimizedEnumerationTest(
     		final EnumerationExtensions.Mode mode,
             final int maxElements,
@@ -140,7 +147,7 @@ public class EnumerationFilterTest extends TestBase {
     		final String dialect,
     		final String expression,
     		final Set<OptionType> options) throws Exception {
-    	
+
     	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
     	settings.setEnumerationMessageActionType(Enumeration.ENUMERATE_ACTION_URI);
     	settings.setTo(DESTINATION);
@@ -150,27 +157,27 @@ public class EnumerationFilterTest extends TestBase {
     	settings.setRequestForOptimizedEnumeration(true);
     	settings.setRequestForTotalItemsCount(true);
     	settings.setEnumerationMode(mode);
-    	
+
         if ((expression != null) && (expression.length() > 0)) {
             if ((dialect != null) && (dialect.length() > 0))
             	settings.setFilterDialect(dialect);
             settings.setFilter(expression);
         }
-        
+
         // Add the namespace for the filter
         Map<String, String> map = new  HashMap<String, String>();
         map.put("user", UserEnumerationHandler.NS_URI);
         settings.setNamespaceMap(map);
-        
+
         // Add any options
         if (options != null)
         	settings.setOptionSet(options);
-        
+
     	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
 
         enu.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(enu);
-        
+
         response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
@@ -181,26 +188,26 @@ public class EnumerationFilterTest extends TestBase {
             // system properties
             fail(response.getBody().getFault().getFaultString());
         }
-        
+
         final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
         for (final EnumerationItem item : enuResponse.getItems()) {
             assertMode(mode, item);
         }
-        
+
         final AttributableNonNegativeInteger ee = enuResponse.getTotalItemsCountEstimate();
         assertNotNull(ee);
         assertTrue(ee.getValue().intValue() > 0);
-        
+
         if (enuResponse.isEndOfSequence() == false) {
-        	
+
         	settings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
         	settings.setEnumerationContext(context);
         	settings.setDefaultTimeout(30000);
         	settings.setMaxCharacters(0);
         	settings.setMaxElements(3);
-        	
+
         	final Enumeration enuPull = EnumerationUtility.buildMessage(null, settings);
         	enuPull.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(enuPull);
@@ -209,7 +216,7 @@ public class EnumerationFilterTest extends TestBase {
                 praddr.prettyPrint(System.err);
                 fail(praddr.getBody().getFault().getFaultString());
             }
-            
+
             final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
             final PullResponse pr = pullResponse.getPullResponse();
             // update context for the next pull (if any)
@@ -219,22 +226,22 @@ public class EnumerationFilterTest extends TestBase {
             for (final EnumerationItem item : pullResponse.getItems()) {
                 assertMode(mode, item);
             }
-            
+
             final AttributableNonNegativeInteger pe = pullResponse.getTotalItemsCountEstimate();
             assertNotNull(pe);
             assertTrue(pe.getValue().intValue() > 0);
         }
-        
+
         if (enuResponse.isEndOfSequence() == false) {
-        	
+
         	settings.setEnumerationMessageActionType(Enumeration.RELEASE_ACTION_URI);
-        	
+
         	final Enumeration enuRelease = EnumerationUtility.buildMessage(null, settings);
-        	
+
             final Management mp = new Management(enuRelease);
             mp.setTo(DESTINATION);
             mp.setResourceURI(resource);
-            
+
             mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);
             praddr.prettyPrint(logfile);
@@ -244,13 +251,13 @@ public class EnumerationFilterTest extends TestBase {
             }
         }
     }
-    
+
     private static void assertMode(final EnumerationExtensions.Mode mode,
             final EnumerationItem item) {
-        
+
         final Object elt = item.getItem();
         final EndpointReferenceType epr = item.getEndpointReference();
-        
+
         if (mode == null) {
             assertNotNull(elt);
             assertNull(epr);

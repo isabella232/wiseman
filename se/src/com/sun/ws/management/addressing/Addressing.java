@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Addressing.java,v 1.17 2007-05-28 09:36:16 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: Addressing.java,v 1.18 2007-05-30 20:31:06 nbeers Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -51,14 +58,14 @@ import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XmlBinding;
 
 public class Addressing extends SOAP {
-    
+
     public static final String NS_PREFIX = "wsa";
     public static final String NS_URI = "http://schemas.xmlsoap.org/ws/2004/08/addressing";
-    
+
     public static final String UNSPECIFIED_MESSAGE_ID = "http://schemas.xmlsoap.org/ws/2004/08/addressing/id/unspecified";
     public static final String ANONYMOUS_ENDPOINT_URI = "http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous";
     public static final String FAULT_ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/08/addressing/fault";
-    
+
     public static final QName ACTION = new QName(NS_URI, "Action", NS_PREFIX);
     public static final QName TO = new QName(NS_URI, "To", NS_PREFIX);
     public static final QName MESSAGE_ID = new QName(NS_URI, "MessageID", NS_PREFIX);
@@ -69,25 +76,25 @@ public class Addressing extends SOAP {
     public static final QName RELATES_TO = new QName(NS_URI, "RelatesTo", NS_PREFIX);
     public static final QName RETRY_AFTER = new QName(NS_URI, "RetryAfter", NS_PREFIX);
     public static final QName ENDPOINT_REFERENCE = new QName(NS_URI, "EndpointReference", NS_PREFIX);
-    
+
     public static final ObjectFactory FACTORY = new ObjectFactory();
-    
+
     public Addressing() throws SOAPException {
         super();
     }
-    
+
     public Addressing(final Addressing addr) throws SOAPException {
         super(addr);
     }
-    
+
     public Addressing(final InputStream is) throws SOAPException, IOException {
         super(is);
     }
-    
+
     public Addressing(final SOAPMessage msg) throws SOAPException {
         super(msg);
     }
-    
+
     public void validate() throws SOAPException, JAXBException, FaultException {
         validateElementPresent(getAction(), ACTION);
         validateElementPresent(getTo(), TO);
@@ -95,13 +102,13 @@ public class Addressing extends SOAP {
         validateElementPresent(getReplyTo(), REPLY_TO);
         final String replyToAddress = getReplyTo().getAddress().getValue();
         validateElementPresent(replyToAddress, ADDRESS);
-        
+
         validateURISyntax(getAction());
         validateURISyntax(getTo());
         validateURISyntax(getMessageId());
         validateURISyntax(replyToAddress);
     }
-    
+
     protected void validateElementPresent(final Object element, final QName elementName) throws FaultException {
         if (element == null) {
 //        	throw new MessageInformationHeaderRequiredFault(elementName);
@@ -115,7 +122,7 @@ public class Addressing extends SOAP {
             	null,elementName,details);
         }
     }
-    
+
     protected void validateURISyntax(final String uri)
     throws FaultException {
         try {
@@ -124,38 +131,38 @@ public class Addressing extends SOAP {
             throw new InvalidMessageInformationHeaderFault(uri);
         }
     }
-    
+
     // only address is mandatory, the rest of the params are optional and can be null
     public static EndpointReferenceType createEndpointReference(final String address,
             final ReferencePropertiesType props, final ReferenceParametersType params,
             final AttributedQName portType, final ServiceNameType serviceName) {
-        
+
         final EndpointReferenceType epr = FACTORY.createEndpointReferenceType();
-        
+
         final AttributedURI addressURI = FACTORY.createAttributedURI();
         addressURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
         addressURI.setValue(address.trim());
         epr.setAddress(addressURI);
-        
+
         if (params != null) {
             epr.setReferenceParameters(params);
         }
-        
+
         if (props != null) {
             epr.setReferenceProperties(props);
         }
-        
+
         if (serviceName != null) {
             epr.setServiceName(serviceName);
         }
-        
+
         if (portType != null) {
             epr.setPortType(portType);
         }
-        
+
         return epr;
     }
-    
+
     public Node[] unwrapEndpointReference(final Node wrappedEPR) {
         if (ENDPOINT_REFERENCE.getLocalPart().equals(wrappedEPR.getLocalName()) &&
                 ENDPOINT_REFERENCE.getNamespaceURI().equals(wrappedEPR.getNamespaceURI())) {
@@ -168,28 +175,28 @@ public class Addressing extends SOAP {
         }
         throw new IllegalArgumentException("Can only unwrap EndpointReferences");
     }
-    
+
     // setters
-    
+
     public void addHeaders(final ReferenceParametersType params) throws JAXBException {
         if (params == null) {
             return;
         }
         addHeaders(params.getAny());
     }
-    
+
     public void addHeaders(final ReferencePropertiesType props) throws JAXBException {
         if (props == null) {
             return;
         }
         addHeaders(props.getAny());
     }
-    
+
     private void addHeaders(final List<Object> anyList) throws JAXBException {
         if (anyList == null) {
             return;
         }
-        
+
         XmlBinding binding = getXmlBinding();
         final Node header = getHeader();
         for (final Object any : anyList) {
@@ -204,7 +211,7 @@ public class Addressing extends SOAP {
 					 hNode = existingHeaders.item(i);
 					 if((node.getNamespaceURI().equals(hNode.getNamespaceURI()))&
 						(node.getLocalName().equals(hNode.getLocalName()))){
-						header.removeChild(hNode); 
+						header.removeChild(hNode);
 					 }
                    }
                 }
@@ -221,7 +228,7 @@ public class Addressing extends SOAP {
             }
         }
     }
-    
+
     public void setAction(final String action) throws JAXBException, SOAPException {
         removeChildren(getHeader(), ACTION);
         final AttributedURI actionURI = FACTORY.createAttributedURI();
@@ -230,7 +237,7 @@ public class Addressing extends SOAP {
         final JAXBElement<AttributedURI> actionElement = FACTORY.createAction(actionURI);
         getXmlBinding().marshal(actionElement, getHeader());
     }
-    
+
     public void setTo(final String to) throws JAXBException, SOAPException {
         removeChildren(getHeader(), TO);
         final AttributedURI toURI = FACTORY.createAttributedURI();
@@ -239,7 +246,7 @@ public class Addressing extends SOAP {
         final JAXBElement<AttributedURI> toElement = FACTORY.createTo(toURI);
         getXmlBinding().marshal(toElement, getHeader());
     }
-    
+
     public void setMessageId(final String msgId) throws JAXBException, SOAPException {
         removeChildren(getHeader(), MESSAGE_ID);
         final AttributedURI msgIdURI = FACTORY.createAttributedURI();
@@ -248,47 +255,47 @@ public class Addressing extends SOAP {
         final JAXBElement<AttributedURI> msgIdElement = FACTORY.createMessageID(msgIdURI);
         getXmlBinding().marshal(msgIdElement, getHeader());
     }
-    
+
     // convenience method
     public void setReplyTo(final String uri) throws JAXBException, SOAPException {
         setReplyTo(createEndpointReference(uri.trim(), null, null, null, null));
     }
-    
+
     public void setReplyTo(final EndpointReferenceType epr) throws JAXBException, SOAPException {
         removeChildren(getHeader(), REPLY_TO);
         final JAXBElement<EndpointReferenceType> element = FACTORY.createReplyTo(epr);
         getXmlBinding().marshal(element, getHeader());
     }
-    
+
     // convenience method
     public void setFaultTo(final String uri) throws JAXBException, SOAPException {
         setFaultTo(createEndpointReference(uri.trim(), null, null, null, null));
     }
-    
+
     public void setFaultTo(final EndpointReferenceType epr) throws JAXBException, SOAPException {
         removeChildren(getHeader(), FAULT_TO);
         final JAXBElement<EndpointReferenceType> element = FACTORY.createFaultTo(epr);
         getXmlBinding().marshal(element, getHeader());
     }
-    
+
     // convenience method
     public void setFrom(final String uri) throws JAXBException, SOAPException {
         setFrom(createEndpointReference(uri.trim(), null, null, null, null));
     }
-    
+
     public void setFrom(final EndpointReferenceType epr) throws JAXBException, SOAPException {
         removeChildren(getHeader(), FROM);
         final JAXBElement<EndpointReferenceType> element = FACTORY.createFrom(epr);
         getXmlBinding().marshal(element, getHeader());
     }
-    
+
     public void addRelatesTo(final String relationshipURI) throws JAXBException {
         final Relationship relationship = FACTORY.createRelationship();
         relationship.setValue(relationshipURI.trim());
         final JAXBElement<Relationship> element = FACTORY.createRelatesTo(relationship);
         getXmlBinding().marshal(element, getHeader());
     }
-    
+
     public void addRelatesTo(final String relationshipURI, final QName relationshipType) throws JAXBException {
         final Relationship relationship = FACTORY.createRelationship();
         relationship.setRelationshipType(relationshipType);
@@ -296,37 +303,37 @@ public class Addressing extends SOAP {
         final JAXBElement<Relationship> element = FACTORY.createRelatesTo(relationship);
         getXmlBinding().marshal(element, getHeader());
     }
-    
+
     // getters
-    
+
     public SOAPElement[] getHeaders() throws SOAPException {
         return getChildren(getHeader());
     }
-    
+
     public String getAction() throws JAXBException, SOAPException {
         return getAttributedURI(ACTION);
     }
-    
+
     public String getTo() throws JAXBException, SOAPException {
         return getAttributedURI(TO);
     }
-    
+
     public String getMessageId() throws JAXBException, SOAPException {
         return getAttributedURI(MESSAGE_ID);
     }
-    
+
     public EndpointReferenceType getReplyTo() throws JAXBException, SOAPException {
         return getEndpointReference(REPLY_TO);
     }
-    
+
     public EndpointReferenceType getFaultTo() throws JAXBException, SOAPException {
         return getEndpointReference(FAULT_TO);
     }
-    
+
     public EndpointReferenceType getFrom() throws JAXBException, SOAPException {
         return getEndpointReference(FROM);
     }
-    
+
     public Relationship[] getRelatesTo() throws JAXBException, SOAPException {
         final SOAPElement[] relations = getChildren(getHeader(), RELATES_TO);
         final Relationship[] relationships = new Relationship[relations.length];
@@ -336,26 +343,26 @@ public class Addressing extends SOAP {
         }
         return relationships;
     }
-    
+
     public EndpointReferenceType getEndpointReference(final SOAPElement parent, final QName... qname) throws JAXBException, SOAPException {
         final Object value = unbind(parent, qname);
         return value == null ? null : (EndpointReferenceType)(((JAXBElement) value).getValue());
     }
-    
+
     // get helpers
-    
+
     private String getAttributedURI(final QName qname) throws JAXBException, SOAPException {
         final JAXBElement value = (JAXBElement)unbind(getHeader(), qname);
         return value == null ? null : ((AttributedURI)(value.getValue())).getValue().trim();
     }
-    
+
     private EndpointReferenceType getEndpointReference(final QName... qname) throws JAXBException, SOAPException {
         return getEndpointReference(getHeader(), qname);
     }
 
     /** This is a convenience method to create a ReferencePropertyType from a QName and content
      *  value.
-     * 
+     *
      * @param container QName
      * @param content
      * @return ReferencePropertyType instance.
@@ -368,7 +375,7 @@ public class Addressing extends SOAP {
     	if(content.trim().length()==0){
     		throw new IllegalArgumentException("Content entered cannot be an empty string.");
     	}
-    	
+
     	//create and populate the reference property and it's value.
     	final ReferencePropertiesType refProperty = Addressing.FACTORY.createReferencePropertiesType();
     	final Document document = Management.newDocument();
@@ -377,13 +384,13 @@ public class Addressing extends SOAP {
     	identifier.setTextContent(content);
     	document.appendChild(identifier);
     	refProperty.getAny().add(document.getDocumentElement());
-    	
+
     	return refProperty;
     }
 
     /** This is a convenience method to create a ReferenceParametersType from a QName and content
      *  value.
-     * 
+     *
      * @param container QName
      * @param content
      * @return ReferenceParametersType instance.
@@ -396,7 +403,7 @@ public class Addressing extends SOAP {
     	if(content.trim().length()==0){
     		throw new IllegalArgumentException("Content entered cannot be an empty string.");
     	}
-    	
+
     	//create and populate the reference property and it's value.
     	final ReferenceParametersType refParameter = Addressing.FACTORY.createReferenceParametersType();
     	final Document document = Management.newDocument();
@@ -405,9 +412,9 @@ public class Addressing extends SOAP {
     	 identifier.setTextContent(content);
     	 document.appendChild(identifier);
     	 refParameter.getAny().add(document.getDocumentElement());
-    	 
+
     	return refParameter;
     }
 
-    
+
 }

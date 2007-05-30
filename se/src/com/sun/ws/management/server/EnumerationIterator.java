@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationIterator.java,v 1.11 2007-05-24 13:23:11 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EnumerationIterator.java,v 1.12 2007-05-30 20:31:05 nbeers Exp $
  */
 
 package com.sun.ws.management.server;
@@ -27,7 +34,7 @@ package com.sun.ws.management.server;
  * @see EnumerationSupport
  */
 public interface EnumerationIterator {
-    
+
     /**
      * Estimate the total number of elements available.
      *
@@ -36,25 +43,25 @@ public interface EnumerationIterator {
      * Return a negative number if an estimate is not available.
      */
     int estimateTotalItems();
-     
+
     /**
      * Indicates if the iterator has already been filtered.
      * This indicates that further filtering is not required
      * by the framwork.
-     * 
+     *
      * @return {@code true} if the iterator has already been filtered,
      * {@code false} otherwise.
      */
     boolean isFiltered();
-    
+
     /**
      * Indicates if there are more elements remaining in the iteration.
-     * 
+     *
      * @return {@code true} if there are more elements in the iteration,
      * {@code false} otherwise.
      */
     boolean hasNext();
-    
+
     /**
      * Supply the next element of the iteration. This is invoked to
      * satisfy a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
@@ -65,7 +72,7 @@ public interface EnumerationIterator {
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
      */
     EnumerationItem next();
-    
+
     /**
      * Release any resources being used by the iterator. Calls
      * to other methods of this iterator instance will exhibit

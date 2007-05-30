@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManAgent.java,v 1.15 2007-05-25 09:56:23 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: WSManAgent.java,v 1.16 2007-05-30 20:31:04 nbeers Exp $
  */
 
 package com.sun.ws.management.server;
@@ -76,12 +83,12 @@ import com.sun.ws.management.xml.XmlBinding;
  */
 
 public abstract class WSManAgent {
-    
+
     private static final Logger LOG = Logger.getLogger(WSManAgent.class.getName());
     private static final long DEFAULT_TIMEOUT = 30000;
     private static final long MIN_ENVELOPE_SIZE = 8192;
     private static final long DISABLED_TIMEOUT = -1;
-    
+
     public static final String OPERATION_TIMEOUT =
             WSManAgent.class.getPackage().getName() + ".operation.timeout";
     private static final String WSMAN_PROPERTY_FILE_NAME = "/wsman.properties";
@@ -91,27 +98,27 @@ public abstract class WSManAgent {
     private static final String UUID_SCHEME = "uuid:";
     private static final String SCHEMA_PATH =
             "/com/sun/ws/management/resources/schemas/";
-    
+
     private static ExecutorService pool;
-    
+
     private static Map<String, String> properties = null;
-    
+
     private Map<String, String> localproperties = null;
     private long defaultOperationTimeout = 0;
-    
+
     // XXX REVISIT, SHOULD BE STATIC BUT CURRENTLY CAN'T Due to openess of JAXBContext
     private final XmlBinding binding;
-    
+
     static {
         // load subsystem properties and save them in a type-safe, unmodifiable Map
         final Map<String, String> propertySet = new HashMap<String, String>();
         getProperties(WSMAN_PROPERTY_FILE_NAME, propertySet);
         properties = Collections.unmodifiableMap(propertySet);
     }
-    
+
     public static void getProperties(final String filename, final Map<String, String> propertySet) {
          if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Getting properties [" + filename 
+                LOG.log(Level.FINE, "Getting properties [" + filename
                         + "]");
         final InputStream ism = WSManAgent.class.getResourceAsStream(filename);
         if (ism != null) {
@@ -137,7 +144,7 @@ public abstract class WSManAgent {
             }
         }
     }
-    
+
     public static Schema createSchema(Source[] customSchemas) throws SAXException {
         final SchemaFactory schemaFactory =
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -162,11 +169,11 @@ public abstract class WSManAgent {
         }
         return schema;
     }
-    
+
     public static Source[] newSources(String schemaNames, String schemaPath) {
-        
+
         if(schemaNames == null) return null;
-        
+
         Source[] stdSchemas = null;
         StringTokenizer t = new StringTokenizer(schemaNames, ",");
         if(LOG.isLoggable(Level.FINE))
@@ -179,7 +186,7 @@ public abstract class WSManAgent {
                 LOG.log(Level.FINE, "Schema to load from " + schemaPath + name);
             final InputStream xsd =
                     Management.class.getResourceAsStream(schemaPath + name);
-            
+
             if(LOG.isLoggable(Level.FINE))
                 LOG.log(Level.FINE, "Loaded schema " + xsd);
             stdSchemas[i] = new StreamSource(xsd);
@@ -187,18 +194,18 @@ public abstract class WSManAgent {
         }
         return stdSchemas;
     }
-    
+
     private static Source[] createStdSources() {
         // The returned list of schemas is already sorted
         String schemaNames = properties.get("schemas");
-        
+
         //check if extensison being added then add to the schemas list.
         final Map<String, String> propertySet = new HashMap<String, String>();
         getProperties(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, propertySet);
         if(!propertySet.isEmpty()&&
         		(propertySet.containsKey("extensions.schemas"))){
-          String schemas = propertySet.get("extensions.schemas");	
-  	      StringTokenizer t = new StringTokenizer(schemas, ","); 
+          String schemas = propertySet.get("extensions.schemas");
+  	      StringTokenizer t = new StringTokenizer(schemas, ",");
 		  while(t.hasMoreTokens()){
 			  schemaNames+=","+t.nextToken();
 		  }
@@ -210,9 +217,9 @@ public abstract class WSManAgent {
     protected WSManAgent() throws SAXException {
         this(null, null, null);
     }
-    
-    protected WSManAgent(Map<String,String> wisemanConf, Source[] customSchemas, 
-           Map<String,String> bindingConf) 
+
+    protected WSManAgent(Map<String,String> wisemanConf, Source[] customSchemas,
+           Map<String,String> bindingConf)
         throws SAXException {
         final Map<String, String> propertySet = new HashMap<String, String>();
         getProperties(WISEMAN_PROPERTY_FILE_NAME, propertySet);
@@ -220,28 +227,28 @@ public abstract class WSManAgent {
         if(wisemanConf != null)
             propertySet.putAll(wisemanConf);
         localproperties = Collections.unmodifiableMap(propertySet);
-        
+
         String opTimeout = System.getProperty(OPERATION_TIMEOUT);
         if(opTimeout == null)
             opTimeout = localproperties.get(OPERATION_TIMEOUT_DEFAULT);
-        
+
         if(opTimeout == null)
              this.defaultOperationTimeout = DEFAULT_TIMEOUT;
         else
             this.defaultOperationTimeout = Long.parseLong(opTimeout);
-            
+
         Schema schema = createSchema(customSchemas);
         try {
-            // 
+            //
             this.binding = new XmlBinding(schema, bindingConf);
         } catch (JAXBException e) {
             throw new InternalErrorFault(e);
         }
-            
+
     }
-    
+
     /**
-     * Allow subclass to provide a ThreadPool according to their own 
+     * Allow subclass to provide a ThreadPool according to their own
      * caching/threadingstrategy
      */
      protected synchronized ExecutorService getExecutorService() {
@@ -249,46 +256,46 @@ public abstract class WSManAgent {
               pool = Executors.newCachedThreadPool();
          return pool;
      }
-    
+
      /** This method is called when processing Identify requests.
      * Modify this method to adjust the Identify
-     *  processing functionality, but you may be able to simply override 
-     *  the getAdditionalIdentifyElements() method to add your own custom 
-     *  elements.  
-     * 
+     *  processing functionality, but you may be able to simply override
+     *  the getAdditionalIdentifyElements() method to add your own custom
+     *  elements.
+     *
      * @return Identify  This is the Identify instance to be returned to identify Request
      * @throws SecurityException
      * @throws JAXBException
      * @throws SOAPException
      */
-    private Identify processForIdentify(Management request) 
+    private Identify processForIdentify(Management request)
         throws SecurityException, JAXBException, SOAPException {
     	//Test for identify message
         final Identify identify = new Identify(request);
         identify.setXmlBinding(request.getXmlBinding());
-        
+
         final SOAPElement id = identify.getIdentify();
         if (id == null) {
             return null;//else exit
         }
         if(LOG.isLoggable(Level.FINE))
             LOG.log(Level.FINE, "Serving Identity");
-        
+
     	//As this is an indentify message then populate the response.
         Identify response = new Identify();
-        response.setXmlBinding(request.getXmlBinding()); 
+        response.setXmlBinding(request.getXmlBinding());
         Map<QName, String> additionals = getAdditionalIdentifyElements();
         if(LOG.isLoggable(Level.FINE))
             LOG.log(Level.FINE, "Additionals QNames " + additionals);
-        
+
         if(additionals == null)
             additionals = new HashMap<QName, String>();
-        
+
         additionals.put(Identify.BUILD_ID, getProperties().get("build.version"));
         additionals.put(Identify.SPEC_VERSION, getProperties().get("spec.version"));
-        
+
         response.setIdentifyResponse(
-            getProperties().get("impl.vendor") + " - " + 
+            getProperties().get("impl.vendor") + " - " +
             		getProperties().get("impl.url"),
             getProperties().get("impl.version"),
             Management.NS_URI,
@@ -303,21 +310,21 @@ public abstract class WSManAgent {
     abstract protected RequestDispatcher createDispatcher(final Management request,
             final HandlerContext context) throws SOAPException, JAXBException,
             IOException;
-        
+
     /** Override this method to define additional Identify elements
      *  to be returned.  This method is usually called in processForIdentify()
      *  method to add additional nodes.
-     * 
+     *
      * @return Map containing information to simple xml nodes.
      */
     protected Map<QName, String> getAdditionalIdentifyElements(){
         return null;
     }
-    
+
     public Map<String, String> getProperties() {
         return properties;
     }
-    
+
     private static long getEnvelopeSize(Management request) throws JAXBException, SOAPException {
         long maxEnvelopeSize = Long.MAX_VALUE;
         final MaxEnvelopeSizeType maxSize = request.getMaxEnvelopeSize();
@@ -326,7 +333,7 @@ public abstract class WSManAgent {
         }
         return maxEnvelopeSize;
     }
-    
+
     public static long getValidEnvelopeSize(Management request) throws JAXBException, SOAPException {
         long maxEnvelopeSize = getEnvelopeSize(request);
         if(maxEnvelopeSize < MIN_ENVELOPE_SIZE)
@@ -338,7 +345,7 @@ public abstract class WSManAgent {
      */
     public Message handleRequest(final Management request, final HandlerContext context) {
         Addressing response = null;
-        
+
         // try {
         // XXX WARNING, CREATING A JAXBCONTEXT FOR EACH REQUEST IS TOO EXPENSIVE.
         // JAXB team says that you should share as much as you can JAXBContext.
@@ -349,19 +356,19 @@ public abstract class WSManAgent {
         // Model layer(s) can implement their own JAXBContext strategies.
         // BTW, doing so, we make clear that any rechnology can be used to marsh/unmarsh.
         // Relaying on JAXB becomes an implementation detail.
-        
+
         // schema might be null if no XSDs were found
         request.setXmlBinding(binding);
         // } catch (JAXBException jex) {
         //     LOG.log(Level.SEVERE, "Error initializing XML Binding", jex);
         // TODO throw new ServletException(jex);
         // }
-        
+
         try {
             logMessage(LOG, request);
-            
+
             long timeout = getTimeout(request);
-            
+
             if((response = isValidEnvelopSize(request)) == null) {
                 final RequestDispatcher dispatcher = createDispatcher(request,
                         context);
@@ -393,9 +400,9 @@ public abstract class WSManAgent {
                 LOG.log(Level.FINE, "Request / Response content type " +
                         request.getContentType());
             response.setContentType(request.getContentType());
-            
+
             Message resp = handleResponse(response, getValidEnvelopeSize(request));
-            
+
         }catch(Exception ex) {
             try {
                 response = new Management();
@@ -407,10 +414,10 @@ public abstract class WSManAgent {
                 throw new RuntimeException(ex2.getMessage());
             }
         }
-        
+
         return response;
     }
-    
+
     private long getTimeout(Management request) throws Exception {
         long timeout = defaultOperationTimeout;
         final Duration timeoutDuration = request.getTimeout();
@@ -419,7 +426,7 @@ public abstract class WSManAgent {
         }
         return timeout;
     }
-    
+
     private static Management isValidEnvelopSize(Management request)
     throws Exception {
         Management response = null;
@@ -435,7 +442,7 @@ public abstract class WSManAgent {
         }
         return response;
     }
-    
+
     private Addressing dispatch(final Callable dispatcher, final long timeout)
     throws Throwable {
         final FutureTask<Management> task =
@@ -459,18 +466,18 @@ public abstract class WSManAgent {
         }
         return null;
     }
-    
+
     private static void fillReturnAddress(Addressing request,
             Addressing response)
             throws JAXBException, SOAPException {
         response.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         // messageId can be missing in a malformed request
         final String msgId = request.getMessageId();
         if (msgId != null) {
             response.addRelatesTo(msgId);
         }
-        
+
         if (response.getBody().hasFault()) {
             final EndpointReferenceType faultTo = request.getFaultTo();
             if (faultTo != null) {
@@ -479,55 +486,55 @@ public abstract class WSManAgent {
                 return;
             }
         }
-        
+
         final EndpointReferenceType replyTo = request.getReplyTo();
         if (replyTo != null) {
             response.setTo(replyTo.getAddress().getValue());
             response.addHeaders(replyTo.getReferenceParameters());
             return;
         }
-        
+
         final EndpointReferenceType from = request.getFrom();
         if (from != null) {
             response.setTo(from.getAddress().getValue());
             response.addHeaders(from.getReferenceParameters());
             return;
         }
-        
+
         response.setTo(Addressing.ANONYMOUS_ENDPOINT_URI);
     }
-    
+
     private static Message handleResponse(final Message response,
             final long maxEnvelopeSize) throws SOAPException, JAXBException,
             IOException {
-        
+
         if(response instanceof Identify) {
             return response;
         }
-        
+
         if(!(response instanceof Management))
             throw new IllegalArgumentException(" Invalid internal response " +
                     "message " + response);
-        
+
         Management mgtResp = (Management) response;
         return handleResponse(mgtResp, null, maxEnvelopeSize, false);
     }
-    
+
     private static Message handleResponse(final Management response,
             final FaultException fex, final long maxEnvelopeSize,
             boolean responseTooBig) throws SOAPException, JAXBException,
             IOException {
         if (fex != null)
             response.setFault(fex);
-        
+
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         response.writeTo(baos);
         final byte[] content = baos.toByteArray();
-        
+
         logMessage(LOG, response);
-        
+
         if (content.length > maxEnvelopeSize) {
-            
+
             // although we check earlier that the maxEnvelopeSize is > 8192, we still
             // need to use the responseTooBig flag to break possible infinite recursion if
             // the serialization of the EncodingLimitFault happens to exceed 8192 bytes
@@ -544,8 +551,8 @@ public abstract class WSManAgent {
         }else
             if(LOG.isLoggable(Level.FINE))
                 LOG.log(Level.FINE, "Response actual size is smaller than maxSize.");
-        
-        
+
+
         final String dest = response.getTo();
         if (!Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
             if(LOG.isLoggable(Level.FINE))
@@ -556,18 +563,18 @@ public abstract class WSManAgent {
             }
             return null;
         }
-        
+
         if(LOG.isLoggable(Level.FINE))
             LOG.log(Level.FINE, "Anonymous reply to send.");
-        
+
         return response;
     }
-    
+
     private static int sendAsyncReply(final String to, final byte[] bits, final ContentType contentType)
     throws IOException, SOAPException, JAXBException {
         return HttpClient.sendResponse(to, bits, contentType);
     }
-    
+
     static void logMessage(Logger logger,
             final Message msg) throws IOException, SOAPException {
         // expensive serialization ahead, so check first
@@ -580,62 +587,62 @@ public abstract class WSManAgent {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
             msg.writeTo(baos);
             final byte[] content = baos.toByteArray();
-            
+
             String encoding = msg.getContentType() == null ? null :
                 msg.getContentType().getEncoding();
-            
+
             logger.fine("Encoding [" + encoding + "]");
-            
+
             if(encoding == null)
                 logger.fine(new String(content));
             else
                 logger.fine(new String(content, encoding));
-            
+
         }
     }
 
     public XmlBinding getXmlBinding() {
         return binding;
     }
-    
+
     private static Map<String, String> propertySet =null;
     private static String extensionsFile = null;
     /**Locates the ./wsman-ext.properties file and looks for the extensions
      * property.  Parses the contents and returns as a Map<String,String>
      * where the key is the prefix and the value is the NS_URI.
-     * 
+     *
      * @return extension namespaces
      */
     public static Map<String,String> locateExtensionNamespaces(){
-       //Hasmap for return	
+       //Hasmap for return
        Map<String,String> extensionNamespaces = new HashMap<String, String>();
        //Temporary map
        if(propertySet==null){
     	   propertySet = new HashMap<String, String>();
     	   try{
-    		 final InputStream ism = 
+    		 final InputStream ism =
     		  WSManAgent.class.getResourceAsStream(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME);
     		 if(ism!=null){
-    			extensionsFile = ""; 
+    			extensionsFile = "";
     		 }
     	   }catch(Exception ex){
-    		 //do nothing 
+    		 //do nothing
     	   }
        }
        if((extensionsFile!=null)&&(propertySet.size()==0)){
-//    	 crud  
+//    	 crud
          WSManAgent.getProperties(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, propertySet);
        }
 		 if((!propertySet.isEmpty()&&
 				 (propertySet.containsKey("extensions.envelope.defs")))){
 		  String extensions = propertySet.get("extensions.envelope.defs");
 		  //Strip out each extension
-	      StringTokenizer t = new StringTokenizer(extensions, ","); 
+	      StringTokenizer t = new StringTokenizer(extensions, ",");
 		  while(t.hasMoreTokens()){
 			 String map = t.nextToken();
 			 StringTokenizer m = new StringTokenizer(map,"#");
 			 if(m.countTokens()==2){
-				extensionNamespaces.put(m.nextToken(), m.nextToken()); 
+				extensionNamespaces.put(m.nextToken(), m.nextToken());
 			 }
 		  }
 	     }

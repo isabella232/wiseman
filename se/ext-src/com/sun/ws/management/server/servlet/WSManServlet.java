@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManServlet.java,v 1.3 2007-04-26 08:34:27 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: WSManServlet.java,v 1.4 2007-05-30 20:30:15 nbeers Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -69,17 +76,17 @@ import com.sun.ws.management.transport.ContentType;
  *
  */
 public abstract class WSManServlet extends HttpServlet {
-    
+
     private static final Logger LOG = Logger.getLogger(WSManServlet.class.getName());
     private static Properties wisemanProperties = null;
     private static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
     private static final String SERVICE_WSDL = "service.wsdl";
     private static final String SERVICE_XSD = "service.xsd";
-    
+
     // This class implements all the WS-Man logic decoupled from transport
-    
+
     WSManAgent agent;
-    
+
     public void init() throws ServletException {
 		Schema schema = null;
 		final SchemaFactory schemaFactory = SchemaFactory
@@ -111,7 +118,7 @@ public abstract class WSManServlet extends HttpServlet {
 			throw new ServletException(ex);
 		}
 	}
-    
+
     private List<String> getFilenames(ServletContext context, String path) {
     	final List<String> xsdFilenames =  new ArrayList();
 		final Set<String> xsdLocSet = context.getResourcePaths(path);
@@ -140,19 +147,19 @@ public abstract class WSManServlet extends HttpServlet {
 	}
 
 	protected abstract WSManAgent createWSManAgent(Source[] schemas) throws SAXException;
-    
+
     public void doGet(final HttpServletRequest req,
-			          final HttpServletResponse resp) 
+			          final HttpServletResponse resp)
                 throws ServletException,
 			IOException {
 
 		doPost(req, resp);
 	}
-    
+
     public void doPost(final HttpServletRequest req,
-                       final HttpServletResponse resp) 
+                       final HttpServletResponse resp)
                 throws ServletException, IOException {
-        
+
         final ContentType contentType = ContentType.createFromHttpContentType(req.getContentType());
         if (contentType == null || !contentType.isAcceptable()) {
 			boolean isWsdlOrSchemaRequest = processForWsdlOrSchemaRequest(req);
@@ -168,11 +175,11 @@ public abstract class WSManServlet extends HttpServlet {
 			resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
 			return;
 		}
-        
+
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setContentType(contentType.toString());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        
+
         InputStream is = null;
         OutputStream os = null;
         try {
@@ -194,14 +201,14 @@ public abstract class WSManServlet extends HttpServlet {
             }
         }
     }
-    
+
     /**Process the http request.
-     * 
+     *
      * @param req
      * @param resp
-     * @throws IOException 
+     * @throws IOException
      */
-    private void processAsHttpRequest(HttpServletRequest req, 
+    private void processAsHttpRequest(HttpServletRequest req,
     		                          HttpServletResponse resp,
     		                          ContentType contentType) throws IOException {
     	//indicate that we agree to process
@@ -209,15 +216,15 @@ public abstract class WSManServlet extends HttpServlet {
         if(contentType!=null){
           resp.setContentType(contentType.toString());
         }
-        
+
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        
+
         InputStream is = null;
         OutputStream os = null;
         try {
             is = new BufferedInputStream(req.getInputStream());
             os = new BufferedOutputStream(resp.getOutputStream());
-            
+
             String contentype = req.getContentType();
             final Principal user = req.getUserPrincipal();
             String charEncoding = req.getCharacterEncoding();
@@ -228,10 +235,10 @@ public abstract class WSManServlet extends HttpServlet {
 //            		charEncoding, url, props, agent.getProperties());
             final HandlerContext context = new HandlerContextImpl(user, contentype,
                     charEncoding, url, props);
-            
+
             // check for filename in URL query
             String filename = getQueryFilename(req);
-            
+
 			if ((filename == null) || (filename.length() == 0)) {
 				// check for the filename in the path
 				String requestURI = req.getRequestURI();
@@ -242,9 +249,9 @@ public abstract class WSManServlet extends HttpServlet {
 							.length());
 				}
 			}
-            
+
             ServletContext srvContext = getServletContext();
-             InputStream inputStream = 
+             InputStream inputStream =
             	 srvContext.getResourceAsStream(filename);
              Set paths = srvContext.getResourcePaths(filename);
              if(inputStream==null){
@@ -270,14 +277,14 @@ public abstract class WSManServlet extends HttpServlet {
 //					String file = (String) iter.next();
 //            		  file = file.trim();
 //            		  if(file.lastIndexOf("/")==file.length()-1){
-//            			 //is directory 
-//            			 body+="<li><a href=\""+file+"\">"+file+"</a></li>"; 
+//            			 //is directory
+//            			 body+="<li><a href=\""+file+"\">"+file+"</a></li>";
 //            		  }else{
-//            			 body+="<li>"+file+"</li>"; 
+//            			 body+="<li>"+file+"</li>";
 //            		  }
 //            	  }
 //            	  if(paths.isEmpty()){
-//            		 body+="<li>(No files to display)</li>"; 
+//            		 body+="<li>(No files to display)</li>";
 //            	  }
 //            	  body+="</ul>";
 //            	 htmlResponse=generateHtmlResponse(requestURI,title,body);
@@ -288,12 +295,12 @@ public abstract class WSManServlet extends HttpServlet {
              while((line=br.readLine())!=null){
           	    bos.write(line.getBytes());
              }
-             
+
              br.close();
              br = null;
              inputStream.close();
              inputStream = null;
-            
+
             final byte[] content = bos.toByteArray();
             resp.setContentLength(content.length);
             os.write(content);
@@ -309,7 +316,7 @@ public abstract class WSManServlet extends HttpServlet {
             }
         }
 	}
-    
+
     private String getQueryFilename(HttpServletRequest req) {
 		String filename = null;
 
@@ -367,7 +374,7 @@ public abstract class WSManServlet extends HttpServlet {
 		}
 		return filename;
 	}
-    
+
     public static String getWisemanProperty(final String property) {
 		if (wisemanProperties == null) {
 			if (LOG.isLoggable(Level.FINE))
@@ -444,12 +451,12 @@ public abstract class WSManServlet extends HttpServlet {
     private void handle(final InputStream is, final ContentType contentType,
             final OutputStream os, final HttpServletRequest req, final HttpServletResponse resp)
             throws SOAPException, JAXBException, IOException {
-        
+
         final Management request = new Management(is);
         request.setXmlBinding(agent.getXmlBinding());
-        
+
         request.setContentType(contentType);
-        
+
         String contentype = req.getContentType();
         final Principal user = req.getUserPrincipal();
         String charEncoding = req.getCharacterEncoding();
@@ -458,31 +465,31 @@ public abstract class WSManServlet extends HttpServlet {
         props.put(HandlerContext.SERVLET_CONTEXT, getServletContext());
         final HandlerContext context = new HandlerContextImpl(user, contentype,
                 charEncoding, url, props);
-        
+
         Message response = agent.handleRequest(request, context);
-        
+
         sendResponse(response, os, resp, agent.getValidEnvelopeSize(request));
     }
-    
+
     private static void sendResponse(final Message response, final OutputStream os,
             final HttpServletResponse resp,  final long maxEnvelopeSize)
             throws SOAPException, JAXBException, IOException {
-        
+
         if(response instanceof Identify) {
             response.writeTo(os);
             return;
         }
-        
+
         Management mgtResp = (Management) response;
-        
+
         sendResponse(mgtResp, os, resp, maxEnvelopeSize, false);
     }
-    
+
     private static void sendResponse(final Management response, final OutputStream os,
             final HttpServletResponse resp, final long maxEnvelopeSize,
             boolean responseTooBig) throws SOAPException, JAXBException,
             IOException {
-        
+
         resp.setStatus(HttpServletResponse.SC_OK);
         if (response.getBody().hasFault()) {
             // sender faults need to set error code to BAD_REQUEST for client errors
@@ -492,12 +499,12 @@ public abstract class WSManServlet extends HttpServlet {
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         }
-        
+
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         response.writeTo(baos);
         final byte[] content = baos.toByteArray();
-        
-        // response being null means that no reply is to be sent back. 
+
+        // response being null means that no reply is to be sent back.
         // The reply has been handled asynchronously
         if(response != null)
              os.write(content);

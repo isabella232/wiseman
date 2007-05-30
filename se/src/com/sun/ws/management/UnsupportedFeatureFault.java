@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: UnsupportedFeatureFault.java,v 1.3 2007-01-14 17:52:35 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: UnsupportedFeatureFault.java,v 1.4 2007-05-30 20:31:05 nbeers Exp $
  */
 
 package com.sun.ws.management;
@@ -24,12 +31,12 @@ import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class UnsupportedFeatureFault extends SenderFault {
-    
-    public static final QName UNSUPPORTED_FEATURE = 
+
+    public static final QName UNSUPPORTED_FEATURE =
             new QName(Management.NS_URI, "UnsupportedFeature", Management.NS_PREFIX);
     public static final String UNSUPPORTED_FEATURE_REASON =
             "The specified feature is not supported.";
-    
+
     public static enum Detail {
         AUTHORIZATION_MODE("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/AuthorizationMode"),
         ADDRESSING_MODE("http://schemas.dmtf.org/wbem/wsman/1/wsman/faultDetail/AddressingMode"),
@@ -60,13 +67,13 @@ public class UnsupportedFeatureFault extends SenderFault {
         Detail(final String uri) { this.uri = uri; }
         public String toString() { return uri; }
     }
-    
+
     public UnsupportedFeatureFault(final Detail... detail) {
-        this(SOAP.createFaultDetail(null, 
-                detail == null ? null : (detail.length == 0 ? null : detail[0].toString()), 
+        this(SOAP.createFaultDetail(null,
+                detail == null ? null : (detail.length == 0 ? null : detail[0].toString()),
                 null, null));
     }
-    
+
     public UnsupportedFeatureFault(final Node... details) {
         super(Management.FAULT_ACTION_URI, UNSUPPORTED_FEATURE, UNSUPPORTED_FEATURE_REASON, details);
     }

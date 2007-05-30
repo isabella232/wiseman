@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XPathFilterFactory.java,v 1.2 2007-01-14 17:52:35 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: XPathFilterFactory.java,v 1.3 2007-05-30 20:31:06 nbeers Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -49,18 +56,18 @@ public class XPathFilterFactory implements FilterFactory {
 
     /**
      * Filter creation
-     * @param content The filter content. In this case an XPath expression (String) 
+     * @param content The filter content. In this case an XPath expression (String)
      * located in the list first element.
      * @param namespaces An XML namespaces map.
      * @return A Filter handling XPath filtering.
-     * 
+     *
      * @throws com.sun.ws.management.soap.FaultException If any WS-MAN related protocol exception occurs.
      * @throws java.lang.Exception If any other exception occurs.
      */
     public Filter newFilter(List content, NamespaceMap namespaces) throws FaultException, Exception {
         return new XPathEnumerationFilter(content, namespaces);
     }
-    
+
     class XPathEnumerationFilter implements Filter {
         private final String expression;
         private final XPath xpath = com.sun.ws.management.xml.XPath.XPATH_FACTORY.newXPath();
@@ -68,7 +75,7 @@ public class XPathFilterFactory implements FilterFactory {
         private final NamespaceMap initialNamespaceMap;
         private final Map<String, String> aggregateNamespaces = new HashMap<String, String>();
         private NamespaceMap aggregateNamespaceMap = null;
-        
+
         /** Creates a new instance of XPathEnumerationFilter */
         public XPathEnumerationFilter(List filterExpressions, NamespaceMap namespaces)
         throws FaultException, Exception {
@@ -87,7 +94,7 @@ public class XPathFilterFactory implements FilterFactory {
                 throw new InvalidMessageFault("Invalid filter expression type: " +
                         expr.getClass().getName());
             }
-            
+
             initialNamespaceMap = namespaces;
             if (initialNamespaceMap != null) {
                 aggregateNamespaces.putAll(initialNamespaceMap.getMap());
@@ -103,7 +110,7 @@ public class XPathFilterFactory implements FilterFactory {
                         + expression);
             }
         }
-        
+
         public NodeList evaluate(final Node content) throws CannotProcessFilterFault {
 
             try {

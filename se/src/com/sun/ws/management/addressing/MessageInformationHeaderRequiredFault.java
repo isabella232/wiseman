@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: MessageInformationHeaderRequiredFault.java,v 1.3 2007-05-03 14:47:50 simeonpinder Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: MessageInformationHeaderRequiredFault.java,v 1.4 2007-05-30 20:31:06 nbeers Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -24,26 +31,26 @@ import javax.xml.namespace.QName;
 import org.w3c.dom.Node;
 
 public class MessageInformationHeaderRequiredFault extends SenderFault {
-    
-    public static final QName MESSAGE_INFORMATION_HEADER_REQUIRED = 
+
+    public static final QName MESSAGE_INFORMATION_HEADER_REQUIRED =
             new QName(Addressing.NS_URI, "MessageInformationHeaderRequired", Addressing.NS_PREFIX);
     public static final String MESSAGE_INFORMATION_HEADER_REQUIRED_REASON =
             "A required header was missing.";
-    
+
     public MessageInformationHeaderRequiredFault(final QName missingHeaderName) {
-        this(SOAP.createFaultDetail(null, null, null, null, 
+        this(SOAP.createFaultDetail(null, null, null, null,
                 missingHeaderName.getPrefix() + SOAP.COLON + missingHeaderName.getLocalPart()));
     }
 
     public MessageInformationHeaderRequiredFault(final String text,
-    		final String faultDetail, final Throwable throwable, 
+    		final String faultDetail, final Throwable throwable,
     		final QName missingHeaderName,
     		final Object[] details) {
-        this(SOAP.createFaultDetail(text, faultDetail, null, missingHeaderName, 
+        this(SOAP.createFaultDetail(text, faultDetail, null, missingHeaderName,
 //        		missingHeaderName.getPrefix() + SOAP.COLON + missingHeaderName.getLocalPart()));
                 details));
     }
-    
+
     public MessageInformationHeaderRequiredFault(final Node... details) {
         super(Addressing.FAULT_ACTION_URI, MESSAGE_INFORMATION_HEADER_REQUIRED,
                 MESSAGE_INFORMATION_HEADER_REQUIRED_REASON, details);

@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ *
+ * $Id: eventsubman_Handler.java,v 1.4 2007-05-30 20:30:27 nbeers Exp $
+ */
 package com.sun.ws.management.server.handler.wsman;
 
 import java.io.IOException;
@@ -102,14 +128,14 @@ import com.sun.xml.ws.addressing.model.ActionNotSupportedException;
 		@WsManagementDefaultAddressingModelAnnotation(
 			getDefaultAddressDefinition=
 				@WsManagementAddressDetailsAnnotation(
-					wsaTo=eventsubman_Handler.DESTINATION, 
+					wsaTo=eventsubman_Handler.DESTINATION,
 					wsmanResourceURI=eventsubman_Handler.RESOURCE_URI
 				),
 		resourceMetaDataUID = eventsubman_Handler.DEFAULT_SUBSCRIPTION_MANAGER_UID
 		),
-	resourceEnumerationAccessRecipe = 
+	resourceEnumerationAccessRecipe =
 		"Enumerate and Optimized Enumeration with no arguments returns all available Event Sources.",
-	resourceFilterUsageDescription = 
+	resourceFilterUsageDescription =
 		 "Filtering via RESOURCE_META_DATA_UID. Ex. env:Envelope/env:Header/wsmeta:ResourceMetaDataUID/text()='"+
 		 eventsubman_Handler.DEFAULT_SUBSCRIPTION_MANAGER_UID+"'"
 )
@@ -118,12 +144,12 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 	public static final String DESTINATION = ManagementMessageValues.WSMAN_DESTINATION;
 	public static final String RESOURCE_URI = "wsman:eventsubman";
 	public static final String DEFAULT_SUBSCRIPTION_MANAGER_UID ="https://wiseman.java.net/ri/SubscriptionManager";
-	private static final Logger LOG = 
+	private static final Logger LOG =
 		Logger.getLogger(eventsubman_Handler.class.getName());
 	//Use HashMap to store event_src_key and EventSource instances
-	private static HashMap<String,EventSourceInterface> eventSources = 
+	private static HashMap<String,EventSourceInterface> eventSources =
 		new HashMap<String, EventSourceInterface>();
-	private static HashMap<String,Object> eventSinks = 
+	private static HashMap<String,Object> eventSinks =
 		new HashMap<String, Object>();
 	private static ObjectFactory env_factory = new ObjectFactory();
 	private static XmlBinding binding = null;
@@ -133,13 +159,13 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 	    try {
 		 Eventing ev = new Eventing();
 		 binding = ev.getXmlBinding();
-		 DEFAULT_SUBSCRIPTION_DURATION = 
+		 DEFAULT_SUBSCRIPTION_DURATION =
 			 DatatypeFactory.newInstance().newDuration(
 					 EventingMessageValues.DEFAULT_SUBSCRIPTION_TIMEOUT);
-		 DEFAULT_SUBSCRIPTION_DURATION_FLOOR = 
+		 DEFAULT_SUBSCRIPTION_DURATION_FLOOR =
 			 DatatypeFactory.newInstance().newDuration(
 					 EventingMessageValues.DEFAULT_SUBSCRIPTION_TIMEOUT_FLOOR);
-		 //locate this Metadata 
+		 //locate this Metadata
 		} catch (SOAPException e) {
 			e.printStackTrace();
 		} catch (DatatypeConfigurationException e) {
@@ -152,17 +178,17 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 		xpath.setNamespaceContext(AnnotationProcessor.getMetaDataNamespaceContext());
 	}
 	//This is the Metadata description of this Management instance which is lazily instantiated.
-	private static Management subscriptionManMetaData =null; 
-	
-	public void handle(String action, String resource, 
-			HandlerContext context, Management request, 
+	private static Management subscriptionManMetaData =null;
+
+	public void handle(String action, String resource,
+			HandlerContext context, Management request,
 			Management response) throws Exception {
 
 		if(action.equals(Enumeration.ENUMERATE_ACTION_URI)){
 			Enumeration enuResponse = new Enumeration(response);
 			Enumeration enuRequest = new Enumeration(request);
 	        enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
-	        
+
 	        synchronized (this) {
 	        	// Make sure there is an Iterator factory registered for this resource
 	        	if (EnumerationSupport.getIteratorFactory(resource) == null) {
@@ -175,13 +201,13 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 		if(action.equals(Transfer.CREATE_ACTION_URI)){
 			response = create(context,request,response);
 //			//locate the CreationSubType
-//			SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(), 
+//			SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(),
 //					EventingMessageValues.EVENTING_CREATION_TYPES);
 //			String type =null;
 //			if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
 //					(CreationTypes.SUBSCRIPTION_SOURCE.name().equals(type.trim()))){
 //				//locate the EventSourceId if sent.
-//				SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//				SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(),
 //						EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
 //				String eventSourceUID = null;
 //				if(eventSrcId!=null){
@@ -191,15 +217,15 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //						eventSourceUID = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME+
 //						UUID.randomUUID();
 //					}
-//					
+//
 //					//Now populate the ResourceCreated value for the response object
 //					HashMap<String, String> selectorMap = new HashMap<String,String>();
 //					selectorMap.put(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME,
 //							eventSourceUID);
 //					TransferExtensions xferResponse = new TransferExtensions(response);
-//					EndpointReferenceType epr = 
+//					EndpointReferenceType epr =
 //						TransferExtensions.createEndpointReference(
-//								request.getTo(), request.getResourceURI(), 
+//								request.getTo(), request.getResourceURI(),
 //								selectorMap);
 //					xferResponse.setCreateResponse(epr);
 //					xferResponse.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -211,16 +237,16 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //					(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
 //				//attempt to extract the subscribe message sent if any
 //				Transfer createRequest = new Transfer(request);
-////System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
-//				Document createBodyDoc = 
+////System.out.println("@@@@ SUBMAN-created the object:"+createRequest);
+//				Document createBodyDoc =
 //					createRequest.getBody().extractContentAsDocument();
-////System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
+////System.out.println("@@@ Extracted content as document:"+createBodyDoc);
 //				if(createBodyDoc!=null){
 ////					Subscribe subscribeContent = env_factory.createSubscribe();
 //					Object ob=	binding.unmarshal(createBodyDoc);
 //				  subscribeContent = (Subscribe) ob;
-////System.out.println("@@@ Have the subcribe content:"+subscribeContent);				  
-////				  JAXBElement<Subscribe> unmarsh = 
+////System.out.println("@@@ Have the subcribe content:"+subscribeContent);
+////				  JAXBElement<Subscribe> unmarsh =
 ////					  (JAXBElement<Subscribe>) binding.unmarshal(createBodyDoc);
 //////					JAXBElement<UserType> unmarshal = (JAXBElement<UserType>) binding
 //////					.unmarshal(resourceStateDom);
@@ -228,18 +254,18 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //////				  UserType returnedUser = (UserType) userReturnedElement.getValue();
 ////				  if((unmarsh!=null)&&(unmarsh.getValue()!=null)){
 ////					  subscribeContent = (Subscribe) unmarsh.getValue();
-////					  
+////
 ////				  }
 //				}
 //				//locate the EventSinkId if sent.
-//				SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//				SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(),
 //						EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
 //				String eventSinkUID = null;
 //				if(eventSinkId!=null){
 //					eventSinkUID = eventSinkId.getTextContent();
 ////System.out.println("###########subscriptionManagerCreateProcessing:"+eventSrcId.getNodeName()+":"+eventSourceUID);
 //				  //Check that this id is not already used. If generate new otherwise use suggested.
-////TODO: EventSinkId					
+////TODO: EventSinkId
 //				  if(eventSinks.containsKey(eventSinkUID)){
 //					  eventSinkUID = EventingMessageValues.EVENT_SINK_NODE_NAME+
 //					    UUID.randomUUID();
@@ -250,20 +276,20 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //					selectorMap.put(EventingMessageValues.EVENT_SINK_NODE_NAME,
 //							eventSinkUID);
 //					TransferExtensions xferResponse = new TransferExtensions(response);
-//					EndpointReferenceType epr = 
+//					EndpointReferenceType epr =
 //						TransferExtensions.createEndpointReference(
-//								request.getTo(), request.getResourceURI(), 
+//								request.getTo(), request.getResourceURI(),
 //								selectorMap);
 //					xferResponse.setCreateResponse(epr);
-//				
+//
 //					//Handle/generate the subcription expiration details
 //					Duration requestedExpiration = null;
 //					 //attempt to locate the expiration request details
 //					 if(subscribeContent!=null){
 //						String expiresContent = subscribeContent.getExpires();
 //						if((expiresContent!=null)&&(expiresContent.trim().length()>0)){
-////							DatatypeFactory.newInstance().newDuration(300000).toString();							
-//						  
+////							DatatypeFactory.newInstance().newDuration(300000).toString();
+//
 //						  try{
 //						   requestedExpiration =
 //							  DatatypeFactory.newInstance().newDuration(
@@ -275,41 +301,41 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //							 if(requestedExpiration.isLongerThan(
 //									 DEFAULT_SUBSCRIPTION_DURATION_FLOOR)){
 //							   //for now as we're only accepting durations then proceed
-//							   //TODO: add additional processing for specific time instances	 
+//							   //TODO: add additional processing for specific time instances
 //							   //   where invalid expiration time.
 //							 }else{//Insert the default timeout value
 //								requestedExpiration =DEFAULT_SUBSCRIPTION_DURATION;
 //							 }
-//						  }else{//attempt to parse the requested expiration timeout but null 
+//						  }else{//attempt to parse the requested expiration timeout but null
 //							 //set to default expiration timeout value
 //							 requestedExpiration = DEFAULT_SUBSCRIPTION_DURATION;
 //						  }
 //						}
 //					 }
 //					 //TODO: now generate the subscribeResponse object and return it as body of CreateResponse.
-//					 SubscribeResponse subscribeResponseBody = 
+//					 SubscribeResponse subscribeResponseBody =
 //						 env_factory.createSubscribeResponse();
 //					  //locate the details to define the SubscriptionManager EPR
 ////					 Management subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
 //					 if(subscriptionManMetaData==null){
-//System.out.println("@@@ SubMan is null!!!");						 
+//System.out.println("@@@ SubMan is null!!!");
 ////						 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
 ////subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
 ////		DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
 ////subscriptionManMetaData = request;
 //System.out.println("@@@ SubMan self ref init-before:"+request);
 //					   subscriptionManMetaData = AnnotationProcessor.stripMetadataContent(request, true);
-//System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);					   
+//System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);
 //					 }
 //					  if(subscriptionManMetaData!=null){
 //					     //translate into subscription manager details
-//					     EndpointReferenceType subscriptionManEpr = 
+//					     EndpointReferenceType subscriptionManEpr =
 //						   ManagementUtility.extractEprType(subscriptionManMetaData);
-////add the ref params passed in					     
+////add the ref params passed in
 ////extract epr from Subscribe/Mode/Notify
 /////##########
 //       //locate notify to
-//        EndpointReferenceType notifyTo = null;					     
+//        EndpointReferenceType notifyTo = null;
 //		for (final Object content : subscribeContent.getDelivery().getContent()) {
 //			final Class contentClass = content.getClass();
 //			if (JAXBElement.class.equals(contentClass)) {
@@ -320,31 +346,31 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //					final EndpointReferenceType eprT = (EndpointReferenceType) item;
 //					if (Eventing.NOTIFY_TO.equals(name)) {
 //						notifyTo = eprT;
-////System.out.println("@@@@ Located eprNotifyType:"+notifyTo);						
+////System.out.println("@@@@ Located eprNotifyType:"+notifyTo);
 //					}
 //				}
 //			}
 //		}
 //		ReferenceParametersType refs = notifyTo.getReferenceParameters();
 //		refs.getAny();
-////System.out.println("@@@ RefParam list:"+refs.getAny());		
+////System.out.println("@@@ RefParam list:"+refs.getAny());
 //		//iterate through and copy all over
 ////		for(Object param: refs.getAny() ){
 //       if((refs.getAny()!=null)&&(refs.getAny().size()>0)){
 ////    	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
 //    	   subscriptionManEpr.setReferenceParameters(refs);
-//    	   
-//System.out.println("@@@@ Adding ref parameters:");    	   
-////System.out.println("@@@@ Adding ref parameter:"+param);    	   
+//
+//System.out.println("@@@@ Adding ref parameters:");
+////System.out.println("@@@@ Adding ref parameter:"+param);
 //       }
-/////##########					     
+/////##########
 //					     //populate subscribeResponseBody
 ////       subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
 ////       EventingExtensions evext = new EventingExtensions();
 //                         EventingExtensions evext = new EventingExtensions(subscriptionManMetaData);
 //                         evext.setSubscribeResponse(subscriptionManEpr, requestedExpiration.toString());
 //                         SubscribeResponse subScrResEl = evext.getSubscribeResponse();
-//System.out.println("@@@@ EventingExt:"+evext);                         
+//System.out.println("@@@@ EventingExt:"+evext);
 ////					     subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
 ////					     //handle the Expiration part of SubscribeResponse object
 ////					     subscribeResponseBody.setExpires(requestedExpiration.toString());
@@ -357,15 +383,15 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 ////					     }
 ////					    	 xferResponse = new TransferExtensions(evext);
 //					    	 response = new Management(evext);
-//System.out.println("@@@@ SubscribeResponse at end:"+response);					    	 
+//System.out.println("@@@@ SubscribeResponse at end:"+response);
 //					  }
 ////					 this.getClass().
-//					 //TODO: Generate the duration instance and stuff into custom header 
+//					 //TODO: Generate the duration instance and stuff into custom header
 //					 //TODO: add header to the response object
 //			   }
-//System.out.println("@@@@ SubscribeResponse at end-2:"+response);				
+//System.out.println("@@@@ SubscribeResponse at end-2:"+response);
 //			}//End of CREATE action for new SUBSCRIBER
-//System.out.println("@@@@ SubscribeResponse at end-3:"+response);			
+//System.out.println("@@@@ SubscribeResponse at end-3:"+response);
 //		}//End of CREATE ACTION processing
 //System.out.println("@@@@ SubscribeResponse at end-4:"+response);
 //		response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -384,12 +410,12 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 
 	public void renew(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	public void unsubsubscribe(HandlerContext context, Enumeration enuRequest, Enumeration enuResponse) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/* (non-Javadoc)
@@ -402,7 +428,7 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 ////		throw new ActionNotSupportedException("TestMEssage");
 //        enuResponse.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
 ////        enuResponse.addNamespaceDeclarations(NAMESPACES);
-//        
+//
 //        synchronized (this) {
 //        	// Make sure there is an Iterator factory registered for this resource
 //        	if (EnumerationSupport.getIteratorFactory(resource) == null) {
@@ -411,7 +437,7 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //        	}
 //        }
 //        EnumerationSupport.enumerate(context, enuRequest, enuResponse);
-//		
+//
 	}
 
 	/* (non-Javadoc)
@@ -438,13 +464,13 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //	@Override
 //	public Management create(HandlerContext context, Management request, Management response) {
 //		//locate the CreationSubType
-//		SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(), 
+//		SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(),
 //				EventingMessageValues.EVENTING_CREATION_TYPES);
 //		String type =null;
 //		if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
 //				(CreationTypes.SUBSCRIPTION_SOURCE.name().equals(type.trim()))){
 //			//locate the EventSourceId if sent.
-//			SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//			SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(),
 //					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
 //			String eventSourceUID = null;
 //			if(eventSrcId!=null){
@@ -454,15 +480,15 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //					eventSourceUID = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME+
 //					UUID.randomUUID();
 //				}
-//				
+//
 //				//Now populate the ResourceCreated value for the response object
 //				HashMap<String, String> selectorMap = new HashMap<String,String>();
 //				selectorMap.put(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME,
 //						eventSourceUID);
 //				TransferExtensions xferResponse = new TransferExtensions(response);
-//				EndpointReferenceType epr = 
+//				EndpointReferenceType epr =
 //					TransferExtensions.createEndpointReference(
-//							request.getTo(), request.getResourceURI(), 
+//							request.getTo(), request.getResourceURI(),
 //							selectorMap);
 //				xferResponse.setCreateResponse(epr);
 //				xferResponse.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -474,16 +500,16 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //				(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
 //			//attempt to extract the subscribe message sent if any
 //			Transfer createRequest = new Transfer(request);
-////System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
-//			Document createBodyDoc = 
+////System.out.println("@@@@ SUBMAN-created the object:"+createRequest);
+//			Document createBodyDoc =
 //				createRequest.getBody().extractContentAsDocument();
-////System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
+////System.out.println("@@@ Extracted content as document:"+createBodyDoc);
 //			if(createBodyDoc!=null){
 ////				Subscribe subscribeContent = env_factory.createSubscribe();
 //				Object ob=	binding.unmarshal(createBodyDoc);
 //			  subscribeContent = (Subscribe) ob;
-////System.out.println("@@@ Have the subcribe content:"+subscribeContent);				  
-////			  JAXBElement<Subscribe> unmarsh = 
+////System.out.println("@@@ Have the subcribe content:"+subscribeContent);
+////			  JAXBElement<Subscribe> unmarsh =
 ////				  (JAXBElement<Subscribe>) binding.unmarshal(createBodyDoc);
 //////				JAXBElement<UserType> unmarshal = (JAXBElement<UserType>) binding
 //////				.unmarshal(resourceStateDom);
@@ -491,18 +517,18 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //////			  UserType returnedUser = (UserType) userReturnedElement.getValue();
 ////			  if((unmarsh!=null)&&(unmarsh.getValue()!=null)){
 ////				  subscribeContent = (Subscribe) unmarsh.getValue();
-////				  
+////
 ////			  }
 //			}
 //			//locate the EventSinkId if sent.
-//			SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(), 
+//			SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(),
 //					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
 //			String eventSinkUID = null;
 //			if(eventSinkId!=null){
 //				eventSinkUID = eventSinkId.getTextContent();
 ////System.out.println("###########subscriptionManagerCreateProcessing:"+eventSrcId.getNodeName()+":"+eventSourceUID);
 //			  //Check that this id is not already used. If generate new otherwise use suggested.
-////TODO: EventSinkId					
+////TODO: EventSinkId
 //			  if(eventSinks.containsKey(eventSinkUID)){
 //				  eventSinkUID = EventingMessageValues.EVENT_SINK_NODE_NAME+
 //				    UUID.randomUUID();
@@ -513,20 +539,20 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //				selectorMap.put(EventingMessageValues.EVENT_SINK_NODE_NAME,
 //						eventSinkUID);
 //				TransferExtensions xferResponse = new TransferExtensions(response);
-//				EndpointReferenceType epr = 
+//				EndpointReferenceType epr =
 //					TransferExtensions.createEndpointReference(
-//							request.getTo(), request.getResourceURI(), 
+//							request.getTo(), request.getResourceURI(),
 //							selectorMap);
 //				xferResponse.setCreateResponse(epr);
-//			
+//
 //				//Handle/generate the subcription expiration details
 //				Duration requestedExpiration = null;
 //				 //attempt to locate the expiration request details
 //				 if(subscribeContent!=null){
 //					String expiresContent = subscribeContent.getExpires();
 //					if((expiresContent!=null)&&(expiresContent.trim().length()>0)){
-////						DatatypeFactory.newInstance().newDuration(300000).toString();							
-//					  
+////						DatatypeFactory.newInstance().newDuration(300000).toString();
+//
 //					  try{
 //					   requestedExpiration =
 //						  DatatypeFactory.newInstance().newDuration(
@@ -538,41 +564,41 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //						 if(requestedExpiration.isLongerThan(
 //								 DEFAULT_SUBSCRIPTION_DURATION_FLOOR)){
 //						   //for now as we're only accepting durations then proceed
-//						   //TODO: add additional processing for specific time instances	 
+//						   //TODO: add additional processing for specific time instances
 //						   //   where invalid expiration time.
 //						 }else{//Insert the default timeout value
 //							requestedExpiration =DEFAULT_SUBSCRIPTION_DURATION;
 //						 }
-//					  }else{//attempt to parse the requested expiration timeout but null 
+//					  }else{//attempt to parse the requested expiration timeout but null
 //						 //set to default expiration timeout value
 //						 requestedExpiration = DEFAULT_SUBSCRIPTION_DURATION;
 //					  }
 //					}
 //				 }
 //				 //TODO: now generate the subscribeResponse object and return it as body of CreateResponse.
-//				 SubscribeResponse subscribeResponseBody = 
+//				 SubscribeResponse subscribeResponseBody =
 //					 env_factory.createSubscribeResponse();
 //				  //locate the details to define the SubscriptionManager EPR
 ////				 Management subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
 //				 if(subscriptionManMetaData==null){
-//System.out.println("@@@ SubMan is null!!!");						 
+//System.out.println("@@@ SubMan is null!!!");
 ////					 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
 ////subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
 ////	DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
 ////subscriptionManMetaData = request;
 //System.out.println("@@@ SubMan self ref init-before:"+request);
 //				   subscriptionManMetaData = AnnotationProcessor.stripMetadataContent(request, true);
-//System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);					   
+//System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);
 //				 }
 //				  if(subscriptionManMetaData!=null){
 //				     //translate into subscription manager details
-//				     EndpointReferenceType subscriptionManEpr = 
+//				     EndpointReferenceType subscriptionManEpr =
 //					   ManagementUtility.extractEprType(subscriptionManMetaData);
-////add the ref params passed in					     
+////add the ref params passed in
 ////extract epr from Subscribe/Mode/Notify
 /////##########
 //   //locate notify to
-//    EndpointReferenceType notifyTo = null;					     
+//    EndpointReferenceType notifyTo = null;
 //	for (final Object content : subscribeContent.getDelivery().getContent()) {
 //		final Class contentClass = content.getClass();
 //		if (JAXBElement.class.equals(contentClass)) {
@@ -583,31 +609,31 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 //				final EndpointReferenceType eprT = (EndpointReferenceType) item;
 //				if (Eventing.NOTIFY_TO.equals(name)) {
 //					notifyTo = eprT;
-////System.out.println("@@@@ Located eprNotifyType:"+notifyTo);						
+////System.out.println("@@@@ Located eprNotifyType:"+notifyTo);
 //				}
 //			}
 //		}
 //	}
 //	ReferenceParametersType refs = notifyTo.getReferenceParameters();
 //	refs.getAny();
-////System.out.println("@@@ RefParam list:"+refs.getAny());		
+////System.out.println("@@@ RefParam list:"+refs.getAny());
 //	//iterate through and copy all over
 ////	for(Object param: refs.getAny() ){
 //   if((refs.getAny()!=null)&&(refs.getAny().size()>0)){
 ////	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
 //	   subscriptionManEpr.setReferenceParameters(refs);
-//	   
-//System.out.println("@@@@ Adding ref parameters:");    	   
-////System.out.println("@@@@ Adding ref parameter:"+param);    	   
+//
+//System.out.println("@@@@ Adding ref parameters:");
+////System.out.println("@@@@ Adding ref parameter:"+param);
 //   }
-/////##########					     
+/////##########
 //				     //populate subscribeResponseBody
 ////   subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
 ////   EventingExtensions evext = new EventingExtensions();
 //                     EventingExtensions evext = new EventingExtensions(subscriptionManMetaData);
 //                     evext.setSubscribeResponse(subscriptionManEpr, requestedExpiration.toString());
 //                     SubscribeResponse subScrResEl = evext.getSubscribeResponse();
-//System.out.println("@@@@ EventingExt:"+evext);                         
+//System.out.println("@@@@ EventingExt:"+evext);
 ////				     subscribeResponseBody.setSubscriptionManager(subscriptionManEpr);
 ////				     //handle the Expiration part of SubscribeResponse object
 ////				     subscribeResponseBody.setExpires(requestedExpiration.toString());
@@ -620,34 +646,34 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 ////				     }
 ////				    	 xferResponse = new TransferExtensions(evext);
 //				    	 response = new Management(evext);
-//System.out.println("@@@@ SubscribeResponse at end:"+response);					    	 
+//System.out.println("@@@@ SubscribeResponse at end:"+response);
 //				  }
 ////				 this.getClass().
-//				 //TODO: Generate the duration instance and stuff into custom header 
+//				 //TODO: Generate the duration instance and stuff into custom header
 //				 //TODO: add header to the response object
 //		   }
-//System.out.println("@@@@ SubscribeResponse at end-2:"+response);				
+//System.out.println("@@@@ SubscribeResponse at end-2:"+response);
 //		}//End of CREATE action for new SUBSCRIBER
-//System.out.println("@@@@ SubscribeResponse at end-3:"+response);			
+//System.out.println("@@@@ SubscribeResponse at end-3:"+response);
 //	}//End of CREATE ACTION processing
 //System.out.println("@@@@ SubscribeResponse at end-4:"+response);
 //	response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-//		
+//
 //		return response;
 //	}
 
 	private synchronized Management create(HandlerContext context, Management request, Management response) throws SOAPException, JAXBException, DatatypeConfigurationException {
-		
+
 		//locate the CreationSubType
-		SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(), 
+		SOAPElement creationHeader =  ManagementUtility.locateHeader(request.getHeaders(),
 				EventingMessageValues.EVENTING_CREATION_TYPES);
 		String type =null;
 		//Create section for SUBSCRIPTION_SOURCES
 		if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
 				(CreationTypes.SUBSCRIPTION_SOURCE.name().equals(type.trim()))){
-			
+
 			//locate the EventSourceId if sent.
-			SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(), 
+			SOAPElement eventSrcId =  ManagementUtility.locateHeader(request.getHeaders(),
 					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
 			String eventSourceUID = null;
 			if(eventSrcId!=null){
@@ -657,39 +683,39 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 					eventSourceUID = EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME+
 					UUID.randomUUID();
 				}
-				
+
 				//Now populate the ResourceCreated value for the response object
 				HashMap<String, String> selectorMap = new HashMap<String,String>();
 				selectorMap.put(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME,
 						eventSourceUID);
 				TransferExtensions xferResponse = new TransferExtensions(response);
-				EndpointReferenceType epr = 
+				EndpointReferenceType epr =
 					TransferExtensions.createEndpointReference(
-							request.getTo(), request.getResourceURI(), 
+							request.getTo(), request.getResourceURI(),
 							selectorMap);
 				xferResponse.setCreateResponse(epr);
 				xferResponse.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 				response = new Management(xferResponse);
 			}
 		}//End of Event source creation processing
-		
+
 		Subscribe subscribeContent = null;
 		//Create portion for EVENT_SINK creation
 		if((creationHeader!=null)&&((type=creationHeader.getTextContent())!=null)&&
 				(CreationTypes.NEW_SUBSCRIBER.name().equals(type.trim()))){
 			//attempt to extract the subscribe message sent if any
 			Transfer createRequest = new Transfer(request);
-//System.out.println("@@@@ SUBMAN-created the object:"+createRequest);				
-			Document createBodyDoc = 
+//System.out.println("@@@@ SUBMAN-created the object:"+createRequest);
+			Document createBodyDoc =
 				createRequest.getBody().extractContentAsDocument();
-//System.out.println("@@@ Extracted content as document:"+createBodyDoc);				
+//System.out.println("@@@ Extracted content as document:"+createBodyDoc);
 			if(createBodyDoc!=null){
 //				Subscribe subscribeContent = env_factory.createSubscribe();
 				Object ob=	binding.unmarshal(createBodyDoc);
 			  subscribeContent = (Subscribe) ob;
 			}
 			//locate the EventSinkId if sent.
-			SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(), 
+			SOAPElement eventSinkId =  ManagementUtility.locateHeader(request.getHeaders(),
 					EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID);
 			String eventSinkUID = null;
 			if(eventSinkId!=null){
@@ -704,12 +730,12 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 				selectorMap.put(EventingMessageValues.EVENT_SINK_NODE_NAME,
 						eventSinkUID);
 				TransferExtensions xferResponse = new TransferExtensions(response);
-				EndpointReferenceType epr = 
+				EndpointReferenceType epr =
 					TransferExtensions.createEndpointReference(
-							request.getTo(), request.getResourceURI(), 
+							request.getTo(), request.getResourceURI(),
 							selectorMap);
 				xferResponse.setCreateResponse(epr);
-			
+
 				//Handle/generate the subcription expiration details
 				Duration requestedExpiration = null;
 				 //attempt to locate the expiration request details
@@ -727,40 +753,40 @@ public class eventsubman_Handler implements Handler, SubscriptionManagerInterfac
 						 if(requestedExpiration.isLongerThan(
 								 DEFAULT_SUBSCRIPTION_DURATION_FLOOR)){
 						   //for now as we're only accepting durations then proceed
-						   //TODO: add additional processing for specific time instances	 
+						   //TODO: add additional processing for specific time instances
 						   //   where invalid expiration time.
 						 }else{//Insert the default timeout value
 							requestedExpiration =DEFAULT_SUBSCRIPTION_DURATION;
 						 }
-					  }else{//attempt to parse the requested expiration timeout but null 
+					  }else{//attempt to parse the requested expiration timeout but null
 						 //set to default expiration timeout value
 						 requestedExpiration = DEFAULT_SUBSCRIPTION_DURATION;
 					  }
 					}
 				 }
 				 //generate the subscribeResponse object and return it as body of CreateResponse.
-				 SubscribeResponse subscribeResponseBody = 
+				 SubscribeResponse subscribeResponseBody =
 					 env_factory.createSubscribeResponse();
 				  //locate the details to define the SubscriptionManager EPR
 				 if(subscriptionManMetaData==null){
-System.out.println("@@@ SubMan is null!!!");						 
+System.out.println("@@@ SubMan is null!!!");
 //					 subscriptionManMetaData = ManagementUtility.findAnnotatedResourceByUID(
 //subscriptionManMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
 //	DEFAULT_SUBSCRIPTION_MANAGER_UID, ManagementMessageValues.WSMAN_DESTINATION);
 //subscriptionManMetaData = request;
 System.out.println("@@@ SubMan self ref init-before:"+request);
 				   subscriptionManMetaData = AnnotationProcessor.stripMetadataContent(request, true);
-System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);					   
+System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);
 				 }
 				 if(subscriptionManMetaData!=null){
 				     //translate into subscription manager details
-				     EndpointReferenceType subscriptionManEpr = 
+				     EndpointReferenceType subscriptionManEpr =
 					   ManagementUtility.extractEprType(subscriptionManMetaData);
-					//add the ref params passed in					     
+					//add the ref params passed in
 					//extract epr from Subscribe/Mode/Notify
 					///##########
 					   //locate notify to
-					    EndpointReferenceType notifyTo = null;					     
+					    EndpointReferenceType notifyTo = null;
 						for (final Object content : subscribeContent.getDelivery().getContent()) {
 							final Class contentClass = content.getClass();
 							if (JAXBElement.class.equals(contentClass)) {
@@ -777,29 +803,29 @@ System.out.println("@@@ SubMan self ref init-after:"+subscriptionManMetaData);
 						}
 						ReferenceParametersType refs = notifyTo.getReferenceParameters();
 						refs.getAny();
-					//System.out.println("@@@ RefParam list:"+refs.getAny());		
+					//System.out.println("@@@ RefParam list:"+refs.getAny());
 						//iterate through and copy all over
 					//	for(Object param: refs.getAny() ){
 					   if((refs.getAny()!=null)&&(refs.getAny().size()>0)){
 					//	   subscriptionManEpr.getReferenceParameters().getAny().add(param);
 						   subscriptionManEpr.setReferenceParameters(refs);
-						   
-System.out.println("@@@@ Adding ref parameters:");    	   
+
+System.out.println("@@@@ Adding ref parameters:");
 					   }
                      EventingExtensions evext = new EventingExtensions(subscriptionManMetaData);
                      evext.setSubscribeResponse(subscriptionManEpr, requestedExpiration.toString());
 //                     SubscribeResponse subScrResEl = evext.getSubscribeResponse();
-System.out.println("@@@@ EventingExt:"+evext);                         
+System.out.println("@@@@ EventingExt:"+evext);
 //				     //set the populated subscribeResponse as the CreateResponse.body
 //				     Document createRespBody = Management.newDocument();
 //				     binding.marshal(subScrResEl, createRespBody);
 				    	 response = new Management(evext);
-System.out.println("@@@@ SubscribeResponse at end:"+response);					    	 
+System.out.println("@@@@ SubscribeResponse at end:"+response);
 				  }
 		   }//End of event sink id !=null
 		}//End of CREATE action for new SUBSCRIBER
 		response.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-System.out.println("@@@ create:returned response:"+response);		
+System.out.println("@@@ create:returned response:"+response);
 	  return response;
 	}//End of CREATE ACTION processing
 
@@ -828,8 +854,8 @@ System.out.println("@@@ create:returned response:"+response);
 		}
 		return null;
 	}
-	
-	 /** Implements the IteratorFactory to generate iterators for 
+
+	 /** Implements the IteratorFactory to generate iterators for
 	  *  subscriptions.
 	  */
 	public class EventingSubscriptionManagerIterator implements IteratorFactory{
@@ -838,19 +864,19 @@ System.out.println("@@@ create:returned response:"+response);
 		protected EventingSubscriptionManagerIterator(String resource) {
 			RESOURCE_URI = resource;
 		}
-		
-		public EnumerationIterator newIterator(HandlerContext context, Enumeration request, 
-				DocumentBuilder db, boolean includeItem, 
-				boolean includeEPR) 
+
+		public EnumerationIterator newIterator(HandlerContext context, Enumeration request,
+				DocumentBuilder db, boolean includeItem,
+				boolean includeEPR)
 		throws UnsupportedFeatureFault, FaultException {
-			return new EventSourcesIterator(context, RESOURCE_URI, 
-					request, 
+			return new EventSourcesIterator(context, RESOURCE_URI,
+					request,
 					db, includeItem, includeEPR);
 		}
-		
+
 		/**Responsible for initializing the iterator and the snapshot
 		 * of the underlying Enumeration that is being passed in.
-		 * 
+		 *
 		 * @author Simeon
 		 */
 		public class EventSourcesIterator implements EnumerationIterator {
@@ -860,21 +886,21 @@ System.out.println("@@@ create:returned response:"+response);
 			private final String requestPath;
 			private final String resourceURI;
 			int iterCount = 0;
-			
+
 			public EventSourcesIterator(final HandlerContext hcontext,
 					final String resource,
 					final Enumeration request, final DocumentBuilder db,
 					final boolean includeItem, final boolean includeEPR) {
-				
+
 				this.requestPath = hcontext.getURL();
 				this.resourceURI = resource;
 				this.db = db;
 				this.includeEPR = includeEPR;
-				
+
 				try{
 				  String xpathFilterString = "";
 				  EnumerationExtensions enx = new EnumerationExtensions(request);
-				  
+
 				  //Process if a filter expression has been passed in.
 				  if((enx!=null)&&(enx.getWsmanFilter()!=null)){
 					 DialectableMixedDataType type = enx.getWsmanFilter();
@@ -882,51 +908,51 @@ System.out.println("@@@ create:returned response:"+response);
 						 //convert any list to xpathFilter expression
 						 String filterValue ="";
 						 for(Object filterArg : type.getContent()){
-							filterValue+= filterArg; 
+							filterValue+= filterArg;
 						 }
 						xpathFilterString = filterValue;
 					 }
 				  }
-				  
+
 				  //Initialize the list of eventSources for the enumeration.
 				  allEventSources = locateEventSourceList(xpathFilterString);
 				}catch (Exception ex){
-				  LOG.severe("There was an error retrieving Metatadata for EventSources : "+ex.getMessage());	
-				  allEventSources = new Management[0];	
+				  LOG.severe("There was an error retrieving Metatadata for EventSources : "+ex.getMessage());
+				  allEventSources = new Management[0];
 				}
 			}
 
-			private Management[] locateEventSourceList(String xpathFilterString) throws SOAPException, 
+			private Management[] locateEventSourceList(String xpathFilterString) throws SOAPException,
 				IOException, JAXBException, DatatypeConfigurationException {
-				
+
 				Management[] eventSrces = null;
-				
+
 //		        //Request identify info to get MetaData root information
 //		        final Identify identify = new Identify();
 //		        identify.setIdentify();
-//		        
+//
 //		        System.out.println("@@@@@@@@@@@@@@@@@reqURI:"+requestPath);
-//		        
+//
 //		        //Send identify request
 ////		        final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
-//		        final Addressing response = 
+//		        final Addressing response =
 //		        	HttpClient.sendRequest(identify.getMessage(), requestPath);
 ////		        response.prettyPrint(logfile);
 ////		        if (response.getBody().hasFault()) {
 ////		            fail(response.getBody().getFault().getFaultString());
 ////		        }
-//		        
+//
 //		        //Parse the identify response
 //		        final Identify id = new Identify(response);
 //		        final SOAPElement idr = id.getIdentifyResponse();
 ////		        assertNotNull(idr);
-//		        SOAPElement el =IdentifyUtility.locateElement(id, 
-//		        		AnnotationProcessor.META_DATA_RESOURCE_URI); 
+//		        SOAPElement el =IdentifyUtility.locateElement(id,
+//		        		AnnotationProcessor.META_DATA_RESOURCE_URI);
 ////		         assertNotNull("MetaDatResourceURI is null.",el);
 //		         //retrieve the MetaData ResourceURI
 //		         String resUri=el.getTextContent();
 ////		          assertNotNull("Retrieved resourceURI is null.",resUri);
-//		        el =IdentifyUtility.locateElement(id, 
+//		        el =IdentifyUtility.locateElement(id,
 //		        		AnnotationProcessor.META_DATA_TO);
 ////		        assertNotNull("MetaDataTo is null",el);
 //		        //retrieve the MetaData To/Destination
@@ -935,17 +961,17 @@ System.out.println("@@@ create:returned response:"+response);
 //
 //		        //############ REQUEST THE LIST OF METADATA AVAILABLE ######################
 //			   //Build the GET request to be submitted for the metadata
-//		        Management m = null; 
+//		        Management m = null;
 //		        m =TransferUtility.createMessage(metTo, resUri,
 //		        		Transfer.GET_ACTION_URI, null, null, 30000, null);
-//		        
+//
 //		         //############ PROCESS THE METADATA RESPONSE ######################
 //		         //Parse the getResponse for the MetaData
 //		         final Addressing getResponse = HttpClient.sendRequest(m);
 //		       Management mResp = new Management(getResponse);
-////		System.out.println("Request MEtaDataResp:"+mResp.toString());       
+////		System.out.println("Request MEtaDataResp:"+mResp.toString());
 ////		        assertNull("A fault was detected.",mResp.getFault());
-//		               
+//
 //		   		//Retrieve the MetaData response to build JAXB type
 ////		   		SOAPBody body = mResp.getBody();
 //
@@ -955,40 +981,40 @@ System.out.println("@@@ create:returned response:"+response);
 //					//unmarshall the Metadata node content
 ////					Object bound = binding.unmarshal(metaDataNode);
 ////					Object bound = m.getXmlBinding().unmarshal(metaDataNode);
-//					
+//
 ////					Metadata ob = (Metadata)bound;
-//					
+//
 //					//Parse the MetadataSections that exist
 ////					List<MetadataSection> metaDataSections = ob.getMetadataSection();
 ////					 assertEquals("The correct number of metadata sections were not found.",
 ////							3, metaDataSections.size());
 //
-//		        //############ PROCESS A METADATASECTION ###################### 
-//					//Examine Metadatasection attributes 
+//		        //############ PROCESS A METADATASECTION ######################
+//					//Examine Metadatasection attributes
 ////					MetadataSection section = metaDataSections.get(0);
 ////					assertEquals("Dialect does not match.",
-////							AnnotationProcessor.NS_URI, 
+////							AnnotationProcessor.NS_URI,
 ////							section.getDialect());
 ////					assertEquals("Identifier does not match.",
-////							AnnotationProcessor.NS_URI, 
+////							AnnotationProcessor.NS_URI,
 ////							section.getIdentifier());
 //
-//			    //########### TRANSLATE METADATA TO FAMILIAR MANAGEMENT NODES ##### 
+//			    //########### TRANSLATE METADATA TO FAMILIAR MANAGEMENT NODES #####
 //			        //Extract the MetaData node returned as Management instances
-//			        Management[] metaDataList = 
+//			        Management[] metaDataList =
 //			        	ManagementUtility.extractEmbeddedMetaDataElements(mResp);
-				
-				Management[] metaDataList = 
+
+				Management[] metaDataList =
 //					ManagementUtility.getExposedMetadata(this.requestPath,0);
 					MetadataUtility.getExposedMetadata(this.requestPath,0);
-//System.out.println("############ALL EXPOSED METADATA CNT: "+metaDataList.length);				
+//System.out.println("############ALL EXPOSED METADATA CNT: "+metaDataList.length);
 			        ArrayList<Management> evtSrcBag = new ArrayList<Management>();
 			        for (int i = 0; i < metaDataList.length; i++) {
 						Management metaDescription = metaDataList[i];
-						SOAPElement element = 
+						SOAPElement element =
 							ManagementUtility.locateHeader(metaDescription.getHeaders(),
 								AnnotationProcessor.META_DATA_CATEGORY);
-//System.out.println("!!!!!!!!!!!!!!!!!!!!MetaDataCategory:"+element.getTextContent());						
+//System.out.println("!!!!!!!!!!!!!!!!!!!!MetaDataCategory:"+element.getTextContent());
 						if(element.getTextContent().trim().equals(
 								CreationTypes.SUBSCRIPTION_SOURCE.name())){
 //TODO: HERE, insert filter processing.
@@ -997,42 +1023,42 @@ System.out.println("@@@ create:returned response:"+response);
 								(xpathFilterString.trim().length()>0)){
 							  //TODO: implement XPath filtering.
 //System.out.println("################XpathFiltString:"+xpathFilterString);
-								
+
 //								XPath xpath = XPathFactory.newInstance().newXPath();
 //								NamespaceContext nsContext = new NameSpacer();
 //								xpath.setNamespaceContext(nsContext);
-								
-//							  ResourceState filtered = 
+
+//							  ResourceState filtered =
 //								  new ResourceStateImpl(
 //									metaDescription.getEnvelope().getOwnerDocument());
 //System.out.println("@@@@@@@@@@ NODE:"+xmlToString(metaDescription.getEnvelope().getOwnerDocument()));
 							  	try {
-								  Object nodes = xpath.evaluate(xpathFilterString, 
-									metaDescription.getEnvelope().getOwnerDocument(), 
+								  Object nodes = xpath.evaluate(xpathFilterString,
+									metaDescription.getEnvelope().getOwnerDocument(),
 //									XPathConstants.NODESET);
 									XPathConstants.BOOLEAN);
 //									XPathConstants.STRING);
-//System.out.println("!!!!!!!!!!NODES REF"+i+":"+nodes);								  
+//System.out.println("!!!!!!!!!!NODES REF"+i+":"+nodes);
 								  if(nodes!=null){
 //										throw new NoMatchFoundException(
 //												"No Element could be found to match"+
 //												" your XPath expression.");
-									  
-//								   NodeList nodelist = (NodeList)nodes;		
+
+//								   NodeList nodelist = (NodeList)nodes;
 //								   if((nodelist!=null)&(nodelist.getLength()>0)){
-//									 evtSrcBag.add(metaDescription); 
+//									 evtSrcBag.add(metaDescription);
 //								   }
 								  Boolean located = (Boolean) nodes;
 								  if(located.booleanValue()){
-									evtSrcBag.add(metaDescription); 
+									evtSrcBag.add(metaDescription);
 								  }else{
-//System.out.println("%%%%%%%%% NO XPath boolean match could be found with:"+xpathFilterString);								
+//System.out.println("%%%%%%%%% NO XPath boolean match could be found with:"+xpathFilterString);
 								  }
 								 }
 								} catch (XPathExpressionException e) {
-//System.out.println("!!!!!!!!!!!XPATH Exp exc:"+e.getMessage()+":"+e.getCause());									
+//System.out.println("!!!!!!!!!!!XPATH Exp exc:"+e.getMessage()+":"+e.getCause());
 //									e.printStackTrace();
-								} 
+								}
 //								catch (NoMatchFoundException e) {
 ////									e.printStackTrace();
 //								}
@@ -1044,13 +1070,13 @@ System.out.println("@@@ create:returned response:"+response);
 //System.out.println("SUBSCRIPTION_SRC_CNT:"+evtSrcBag.size());
 			        eventSrces = new Management[evtSrcBag.size()];
 			        if(evtSrcBag.size()>0){
-			        	System.arraycopy(evtSrcBag.toArray(), 0, eventSrces, 0, 
+			        	System.arraycopy(evtSrcBag.toArray(), 0, eventSrces, 0,
 			        	  evtSrcBag.size());
 			        }
 //				}catch(Exception ex){
-//					
+//
 //				}
-//System.out.println("EventSrcsList:"+eventSrces.length);				
+//System.out.println("EventSrcsList:"+eventSrces.length);
 				return eventSrces;
 			}
 
@@ -1097,5 +1123,5 @@ System.out.println("@@@ create:returned response:"+response);
 			}
 		}
 	}
-	
+
 }

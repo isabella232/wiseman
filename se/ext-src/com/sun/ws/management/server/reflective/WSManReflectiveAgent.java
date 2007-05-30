@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManReflectiveAgent.java,v 1.2 2007-05-02 19:29:21 simeonpinder Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: WSManReflectiveAgent.java,v 1.3 2007-05-30 20:30:32 nbeers Exp $
  */
 
 package com.sun.ws.management.server.reflective;
@@ -40,12 +47,12 @@ import org.xml.sax.SAXException;
 public class WSManReflectiveAgent extends WSManAgent {
     private static final String METADATA_PROPERTY_FILE_NAME = "/metadata.properties";
     private Map<String, String> metadataProperties;
-    
+
     public WSManReflectiveAgent() throws SAXException {
         this(null, null, null);
     }
-    
-    protected WSManReflectiveAgent(Map<String,String> wisemanConf, Source[] customSchemas, 
+
+    protected WSManReflectiveAgent(Map<String,String> wisemanConf, Source[] customSchemas,
             Map<String,String> bindingConf) throws SAXException {
         super(wisemanConf, customSchemas, bindingConf);
          // Handle metadata property file
@@ -54,15 +61,15 @@ public class WSManReflectiveAgent extends WSManAgent {
         getProperties(METADATA_PROPERTY_FILE_NAME, propertySet);
         metadataProperties = Collections.unmodifiableMap(propertySet);
     }
-    
+
     @Override
-    protected RequestDispatcher createDispatcher(Management request, HandlerContext context) 
+    protected RequestDispatcher createDispatcher(Management request, HandlerContext context)
             throws SOAPException, JAXBException, IOException {
     	request = processForMissingTrailingSlash(request);
         return new ReflectiveRequestDispatcher(request, context);
     }
-    
-    
+
+
     private Management processForMissingTrailingSlash(Management request) {
     	String address = null;
     	try {
@@ -92,7 +99,7 @@ public class WSManReflectiveAgent extends WSManAgent {
         }
          //Add additional elements to the IdentifyResponse object.
         Map<QName,String> extraIdInfo = new HashMap<QName, String>();
-        
+
         //If MetaData resource is exposed, then populate that information here.
         String value = null;
         //Determine whether to turn on/off metaData exposure
@@ -105,7 +112,7 @@ public class WSManReflectiveAgent extends WSManAgent {
                     AnnotationProcessor.META_DATA_ENABLED,
                     value);
         }
-        
+
         //If enabled then populate then expose default meta data resource
         if(exposeMetaDataContent){
             //MetaData Addressing TO field
@@ -135,7 +142,7 @@ public class WSManReflectiveAgent extends WSManAgent {
         }
         return extraIdInfo;
     }
-    
+
     /* (non-Javadoc)
          * @see com.sun.ws.management.server.RequestDispatcher#getAdditionalIdentifyElements()
          */

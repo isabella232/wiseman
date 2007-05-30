@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Message.java,v 1.13 2007-05-03 14:47:50 simeonpinder Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: Message.java,v 1.14 2007-05-30 20:31:05 nbeers Exp $
  */
 
 package com.sun.ws.management;
@@ -57,34 +64,34 @@ import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 public abstract class Message {
-    
+
     public static final String COLON = ":";
-    
+
     private static final MimeHeaders DEFAULT_SOAP_MIME_HEADER = new MimeHeaders();
     private static final String UNINITIALIZED = "uninitialized";
-    
+
     private static MessageFactory msgFactory = null;
     private static DocumentBuilderFactory docFactory = null;
     private static DocumentBuilder db = null;
-    
+
     private ContentType contentType = null;
-    
+
     private final SOAPMessage msg;
     private SOAPEnvelope env = null;
     private SOAPHeader hdr = null;
     private SOAPBody body = null;
-    
+
     private static Map<String,String> extensionNamespaces =null;
-    
+
     static {
-        DEFAULT_SOAP_MIME_HEADER.setHeader("Content-Type", 
+        DEFAULT_SOAP_MIME_HEADER.setHeader("Content-Type",
                 "application/soap+xml");
         try {
             msgFactory = MessageFactory.
                     newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
             docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setNamespaceAware(true);
-            
+
             db = docFactory.newDocumentBuilder();
         } catch (Exception pex) {
             pex.printStackTrace();
@@ -92,26 +99,26 @@ public abstract class Message {
                     + pex);
         }
     }
-    
+
     public static Document newDocument() {
         return db.newDocument();
     }
-    
+
     public static DocumentBuilder getDocumentBuilder() {
         return db;
     }
-    
+
     public static Element createElement(final Document doc, final QName qname) {
         return doc.createElementNS(qname.getNamespaceURI(),
                 qname.getPrefix() + COLON + qname.getLocalPart());
     }
-    
+
     public static void setAttribute(final Element element, final QName qname,
             final String value) {
         element.setAttributeNS(qname.getNamespaceURI(),
                 qname.getPrefix() + COLON + qname.getLocalPart(), value);
     }
-    
+
     public Message() throws SOAPException {
         assert msgFactory != null : UNINITIALIZED;
         contentType = ContentType.DEFAULT_CONTENT_TYPE;
@@ -119,45 +126,45 @@ public abstract class Message {
         init();
         addNamespaceDeclarations();
     }
-    
+
     public Message(final Message message) throws SOAPException {
         assert msgFactory != null : UNINITIALIZED;
         contentType = message.contentType;
         msg = message.msg;
         init();
     }
-    
+
     public Message(final InputStream is) throws SOAPException, IOException {
         assert msgFactory != null : UNINITIALIZED;
         contentType = ContentType.DEFAULT_CONTENT_TYPE;
         msg = msgFactory.createMessage(DEFAULT_SOAP_MIME_HEADER, is);
         init();
     }
-    
+
     public Message(final SOAPMessage message) throws SOAPException {
         assert msgFactory != null : UNINITIALIZED;
         String contentT = (String) message.getProperty(SOAPMessage.CHARACTER_SET_ENCODING);
-        contentType = contentT == null ? ContentType.DEFAULT_CONTENT_TYPE : 
+        contentType = contentT == null ? ContentType.DEFAULT_CONTENT_TYPE :
             ContentType.createFromEncoding(contentT);
         msg = message;
         init();
     }
-    
+
     public ContentType getContentType() {
         return contentType;
     }
-    
+
     public void setContentType(final ContentType ct) throws SOAPException {
         contentType = ct;
         msg.setProperty(SOAPMessage.CHARACTER_SET_ENCODING, contentType.getEncoding());
     }
-    
+
     public abstract void validate() throws SOAPException, JAXBException, FaultException;
-    
+
     public void writeTo(final OutputStream os) throws SOAPException, IOException {
         msg.writeTo(os);
     }
-    
+
     public void prettyPrint(final OutputStream os)
     throws SOAPException, ParserConfigurationException, SAXException, IOException {
         assert db != null : UNINITIALIZED;
@@ -174,7 +181,7 @@ public abstract class Message {
         serializer.serialize(doc);
         os.write("\n".getBytes());
     }
-    
+
     public String toString() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
@@ -184,7 +191,7 @@ public abstract class Message {
         }
         return new String(bos.toByteArray());
     }
-    
+
     private void init() throws SOAPException {
         assert msg != null : UNINITIALIZED;
         final SOAPPart soap = msg.getSOAPPart();
@@ -192,7 +199,7 @@ public abstract class Message {
         env = soap.getEnvelope();
         body = msg.getSOAPBody();
     }
-    
+
     private void addNamespaceDeclarations() throws SOAPException {
         // having all the namespace declarations in the envelope keeps
         // JAXB from putting these on every element
@@ -203,16 +210,16 @@ public abstract class Message {
         env.addNamespaceDeclaration(Enumeration.NS_PREFIX, Enumeration.NS_URI);
         env.addNamespaceDeclaration(Transfer.NS_PREFIX, Transfer.NS_URI);
         env.addNamespaceDeclaration(Management.NS_PREFIX, Management.NS_URI);
-        
+
         //Check to see if there are additional namespaces to add
         try{
-          if(extensionNamespaces ==null){	
-//        	  Map<String,String> extensionNamespaces = 
-		   extensionNamespaces = 
-			WSManAgent.locateExtensionNamespaces();  
+          if(extensionNamespaces ==null){
+//        	  Map<String,String> extensionNamespaces =
+		   extensionNamespaces =
+			WSManAgent.locateExtensionNamespaces();
           }
          if((extensionNamespaces!=null)&&(extensionNamespaces.size()>0)){
-          for(String key: extensionNamespaces.keySet()){	
+          for(String key: extensionNamespaces.keySet()){
            env.addNamespaceDeclaration(key.trim(), extensionNamespaces.get(key).trim());
           }
          }
@@ -221,7 +228,7 @@ public abstract class Message {
           //Eat the exception so as not to take down Message instantiation.
         }
     }
-    
+
     public void addNamespaceDeclarations(final Map<String, String> ns) throws SOAPException {
         final Iterator<Entry<String, String> > ni = ns.entrySet().iterator();
         while (ni.hasNext()) {
@@ -229,19 +236,19 @@ public abstract class Message {
             env.addNamespaceDeclaration(entry.getKey(), entry.getValue());
         }
     }
-    
+
     public SOAPMessage getMessage() {
         return msg;
     }
-    
+
     public SOAPEnvelope getEnvelope() {
         return env;
     }
-    
+
     public SOAPHeader getHeader() {
         return hdr;
     }
-    
+
     public SOAPBody getBody() {
         return body;
     }

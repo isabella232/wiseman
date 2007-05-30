@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: HttpClient.java,v 1.18 2007-05-30 15:30:05 simeonpinder Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: HttpClient.java,v 1.19 2007-05-30 20:31:07 nbeers Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -57,39 +64,39 @@ import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 
 public final class HttpClient {
-    
+
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
 //    private static boolean useApacheCommonsHttpClient = true;
     private static boolean useApacheCommonsHttpClient = false;
-    
+
     private HttpClient() {}
-    
+
     public static void setAuthenticator(final Authenticator auth) {
         Authenticator.setDefault(auth);
     }
-    
+
     public static void setTrustManager(final X509TrustManager trustManager)
     throws NoSuchAlgorithmException, KeyManagementException {
-        
+
         final TrustManager[] tm = { trustManager };
         final SSLContext sslContext = SSLContext.getInstance("SSL");
         sslContext.init(null, tm, new SecureRandom());
         HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
     }
-    
+
     public static void setHostnameVerifier(final HostnameVerifier hv) {
         HttpsURLConnection.setDefaultHostnameVerifier(hv);
     }
-    
+
     private static HttpURLConnection initConnection(final String to, final ContentType ct) throws IOException {
         if (to == null) {
             throw new IllegalArgumentException("Required Element is missing: " +
                     Addressing.TO);
         }
-        
+
         final URL dest = new URL(to);
         final URLConnection conn = dest.openConnection();
-        
+
         conn.setAllowUserInteraction(false);
         conn.setDoInput(true);
         conn.setDoOutput(true);
@@ -97,13 +104,13 @@ public final class HttpClient {
                 ct == null ? ContentType.DEFAULT_CONTENT_TYPE.toString() : ct.toString());
         // TODO: get this from the properties
         conn.setRequestProperty("User-Agent", "https://wiseman.dev.java.net");
-        
+
         final HttpURLConnection http = (HttpURLConnection) conn;
         http.setRequestMethod("POST");
-        
+
         return http;
     }
-    
+
     // type of data can be Message or byte[], others will throw IllegalArgumentException
     private static void transfer(final URLConnection conn, final Object data)
     throws IOException, SOAPException, JAXBException {
@@ -124,17 +131,17 @@ public final class HttpClient {
             if (os != null) { os.close(); }
         }
     }
-    
+
     public static Addressing sendRequest(final SOAPMessage msg, final String destination)
     throws IOException, SOAPException, JAXBException {
-        
+
 //    	if(useApacheCommonsHttpClient){
 //        	Addressing message = new Addressing(msg);
 //        	message.setTo(destination);
 //       	 return sendHttpRequest(message);
 //    	}
 ////        log(msg);
-        
+
         final HttpURLConnection http = initRequest(destination,
                 ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
         transfer(http, msg);
@@ -143,12 +150,12 @@ public final class HttpClient {
 
     public static Addressing sendRequest(final SOAPMessage msg, final String destination,Entry<String, String>... headers)
     throws IOException, SOAPException, JAXBException {
-        
+
 //    	if(useApacheCommonsHttpClient){
 //    		return sendHttpRequest(msg,destination);
 //    	}
 ////        log(msg);
-        
+
         final HttpURLConnection http = initRequest(destination,
                 ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
         if (headers != null) {
@@ -156,45 +163,45 @@ public final class HttpClient {
                 http.setRequestProperty(entry.getKey(),entry.getValue());
             }
         }
-        
+
         transfer(http, msg);
         return readResponse(http);
     }
 
-    
+
     public static Addressing sendRequest(final Addressing msg, final
     		Entry<String, String>... headers)
     throws IOException, JAXBException, SOAPException {
-        
+
 //    	if(useApacheCommonsHttpClient){
-//    		return sendHttpRequest(msg, headers);	
+//    		return sendHttpRequest(msg, headers);
 //    	}
 ////        log(msg);
-        
+
         final HttpURLConnection http = initRequest(msg.getTo(), msg.getContentType());
-        
+
         if (headers != null) {
             for (Entry<String,String> entry: headers) {
                 http.setRequestProperty(entry.getKey(),entry.getValue());
             }
         }
-        
+
         transfer(http, msg);
         final Addressing response = readResponse(http);
         response.setXmlBinding(msg.getXmlBinding());
         return response;
 //    	return sendHttpRequest(msg, headers);
     }
-    
+
 //    public static Addressing sendHttpRequest(final Addressing msg,
-//    		Entry<String,String>... headers) throws SOAPException, 
+//    		Entry<String,String>... headers) throws SOAPException,
 //    		JAXBException, IOException{
 //    	Addressing response = buildCommonsHttpRequest(msg,msg.getTo());
 //    	return response;
 //    }
 //
 //    public static Addressing sendHttpRequest(final SOAPMessage msg,
-//    		String destination) throws SOAPException, 
+//    		String destination) throws SOAPException,
 //    		JAXBException, IOException{
 //    	Addressing message = new Addressing(msg);
 //    	Addressing response = buildCommonsHttpRequest(message,destination);
@@ -203,17 +210,17 @@ public final class HttpClient {
 ////                ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
 ////        transfer(http, msg);
 ////        return readResponse(http);
-//    	
+//
 //    	return response;
 //    }
 
     public static HttpURLConnection createHttpConnection(
-    				String destination,Object data) throws SOAPException, 
+    				String destination,Object data) throws SOAPException,
     				JAXBException, IOException{
     	InputStream response = null;
         final HttpURLConnection http = initRequest(destination, null);
 //        transfer(http, data);
-        
+
 //    	Addressing message = new Addressing(msg);
 //    	Addressing response = buildCommonsHttpRequest(message,destination);
 //    	message.
@@ -239,9 +246,9 @@ public final class HttpClient {
 ////    	org.apache.commons.httpclient.HttpClient client = null;
 //        PostMethod method = null;
 //        Addressing response = null;
-//	      try{  
+//	      try{
 //	//        final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
-//	       if(client==null){	  
+//	       if(client==null){
 //	          client = new org.apache.commons.httpclient.HttpClient();
 //	       }
 ////	        method = new PostMethod(msg.getTo());
@@ -256,18 +263,18 @@ public final class HttpClient {
 //	            msg.setContentType(ContentType.DEFAULT_CONTENT_TYPE);
 //	        }
 ////	        if(msg.getContentType()){
-////	        	
+////
 ////	        }
-//	        method.setRequestHeader("Content-Type", 
+//	        method.setRequestHeader("Content-Type",
 ////	        		ContentType.DEFAULT_CONTENT_TYPE.toString());
 //	        		msg.getContentType().toString());
 //	        method.setRequestHeader("User-Agent", "https://wiseman.dev.java.net");
 //	        method.setFollowRedirects(false);
 //	        method.setRequestHeader("Accept", ContentType.ACCEPTABLE_CONTENT_TYPES);
-//	        
+//
 //	        final String user = System.getProperty("wsman.user", "");
 //	        final String password = System.getProperty("wsman.password", "");
-//	        
+//
 //	        client.getState().setCredentials(
 //	//        		new AuthScope("www.verisign.com", 443, "realm"),
 //	        		AuthScope.ANY,
@@ -275,7 +282,7 @@ public final class HttpClient {
 ////	        		new UsernamePasswordCredentials("wsman", "secret")
 //	                new UsernamePasswordCredentials(user, password)
 //	        );
-//	        
+//
 //	        method.setDoAuthentication(true);
 //	        int result = client.executeMethod(method);
 //	        response = new Addressing(method.getResponseBodyAsStream());
@@ -286,19 +293,19 @@ public final class HttpClient {
 //	      }
 //		return response;
 //    }
-    
+
     private static HttpURLConnection initRequest(final String destination, final ContentType contentType)
     throws IOException {
-        
+
         final HttpURLConnection http = initConnection(destination, contentType);
         http.setRequestProperty("Accept", ContentType.ACCEPTABLE_CONTENT_TYPES);
         http.setInstanceFollowRedirects(false);
         return http;
     }
-    
+
     private static Addressing readResponse(final HttpURLConnection http)
     throws IOException, SOAPException {
-        
+
         final InputStream is;
         final int response = http.getResponseCode();
         if (response == HttpURLConnection.HTTP_OK) {
@@ -311,7 +318,7 @@ public final class HttpClient {
             final String detail = http.getResponseMessage();
             throw new IOException(detail == null ? Integer.toString(response) : detail);
         }
-        
+
         final String responseType = http.getContentType();
         final ContentType contentType = ContentType.createFromHttpContentType(responseType);
         if (contentType==null||!contentType.isAcceptable()) {
@@ -327,20 +334,20 @@ public final class HttpClient {
             }
             throw new IOException("Content-Type of response is not acceptable: " + responseType);
         }
-        
+
         final Addressing addr;
         try {
             addr = new Addressing(is);
         } finally {
             if (is != null) { is.close(); }
         }
-        
+
         addr.setContentType(contentType);
 //        log(addr);
-        
+
         return addr;
     }
-    
+
     public static int sendResponse(final String to, final byte[] bits, final ContentType contentType)
     throws IOException, SOAPException, JAXBException {
 //        log(bits);
@@ -348,14 +355,14 @@ public final class HttpClient {
         transfer(http, bits);
         return http.getResponseCode();
     }
-    
+
     public static int sendResponse(final Addressing msg) throws IOException, SOAPException, JAXBException {
 //        log(msg);
         final HttpURLConnection http = initConnection(msg.getTo(), msg.getContentType());
         transfer(http, msg);
         return http.getResponseCode();
     }
-    
+
 //    private static void log(final Addressing msg) throws IOException, SOAPException {
 //        // expensive serialization ahead, so check first
 //        if (LOG.isLoggable(Level.FINE)) {
@@ -366,7 +373,7 @@ public final class HttpClient {
 //            LOG.fine(type == null ? new String(content) : new String(content, type.getEncoding()));
 //        }
 //    }
-//    
+//
 //    private static void log(final SOAPMessage msg) throws IOException, SOAPException {
 //        // expensive serialization ahead, so check first
 //        if (LOG.isLoggable(Level.FINE)) {
@@ -377,7 +384,7 @@ public final class HttpClient {
 //            LOG.fine(encoding == null ? new String(content) : new String(content, encoding));
 //        }
 //    }
-//    
+//
 //    private static void log(final byte[] bits) {
 //        if (LOG.isLoggable(Level.FINE)) {
 //            LOG.fine(new String(bits));

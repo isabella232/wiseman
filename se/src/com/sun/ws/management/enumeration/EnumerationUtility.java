@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **  
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com), 
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
+ **
+ **$Log: not supported by cvs2svn $
+ ** 
+ *
+ * $Id: EnumerationUtility.java,v 1.3 2007-05-30 20:31:03 nbeers Exp $
+ */
 package com.sun.ws.management.enumeration;
 
 import java.util.ArrayList;
@@ -14,7 +40,6 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -26,9 +51,6 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
-//import com.sun.ws.management.client.EnumerationResourceState;
-//import com.sun.ws.management.client.impl.EnumerationResourceStateImpl;
-import com.sun.ws.management.enumeration.EnumerationExtensions.Mode;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.xml.XmlBinding;
 

@@ -1,38 +1,44 @@
+/*
+ * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **  
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com), 
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
+ **
+ **$Log: not supported by cvs2svn $
+ ** 
+ *
+ * $Id: EventingUtility.java,v 1.5 2007-05-30 20:31:05 nbeers Exp $
+ */
 package com.sun.ws.management.eventing;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.Duration;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationMessageValues;
-import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.eventing.EventingMessageValues.CreationTypes;
-import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.transfer.TransferMessageValues;
-import com.sun.ws.management.transfer.TransferUtility;
+import com.sun.ws.management.enumeration.EnumerationMessageValues;
 
 /** This class is meant to provide general utility functionality for
  *  Eventing message instances and all of their related extensions.

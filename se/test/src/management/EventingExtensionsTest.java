@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingExtensionsTest.java,v 1.11 2007-04-23 19:18:11 nbeers Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EventingExtensionsTest.java,v 1.12 2007-05-30 20:30:23 nbeers Exp $
  */
 
 package management;
@@ -57,78 +64,78 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
  * Unit test for WS-Eventing extensions in WS-Management
  */
 public class EventingExtensionsTest extends TestBase {
-    
+
     public EventingExtensionsTest(final String testName) {
         super(testName);
     }
-    
+
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite(EventingExtensionsTest.class);
         return suite;
     }
-    
+
     public void testSubscribeVisual() throws Exception {
         final EventingExtensions evtx = new EventingExtensions();
         evtx.setAction(Eventing.SUBSCRIBE_ACTION_URI);
-        
+
         final ConnectionRetryType retry = new ConnectionRetryType();
         final int retryCount = 3;
         retry.setTotal(new BigInteger(Integer.toString(retryCount)));
         final Duration retryInterval = DatatypeFactory.newInstance().newDuration(5000);
         retry.setValue(retryInterval);
-        
+
         final Duration heartbeatsInterval = DatatypeFactory.newInstance().newDuration(15000);
-        
+
         final Boolean sendBookmarks = Boolean.TRUE;
-        
+
         final AttributableAny bookmark = new AttributableAny();
         final Document bookmarkDoc = evtx.newDocument();
         final Element bookmarkElement = bookmarkDoc.createElement("bookmark-element");
         bookmarkElement.setTextContent("1234");
         bookmark.getAny().add(bookmarkElement);
-        
+
         final MaxEnvelopeSizeType maxEnvelopeSize = new MaxEnvelopeSizeType();
         final int maxEnvSize = 1024;
         maxEnvelopeSize.setValue(new BigInteger(Integer.toString(maxEnvSize)));
         final PolicyType policy = PolicyType.fromValue(EventingExtensions.SKIP_POLICY);
         maxEnvelopeSize.setPolicy(policy);
-        
+
         final Long maxElements = new Long(7);
-        
+
         final Duration maxTime = DatatypeFactory.newInstance().newDuration(3000);
-        
+
         evtx.setSubscribe(null, null, null, null, null,
                 retry, heartbeatsInterval, sendBookmarks, bookmark,
                 maxEnvelopeSize, maxElements, maxTime);
-        
+
         evtx.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evtx.writeTo(bos);
         final EventingExtensions evtx2 = new EventingExtensions(new ByteArrayInputStream(bos.toByteArray()));
-        
+
         final Subscribe sub2 = evtx2.getSubscribe();
         final DeliveryType delivery2 = sub2.getDelivery();
-        
+
         final ConnectionRetryType retry2 = ((JAXBElement<ConnectionRetryType>) delivery2.getContent().get(0)).getValue();
         assertEquals(retryCount, retry2.getTotal().intValue());
         assertEquals(retryInterval, retry2.getValue());
-        
+
         assertEquals(heartbeatsInterval, ((JAXBElement<AttributableDuration>) delivery2.getContent().get(1)).getValue().getValue());
         assertEquals(EventingExtensions.SEND_BOOKMARKS, ((JAXBElement<QName>) delivery2.getContent().get(2)).getName());
-        
+
         final AttributableAny bookmark2 = ((JAXBElement<AttributableAny>) delivery2.getContent().get(3)).getValue();
         assertEquals(bookmark.getAny().size(), bookmark2.getAny().size());
         assertEquals(bookmarkElement.getNodeName(), ((Element) bookmark2.getAny().get(0)).getNodeName());
         assertEquals(bookmarkElement.getTextContent(), ((Element) bookmark2.getAny().get(0)).getTextContent());
-        
+
         final MaxEnvelopeSizeType maxEnvelopeSize2 = ((JAXBElement<MaxEnvelopeSizeType>) delivery2.getContent().get(4)).getValue();
         assertEquals(maxEnvelopeSize.getValue(), maxEnvelopeSize2.getValue());
         assertEquals(maxEnvelopeSize.getPolicy(), maxEnvelopeSize2.getPolicy());
-        
+
         assertEquals(maxElements.longValue(), ((JAXBElement<AttributablePositiveInteger>) delivery2.getContent().get(5)).getValue().getValue().longValue());
         assertEquals(maxTime, ((JAXBElement<AttributableDuration>) delivery2.getContent().get(6)).getValue().getValue());
     }
-    
+
     public void testPullMode() throws Exception {
         pullModeTest(null, null);
         HashMap<String, String> map = new HashMap<String, String>(1);
@@ -136,7 +143,7 @@ public class EventingExtensionsTest extends TestBase {
         NamespaceMap filterNsMap = new NamespaceMap(map);
         pullModeTest("/log:event3", filterNsMap);
     }
-    
+
     private void pullModeTest(final String filter, final NamespaceMap filterNsMap) throws Exception {
 
         EventingMessageValues settings = new EventingMessageValues();
@@ -147,8 +154,8 @@ public class EventingExtensionsTest extends TestBase {
     	settings.setFilterDialect(XPath.NS_URI);
     	settings.setResourceUri("wsman:test/pull_source");
         if ((filter != null) && (filterNsMap != null))
-        	settings.setNamespaceMap(filterNsMap.getMap()); 
-    	
+        	settings.setNamespaceMap(filterNsMap.getMap());
+
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
         evt.prettyPrint(logfile);
@@ -157,7 +164,7 @@ public class EventingExtensionsTest extends TestBase {
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
-        
+
         String context = null;
         final EventingExtensions evtx2 = new EventingExtensions(response);
         final SubscribeResponse subr = evtx2.getSubscribeResponse();
@@ -172,11 +179,11 @@ public class EventingExtensionsTest extends TestBase {
             }
         }
         assertNotNull(context);
-        
+
         boolean done = false;
         int count = 0;
         do {
-        	
+
             EnumerationMessageValues enumSettings = new EnumerationMessageValues();
             enumSettings.setTo(DESTINATION);
             enumSettings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
@@ -184,16 +191,16 @@ public class EventingExtensionsTest extends TestBase {
             enumSettings.setEnumerationContext(context);
             enumSettings.setMaxElements(2);
             enumSettings.setResourceUri("wsman:test/pull_source");
-       	
+
         	Enumeration enu = EnumerationUtility.buildMessage(null, enumSettings);
-          
+
         	enu.prettyPrint(logfile);
             Addressing response2 = HttpClient.sendRequest(enu);
             response2.prettyPrint(logfile);
             if (response2.getBody().hasFault()) {
                 fail(response2.getBody().getFault().getFaultString());
             }
-            
+
             final Enumeration pullResponse = new Enumeration(response2);
             final PullResponse pr = pullResponse.getPullResponse();
             // update context for the next pull (if any)

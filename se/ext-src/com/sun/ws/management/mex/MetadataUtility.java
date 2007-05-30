@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ *
+ * $Id: MetadataUtility.java,v 1.6 2007-05-30 20:30:30 nbeers Exp $
+ */
 package com.sun.ws.management.mex;
 
 import com.sun.ws.management.Management;
@@ -39,43 +65,43 @@ import com.sun.xml.fastinfoset.sax.Properties;
 
 /** This class is meant to provide general utility functionality for
  *  Management instances and all of their related extensions.
- * 
+ *
  * @author Simeon
  */
 public class MetadataUtility extends ManagementUtility {
-	
-	//These values are final and static so that they can be uniformly used by many classes  
+
+	//These values are final and static so that they can be uniformly used by many classes
 	private static final Logger LOG = Logger.getLogger(MetadataUtility.class.getName());
-	
-	/** This method takes a GetResponse Management instance containing a 
+
+	/** This method takes a GetResponse Management instance containing a
 	 *  a MetaDataExchange element.  An array of Management instances located
 	 *  is returned in response.
-	 * 
+	 *
 	 * @param metaDataGetResponse
 	 * @return array of Management instances
 	 */
 	public static Management[] extractEmbeddedMetaDataElements(Management metaDataGetResponse){
 		Management[] locatedMetaDataElements = null;
 		ArrayList<Management> located = new ArrayList<Management>();
-		
+
    		//Retrieve the MetaData response to build JAXB type
    		SOAPBody body = metaDataGetResponse.getBody();
-   		
+
    		if((body!=null)&&(body.getFirstChild()!=null)){
 	   	 //Normal processing to create/retrieve the Metadata object
 	   	 Node metaDataNode = body.getFirstChild();
-	   	 
+
 			try {
 			 //unmarshall the Metadata node content
 //				Object bound = binding.unmarshal(metaDataNode);
 			 Object bound = metaDataGetResponse.getXmlBinding().unmarshal(metaDataNode);
 			 if((bound!=null) && (bound instanceof Metadata)){
 				 Metadata ob = (Metadata)bound;
-				
+
 				//Parse the MetadataSections that exist
-				List<MetadataSection> metaDataSections = 
+				List<MetadataSection> metaDataSections =
 					ob.getMetadataSection();
-				
+
 				if(metaDataSections!=null){
 				 for (Iterator iter = metaDataSections.iterator(); iter.hasNext();) {
 					MetadataSection element = (MetadataSection) iter.next();
@@ -83,9 +109,9 @@ public class MetadataUtility extends ManagementUtility {
 							(element.getDialect().equals(AnnotationProcessor.NS_URI))){
 						Management instance = new Management();
 						//Now parse the Dialect specif component.
-						instance = AnnotationProcessor.populateMetadataInformation(element, 
+						instance = AnnotationProcessor.populateMetadataInformation(element,
 								instance);
-						located.add(instance);	
+						located.add(instance);
 					}
 				}//end of for loop.
 			 }//end of if metaDataSections exist
@@ -98,16 +124,16 @@ public class MetadataUtility extends ManagementUtility {
   			LOG.log(Level.FINE, "SOAPException occurred:"+e.getMessage());
    		   }
 		}
-   		
+
    		//Now populate the return array.
    		locatedMetaDataElements = new Management[located.size()];
-   		System.arraycopy(located.toArray(), 0, 
+   		System.arraycopy(located.toArray(), 0,
    				locatedMetaDataElements, 0, located.size());
-   		
+
 	   return locatedMetaDataElements;
 	}
-	
-	public static Management[] getExposedMetadata(String wisemanServerAddress,long timeout) 
+
+	public static Management[] getExposedMetadata(String wisemanServerAddress,long timeout)
 		throws SOAPException, IOException, JAXBException, DatatypeConfigurationException{
 		long timeoutValue = 30000;
 		if(timeout>timeoutValue){
@@ -115,47 +141,47 @@ public class MetadataUtility extends ManagementUtility {
 		}
 		Management[] metaDataValues = null;
 		loadServerAccessCredentials(null);
-		
+
 		//Make identify request to the Wiseman server
         final Identify identify = new Identify();
         identify.setIdentify();
         //Send identify request
-        final Addressing response = 
-        	HttpClient.sendRequest(identify.getMessage(), 
+        final Addressing response =
+        	HttpClient.sendRequest(identify.getMessage(),
         			wisemanServerAddress);
-        
+
         //Parse the identify response
         final Identify id = new Identify(response);
         final SOAPElement idr = id.getIdentifyResponse();
-        SOAPElement el = IdentifyUtility.locateElement(id, 
+        SOAPElement el = IdentifyUtility.locateElement(id,
         		AnnotationProcessor.META_DATA_RESOURCE_URI);
 
         //retrieve the MetaData ResourceURI
         String resUri=el.getTextContent();
-        el = IdentifyUtility.locateElement(id, 
+        el = IdentifyUtility.locateElement(id,
         		AnnotationProcessor.META_DATA_TO);
 
         //retrieve the MetaData To/Destination
         String metTo=el.getTextContent();
-    	
+
      //exercise the Enumeration annotation mechanism
         //############ REQUEST THE LIST OF METADATA AVAILABLE ######################
  	   //Build the GET request to be submitted for the metadata
         Management m = TransferUtility.createMessage(metTo, resUri,
 //        		Transfer.GET_ACTION_URI, null, null, 30000, null);
         		Transfer.GET_ACTION_URI, null, null, timeoutValue, null);
-        
+
           //############ PROCESS THE METADATA RESPONSE ######################
           //Parse the getResponse for the MetaData
           final Addressing getResponse = HttpClient.sendRequest(m);
         Management mResp = new Management(getResponse);
-        
-		metaDataValues = 
-			MetadataUtility.extractEmbeddedMetaDataElements(mResp); 
-		
+
+		metaDataValues =
+			MetadataUtility.extractEmbeddedMetaDataElements(mResp);
+
 		return metaDataValues;
 	}
-	
+
 	public static void loadServerAccessCredentials(Properties properties){
 		String wsmanDest="wsman.dest";
 		String wsmanUser="wsman.user";
@@ -184,15 +210,15 @@ public class MetadataUtility extends ManagementUtility {
         	HttpClient.setAuthenticator(new BasicAuthenticator());
 //            HttpClient.setAuthenticator(new SimpleHttpAuthenticator());
         }
-	    
+
 	}
 
 	//EVENTING METHODS
-	public static String registerEventSourceWithSubscriptionManager(EventSourceInterface 
-			eventSource,boolean logException,boolean throwException) throws 
+	public static String registerEventSourceWithSubscriptionManager(EventSourceInterface
+			eventSource,boolean logException,boolean throwException) throws
 	SOAPException, JAXBException, DatatypeConfigurationException, IOException{
 		String eventSourceUid = null;
-		
+
 		if(eventSource==null){
 			String msg = "The EventSourceInterface instance was NULL. This is not allowed.";
 			if(logException){
@@ -203,14 +229,14 @@ public class MetadataUtility extends ManagementUtility {
 			}
 			return eventSourceUid;
 		}
-		
+
 		//Retrieve the SubscriptionManager details
 		Management subManagerData = null;
 
 		//locate the subscriptionManager instance
 		if(!eventSource.isAlsoTheSubscriptionManager()){
 			subManagerData = eventSource.getMetadataForSubscriptionManager();
-			//component ananlysis. 
+			//component ananlysis.
 			//TODO: insert check for ADDRESSING.TO as this must be set. All others variable.
 			if(subManagerData==null){
 				String msg="SubscriptionManager metadata is null. Unable to proceed.";
@@ -222,49 +248,49 @@ public class MetadataUtility extends ManagementUtility {
 				}
 				return eventSourceUid;
 			}
-			
+
 //System.out.println("@@@ regSrcWSubMan:submanMetadata:"+subManagerData);
 			//Add the specific headers to the message to ensure correct processing.
 			subManagerData.addHeaders(Management.createReferenceParametersType(
-					EventingMessageValues.EVENTING_CREATION_TYPES, 
+					EventingMessageValues.EVENTING_CREATION_TYPES,
 					CreationTypes.SUBSCRIPTION_SOURCE.name()));
-	    	
+
 	    	//Retrieve the Event Source details
-			Management evtSrcDetails = 
+			Management evtSrcDetails =
 				eventSource.getMetadataForEventSource();
-//System.out.println("@@@ regEvSrcWSubMan:evsrcMetaData:"+evtSrcDetails);			
-			
+//System.out.println("@@@ regEvSrcWSubMan:evsrcMetaData:"+evtSrcDetails);
+
 			//Continue to add required elements to indicate correct processing path..
 			 //Locate the MetaDataUID for the event source(should be unique across server)
 			SOAPElement evtSrcMetDataId = ManagementUtility.locateHeader(
-					evtSrcDetails.getHeaders(), 
+					evtSrcDetails.getHeaders(),
 					AnnotationProcessor.RESOURCE_META_DATA_UID);
 			if(evtSrcMetDataId!=null){
 			  String evtMetadata = evtSrcMetDataId.getTextContent();
 			  if((evtMetadata!=null)&&!(evtMetadata.trim().equals(""))){
-				//Located an event source requested ID. Add as header  
+				//Located an event source requested ID. Add as header
 			    subManagerData.addHeaders(Management.createReferenceParametersType(
-				 EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+				 EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID,
 				 evtMetadata));
 			  }
 			}
-			
+
 			//set correct action
 			subManagerData.setAction(Transfer.CREATE_ACTION_URI);
 			//set the reply to to be anonymous
 			subManagerData.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-			
+
 			//populate the other required elements of message
-			subManagerData = ManagementUtility.buildMessage(null, 
+			subManagerData = ManagementUtility.buildMessage(null,
 //					subManagerData, true);
 					subManagerData, false);
-			
-			//Reset the message to new UID to prevent message misdirection??? 
+
+			//Reset the message to new UID to prevent message misdirection???
 			subManagerData.setMessageId(EventingMessageValues.DEFAULT_EVT_SINK_UUID_SCHEME+
 					UUID.randomUUID());
-			
+
 //System.out.println("#####MetUtility.REG_EVT_SRCwSubMan toal request:"+subManagerData);
-	    	
+
 	        final Addressing response = HttpClient.sendRequest(subManagerData);
 	        if (response.getBody().hasFault())
 	        {
@@ -274,31 +300,31 @@ public class MetadataUtility extends ManagementUtility {
 	        }else{
 	        	//extract the returned selectorSet
 	        	Management eventSourceRegistrationResp = new Management(response);
-	        	
+
 //System.out.println("metUtil.regEvtSrcWSubMan.RESP:"+eventSourceRegistrationResp);
 
-	          Map<String,String> selectors=	
+	          Map<String,String> selectors=
 	        	  ManagementUtility.extractSelectors(eventSourceRegistrationResp);
-	          if(selectors.size()>0){	
+	          if(selectors.size()>0){
 	        	if(selectors.containsKey(EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME)){
 	        		eventSourceUid = selectors.get(
 	        			EventingMessageValues.EVENT_SOURCE_ID_ATTR_NAME);
 	        	}
 	          }
 	        }
-				
+
 //			return eventSourceUid;
 		}else{//Is one and the same handler.
-//System.out.println("@@@ EVT_SRC is ALSO SUBSCRIPTION_MANAGER!!!!!!!!!!!!!!!!!!!!!");		
+//System.out.println("@@@ EVT_SRC is ALSO SUBSCRIPTION_MANAGER!!!!!!!!!!!!!!!!!!!!!");
 		}
-		
+
 		return eventSourceUid;
 	}
 
 //	public static String registerEventSinkWithSubscriptionManager(
 //			String suggestionForEvtSinkId,
-//			EventSourceInterface eventSource,Management message, boolean logException, 
-//			boolean throwException) throws SOAPException, JAXBException, 
+//			EventSourceInterface eventSource,Management message, boolean logException,
+//			boolean throwException) throws SOAPException, JAXBException,
 //			DatatypeConfigurationException, IOException {
 //		String eventSinkId = null;
 ////######
@@ -307,10 +333,10 @@ public class MetadataUtility extends ManagementUtility {
 //			subManagerData = eventSource.getMetadataForSubscriptionManager();
 //		TransferMessageValues settings = TransferMessageValues.newInstance();
 //		Transfer tMessage = TransferUtility.buildMessage(null, settings);
-//		
+//
 //		//locate the subscriptionManager instance
 //		if(!eventSource.isAlsoTheSubscriptionManager()){
-//			
+//
 ////			subManagerData = eventSource.getMetadataForSubscriptionManager();
 //			subManagerData = eventSource.getMetadataForSubscriptionManager();
 //			if(subManagerData==null){
@@ -327,27 +353,27 @@ public class MetadataUtility extends ManagementUtility {
 //			//Now add the additional components to this message so that subman can proceed
 //			  //indicate for creating new subscriber
 //			subManagerData.addHeaders(Management.createReferenceParametersType(
-//					EventingMessageValues.EVENTING_CREATION_TYPES, 
+//					EventingMessageValues.EVENTING_CREATION_TYPES,
 ////					CreationTypes.SUBSCRIPTION_SOURCE.name()));
 //					CreationTypes.NEW_SUBSCRIBER.name()));
-//			Management evtSrcDetails = 
+//			Management evtSrcDetails =
 //				eventSource.getMetadataForEventSource();
 //			//indicate which EventSource is responsible
 //			SOAPElement evtSrcMetDataId = ManagementUtility.locateHeader(
-//					evtSrcDetails.getHeaders(), 
+//					evtSrcDetails.getHeaders(),
 //					AnnotationProcessor.RESOURCE_META_DATA_UID);
 //			String metadataId = null;
 //			if((evtSrcMetDataId!=null)&&
 //				((metadataId = evtSrcMetDataId.getTextContent())!=null)){
 //				//do nothing already have the data
 //			}
-//			
+//
 //			if((metadataId!=null)&&
 //					(metadataId.trim().length()>0)){
 //			  String evtMetadata = metadataId;
 //			  subManagerData.addHeaders(
 //					  Management.createReferenceParametersType(
-//				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+//				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID,
 //				evtMetadata));
 //			  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
 //			}
@@ -356,40 +382,40 @@ public class MetadataUtility extends ManagementUtility {
 ////			  String evtMetadata = suggestionForEvtSinkId;
 ////			  subManagerData.addHeaders(
 ////					  Management.createReferenceParametersType(
-////				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+////				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID,
 ////				evtMetadata));
 ////			  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
 ////			}
-//			subManagerData = ManagementUtility.buildMessage(null, 
+//			subManagerData = ManagementUtility.buildMessage(null,
 //					subManagerData, true);
 ////					subManagerData, false);
-//			
+//
 //			//insert the body of the message from the message passed in.
 //			if((message!=null)&&(message.getBody()!=null)){
 //			   subManagerData.getBody().addDocument(
 //					   message.getBody().extractContentAsDocument());
 //			}
-////			subManagerData = 
+////			subManagerData =
 ////				ManagementUtility.removeDescriptiveMetadataHeaders(subManagerData);
-//			
-//			
-//	    	
+//
+//
+//
 ////final Addressing response = HttpClient.sendRequest(mgmt);
 //	        final Addressing response = HttpClient.sendRequest(subManagerData);
 //	        if (response.getBody().hasFault())
 //	        {
-//System.out.println("@@@@ MetDUtil:registerEv");	        	
+//System.out.println("@@@@ MetDUtil:registerEv");
 //	//            fail(response.getBody().getFault().getFaultString());
 //	        }else{
 //	        	//extract the returned selectorSet
 //	        	Management eventSinkRegistrationResp = new Management(response);
 ////		        	ManagementUtility.extractSelectorsAsMap(null,eventSourceRegistrationResp.getSelectors());
-//	          Map<String,String> selectors=	
+//	          Map<String,String> selectors=
 ////	        	  TransferUtility.extractSelectors(eventSinkRegistrationResp);
 //	        	  ManagementUtility.extractSelectors(eventSinkRegistrationResp);
-////	          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){	
+////	          if((eventSourceRegistrationResp.getSelectors()!=null)&&(eventSourceRegistrationResp.getSelectors().size()>0)){
 ////	        	  List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
-//	          if(selectors.size()>0){	
+//	          if(selectors.size()>0){
 ////	        	List selList = (List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors());
 ////				Map<String, String> selectorsRetrieved = ManagementUtility.extractSelectorsAsMap(null,
 //////						(List)new ArrayList<SelectorType>(eventSourceRegistrationResp.getSelectors()));
@@ -405,24 +431,24 @@ public class MetadataUtility extends ManagementUtility {
 //	          }
 //	        }
 ////			}else{
-////				
+////
 ////			}
-//				
+//
 //			return eventSinkId;
 //		}else{//Is one and the same handler.
-//		
+//
 //		}
-//		
-////######		
+//
+////######
 //		return eventSinkId;
 //	}
 
 	public static Management registerEventSinkWithSubscriptionManager(
-			EventSourceInterface eventSource,Management message, boolean logException, 
+			EventSourceInterface eventSource,Management message, boolean logException,
 			boolean throwException) throws JAXBException, SOAPException, DatatypeConfigurationException, IOException {
 		//The reference to be returned
 	    Management subManagerData = null;
-	
+
 	    //locate the subscriptionManager instance
 	  if(!eventSource.isAlsoTheSubscriptionManager()){
 	    	subManagerData = eventSource.getMetadataForSubscriptionManager();
@@ -436,17 +462,17 @@ public class MetadataUtility extends ManagementUtility {
 				}
 				return subManagerData;
 			}
-			
+
 			//Now insert the relevant parameters to tell the SubscriptionManager how to process
 				//Indicate that this is a NEW_SUBSCRIBER packet
 			subManagerData.addHeaders(Management.createReferenceParametersType(
-					EventingMessageValues.EVENTING_CREATION_TYPES, 
+					EventingMessageValues.EVENTING_CREATION_TYPES,
 					CreationTypes.NEW_SUBSCRIBER.name()));
-				Management evtSrcDetails = 
+				Management evtSrcDetails =
 					eventSource.getMetadataForEventSource();
 			//Indicate which EventSource this message comes from
 			SOAPElement evtSrcMetDataId = ManagementUtility.locateHeader(
-					evtSrcDetails.getHeaders(), 
+					evtSrcDetails.getHeaders(),
 					AnnotationProcessor.RESOURCE_META_DATA_UID);
 			String srcMetadataKey = null;
 			if(evtSrcMetDataId!=null){
@@ -458,18 +484,18 @@ public class MetadataUtility extends ManagementUtility {
 			  String evtMetadata = srcMetadataKey;
 			  subManagerData.addHeaders(
 					  Management.createReferenceParametersType(
-				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID, 
+				EventingMessageValues.EVENTING_COMMUNICATION_CONTEXT_ID,
 				evtMetadata));
 			  subManagerData.setAction(Transfer.CREATE_ACTION_URI);
 			  subManagerData.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 			}
-			
+
 			//build the message to be sent
 			subManagerData.setMessageId(EventingMessageValues.DEFAULT_UID_SCHEME+UUID.randomUUID());
-			subManagerData = ManagementUtility.buildMessage(null, 
+			subManagerData = ManagementUtility.buildMessage(null,
 	//				subManagerData, true);
 					subManagerData, false);
-		
+
 			//insert the body of the message from the message passed in.
 			if((message!=null)&&(message.getBody()!=null)){
 			   subManagerData.getBody().addDocument(
@@ -482,10 +508,10 @@ public class MetadataUtility extends ManagementUtility {
 
 		//submit the request to the subscription manager
         final Addressing response = HttpClient.sendRequest(subManagerData);
-//System.out.println("@@@@ MetaDatUtil:piped messResp:"+response);        
-        
+//System.out.println("@@@@ MetaDatUtil:piped messResp:"+response);
+
         if (response.getBody().hasFault()){
-//System.out.println("@@@@ A fault occurred:"+response.getBody().getFault().getFaultString());        	
+//System.out.println("@@@@ A fault occurred:"+response.getBody().getFault().getFaultString());
 //            fail(response.getBody().getFault().getFaultString());
         }else{
 //System.out.println("@@@@ no fault detected:response is:"+response);
@@ -495,11 +521,11 @@ public class MetadataUtility extends ManagementUtility {
         }
 	  }//End of is NOT also a subscription manager loop.
 	  else{
-//System.out.println("@@@@ in the IS also a subscription manager route.");			
+//System.out.println("@@@@ in the IS also a subscription manager route.");
 	  }
-	  
+
 	  subManagerData.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 	 return subManagerData;
 	}
-	
+
 }

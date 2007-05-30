@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BaseSupport.java,v 1.17 2007-05-28 09:36:16 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: BaseSupport.java,v 1.18 2007-05-30 20:31:04 nbeers Exp $
  */
 
 package com.sun.ws.management.server;
@@ -50,13 +57,13 @@ import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.xml.XPathFilterFactory;
 
 public class BaseSupport {
-    
+
     protected static final String UUID_SCHEME = "urn:uuid:";
     protected static final String UNINITIALIZED = "uninitialized";
     protected static DatatypeFactory datatypeFactory = null;
-    
+
     public static final Map<UUID, BaseContext> contextMap = new ConcurrentHashMap<UUID, BaseContext>();
-    
+
     protected static final TimerTask ttask = new TimerTask() {
         public void run() {
             final GregorianCalendar now = new GregorianCalendar();
@@ -74,17 +81,17 @@ public class BaseSupport {
             }
         }
     };
-    
+
     private static final Logger LOG = Logger.getLogger(BaseSupport.class.getName());
-    
+
     private static final int CLEANUP_INTERVAL = 60000;
     private static Timer cleanupTimer = new Timer(true);
-    
+
     private static Map<String, FilterFactory> supportedFilters =
             new HashMap<String, FilterFactory>();
-    
+
     protected BaseSupport() {}
-    
+
     static {
         FilterFactory xpathFilter = new XPathFilterFactory();
         supportedFilters.put(com.sun.ws.management.xml.XPath.NS_URI,
@@ -108,7 +115,7 @@ public class BaseSupport {
      * @param dialect Filter dialect
      * @param filterFactory The Filter Factory that creates <code>Filter</code> for requests
      * relying on the passed dialect.
-     * 
+     *
      * @throws java.lang.Exception If the filter is already supported.
      */
     public synchronized static void addSupportedFilterDialect(String dialect,
@@ -117,7 +124,7 @@ public class BaseSupport {
             throw new Exception("Dialect " + dialect + " already supported");
         supportedFilters.put(dialect, filterFactory);
     }
-    
+
     /**
      * Determines if the passed dialect is a supported dialect
      * @param dialect The dialect to check for support.
@@ -127,7 +134,7 @@ public class BaseSupport {
         if(dialect == null) return true;
         return supportedFilters.get(dialect) != null;
     }
-    
+
     /**
      * Supported dialects, returned as Fault Detail when the dialect
      * is not supported.
@@ -138,8 +145,8 @@ public class BaseSupport {
         String[] dialects = new String[keys.size()];
         return keys.toArray(dialects);
     }
-    
-    protected synchronized static Filter newFilter(String dialect, 
+
+    protected synchronized static Filter newFilter(String dialect,
             List content,
             NamespaceMap nsMap) throws Exception {
         if(dialect == null)
@@ -150,9 +157,9 @@ public class BaseSupport {
                     getSupportedDialects());
         return factory.newFilter(content, nsMap);
     }
-        
+
     public static Filter createFilter(String dialect, List content,
-            NamespaceMap nsMap)throws CannotProcessFilterFault, 
+            NamespaceMap nsMap)throws CannotProcessFilterFault,
             FilteringRequestedUnavailableFault {
         try {
             return newFilter(dialect, content, nsMap);
@@ -162,19 +169,19 @@ public class BaseSupport {
             throw new CannotProcessFilterFault(ex.getMessage());
         }
     }
-    
+
 
     /**
      * Create a JAXBElement object that is a wsman:XmlFragment from a list
      * of XML Nodes.
-     * 
+     *
      * @param nodes Nodes to be inserted into the XmlFragment element.
      * @return XmlFragment JAXBElement object.
      */
 	public static JAXBElement<MixedDataType> createXmlFragment(List<Node> nodes) {
 		final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
 		final StringBuffer buf = new StringBuffer();
-		
+
 		for (int j = 0; j < nodes.size(); j++) {
 			// Check if it is a text node from text() function
 			if (nodes.get(j) instanceof Element) {
@@ -199,17 +206,17 @@ public class BaseSupport {
         }
 		return fragment;
 	}
-	
+
     /**
      * Create a JAXBElement object that is a wsman:XmlFragment from a NodeList
-     * 
+     *
      * @param nodes Nodes to be inserted into the XmlFragment element.
      * @return XmlFragment JAXBElement object.
      */
 	public static JAXBElement<MixedDataType> createXmlFragment(NodeList nodes) {
 		final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
 		final StringBuffer buf = new StringBuffer();
-		
+
 		for (int j = 0; j < nodes.getLength(); j++) {
 			// Check if it is a text node from text() function
 			if (nodes.item(j) instanceof Element) {
@@ -234,7 +241,7 @@ public class BaseSupport {
         }
 		return fragment;
 	}
-	
+
 	/* The following code was a test as a possible replacement for createXmlFragment()
 	public static Element createXmlFragmentElement(NodeList nodes) {
 		final Document doc = Message.newDocument();
@@ -245,21 +252,21 @@ public class BaseSupport {
 		}
 		return fragment;
 	} */
-    
+
     protected static XMLGregorianCalendar initExpiration(final String expires)
     throws InvalidExpirationTimeFault {
-        
+
         assert datatypeFactory != null : UNINITIALIZED;
-        
+
         if (expires == null) {
             // a very large value - effectively never expires
             return datatypeFactory.newXMLGregorianCalendar(Integer.MAX_VALUE,
                     12, 31, 23, 59, 59, 999, DatatypeConstants.MAX_TIMEZONE_OFFSET);
         }
-        
+
         final GregorianCalendar now = new GregorianCalendar();
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
-        
+
         XMLGregorianCalendar expiration = null;
         try {
             // first try if it's a Duration
@@ -280,7 +287,7 @@ public class BaseSupport {
         }
         return expiration;
     }
-    
+
     protected static UUID initContext(final HandlerContext requestContext,
     		                          final BaseContext context) {
         final UUID uuid = UUID.randomUUID();
@@ -290,15 +297,15 @@ public class BaseSupport {
 		}
         return uuid;
     }
-    
+
     protected static BaseContext getContext(final Object context) {
         return contextMap.get(context);
     }
-    
+
     protected static BaseContext putContext(final UUID context, final BaseContext ctx) {
         return contextMap.put(context, ctx);
     }
-    
+
     public static synchronized void stopTimer() {
         if(LOG.isLoggable(Level.FINER))
             LOG.log(Level.FINER, "Stopping timer " + cleanupTimer);
@@ -306,8 +313,8 @@ public class BaseSupport {
         cleanupTimer.cancel();
         cleanupTimer = null;
     }
-    
-    protected synchronized static BaseContext removeContext(final HandlerContext requestContext, 
+
+    protected synchronized static BaseContext removeContext(final HandlerContext requestContext,
     		                                   final Object context) {
     	BaseContext ctx = contextMap.get(context);
     	if (ctx == null)

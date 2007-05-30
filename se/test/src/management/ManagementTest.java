@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: ManagementTest.java,v 1.21 2007-05-24 13:22:29 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: ManagementTest.java,v 1.22 2007-05-30 20:30:24 nbeers Exp $
  */
 
 package management;
@@ -58,16 +65,16 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
  * Unit test for WS-Management
  */
 public class ManagementTest extends TestBase {
-    
+
     private static final String RESOURCE = "wsman:test/java/system/properties";
     private static final int TIMEOUT = 30000;
-    
+
     private final Set<SelectorType> selectors = new HashSet<SelectorType>();
-    
+
     public ManagementTest(final String testName) {
         super(testName);
     }
-    
+
     protected void setUp() throws java.lang.Exception {
         super.setUp();
         final SelectorType selector = new SelectorType();
@@ -75,17 +82,17 @@ public class ManagementTest extends TestBase {
         selector.getContent().add("WSMAN");
         selectors.add(selector);
     }
-    
+
     protected void tearDown() throws java.lang.Exception {
         selectors.clear();
         super.tearDown();
     }
-    
+
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite(ManagementTest.class);
         return suite;
     }
-    
+
     public void testSet() throws Exception {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
@@ -102,18 +109,18 @@ public class ManagementTest extends TestBase {
         assertEquals(uuid, mgmt.getMessageId());
         assertEquals(Transfer.DELETE_ACTION_URI, mgmt.getAction());
     }
-    
+
     public void testMissingResourceURI() throws Exception {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         mgmt.setTo(DESTINATION);
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        
+
         mgmt.prettyPrint(logfile);
         Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
-        
+
         assertTrue("Missing ResourceURI accepted", response.getBody().hasFault());
         final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
@@ -128,22 +135,22 @@ public class ManagementTest extends TestBase {
             }
         }
     }
-    
+
     public void testGetVisual() throws Exception {
-        
+
         final Transfer xf = new Transfer();
         xf.setAction(Transfer.GET_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         final String uuid = UUID_SCHEME + UUID.randomUUID().toString();
         xf.setMessageId(uuid);
-        
+
         final Management mgmt = new Management(xf);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
         final Duration timeout = DatatypeFactory.newInstance().newDuration(TIMEOUT);
         mgmt.setTimeout(timeout);
         mgmt.setSelectors(selectors);
-        
+
         final MaxEnvelopeSizeType maxEnvSize = Management.FACTORY.createMaxEnvelopeSizeType();
         final long envSize = 4096;
         maxEnvSize.setValue(new BigInteger(Long.toString(envSize)));
@@ -151,12 +158,12 @@ public class ManagementTest extends TestBase {
         final PolicyType policyType = PolicyType.fromValue(envPolicy);
         maxEnvSize.setPolicy(policyType);
         mgmt.setMaxEnvelopeSize(maxEnvSize);
-        
+
         final Locale locale = Management.FACTORY.createLocale();
         final String localeString = "en-US";
         locale.setLang(localeString);
         mgmt.setLocale(locale);
-        
+
         final Set<OptionType> options = new HashSet<OptionType>();
         final String verboseOptionName = "--output-file";
         final String verboseOptionValue = "/dev/null";
@@ -167,48 +174,48 @@ public class ManagementTest extends TestBase {
         verboseOption.setType(verboseOptionType);
         options.add(verboseOption);
         mgmt.setOptions(options);
-        
+
         mgmt.prettyPrint(logfile);
-        
+
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         mgmt.writeTo(bos);
         final Management m2 = new Management(new ByteArrayInputStream(bos.toByteArray()));
-        
+
         assertEquals(RESOURCE, m2.getResourceURI());
         assertEquals(timeout, m2.getTimeout());
-        
+
         final Set<SelectorType> selectors2 = mgmt.getSelectors();
         assertEquals(selectors.size(), selectors2.size());
         final SelectorType selector = selectors.iterator().next();
         final SelectorType selector2 = selectors2.iterator().next();
         assertEquals(selector.getName(), selector2.getName());
         assertEquals(selector.getContent().get(0), selector2.getContent().get(0));
-        
+
         final MaxEnvelopeSizeType maxEnvSize2 = m2.getMaxEnvelopeSize();
         assertEquals(envSize, maxEnvSize2.getValue().longValue());
         assertEquals(envPolicy, maxEnvSize2.getPolicy().value());
-        
+
         assertEquals(localeString, m2.getLocale().getLang());
-        
+
         final Set<OptionType> options2 = m2.getOptions();
         final OptionType option2 = options2.iterator().next();
         assertEquals(verboseOptionName, option2.getName());
         assertEquals(verboseOptionValue, option2.getValue());
         assertEquals(verboseOptionType, option2.getType());
     }
-    
+
     public void testActionNotSupported() throws Exception {
-        
+
         final Transfer xf = new Transfer();
         final String UNSUPPORTED_ACTION = "some/random/action";
         xf.setAction(UNSUPPORTED_ACTION);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         final Management mgmt = new Management(xf);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
-        
+
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
@@ -220,32 +227,32 @@ public class ManagementTest extends TestBase {
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
         assertEquals(ActionNotSupportedFault.ACTION_NOT_SUPPORTED, fault.getCode().getSubcode().getValue());
         assertEquals(ActionNotSupportedFault.ACTION_NOT_SUPPORTED_REASON, fault.getReason().getText().get(0).getValue());
-        assertEquals(UNSUPPORTED_ACTION, 
+        assertEquals(UNSUPPORTED_ACTION,
                 ((JAXBElement<AttributedURI>) fault.getDetail().getAny().get(0)).getValue().getValue());
     }
-    
+
     public void testGetResponseEncoding() throws Exception {
-        
+
         final Transfer xf = new Transfer();
         xf.setAction(Transfer.GET_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         final Management mgmt = new Management(xf);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
         final Duration timeout = DatatypeFactory.newInstance().newDuration(TIMEOUT);
         mgmt.setTimeout(timeout);
-        
+
         final Set<SelectorType> selectorSet = new HashSet<SelectorType>();
         final SelectorType selector = new SelectorType();
         selector.setName("SystemName");
         selector.getContent().add("sun-v20z-1");
         mgmt.setSelectors(selectorSet);
-        
+
         // send this message encoded in UTF-16
         mgmt.setContentType(ContentType.UTF16_CONTENT_TYPE);
-        
+
         // prettyPrint does not preserve encoding
         mgmt.writeTo(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
@@ -253,16 +260,16 @@ public class ManagementTest extends TestBase {
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
-        
+
         // verify that the response is received encoded in UTF-16
         assertEquals("Incorrect Encoding type returned.",ContentType.UTF16_CONTENT_TYPE, response.getContentType());
 
         logfile.write("\n\n---- pretty-printed, pretty-printer converts encoding to utf-8 ----\n\n".getBytes());
         response.prettyPrint(logfile);
     }
-    
+
     public void testValidate() throws Exception {
-        
+
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
@@ -270,46 +277,46 @@ public class ManagementTest extends TestBase {
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         mgmt.prettyPrint(logfile);
-        
+
         final SOAPHeaderElement[] she = mgmt.getAllMustUnderstand();
         // wsa:Action, wsa:To, wsa:MessageID are the three headers with MU=1
         assertEquals(3, she.length);
         for (final SOAPHeaderElement hdr : she) {
             assertTrue(hdr.getMustUnderstand());
         }
-        
+
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
-        
+
         try {
             mgmt.validate();
         } catch (FaultException fex) {
             fail("Validation failed: " + fex.toString());
         }
-        
+
         final Management mgmt2 = new Management();
         mgmt2.setTo(DESTINATION);
         mgmt2.setResourceURI(RESOURCE);
         mgmt2.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt2.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         doValidation(mgmt2, Addressing.NS_PREFIX + ":Action");
-        
+
         final Management mgmt3 = new Management();
         mgmt3.setAction(Transfer.GET_ACTION_URI);
         mgmt3.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt3.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         doValidation(mgmt3, Addressing.NS_PREFIX + ":To");
-        
+
         final Management mgmt4 = new Management();
         mgmt4.setAction(Transfer.GET_ACTION_URI);
         mgmt4.setTo(DESTINATION);
         mgmt4.setResourceURI(RESOURCE);
         mgmt4.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         doValidation(mgmt4, Addressing.NS_PREFIX + ":ReplyTo");
-        
+
         final Management mgmt5 = new Management();
         mgmt5.setAction(Transfer.GET_ACTION_URI);
         mgmt5.setTo(DESTINATION);
@@ -317,14 +324,14 @@ public class ManagementTest extends TestBase {
         mgmt5.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         doValidation(mgmt5, Addressing.NS_PREFIX + ":MessageID");
     }
-    
+
     private void doValidation(final Management mgmt, final String elementName) throws Exception {
         mgmt.prettyPrint(logfile);
         try {
             mgmt.validate();
             fail("Validation succeeded with no " + elementName);
         } catch (FaultException ignore) {}
-        
+
         if (mgmt.getTo() != null) {
             final Addressing response = HttpClient.sendRequest(mgmt);
             assertTrue(response.getBody().hasFault());
@@ -334,7 +341,7 @@ public class ManagementTest extends TestBase {
             assertEquals(MessageInformationHeaderRequiredFault.MESSAGE_INFORMATION_HEADER_REQUIRED_REASON, fault.getReason().getText().get(0).getValue());
         }
     }
-    
+
     public void testAccessDenied() throws Exception {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
@@ -342,7 +349,7 @@ public class ManagementTest extends TestBase {
         mgmt.setResourceURI("wsman:test/access_denied");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
@@ -354,7 +361,7 @@ public class ManagementTest extends TestBase {
         assertEquals(AccessDeniedFault.ACCESS_DENIED, fault.getCode().getSubcode().getValue());
         assertEquals(AccessDeniedFault.ACCESS_DENIED_REASON, fault.getReason().getText().get(0).getValue());
     }
-    
+
     public void testNonHandler() throws Exception {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
@@ -362,7 +369,7 @@ public class ManagementTest extends TestBase {
         mgmt.setResourceURI("wsman:test/non_handler");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
@@ -374,7 +381,7 @@ public class ManagementTest extends TestBase {
         assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
         assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
     }
-    
+
     public void testTimeout() throws Exception {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
@@ -384,7 +391,7 @@ public class ManagementTest extends TestBase {
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         final DatatypeFactory durationFactory = DatatypeFactory.newInstance();
         mgmt.setTimeout(durationFactory.newDuration(2000));
-        
+
         mgmt.prettyPrint(logfile);
         final GregorianCalendar start = new GregorianCalendar();
         final Addressing response = HttpClient.sendRequest(mgmt);
@@ -396,13 +403,13 @@ public class ManagementTest extends TestBase {
         long diff = end.getTimeInMillis()-start.getTimeInMillis();
         assertTrue((diff >= 2000));
         assertTrue("Timeout was " + diff + " milliseconds, expected 2000 milliseconds.",(diff<= 4000)); // Should be reasonable
-        
+
         final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
         assertEquals(TimedOutFault.TIMED_OUT, fault.getCode().getSubcode().getValue());
         assertEquals(TimedOutFault.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
     }
-    
+
     public void testMaxEnvelopeSizeTooSmall() throws Exception {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
@@ -412,18 +419,18 @@ public class ManagementTest extends TestBase {
         mgmt.setResourceURI("wsman:test/timeout");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         final MaxEnvelopeSizeType maxEnvSize = new MaxEnvelopeSizeType();
         maxEnvSize.setValue(new BigInteger(Integer.toString(4)));
         mgmt.setMaxEnvelopeSize(maxEnvSize);
-        
+
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         if (!response.getBody().hasFault()) {
             fail("fault not returned");
         }
-        
+
         final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
         assertEquals(EncodingLimitFault.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
@@ -437,7 +444,7 @@ public class ManagementTest extends TestBase {
             }
         }
     }
-    
+
     public void testMaxEnvelopeSizeTooBig() throws Exception {
         final Management mgmt = new Management();
         mgmt.setAction(Transfer.GET_ACTION_URI);
@@ -445,18 +452,18 @@ public class ManagementTest extends TestBase {
         mgmt.setResourceURI("wsman:test/huge_envelope_creator");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         final MaxEnvelopeSizeType maxEnvSize = new MaxEnvelopeSizeType();
         maxEnvSize.setValue(new BigInteger(Integer.toString(8192 + 1)));
         mgmt.setMaxEnvelopeSize(maxEnvSize);
-        
+
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         if (!response.getBody().hasFault()) {
             fail("fault not returned");
         }
-        
+
         final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
         assertEquals(EncodingLimitFault.ENCODING_LIMIT, fault.getCode().getSubcode().getValue());
@@ -478,7 +485,7 @@ public class ManagementTest extends TestBase {
         mgmt.setResourceURI("wsman:test/base");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
@@ -489,7 +496,7 @@ public class ManagementTest extends TestBase {
         assertEquals(SOAP.SENDER, fault.getCode().getValue());
         assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE, fault.getCode().getSubcode().getValue());
         assertEquals(DestinationUnreachableFault.DESTINATION_UNREACHABLE_REASON, fault.getReason().getText().get(0).getValue());
-        assertEquals(DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI.toString(), 
+        assertEquals(DestinationUnreachableFault.Detail.INVALID_RESOURCE_URI.toString(),
                 ((JAXBElement<String>) fault.getDetail().getAny().get(1)).getValue());
     }
 
@@ -500,13 +507,13 @@ public class ManagementTest extends TestBase {
         mgmt.setResourceURI("wsman:test/concrete");
         mgmt.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
+
         mgmt.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         final SOAPBody body = response.getBody();
         if (body.hasFault()) {
-            fail("invocation of concrete handler failed: " + 
+            fail("invocation of concrete handler failed: " +
                     body.getFault().getFaultString());
         }
         assertNotNull(body.getFirstChild());

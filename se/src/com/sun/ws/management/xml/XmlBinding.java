@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: XmlBinding.java,v 1.20 2007-05-03 14:47:53 simeonpinder Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: XmlBinding.java,v 1.21 2007-05-30 20:31:06 nbeers Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -41,7 +48,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 public final class XmlBinding {
-    
+
 	//This is the initial list of package bindings for Wiseman-core
 	private static String[] defaultPackageList = {
 	        "org.w3._2003._05.soap_envelope",
@@ -51,12 +58,12 @@ public final class XmlBinding {
 	        "org.xmlsoap.schemas.ws._2004._09.transfer",
 	        "org.dmtf.schemas.wbem.wsman._1.wsman"
 	};
-	
+
 	static{//determine whether additional packages should be added to default binding
 	  try{
-		 //parse for extensions, if they exist add them. 
+		 //parse for extensions, if they exist add them.
          Map<String, String> propertySet = new HashMap<String, String>();
-         WSManAgent.getProperties(WSManAgent.WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, 
+         WSManAgent.getProperties(WSManAgent.WSMAN_EXTENSIONS_PROPERTY_FILE_NAME,
     		   propertySet);
          //if the properties were located then located, proceed
 	     if((propertySet!=null)&&propertySet.containsKey("extensions.binding.packages")){
@@ -66,28 +73,28 @@ public final class XmlBinding {
 		      String[] additional = new String[t.countTokens()];
 		      int indx=0;
 		      while(t.hasMoreTokens()){
-		    	 additional[indx++] = t.nextToken(); 
+		    	 additional[indx++] = t.nextToken();
 		      }
-			 String[] newDefaultPackageList = 
+			 String[] newDefaultPackageList =
 					new String[defaultPackageList.length+additional.length];
 				 //copy all content into the new array
-				 System.arraycopy(defaultPackageList, 0, 
+				 System.arraycopy(defaultPackageList, 0,
 						newDefaultPackageList, 0, defaultPackageList.length);
-				 System.arraycopy(additional, 0, newDefaultPackageList, 
+				 System.arraycopy(additional, 0, newDefaultPackageList,
 						defaultPackageList.length, additional.length);
-				 //reassignment 
+				 //reassignment
 				 defaultPackageList = newDefaultPackageList;
 		   }
 	     }
 	  }catch(Exception ex){
-		ex.printStackTrace();  
-		//Then eat the exception. Should not take down the XMLBinding because of bad user data. 
+		ex.printStackTrace();
+		//Then eat the exception. Should not take down the XMLBinding because of bad user data.
 	  }
 	}
-	
+
 	//load the final list of packages that will be used by this binding.
     private static final String[] DEFAULT_PACKAGES = defaultPackageList;
-        
+
     private static final String BINDING_PROPERTIES_FILE = "/binding.properties";
     public static final String CUSTOM_PACKAGE_NAMES =
             XmlBinding.class.getPackage().getName() + ".custom.packagenames";
@@ -95,49 +102,49 @@ public final class XmlBinding {
             XmlBinding.class.getPackage().getName() + ".custom.schemas";
     public static final String VALIDATE =
             XmlBinding.class.getPackage().getName() + ".validate";
-    
+
     private JAXBContext context;
     private Schema schema;
     private boolean validate;
     private Set packageNamesHandled = new HashSet<String>();
-    
+
     private static final class ValidationHandler implements ValidationEventHandler {
-        
+
         private FaultException validationException = null;
-        
+
         public boolean handleEvent(final ValidationEvent event) {
             validationException = new SchemaValidationErrorFault(event.getMessage());
             // stop at the first validation error
             return false;
         }
-        
+
         public FaultException getFault() {
             return validationException;
         }
     }
-    
-    
+
+
     public XmlBinding(final Schema schema, String... customPackages)
     throws JAXBException {
-        init(schema, null, null, null, 
+        init(schema, null, null, null,
              false,
              customPackages);
     }
-    
+
     public XmlBinding(final Schema schema, Map<String, String> bindingConf)
     throws JAXBException {
-        init(schema, null, bindingConf, 
+        init(schema, null, bindingConf,
                 Thread.currentThread().getContextClassLoader(), false);
     }
-    
+
     public XmlBinding(final Source[] customSchemas, Map<String, String> bindingConf,
             ClassLoader loader,
             String... customPackages)
             throws JAXBException {
-        init(null, customSchemas, bindingConf, 
+        init(null, customSchemas, bindingConf,
              loader,true, customPackages);
     }
-    
+
     public XmlBinding(Schema schema, Source[] customSchemas,
             Map<String, String> bindingConf,
             ClassLoader loader,
@@ -146,19 +153,19 @@ public final class XmlBinding {
          init(schema, customSchemas, bindingConf, loader, true,
               customPackages);
     }
-    
+
     private static Map<String, String> bindingsPropertySet = null;
     private void init(Schema schema, Source[] customSchemas,
             Map<String, String> bindingConf,
             ClassLoader loader, boolean validation,
             String... customPackages) throws JAXBException {
-        
+
         if(loader == null)
             loader = Thread.currentThread().getContextClassLoader();
-   
+
         final StringBuilder packageNames = new StringBuilder();
         boolean first = true;
-        
+
         for (final String p : DEFAULT_PACKAGES) {
             if (first) {
                 first = false;
@@ -168,14 +175,14 @@ public final class XmlBinding {
             packageNames.append(p);
             packageNamesHandled.add(p);
         }
-        
+
         Map<String, String> propertySet = new HashMap<String, String>();
         if(bindingsPropertySet==null){
-          bindingsPropertySet =	new HashMap<String, String>();	
+          bindingsPropertySet =	new HashMap<String, String>();
           WSManAgent.getProperties(BINDING_PROPERTIES_FILE, bindingsPropertySet);
         }
         propertySet = bindingsPropertySet;
-        
+
         // Put all passed properties
         if(bindingConf != null)
             propertySet.putAll(bindingConf);
@@ -183,7 +190,7 @@ public final class XmlBinding {
         if(customPackageNames == null || customPackageNames.equals("")) {
             customPackageNames = propertySet.get(CUSTOM_PACKAGE_NAMES);
         }
-        
+
         if (customPackageNames != null && !customPackageNames.equals("")) {
             for (final String packageName : customPackageNames.split(",")) {
                 final String pkg = packageName.trim();
@@ -192,15 +199,15 @@ public final class XmlBinding {
                 packageNamesHandled.add(pkg);
             }
         }
-        
+
         for (final String p : customPackages) {
             packageNames.append(":");
             packageNames.append(p);
             packageNamesHandled.add(p);
         }
-        
+
         context = JAXBContext.newInstance(packageNames.toString(), loader);
-        
+
         // Compute a schema based on passed sources and custom ones.
         if(schema == null && validation) {
             String customSchemaNames = System.getProperty(CUSTOM_SCHEMA_NAMES);
@@ -228,10 +235,10 @@ public final class XmlBinding {
                 throw new IllegalArgumentException("Invalid schema, " +
                         "can't validate. " + sx);
             }
-        } 
-        
+        }
+
         this.schema = schema;
-        
+
         // Allow enabling and disabling validation via properties
         if (this.schema != null) {
             String doValidate = null;
@@ -248,12 +255,12 @@ public final class XmlBinding {
         } else
             this.validate = false;
     }
-    
+
     public void marshal(final Object obj, final Node node) throws JAXBException {
         final Marshaller marshaller = context.createMarshaller();
         marshaller.marshal(obj, node);
     }
-    
+
     public Object unmarshal(final Node node) throws JAXBException {
         final Unmarshaller unmarshaller = context.createUnmarshaller();
         if (this.validate) {
@@ -268,11 +275,11 @@ public final class XmlBinding {
         }
         return obj;
     }
-    
+
     public boolean isValidating() {
         return this.validate;
     }
-    
+
     public boolean isPackageHandled(final String pkg) {
         return packageNamesHandled.contains(pkg);
     }

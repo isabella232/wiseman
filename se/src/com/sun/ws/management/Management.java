@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: Management.java,v 1.10 2007-04-23 19:17:50 nbeers Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: Management.java,v 1.11 2007-05-30 20:31:05 nbeers Exp $
  */
 
 package com.sun.ws.management;
@@ -41,10 +48,10 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 
 public class Management extends Addressing {
-    
+
     public static final String NS_PREFIX = "wsman";
     public static final String NS_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd";
-    
+
     public static final String EVENTS_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Events";
     public static final String HEARTBEAT_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Heartbeat";
     public static final String DROPPED_EVENTS_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/DroppedEvents";
@@ -54,7 +61,7 @@ public class Management extends Addressing {
     public static final String PUSH_WITH_ACK_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/PushWithAck";
     public static final String PULL_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/Pull";
     public static final String FAULT_ACTION_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/fault";
-    
+
     public static final QName RESOURCE_URI = new QName(NS_URI, "ResourceURI", NS_PREFIX);
     public static final QName OPERATION_TIMEOUT = new QName(NS_URI, "OperationTimeout", NS_PREFIX);
     public static final QName SELECTOR_SET = new QName(NS_URI, "SelectorSet", NS_PREFIX);
@@ -64,27 +71,27 @@ public class Management extends Addressing {
     public static final QName FAULT_DETAIL = new QName(NS_URI, "FaultDetail", NS_PREFIX);
     public static final QName URL = new QName(NS_URI, "URL", NS_PREFIX);
     public static final QName ENDPOINT_REFERENCE = new QName(NS_URI, "EndpointReference", NS_PREFIX);
-    
+
     public static final ObjectFactory FACTORY = new ObjectFactory();
-    
+
     public Management() throws SOAPException {
         super();
     }
-    
+
     public Management(final Addressing addr) throws SOAPException {
         super(addr);
     }
-    
+
     public Management(final InputStream is) throws SOAPException, IOException {
         super(is);
     }
-    
+
     public Management(final SOAPMessage msg) throws SOAPException {
         super(msg);
     }
-    
+
     // setters
-    
+
     public void setResourceURI(final String resource) throws JAXBException, SOAPException {
         removeChildren(getHeader(), RESOURCE_URI);
         final AttributableURI resType = FACTORY.createAttributableURI();
@@ -92,7 +99,7 @@ public class Management extends Addressing {
         final JAXBElement<AttributableURI> resTypeElement = FACTORY.createResourceURI(resType);
         getXmlBinding().marshal(resTypeElement, getHeader());
     }
-    
+
     public void setTimeout(final Duration duration) throws JAXBException, SOAPException {
         removeChildren(getHeader(), OPERATION_TIMEOUT);
         final AttributableDuration durationType = FACTORY.createAttributableDuration();
@@ -100,7 +107,7 @@ public class Management extends Addressing {
         final JAXBElement<AttributableDuration> durationElement = FACTORY.createOperationTimeout(durationType);
         getXmlBinding().marshal(durationElement, getHeader());
     }
-    
+
     public void setSelectors(final Set<SelectorType> selectors) throws JAXBException, SOAPException {
         removeChildren(getHeader(), SELECTOR_SET);
         final SelectorSetType selectorSet = FACTORY.createSelectorSetType();
@@ -111,18 +118,18 @@ public class Management extends Addressing {
         final JAXBElement<SelectorSetType> selectorSetElement = FACTORY.createSelectorSet(selectorSet);
         getXmlBinding().marshal(selectorSetElement, getHeader());
     }
-    
+
     public void setMaxEnvelopeSize(final MaxEnvelopeSizeType size) throws JAXBException, SOAPException {
         removeChildren(getHeader(), MAX_ENVELOPE_SIZE);
         final JAXBElement<MaxEnvelopeSizeType> sizeElement = FACTORY.createMaxEnvelopeSize(size);
         getXmlBinding().marshal(sizeElement, getHeader());
     }
-    
+
     public void setLocale(final Locale locale) throws JAXBException, SOAPException {
         removeChildren(getHeader(), LOCALE);
         getXmlBinding().marshal(locale, getHeader());
     }
-    
+
     public void setOptions(final Set<OptionType> options) throws JAXBException, SOAPException {
         removeChildren(getHeader(), OPTION_SET);
         final OptionSet optionSet = FACTORY.createOptionSet();
@@ -132,38 +139,37 @@ public class Management extends Addressing {
         }
         getXmlBinding().marshal(optionSet, getHeader());
     }
-    
+
     // getters
-    
+
     public String getResourceURI() throws JAXBException, SOAPException {
         final Object value = unbind(getHeader(), RESOURCE_URI);
         return value == null ? null : ((JAXBElement<AttributableURI>) value).getValue().getValue();
     }
-    
+
     public Duration getTimeout() throws JAXBException, SOAPException {
     		final Object value = unbind(getHeader(), OPERATION_TIMEOUT);
     	    return value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
     }
-    
+
     public Set<SelectorType> getSelectors() throws JAXBException, SOAPException {
         final Object value = unbind(getHeader(), SELECTOR_SET);
         return value == null ? null : new HashSet<SelectorType>(((JAXBElement<SelectorSetType>) value).getValue().getSelector());
     }
-    
+
     public Set<OptionType> getOptions() throws JAXBException, SOAPException {
         final Object value = unbind(getHeader(), OPTION_SET);
         return value == null ? null : new HashSet<OptionType>(((OptionSet) value).getOption());
     }
-    
+
     public MaxEnvelopeSizeType getMaxEnvelopeSize() throws JAXBException, SOAPException {
         final Object value = unbind(getHeader(), MAX_ENVELOPE_SIZE);
         return value == null ? null : ((JAXBElement<MaxEnvelopeSizeType>) value).getValue();
     }
-    
+
     public Locale getLocale() throws JAXBException, SOAPException {
         final Object value = unbind(getHeader(), LOCALE);
         return (Locale) value;
     }
 }
 
-    

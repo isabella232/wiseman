@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EventingSupport.java,v 1.22 2007-05-30 15:30:05 simeonpinder Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EventingSupport.java,v 1.23 2007-05-30 20:31:04 nbeers Exp $
  */
 
 package com.sun.ws.management.server;
@@ -70,31 +77,31 @@ import com.sun.ws.management.transport.HttpClient;
  * subscriptions using the WS-Eventing protocol.
  */
 public final class EventingSupport extends BaseSupport {
-	
+
 	public static final int DEFAULT_QUEUE_SIZE = 1024;
 	public static final int DEFAULT_EXPIRATION_MILLIS = 60000;
-	
+
     // TODO: add more delivery modes as they are implemented
     private static final String[] SUPPORTED_DELIVERY_MODES = {
         Eventing.PUSH_DELIVERY_MODE,
         EventingExtensions.PULL_DELIVERY_MODE
     };
-    
+
     private static Map<String, EventingIteratorFactory> registeredIterators =
         new HashMap<String, EventingIteratorFactory>();
-    
+
 	private static Duration defaultExpiration = null;
-	
+
     static {
         defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
     }
-    
+
     private EventingSupport() {}
-    
+
     public static String[] getSupportedDeliveryModes() {
         return SUPPORTED_DELIVERY_MODES;
     }
-    
+
     public static boolean isDeliveryModeSupported(final String deliveryMode) {
         for (final String mode : SUPPORTED_DELIVERY_MODES) {
             if (mode.equals(deliveryMode)) {
@@ -103,60 +110,60 @@ public final class EventingSupport extends BaseSupport {
         }
         return false;
     }
-    
+
     // the EventingExtensions.PULL_DELIVERY_MODE is handled by
 	// EnumerationSupport
 	public static UUID subscribe(final HandlerContext handlerContext,
-			                     final Eventing request, 
+			                     final Eventing request,
 			                     final Eventing response,
 			                     final ContextListener listener)
 			throws DatatypeConfigurationException, SOAPException,
 			JAXBException, FaultException {
 		return subscribe(handlerContext, request, response, false, DEFAULT_QUEUE_SIZE, listener);
 	}
-    
+
     // the EventingExtensions.PULL_DELIVERY_MODE is handled by
 	// EnumerationSupport
-    public static UUID subscribe(final HandlerContext handlerContext, 
+    public static UUID subscribe(final HandlerContext handlerContext,
     		                     final Eventing request,
     		                     final Eventing response,
     		                     final boolean isFiltered,
     		                     final int queueSize,
     		                     final ContextListener listener)
         throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
-        
+
         final Subscribe subscribe = request.getSubscribe();
 		if (subscribe == null) {
 			throw new InvalidMessageFault();
 		}
-        
+
         final EndpointReferenceType endTo = subscribe.getEndTo();
         if (endTo != null) {
             throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
         }
-        
+
         final DeliveryType delivery = subscribe.getDelivery();
         String deliveryMode = delivery.getMode();
         if (deliveryMode == null) {
             // implied value
             deliveryMode = Eventing.PUSH_DELIVERY_MODE;
         }
-        
+
         Filter filter = null;
-        
+
         if (deliveryMode.equals(EventingExtensions.PULL_DELIVERY_MODE)) {
         	// this is a pull event mode subscribe request so setup an enumeration
 			final EventingExtensions evtxRequest = new EventingExtensions(
 					request);
 
-			EnumerationIterator iterator = newIterator(handlerContext, 
-					                                   request, 
-					                                   response, 
-					                                   isFiltered, 
+			EnumerationIterator iterator = newIterator(handlerContext,
+					                                   request,
+					                                   response,
+					                                   isFiltered,
 					                                   queueSize);
-			
-			
-			
+
+
+
 			if (iterator.isFiltered() == false) {
 				// We will do the filtering
 				try {
@@ -176,7 +183,7 @@ public final class EventingSupport extends BaseSupport {
 			// create and register an EnumerationContext
 			EnumerationContext ctx = new EnumerationContext(initExpiration(subscribe.getExpires()),
 					                                  filter, null, iterator, listener);
-			
+
 			// Set single thread use of this context
 			synchronized (ctx) {
 				final UUID context = initContext(handlerContext, ctx);
@@ -189,7 +196,7 @@ public final class EventingSupport extends BaseSupport {
 							.toString());
 					return context;
 			}
-        	
+
         } else {
 			// one of the push modes
         	if (isFiltered == false) {
@@ -240,11 +247,11 @@ public final class EventingSupport extends BaseSupport {
 			return context;
 		}
     }
-    
+
     public static EndpointReferenceType createSubscriptionManagerEpr(
         final Eventing request, final Eventing response,
         final Object context) throws SOAPException, JAXBException {
-    	
+
 		final ReferenceParametersType refp = Addressing.FACTORY.createReferenceParametersType();
         final AttributableURI attributableURI = Management.FACTORY.createAttributableURI();
         Management mgmt = new Management(request);
@@ -259,23 +266,23 @@ public final class EventingSupport extends BaseSupport {
         refp.getAny().add(doc.getDocumentElement());
         return Addressing.createEndpointReference(request.getTo(), null, refp, null, null);
     }
-    
+
     public static void unsubscribe(final HandlerContext handlerContext,
-    		                       final Eventing request, 
+    		                       final Eventing request,
     		                       final Eventing response)
     throws SOAPException, JAXBException, FaultException {
-        
+
         final Unsubscribe unsubscribe = request.getUnsubscribe();
         if (unsubscribe == null) {
             throw new InvalidMessageFault("Missing Unsubsribe element");
         }
-        
+
         final String identifier = request.getIdentifier();
         if (identifier == null) {
             throw new InvalidMessageFault("Missing Identifier header element");
-            
+
         }
-        
+
         final Object found = removeContext(handlerContext,
         		                           UUID.fromString(identifier));
         if (found == null) {
@@ -286,17 +293,17 @@ public final class EventingSupport extends BaseSupport {
             throw new InvalidMessageFault("Subscription with Identifier: " +
                 identifier + " not found");
         }
-        
+
         response.setIdentifier(identifier);
     }
-    
+
     // TODO: avoid blocking the sender - use a thread pool to send notifications
     public static boolean sendEvent(final Object context, final Addressing msg,
         final NamespaceMap nsMap)
         throws SOAPException, JAXBException, IOException, XPathExpressionException, Exception {
-        
+
         assert datatypeFactory != null : UNINITIALIZED;
-        
+
         final BaseContext bctx = getContext(context);
         if (bctx == null) {
             throw new RuntimeException("Context not found: subscription expired?");
@@ -305,14 +312,14 @@ public final class EventingSupport extends BaseSupport {
             throw new RuntimeException("Context not found");
         }
         final EventingContext ctx = (EventingContext) bctx;
-        
+
         final GregorianCalendar now = new GregorianCalendar();
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
         if (ctx.isExpired(nowXml)) {
             removeContext(null, context);
             throw new RuntimeException("Subscription expired");
         }
-        
+
         // the filter is only applied to the first child in soap body
         if (ctx.getFilter() != null) {
 			final Node content = msg.getBody().getFirstChild();
@@ -323,7 +330,7 @@ public final class EventingSupport extends BaseSupport {
 				throw ex;
 			}
 		}
-        
+
         final EndpointReferenceType notifyTo = ctx.getNotifyTo();
         msg.setTo(notifyTo.getAddress().getValue());
         final ReferenceParametersType refparams = notifyTo.getReferenceParameters();
@@ -338,14 +345,14 @@ public final class EventingSupport extends BaseSupport {
         HttpClient.sendResponse(msg);
         return true;
     }
-    
+
     /**
      * Create a Filter from an Eventing request
-     * 
+     *
      * @return Returns a Filter object if a filter exists in the request, otherwise null.
-     * @throws CannotProcessFilterFault, FilteringRequestedUnavailableFault, InternalErrorFault 
+     * @throws CannotProcessFilterFault, FilteringRequestedUnavailableFault, InternalErrorFault
      */
-    public static Filter createFilter(final Eventing request) 
+    public static Filter createFilter(final Eventing request)
                      throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
     	try {
 			final EventingExtensions evtxRequest = new EventingExtensions(request);
@@ -365,12 +372,12 @@ public final class EventingSupport extends BaseSupport {
 			}
 
 			final NamespaceMap nsMap = getNamespaceMap(request);
-			
+
 			if (evtxFilter != null)
-				return createFilter(evtxFilter.getDialect(), 
+				return createFilter(evtxFilter.getDialect(),
 						evtxFilter.getContent(), nsMap);
 			else
-				return createFilter(evtFilter.getDialect(), 
+				return createFilter(evtFilter.getDialect(),
 						evtFilter.getContent(), nsMap);
 		} catch (SOAPException e) {
 			throw new InternalErrorFault(e.getMessage());
@@ -378,11 +385,11 @@ public final class EventingSupport extends BaseSupport {
 			throw new InternalErrorFault(e.getMessage());
 		}
     }
-    
+
 	private static NamespaceMap getNamespaceMap(final Eventing request) {
         final NamespaceMap nsMap;
         final SOAPBody body = request.getBody();
-        
+
         NodeList wsmanFilter = body.getElementsByTagNameNS(EventingExtensions.FILTER.getNamespaceURI(),
         		                                           EventingExtensions.FILTER.getLocalPart());
     	NodeList evtFilter = body.getElementsByTagNameNS(Eventing.FILTER.getNamespaceURI(),
@@ -398,12 +405,12 @@ public final class EventingSupport extends BaseSupport {
         }
         return nsMap;
 	}
-	
-	
+
+
     /**
      * Add an iterator factory to EnumerationSupport.
-     * 
-     * @param resourceURI ResourceURI for which this iterator factory 
+     *
+     * @param resourceURI ResourceURI for which this iterator factory
      * is to be used to fufill Enumeration requests.
      * @param iteratorFactory The Iterator Factory that creates <code>EnumerationIterator</code>
      * objects that are used by EnumerationSupport to fufill Enumeration requests.
@@ -414,27 +421,27 @@ public final class EventingSupport extends BaseSupport {
     		EventingIteratorFactory iteratorFactory) throws Exception {
         registeredIterators.put(resourceURI, iteratorFactory);
     }
-    
+
     /**
      * Gets an IteratorFactory for the specified resource URI.
-     * 
+     *
      * @param resourceURI the URI associated with the IteratorFactory
      * @return the IteratorFactory if one is registered, otherwise null
      */
     public synchronized static EventingIteratorFactory getIteratorFactory(String resourceURI) {
     	return registeredIterators.get(resourceURI);
     }
-    
+
     private synchronized static EnumerationIterator newIterator(
-    		final HandlerContext context, 
+    		final HandlerContext context,
 			final Eventing request,
-			final Eventing response, 
-			final boolean isFiltered, 
+			final Eventing response,
+			final boolean isFiltered,
 			final int queueSize) throws SOAPException, JAXBException {
     	final Management mgmt = new Management(request);
     	final EventingIteratorFactory factory = registeredIterators.get(mgmt.getResourceURI());
 		final DocumentBuilder db = response.getDocumentBuilder();
-		
+
     	if (factory == null) {
 			// Build a default iterator for pull
 			return new EventingIterator(isFiltered, queueSize);
@@ -445,17 +452,17 @@ public final class EventingSupport extends BaseSupport {
     }
 
     //  TODO: avoid blocking the sender - use a thread pool to send notifications
-	public static boolean sendEvent(UUID id, Object content) 
+	public static boolean sendEvent(UUID id, Object content)
 	       throws SOAPException, JAXBException, IOException {
-		
+
         assert datatypeFactory != null : UNINITIALIZED;
-        
+
 		boolean result = false;
 		BaseContext bctx = contextMap.get(id);
 		if ((bctx == null) || (bctx.isDeleted())) {
 			throw new RuntimeException("Context not found: subscription expired?");
 		}
-		
+
 		// Check if context is expired
         final GregorianCalendar now = new GregorianCalendar();
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
@@ -463,7 +470,7 @@ public final class EventingSupport extends BaseSupport {
             removeContext(null, bctx);
             throw new RuntimeException("Subscription expired");
         }
-		
+
 		if (bctx instanceof EnumerationContext) {
 			// Pull, add data to iterator
 			final EnumerationContext ctx = (EnumerationContext) bctx;
@@ -480,10 +487,10 @@ public final class EventingSupport extends BaseSupport {
                 throw new RuntimeException("Context not found");
             }
             final EventingContext ctx = (EventingContext) bctx;
-            
+
             final Addressing msg = new Addressing();
             msg.setAction(Management.EVENT_URI);
-            
+
             if (ctx.getFilter() == null) {
             	if (content instanceof Node)
             	    msg.getBody().appendChild(msg.getBody().getOwnerDocument().importNode((Node)content, true));

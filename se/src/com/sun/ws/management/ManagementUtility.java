@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ *
+ * $Id: ManagementUtility.java,v 1.11 2007-05-30 20:31:05 nbeers Exp $
+ */
 package com.sun.ws.management;
 
 import java.io.StringWriter;
@@ -55,12 +81,12 @@ import com.sun.xml.fastinfoset.sax.Properties;
 
 /** This class is meant to provide general utility functionality for
  *  Management instances and all of their related extensions.
- * 
+ *
  * @author Simeon
  */
 public class ManagementUtility {
-	
-	//These values are final and static so that they can be uniformly used by many classes  
+
+	//These values are final and static so that they can be uniformly used by many classes
 	private static final Logger LOG = Logger.getLogger(ManagementUtility.class.getName());
 	private static final org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory
 	   addressing_factory = new org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory();
@@ -77,9 +103,9 @@ public class ManagementUtility {
 		}
 	}
 	/** Takes an existing SelectorSetType container and a Map<String,String> where
-	 *  Key,Value or Name,Value have been supplied are accepted as parameters.  
+	 *  Key,Value or Name,Value have been supplied are accepted as parameters.
 	 *  A SelectorSetType instance includind the Map values provided are returned.
-	 * 
+	 *
 	 * @return SelectorSetType instance.
 	 */
 	public static SelectorSetType populateSelectorSetType(Map<String,String> selectors,
@@ -89,26 +115,26 @@ public class ManagementUtility {
 			}
 			//Now populate the selectorSetType
 		    List<SelectorType> selectorList = selectorContainer.getSelector();
-		    
+
 		    // Add a selector to the list
 		    for (String key : selectors.keySet()) {
 		        SelectorType nameSelector = new SelectorType();
-		        nameSelector.setName(key);        
-		        nameSelector.getContent().add(selectors.get(key));        
-		        selectorList.add(nameSelector);			
+		        nameSelector.setName(key);
+		        nameSelector.getContent().add(selectors.get(key));
+		        selectorList.add(nameSelector);
 			}
 	    return selectorContainer;
 	}
-	
+
 	/**Takes a Map<String,String> of selector values and returns
-	 * a container Set<SelectorType> which has the selectors 
-	 * passed in. 
+	 * a container Set<SelectorType> which has the selectors
+	 * passed in.
 	 * Ex. Map<String,String> selectors = new HashMap<String,String>();
 	 * 	     selectors.put("firstname","Get");
 	 * 	     selectors.put("lastname","Guy");
-	 * 
+	 *
 	 *    is wrapped in the appropriate type that will look like
-	 *    
+	 *
 	 *  <wsman:SelectorSet>
      * 	 <wsman:Selector Name="firstname">Get</wsman:Selector>
      *    <wsman:Selector Name="lastname">Guy</wsman:Selector>
@@ -132,10 +158,10 @@ public class ManagementUtility {
 		}
 		return selectors;
 	}
-	
+
 	/**The method takes a SelectorSetType instance and returns the Selectors defined
-	 * in a Map<String,String> instance, with Key,Value being the values respectively. 
-	 * 
+	 * in a Map<String,String> instance, with Key,Value being the values respectively.
+	 *
 	 * @param selectorContainer
 	 * @return Map<String,String> being Selector values
 	 */
@@ -143,23 +169,23 @@ public class ManagementUtility {
 		//Create the Map instance to be returned
 		Map<String,String> map = new HashMap<String, String>();
 		List<SelectorType> selectorsList = null;
-		
+
 		//populate the Map with the selectorContainer contents
 		if(selectorContainer!=null){
 		  selectorsList=selectorContainer.getSelector();
 		  map =extractSelectorsAsMap(map, selectorsList);
 		}
-		
+
 		return map;
 	}
 
 	/**The method takes a List<SelectorType> instance and returns the Selectors defined
-	 * in a Map<String,String> instance, with Key,Value being the values respectively. 
-	 * 
+	 * in a Map<String,String> instance, with Key,Value being the values respectively.
+	 *
 	 * @param map
 	 * @param selectorsList
 	 */
-	public static Map<String,String> extractSelectorsAsMap(Map<String, String> map, 
+	public static Map<String,String> extractSelectorsAsMap(Map<String, String> map,
 			List<SelectorType> selectorsList) {
 		if(map==null){
 			map = new HashMap<String, String>();
@@ -178,9 +204,9 @@ public class ManagementUtility {
 		return map;
 	}
 
-	/** Parses the header list to locate the SOAPElement identified by the QName 
+	/** Parses the header list to locate the SOAPElement identified by the QName
 	 * passed in.
-	 * 
+	 *
 	 * @param headers
 	 * @param qualifiedName
 	 * @return SOAPElement of the located header
@@ -200,20 +226,20 @@ public class ManagementUtility {
 		}
 		return located;
 	}
-	
+
 	/**Attempts to build a message from the addressing instance passed in and with
 	 * the ManagementMessageValues passed in.  Only if the values has not already
 	 * been set in the Addressing instance will the values from the constants be
 	 * used.
-	 * 
+	 *
 	 * @param instance
 	 * @param settings
 	 * @return message
 	 * @throws SOAPException
-	 * @throws JAXBException 
-	 * @throws DatatypeConfigurationException 
+	 * @throws JAXBException
+	 * @throws DatatypeConfigurationException
 	 */
-	public static Management buildMessage(Addressing instance,ManagementMessageValues settings) 
+	public static Management buildMessage(Addressing instance,ManagementMessageValues settings)
 		throws SOAPException, JAXBException, DatatypeConfigurationException {
 		//return reference
 		Management message = null;
@@ -235,7 +261,7 @@ public class ManagementUtility {
 				message.setTo(settings.getTo());
 			}
 		}
-		
+
 		  //Processing the ResourceURI value
 		if((message.getResourceURI()==null)||
 				(message.getResourceURI().trim().length()==0)){
@@ -248,16 +274,16 @@ public class ManagementUtility {
 		  //Processing for xmlBinding
 		if(message.getXmlBinding()==null){
 		   if(settings.getXmlBinding()!=null){
-			  message.setXmlBinding(settings.getXmlBinding()); 
+			  message.setXmlBinding(settings.getXmlBinding());
 		   }else{ //otherwise use/create default one for Managemetn class
 			  if(defautInst!=null){
-				 message.setXmlBinding(defautInst.getXmlBinding());  
+				 message.setXmlBinding(defautInst.getXmlBinding());
 			  }else{
 			     message.setXmlBinding(new Management().getXmlBinding());
 			  }
 		   }
 		}
-		
+
 		 //Processing ReplyTo
 		if((settings.getReplyTo()!=null)&&
 		    settings.getReplyTo().trim().length()>0){
@@ -265,7 +291,7 @@ public class ManagementUtility {
 		}else{
 			message.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 		}
-		
+
 		 //Processing MessageId component
 		if((settings.getUidScheme()!=null)&&
 				(settings.getUidScheme().trim().length()>0)){
@@ -276,7 +302,7 @@ public class ManagementUtility {
 			UUID.randomUUID().toString());
 		}
 
-		
+
 		//Add processing for timeout
 		final DatatypeFactory factory = DatatypeFactory.newInstance();
 		if(settings.getTimeout()>ManagementMessageValues.DEFAULT_TIMEOUT){
@@ -284,12 +310,12 @@ public class ManagementUtility {
 			factory.newDuration(
 					settings.getTimeout()));
 		}
-		
+
         //process the selectors passed in.
         if((settings.getSelectorSet()!=null)&&(settings.getSelectorSet().size()>0)){
         	message.setSelectors(settings.getSelectorSet());
         }
-        
+
 		 //Processing MaxEnvelopeSize
 		if((settings.getMaxEnvelopeSize()!=null)&&
 		    settings.getMaxEnvelopeSize().longValue() >0){
@@ -298,12 +324,12 @@ public class ManagementUtility {
 	        maxEnvSize.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, SOAP.TRUE);
 	        message.setMaxEnvelopeSize(maxEnvSize);
 		}
-        
+
 		 //Processing Locale
 		if(settings.getLocale()!=null){
 			message.setLocale(settings.getLocale());
 		}
-		
+
 		//Add processing for other Management components
 		if((settings.getAdditionalHeaders()!=null)&&
 			(settings.getAdditionalHeaders().size()>0)){
@@ -320,9 +346,9 @@ public class ManagementUtility {
 
 		return message;
 	}
-	
-	public static Management buildMessage(Management existing, 
-			Addressing subMessage,boolean trimAdditionalMetadata) throws SOAPException, JAXBException, 
+
+	public static Management buildMessage(Management existing,
+			Addressing subMessage,boolean trimAdditionalMetadata) throws SOAPException, JAXBException,
 			DatatypeConfigurationException{
 		 //return reference
 		 Management message = null;
@@ -340,29 +366,29 @@ public class ManagementUtility {
 				 if(((examine =header.getElementQName())!=null)&&
 						 examine.getLocalPart().equals(Management.ACTION.getLocalPart())){
 					 //Bail out and do not add.
-					 continue;	
+					 continue;
 				 }
   				 //Don't add the original MessageId if one exists
 				 QName mesgId = null;
 				 if(((mesgId =header.getElementQName())!=null)&&
 					mesgId.getLocalPart().equals(Management.MESSAGE_ID.getLocalPart())){
 					//Bail out and do not add.
-				   continue;	
+				   continue;
 				 }
 				if(trimAdditionalMetadata){
 //				  if(!AnnotationProcessor.isDescriptiveMetadataElement(
 //						  header.getElementQName())){
-//				     Node located = containsHeader(message.getHeader(),header);	
+//				     Node located = containsHeader(message.getHeader(),header);
 //					 if(located!=null){
-//					   message.getHeader().removeChild(located);  
+//					   message.getHeader().removeChild(located);
 //					 }
 //					 message.getHeader().addChildElement(header);
 //				  }
 				}else{
 //					message.getHeader().addChildElement(header);
-				  Node located = containsHeader(message.getHeader(),header);	
+				  Node located = containsHeader(message.getHeader(),header);
 				  if(located!=null){
-					 message.getHeader().removeChild(located);  
+					 message.getHeader().removeChild(located);
 				  }
 				  message.getHeader().addChildElement(header);
 				}
@@ -371,33 +397,33 @@ public class ManagementUtility {
 		 message = buildMessage(message, ManagementMessageValues.newInstance());
 		return message;
 	}
-	
+
 	/** Attempts to extract Selectors returned from a Management instance including
-	 * a CreateResponse type, as a Map<String,String> for convenience. 
-	 * 
+	 * a CreateResponse type, as a Map<String,String> for convenience.
+	 *
 	 * @param managementMessage
 	 * @return extracted selectors
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 */
-	public static Map<String, String> extractSelectors(Management 
+	public static Map<String, String> extractSelectors(Management
 			managementMessage) throws SOAPException, JAXBException {
 		//stores located selectors
 		Map<String,String> selectors = new HashMap<String,String>();
-		
-		//parse the Management instance passed in for ResourceCreated and 
+
+		//parse the Management instance passed in for ResourceCreated and
 		//  embedded selectors
 		if(managementMessage!=null){
-		 EndpointReferenceType crtType = null;	
+		 EndpointReferenceType crtType = null;
 		 if((managementMessage.getBody()!=null)&&
 			(managementMessage.getBody().getFirstChild()!=null)){
 			 //Extract dom component
 			Node createContent = managementMessage.getBody().getFirstChild();
 			try{
-			 JAXBElement<EndpointReferenceType> unmarshal = 
-				(JAXBElement<EndpointReferenceType>) 
+			 JAXBElement<EndpointReferenceType> unmarshal =
+				(JAXBElement<EndpointReferenceType>)
 				binding.unmarshal(createContent);
-			 crtType = 
+			 crtType =
 				(EndpointReferenceType) unmarshal.getValue();
 			}catch(Exception ex){
 				ex.printStackTrace();
@@ -408,25 +434,25 @@ public class ManagementUtility {
 				EndpointReferenceType resCreatedElement = crtType;
 			    if((resCreatedElement!=null)&&(resCreatedElement.getReferenceParameters()!=null)&&
 			    	(resCreatedElement.getReferenceParameters().getAny()!=null)){
-			      List<Object> refContents = 
+			      List<Object> refContents =
 			    	  resCreatedElement.getReferenceParameters().getAny();
 			      if((refContents!=null)&&(refContents.size()>0)){
 			    	  for(Object node: refContents){
 						JAXBElement eprElement = (JAXBElement) node;
-					  //locate the refParameter element that is the selectorSet	
+					  //locate the refParameter element that is the selectorSet
 					  if(eprElement.getName().getLocalPart().equals(
 							Management.SELECTOR_SET.getLocalPart())){
-						Document nod = Management.newDocument();							
+						Document nod = Management.newDocument();
 							binding.marshal(node, nod );
 
-						JAXBElement<SelectorSetType> selSet = 
+						JAXBElement<SelectorSetType> selSet =
 							(JAXBElement<SelectorSetType>) binding
 										.unmarshal(nod);
 						SelectorSetType sels = (SelectorSetType) selSet.getValue();
 			    		if(sels!=null){
 					      //extract the SelectorSet contents
 					     selectors= ManagementUtility.extractSelectorsAsMap(
-					    		 selectors,sels.getSelector());	
+					    		 selectors,sels.getSelector());
 			    		}
 			    	  }//end of if
 			    	}
@@ -435,13 +461,13 @@ public class ManagementUtility {
 			  }
 			}
 		}
-		
+
 		return selectors;
 	}
-    
+
 	/** Convenience method to locate a specific SOAPElement from within the SOAPHeader
 	 * instance.
-	 * 
+	 *
 	 * @param header
 	 * @param element
 	 * @return the node
@@ -454,29 +480,29 @@ public class ManagementUtility {
 			 Node elem = chNodes.item(i);
 			 if((elem.getLocalName().equals(elementNode.getLocalPart()))&&
 				(elem.getNamespaceURI().equals(elementNode.getNamespaceURI()))){
-				located = elem; 
+				located = elem;
 			 }
 		  }
 		return located;
 	}
 
 	/**Attempts to extract the addressing components from a Management message
-	 * as an EPR type.  
-	 * 
+	 * as an EPR type.
+	 *
 	 * @param managementMesg
 	 * @return the EPR
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
-	public static EndpointReferenceType extractEprType(Management managementMesg) 
+	public static EndpointReferenceType extractEprType(Management managementMesg)
 	throws JAXBException, SOAPException {
 	  EndpointReferenceType epr = null;
 	  epr = addressing_factory.createEndpointReferenceType();
 	   AttributedURI to = addressing_factory.createAttributedURI();
 	   to.setValue(managementMesg.getTo());
 	  epr.setAddress(to);
-	    //######## REF PARAMETERS		  
-	    ReferenceParametersType refParams = 
+	    //######## REF PARAMETERS
+	    ReferenceParametersType refParams =
 		  addressing_factory.createReferenceParametersType();
 	    //add the resourceUri
 	     SOAPElement resourceURI = ManagementUtility.locateHeader(
@@ -494,11 +520,11 @@ public class ManagementUtility {
 	     }
 	     //TODO: add for OptionSet processing.
 	    //######## REF PROPERTIES
-	    ReferencePropertiesType refProps = 
+	    ReferencePropertiesType refProps =
 	    	addressing_factory.createReferencePropertiesType();
 	    boolean hasReferenceProperties = false;
 	  //Populate the Reference* just populated.
-	  if((refParams.getAny()!=null)&&(refParams.getAny().size()>0)){  
+	  if((refParams.getAny()!=null)&&(refParams.getAny().size()>0)){
 	   epr.setReferenceParameters(refParams);
 	  }
 	  if((refProps.getAny()!=null)&&(refProps.getAny().size()>0)){
@@ -506,11 +532,11 @@ public class ManagementUtility {
 	  }
 	 return epr;
 	}
-	
-	
-	//###################### GETTERS/SETTERS for instance 
+
+
+	//###################### GETTERS/SETTERS for instance
     /* Exposes the default uid scheme for the ManagementUtility instance.
-     * 
+     *
      */
 	public static String getUidScheme() {
 		return uidScheme;
@@ -522,7 +548,7 @@ public class ManagementUtility {
 	public static long getDefaultTimeout() {
 		return defaultTimeout;
 	}
-	
+
 	/**
 	 * Send an http request and return the response as a ResourceState
 	 * @param request SOAP request
@@ -531,9 +557,9 @@ public class ManagementUtility {
 	 */
 	public static ResourceStateDocument getAsResourceState(Addressing response) throws Exception {
         return new ResourceStateDocumentImpl(response.getEnvelope().getOwnerDocument());
-	
+
 	}
-	
+
 	/**
 	 * Send an http request and return the response as a Addressing object
 	 * @param request SOAP request
@@ -552,9 +578,9 @@ public class ManagementUtility {
         }
 
         return response;
-	
+
 	}
-	
+
 	 public static String xmlToString(Node node) {
 		try {
 			Source source = new DOMSource(node);

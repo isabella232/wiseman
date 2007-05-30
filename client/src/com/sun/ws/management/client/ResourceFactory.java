@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ *
+ * $Id: ResourceFactory.java,v 1.16 2007-05-30 20:30:21 nbeers Exp $
+ */
 package com.sun.ws.management.client;
 
 import java.io.IOException;
@@ -46,21 +72,21 @@ import com.sun.ws.management.xml.XmlBinding;
  * Factory to create and configure {@link Resource}
  * objects for use by a client. Provides additional support
  * methods to obtain the {@link ServerIdentity} metadata.
- * 
+ *
  * @see Resource
  * @see EnumerableResource
  * @see TransferableResource
  * @see ServerIdentity
- * 
+ *
  * @author spinder
- * 
+ *
  */
 public class ResourceFactory {
 
 	protected static final String UUID_SCHEME = "uuid:";
 
 	public static final String LATEST = "LATEST";
-	
+
     private static Logger log = Logger.getLogger(ResourceFactory.class.getName());
     private static XmlBinding xmlBinding = null;
 
@@ -76,7 +102,7 @@ public class ResourceFactory {
 	/**
 	 * You should never create a factory. Access it statically.
 	 */
-	private static org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory wsManFactory= 
+	private static org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory wsManFactory=
 		new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
 	private ResourceFactory() {
 		super();
@@ -84,14 +110,14 @@ public class ResourceFactory {
 
 	/**
 	 * Creates a new resource instance on the server.
-	 *  
+	 *
 	 * @param destination A URL for the destination port of this service.
-	 * @param resourceURI A resource URI indicating the type of resource to create 
+	 * @param resourceURI A resource URI indicating the type of resource to create
 	 * @param timeoutInMilliseconds Time to wait before giving up on creation
-	 * @param content a w3c document representing the inital resource state 
-	 * @param specVersion The wsman spec version of the client to create. You can 
-	 * use null or the constant #LATEST. 
-	 * @return A Resource class representing the new resource created on the server. 
+	 * @param content a w3c document representing the inital resource state
+	 * @param specVersion The wsman spec version of the client to create. You can
+	 * use null or the constant #LATEST.
+	 * @return A Resource class representing the new resource created on the server.
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
@@ -105,18 +131,18 @@ public class ResourceFactory {
 				return create(destination, resourceURI,
 						timeoutInMilliseconds, content, specVersion, null);
 	}
-	
+
 	/**
 	 * Creates a new resource instance on the server.
-	 *  
+	 *
 	 * @param destination A URL for the destination port of this service.
-	 * @param resourceURI A resource URI indicating the type of resource to create 
+	 * @param resourceURI A resource URI indicating the type of resource to create
 	 * @param timeoutInMilliseconds Time to wait before giving up on creation
-	 * @param content a w3c document representing the inital resource state 
-	 * @param specVersion The wsman spec version of the client to create. You can 
-	 * use null or the constant #LATEST. 
-	 * @param optionSet set of user defined options to use during the create operation 
-	 * @return A Resource class representing the new resource created on the server. 
+	 * @param content a w3c document representing the inital resource state
+	 * @param specVersion The wsman spec version of the client to create. You can
+	 * use null or the constant #LATEST.
+	 * @param optionSet set of user defined options to use during the create operation
+	 * @return A Resource class representing the new resource created on the server.
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
@@ -144,7 +170,7 @@ public class ResourceFactory {
 		xf.setXmlBinding(xmlBinding);
 		xf.setAction(Transfer.CREATE_ACTION_URI);
 		// Replying to creator
-		xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); 
+		xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 		xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
 
 		final Management mgmt = new Management(xf);
@@ -157,7 +183,7 @@ public class ResourceFactory {
 
 		// populate attribute details
 		// setMessageTimeout(timeoutInMilliseconds);
-		
+
 		if (optionSet != null)
 		{
 			mgmt.setOptions(optionSet);
@@ -215,18 +241,18 @@ public class ResourceFactory {
 		resource.setMessageTimeout(timeoutInMilliseconds);
 		return resource;
 	}
-		
-		
+
+
         /**
          * Create a fragment resource on the server.
-         * 
+         *
          * @param destination A URL for the destination port of this service.
-	     * @param resourceURI A resource URI indicating the type of resource to create 
+	     * @param resourceURI A resource URI indicating the type of resource to create
          * @param existingResourceId selector set identifying the resource
 	     * @param timeoutInMilliseconds Time to wait before giving up on creation
-	     * @param content a w3c document representing the fragment to create 
-	     * @param specVersion The wsman spec version of the client to create. You can 
-	     *        use null or the constant #LATEST. 
+	     * @param content a w3c document representing the fragment to create
+	     * @param specVersion The wsman spec version of the client to create. You can
+	     *        use null or the constant #LATEST.
          * @param fragmentExp the fragment expression
          * @param dialect the fragment expression dialect
          * @return TransferableResource referencing the resource created
@@ -239,10 +265,10 @@ public class ResourceFactory {
 		public static Resource createFragment(String destination,
 				String resourceURI, SelectorSetType existingResourceId,
 				long timeoutInMilliseconds,Document content,
-				String specVersion, String fragmentExp, String dialect) throws SOAPException, 
-				JAXBException, IOException, FaultException, 
+				String specVersion, String fragmentExp, String dialect) throws SOAPException,
+				JAXBException, IOException, FaultException,
 				DatatypeConfigurationException {
-			
+
 			//required: host, resourceUri
 			if((destination == null)||(resourceURI ==null)){
 				String msg="Host Address and ResourceURI cannot be null.";
@@ -254,7 +280,7 @@ public class ResourceFactory {
 				String msg="FragmentExpression or existingResourceId cannot be null.";
 				throw new IllegalArgumentException(msg);
 			}
-			
+
 			if (xmlBinding == null) {
 				xmlBinding = new XmlBinding(null);
 			}
@@ -265,21 +291,21 @@ public class ResourceFactory {
 			xf.setAction(Transfer.CREATE_ACTION_URI);
 			xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI); //Replying to creator
 			xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-			
+
 			final Management mgmt = new Management(xf);
 			mgmt.setXmlBinding(xf.getXmlBinding());
 			mgmt.setTo(destination);
 			mgmt.setResourceURI(resourceURI);
-			final Duration timeout = 
+			final Duration timeout =
 				DatatypeFactory.newInstance().newDuration(timeoutInMilliseconds);
 			mgmt.setTimeout(timeout);
-			
-	        //DONE: if xpathExpression is not null then generate fragment GET 
+
+	        //DONE: if xpathExpression is not null then generate fragment GET
 	        if((fragmentExp!=null)&&(fragmentExp.trim().length()>0)){
 	        	//DONE: add the Fragement Header
 	        	setFragmentHeader(fragmentExp,dialect,mgmt);
 	        }
-			
+
 	        //DONE: add the selectorSetType to the request as well.
 	        if(existingResourceId!=null){
 	        	//Convert type for correct insertion
@@ -304,7 +330,7 @@ public class ResourceFactory {
 			// Add the Fragment to the body
 			xf.getXmlBinding().marshal(fragment, mgmt.getBody());
 		}
-			
+
 			log.info("REQUEST:\n"+mgmt+"\n");
 			//Send the request
 			final Addressing response = HttpClient.sendRequest(mgmt);
@@ -317,13 +343,13 @@ public class ResourceFactory {
 				throw new FaultException(fault);
 			}
 			log.info("RESPONSE:\n" + response + "\n");
-			
+
 			//parse response and retrieve contents.
 			// Iterate through the create response to obtain the selectors
 			SOAPBody body = response.getBody();
 			JAXBElement createResponse = (JAXBElement)response.getXmlBinding().unmarshal(body.getFirstChild());
 			EndpointReferenceType resCreated = (EndpointReferenceType)createResponse.getValue();
-			
+
 			ReferenceParametersType refParams = resCreated.getReferenceParameters();
 			List<Object> parmList = refParams.getAny();
 			AttributableURI uriType =null;
@@ -351,7 +377,7 @@ public class ResourceFactory {
 	}
 
 	/**
-	 * Extracts and builds a selector set from the response from create. 
+	 * Extracts and builds a selector set from the response from create.
 	 * @param createResponse
 	 * @return the SelectorSetType created
 	 */
@@ -412,7 +438,7 @@ public class ResourceFactory {
 	/**
 	 * Delete the specified resource on the server.
 	 * @see TransferableResource#delete()
-	 * 
+	 *
 	 * @param res resource to delete.
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -429,11 +455,11 @@ public class ResourceFactory {
 	/**
 	 * Static method for locating existing exposed resource(s).
 	 * This method returns a single Resource object in the first
-	 * element of an array. It may be used as an 
+	 * element of an array. It may be used as an
 	 * {@link EnumerableResource EnumerableResource} or
 	 * {@link TransferableResource TransferableResource},
 	 * depending upon the desired operation.
-	 * 
+	 *
 	 * @param destination URL of the target service
 	 * @param resourceURI URI identifying the resource
 	 * @param timeout the <code>OperationTimeout</code>. This is the
@@ -442,7 +468,7 @@ public class ResourceFactory {
 	 * @param selectors set of selectors used to identify a single
 	 *        or subset of resources at the target service.
 	 * @return an array containing a single Resource object.
-	 *         It may be used as an 
+	 *         It may be used as an
 	 *         {@link EnumerableResource EnumerableResource} or
 	 *         {@link TransferableResource TransferableResource},
 	 *         depending upon the desired operation.
@@ -472,11 +498,11 @@ public class ResourceFactory {
 	/**
 	 * Static method for locating existing exposed resource(s).
 	 * This method returns a single Resource object in the first
-	 * element of an array. It may be used as an 
+	 * element of an array. It may be used as an
 	 * {@link EnumerableResource EnumerableResource} or
 	 * {@link TransferableResource TransferableResource},
 	 * depending upon the desired operation.
-	 * 
+	 *
 	 * @param destination URL of the target service
 	 * @param resourceURI URI identifying the resource
 	 * @param timeout the <code>OperationTimeout</code>. This is the
@@ -485,7 +511,7 @@ public class ResourceFactory {
 	 * @param selectors set of selectors used to identify a single
 	 *        or subset of resources at the target service.
 	 * @return an array containing a single Resource object.
-	 *         It may be used as an 
+	 *         It may be used as an
 	 *         {@link EnumerableResource EnumerableResource} or
 	 *         {@link TransferableResource TransferableResource},
 	 *         depending upon the desired operation.
@@ -510,11 +536,11 @@ public class ResourceFactory {
 				selectorList.add(selectorType);
 			}
 		}
-		
-		
+
+
 		return find( destination,  resourceURI, timeout,  selectorsSetType);
 	}
-	
+
     private static void setFragmentHeader(final String expression, final String dialect,
     		Management mgmt) throws SOAPException, JAXBException {
 		if (xmlBinding == null) {
@@ -523,8 +549,8 @@ public class ResourceFactory {
 
 		        // remove existing, if any
 //		        removeChildren(mgmt.getHeader(), FRAGMENT_TRANSFER);
-		        
-		        final DialectableMixedDataType dialectableMixedDataType = 
+
+		        final DialectableMixedDataType dialectableMixedDataType =
 		                Management.FACTORY.createDialectableMixedDataType();
 		        if (dialect != null) {
 //		            if (!XPath.isSupportedDialect(dialect)) {
@@ -532,15 +558,15 @@ public class ResourceFactory {
 //		            }
 		            dialectableMixedDataType.setDialect(dialect);
 		        }
-		        dialectableMixedDataType.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, 
+		        dialectableMixedDataType.getOtherAttributes().put(SOAP.MUST_UNDERSTAND,
 		                Boolean.TRUE.toString());
-		        
+
 		        //add the query string to the content of the FragmentTransfer Header
 		        dialectableMixedDataType.getContent().add(expression);
-		        
+
 		        final JAXBElement<DialectableMixedDataType> fragmentTransfer =
 		                Management.FACTORY.createFragmentTransfer(dialectableMixedDataType);
-		        
+
 		        //set the SOAP Header for Fragment Transfer
 		        xmlBinding.marshal(fragmentTransfer, mgmt.getHeader());
 		    }
@@ -548,7 +574,7 @@ public class ResourceFactory {
     /**
      * Gets the server identity.
      * @see ServerIdentity
-     * 
+     *
      * @param destination URL of the target service
      * @return {@link ServerIdentity ServerIdentity}
      * @throws SOAPException
@@ -564,11 +590,11 @@ public class ResourceFactory {
 			throw new RuntimeException("getIdentity attempt exceeded timout.");
 		}
 	}
-	
+
 	/**
      * Gets the server identity.
      * @see ServerIdentity
-     * 
+     *
      * @param destination URL of the target service
 	 * @param timeout the <code>OperationTimeout</code>. This is the
 	 *        maximum amount of time the client is willing to wait
@@ -585,11 +611,11 @@ public class ResourceFactory {
 		ServerIdentity identity = getIdentity(destination, timeout, map);
 		return identity;
 	}
-	
+
 	/**
      * Gets the server identity.
      * @see ServerIdentity
-     * 
+     *
      * @param destination URL of the target service
 	 * @param timeout the <code>OperationTimeout</code>. This is the
 	 *        maximum amount of time the client is willing to wait
@@ -604,34 +630,34 @@ public class ResourceFactory {
 	 */
 	public static ServerIdentity getIdentity(final String destination,int timeout, final
     		Entry<String, String>... headers) throws SOAPException, IOException, JAXBException, InterruptedException, TimeoutException{
-		
+
 		IdentifyTask identifyTask = new IdentifyTask(destination,headers);
-		
+
          	Thread identifyThread=new Thread(identifyTask);
         	identifyThread.start();
         	if(timeout<0)
         		identifyThread.join();
         	else
         		identifyThread.join(timeout);
-        	
+
         	if(identifyThread.isAlive()){
         		String timeoutMessage = "An identify attempt to "+destination+" exceeded timeout interval and has been abandoned";
 				log.info(timeoutMessage);
         		throw new TimeoutException(timeoutMessage);
         	}
-        	
+
         return identifyTask.servIdent;
 	}
 
 	/**
 	 * Sets the XmlBinding that will be used for marshalling and unmarshalling.
-	 * 
+	 *
 	 * @param binding
 	 */
 	public static void setBinding(XmlBinding binding) {
 		xmlBinding = binding;
 	}
-	
+
 	/**
 	 * Gets the XmlBinding that is used for marshaling and unmarshaling.
 	 * @return the XmlBinding.
@@ -639,21 +665,21 @@ public class ResourceFactory {
 	public static XmlBinding getBinding() {
 		return xmlBinding;
 	}
-	
+
 	/**
 	 * Creates a new resource instance on the server.
-	 *  
+	 *
 	 * @param destination A URL for the destination port of this service.
-	 * @param resourceURI A resource URI indicating the type of resource to create 
+	 * @param resourceURI A resource URI indicating the type of resource to create
 	 * @param timeoutInMilliseconds Time to wait before giving up on creation
 	 * @param content object to be marshaled into the SOAP document that represents
-	 *        the resource to be created. 
-	 * @param specVersion The wsman spec version of the client to create. You can 
+	 *        the resource to be created.
+	 * @param specVersion The wsman spec version of the client to create. You can
 	 * use null or the constant #LATEST.
 	 * @param binding {@link XmlBinding XmlBinding}
 	 *        to use to marshal and unmarshal the SOAP documents
 	 *        sent over the wire.
-	 * @return A Resource class representing the new resource created on the server. 
+	 * @return A Resource class representing the new resource created on the server.
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
@@ -664,7 +690,7 @@ public class ResourceFactory {
 			long timeoutInMilliseconds, Object content, String specVersion,XmlBinding binding)
 	throws SOAPException, JAXBException, IOException, FaultException,
 	DatatypeConfigurationException {
-		
+
 		// Actually create this object on the server
 		Document domContent = Management.newDocument();
 		if(content != null) {
@@ -673,30 +699,30 @@ public class ResourceFactory {
 
 		Resource resource=create( destination, resourceURI,
 				timeoutInMilliseconds,  domContent, specVersion);
-		
+
 		// now construct a JAXBResourceImpl to talk with it
 		JAXBResource jaxbResource=new JAXBResourceImpl(resource.getDestination(),resource.getResourceUri(),resource.getSelectorSet(),binding);
 		return jaxbResource ;
-		
+
 	}
-	
+
 	/**
 	 * Creates a new resource instance on the server.
-	 *  
+	 *
 	 * @param destination A URL for the destination port of this service.
-	 * @param resourceURI A resource URI indicating the type of resource to create 
+	 * @param resourceURI A resource URI indicating the type of resource to create
 	 * @param timeoutInMilliseconds Time to wait before giving up on creation
 	 * @param content object to be marshaled into the SOAP document that represents
-	 *        the resource to be created. 
-	 * @param specVersion The wsman spec version of the client to create. You can 
+	 *        the resource to be created.
+	 * @param specVersion The wsman spec version of the client to create. You can
 	 * use null or the constant #LATEST.
 	 * @param packageNames names of packages to be used to construct an
 	 *        {@link XmlBinding XmlBinding} object that will be used to marshal
 	 *        the resource into the SOAP document. NOTE: For performance reasons
-	 *        it is highly recommended to use 
+	 *        it is highly recommended to use
 	 *        {@link #createJAXB(String, String, long, Object, String, XmlBinding)}
 	 *        instead of this method and reuse the {@link XmlBinding} object.
-	 * @return A Resource class representing the new resource created on the server. 
+	 * @return A Resource class representing the new resource created on the server.
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
@@ -707,7 +733,7 @@ public class ResourceFactory {
 			long timeoutInMilliseconds, Object content,String specVersion, final String... packageNames)
 	throws SOAPException, JAXBException, IOException, FaultException,
 	DatatypeConfigurationException {
-		
+
 		return createJAXB( destination,  resourceURI,
 				 timeoutInMilliseconds,  content,  specVersion, new XmlBinding(null,packageNames));
 	}

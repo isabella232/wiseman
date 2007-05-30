@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensions.java,v 1.13 2007-04-03 12:18:39 jfdenise Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EnumerationExtensions.java,v 1.14 2007-05-30 20:31:03 nbeers Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -58,63 +65,63 @@ import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.xml.XmlBinding;
 
 public class EnumerationExtensions extends Enumeration {
-    
+
     public static final QName REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE =
             new QName(Management.NS_URI, "RequestTotalItemsCountEstimate", Management.NS_PREFIX);
-    
+
     public static final QName TOTAL_ITEMS_COUNT_ESTIMATE =
             new QName(Management.NS_URI, "TotalItemsCountEstimate", Management.NS_PREFIX);
-    
+
     public static final QName OPTIMIZE_ENUMERATION =
             new QName(Management.NS_URI, "OptimizeEnumeration", Management.NS_PREFIX);
-    
+
     public static final QName MAX_ELEMENTS =
             new QName(Management.NS_URI, "MaxElements", Management.NS_PREFIX);
-    
+
     public static final QName ENUMERATION_MODE =
             new QName(Management.NS_URI, "EnumerationMode", Management.NS_PREFIX);
-    
+
     public static final QName ITEMS =
             new QName(Management.NS_URI, "Items", Management.NS_PREFIX);
-    
+
     public static final QName ITEM =
             new QName(Management.NS_URI, "Item", Management.NS_PREFIX);
-    
+
     public static final QName END_OF_SEQUENCE =
             new QName(Management.NS_URI, "EndOfSequence", Management.NS_PREFIX);
-    
+
     public static final QName FILTER =
         new QName(Management.NS_URI, "Filter", Management.NS_PREFIX);
-    
+
     final static String WSMAN_ITEM = ITEM.getPrefix()+":"+ITEM.getLocalPart();
 
     public enum Mode {
         EnumerateEPR("EnumerateEPR"),
         EnumerateObjectAndEPR("EnumerateObjectAndEPR");
-        
+
         public static Mode fromBinding(final JAXBElement<EnumerationModeType> t) {
             return valueOf(t.getValue().value());
         }
-        
+
         private String mode;
         Mode(final String m) { mode = m; }
         public JAXBElement<EnumerationModeType> toBinding() {
             return Management.FACTORY.createEnumerationMode(EnumerationModeType.fromValue(mode));
         }
     }
-    
+
     public EnumerationExtensions() throws SOAPException {
         super();
     }
-    
+
     public EnumerationExtensions(final Addressing addr) throws SOAPException {
         super(addr);
     }
-    
+
     public EnumerationExtensions(final InputStream is) throws SOAPException, IOException {
         super(is);
     }
-    
+
     public void setEnumerate(final EndpointReferenceType endTo,
     		                 final boolean requestTotalItemsCountEstimate,
                              final boolean optimize,
@@ -123,7 +130,7 @@ public class EnumerationExtensions extends Enumeration {
                              final DialectableMixedDataType filter,
                              final Mode mode,
                              final Object... anys) throws JAXBException, SOAPException {
-               
+
         ArrayList<Object> list = new ArrayList<Object>();
 
         if (filter != null) {
@@ -134,7 +141,7 @@ public class EnumerationExtensions extends Enumeration {
         }
         if (optimize == true) {
         	list.add(Management.FACTORY.createOptimizeEnumeration(new AttributableEmpty()));
-        	
+
             if (maxElements > 0) {
                 final AttributablePositiveInteger posInt = new AttributablePositiveInteger();
                 posInt.setValue(new BigInteger(Integer.toString(maxElements)));
@@ -149,23 +156,23 @@ public class EnumerationExtensions extends Enumeration {
         if (requestTotalItemsCountEstimate)
            setRequestTotalItemsCountEstimate();
     }
-    
+
     // context must not be null, the others can be null
     // context must be either java.lang.String or org.w3c.dom.Element
     public void setPull(final Object context, final int maxChars,
             final int maxElements, final Duration maxDuration,
             final boolean requestTotalItemsCountEstimate)
             throws JAXBException, SOAPException, DatatypeConfigurationException {
-    	
+
     	super.setPull(context, maxChars, maxElements, maxDuration);
         if (requestTotalItemsCountEstimate)
             setRequestTotalItemsCountEstimate();
     }
-    
+
     public void setEnumerateResponse(final Object context, final String expires,
             final List<EnumerationItem> items, final EnumerationModeType mode, final boolean haveMore)
             throws JAXBException, SOAPException {
-        
+
         final AnyListType anyListType = Management.FACTORY.createAnyListType();
         final List<Object> any = anyListType.getAny();
         final DocumentBuilder builder = getDocumentBuilder();
@@ -188,9 +195,9 @@ public class EnumerationExtensions extends Enumeration {
 			super.setEnumerateResponse(context, expires);
 		}
     }
-    
-    private static void addEnumerationItem(List<Object> itemListAny, 
-            EnumerationItem ee, 
+
+    private static void addEnumerationItem(List<Object> itemListAny,
+            EnumerationItem ee,
             EnumerationModeType mode,
             DocumentBuilder builder,
             XmlBinding binding) throws JAXBException {
@@ -201,7 +208,7 @@ public class EnumerationExtensions extends Enumeration {
         } else if (EnumerationModeType.ENUMERATE_OBJECT_AND_EPR.equals(mode)) {
         	final ItemType item = Management.FACTORY.createItemType();
         	final Object obj = ee.getItem();
-            
+
         	// add the object to the Item
             if (obj instanceof Document) {
                 item.getContent().add(((Document)obj).getDocumentElement());
@@ -215,10 +222,10 @@ public class EnumerationExtensions extends Enumeration {
             itemListAny.add(Management.FACTORY.createItem(item));;
         }
     }
-    
+
     public void setPullResponse(final List<EnumerationItem> items, final Object context, final boolean haveMore, EnumerationModeType mode)
     throws JAXBException, SOAPException {
-    	
+
         final ItemListType itemList = FACTORY.createItemListType();
         final List<Object> itemListAny = itemList.getAny();
         final DocumentBuilder builder = getDocumentBuilder();
@@ -228,10 +235,10 @@ public class EnumerationExtensions extends Enumeration {
         for (final EnumerationItem ee : items) {
         	addEnumerationItem(itemListAny,ee,mode,builder,binding);
         }
-        
+
         super.setPullResponse(itemList, context, haveMore);
     }
-    
+
     public List<EnumerationItem> getItems() throws JAXBException, SOAPException {
 		final List<Object> items;
 		final PullResponse pullResponse = getPullResponse();
@@ -266,7 +273,7 @@ public class EnumerationExtensions extends Enumeration {
 		}
 		return itemList;
 	}
-    
+
     public boolean isEndOfSequence()
     throws JAXBException, SOAPException {
     	final Object eos;
@@ -283,7 +290,7 @@ public class EnumerationExtensions extends Enumeration {
     	}
         return null != eos;
     }
-    
+
     private int getNextElementIndex(NodeList list, int start) {
         for(int i = start; i < list.getLength(); i++) {
             Node n = list.item(i);
@@ -294,11 +301,11 @@ public class EnumerationExtensions extends Enumeration {
         }
         return -1;
     }
-    
+
     private EnumerationItem unbindItem(Object obj)
         throws JAXBException {
         // the three possibilities are: EPR only, Item and EPR or Item only
-        
+
     	Object item = null;
         EndpointReferenceType eprt = null;
 		if (obj instanceof JAXBElement) {
@@ -316,7 +323,7 @@ public class EnumerationExtensions extends Enumeration {
 					while (iter.hasNext()) {
 						Object itemObj = iter.next();
                                                 // XXX Revisit, JAXB is adding an empty String when unmarshaling
-                                                // a Mixed content. getContent() returns a list containing 
+                                                // a Mixed content. getContent() returns a list containing
                                                 // such empty String element
                                                 // BUG ID is : 6542005
                                                 // Unmarshalled @XmlMixed list contains an additional empty String
@@ -327,7 +334,7 @@ public class EnumerationExtensions extends Enumeration {
                                                     if(str.length() == 0)
                                                         continue;
                                                     else
-                                                       item = itemObj; 
+                                                       item = itemObj;
                                                 } else
                                                     if ((itemObj instanceof JAXBElement)
 								&& ((JAXBElement) itemObj).getDeclaredType()
@@ -349,19 +356,19 @@ public class EnumerationExtensions extends Enumeration {
 		}
 		return new EnumerationItem(item, eprt);
    }
-    
+
     public void setRequestTotalItemsCountEstimate() throws JAXBException {
         final AttributableEmpty empty = new AttributableEmpty();
         final JAXBElement<AttributableEmpty> emptyElement =
                 Management.FACTORY.createRequestTotalItemsCountEstimate(empty);
         getXmlBinding().marshal(emptyElement, getHeader());
     }
-    
+
     public AttributableEmpty getRequestTotalItemsCountEstimate() throws JAXBException, SOAPException {
         final Object value = unbind(getHeader(), REQUEST_TOTAL_ITEMS_COUNT_ESTIMATE);
         return value == null ? null : ((JAXBElement<AttributableEmpty>) value).getValue();
     }
-    
+
     public void setTotalItemsCountEstimate(final BigInteger itemCount) throws JAXBException {
         final AttributableNonNegativeInteger count = new AttributableNonNegativeInteger();
         final JAXBElement<AttributableNonNegativeInteger> countElement =
@@ -377,12 +384,12 @@ public class EnumerationExtensions extends Enumeration {
         }
         getXmlBinding().marshal(countElement, getHeader());
     }
-    
+
     public AttributableNonNegativeInteger getTotalItemsCountEstimate() throws JAXBException, SOAPException {
         final Object value = unbind(getHeader(), TOTAL_ITEMS_COUNT_ESTIMATE);
         return value == null ? null : ((JAXBElement<AttributableNonNegativeInteger>) value).getValue();
     }
-    
+
     private static Object extract(final List<Object> anyList, final Class classType, final QName eltName) {
         for (final Object any : anyList) {
             if (any instanceof JAXBElement) {
@@ -398,30 +405,30 @@ public class EnumerationExtensions extends Enumeration {
 
 	public DialectableMixedDataType getWsmanFilter() throws JAXBException, SOAPException {
 		Enumerate enumerate = getEnumerate();
-		
+
 		if (enumerate == null) {
 			return null;
 		}
-		return (DialectableMixedDataType) extract(enumerate.getAny(), 
-				                                  DialectableMixedDataType.class, 
+		return (DialectableMixedDataType) extract(enumerate.getAny(),
+				                                  DialectableMixedDataType.class,
 				                                  FILTER);
 	}
-	
+
 	public EnumerationModeType getModeType() throws JAXBException, SOAPException {
 		Enumerate enumerate = getEnumerate();
-		
+
 		if (enumerate == null) {
 			return null;
 		}
-		EnumerationModeType type =  (EnumerationModeType) extract(enumerate.getAny(), 
-				                                                  EnumerationModeType.class, 
+		EnumerationModeType type =  (EnumerationModeType) extract(enumerate.getAny(),
+				                                                  EnumerationModeType.class,
 		                                                          ENUMERATION_MODE);
 		return (type == null) ? null : type;
 	}
-	
+
 	public Mode getMode() throws JAXBException, SOAPException {
 		Enumerate enumerate = getEnumerate();
-		
+
 		if (enumerate == null) {
 			return null;
 		}
@@ -431,24 +438,24 @@ public class EnumerationExtensions extends Enumeration {
 
 	public boolean getOptimize() throws JAXBException, SOAPException {
 		Enumerate enumerate = getEnumerate();
-		
+
 		if (enumerate == null) {
 			return false;
 		}
-		AttributableEmpty optimize =  (AttributableEmpty) extract(enumerate.getAny(), 
-                                               AttributableEmpty.class, 
+		AttributableEmpty optimize =  (AttributableEmpty) extract(enumerate.getAny(),
+                                               AttributableEmpty.class,
 				                               OPTIMIZE_ENUMERATION);
 		return (optimize == null) ? false : true;
 	}
 
 	public int getMaxElements() throws JAXBException, SOAPException {
 		Enumerate enumerate = getEnumerate();
-		
+
 		if (enumerate == null) {
 			return 1;
 		}
-		AttributablePositiveInteger max =  (AttributablePositiveInteger) extract(enumerate.getAny(), 
-				AttributablePositiveInteger.class, 
+		AttributablePositiveInteger max =  (AttributablePositiveInteger) extract(enumerate.getAny(),
+				AttributablePositiveInteger.class,
 				MAX_ELEMENTS);
 
 		return (max == null) ? 1 : max.getValue().intValue();

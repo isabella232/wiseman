@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationExtensionsTest.java,v 1.12 2007-04-23 19:18:11 nbeers Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EnumerationExtensionsTest.java,v 1.13 2007-05-30 20:30:24 nbeers Exp $
  */
 
 package management;
@@ -51,12 +58,12 @@ import com.sun.ws.management.xml.XmlBinding;
  * Unit test for WS-Enumeration extensions in WS-Management
  */
 public class EnumerationExtensionsTest extends TestBase {
-    
+
 	XmlBinding binding;
-	
+
     public EnumerationExtensionsTest(final String testName) {
         super(testName);
-        
+
 		// Set the system property to always create bindings with our package
 		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
 				"com.hp.examples.ws.wsman.user");
@@ -66,14 +73,14 @@ public class EnumerationExtensionsTest extends TestBase {
 			fail(e.getMessage());
 		}
     }
-    
+
     public static junit.framework.Test suite() {
         final junit.framework.TestSuite suite = new junit.framework.TestSuite(EnumerationExtensionsTest.class);
         return suite;
     }
-    
+
     public void testEnumerateVisual() throws Exception {
-        
+
 
         final EndpointReferenceType endTo = Addressing.createEndpointReference("http://host/endTo", null, null, null, null);
         final String expires = DatatypeFactory.newInstance().newDuration(300000).toString();
@@ -89,20 +96,20 @@ public class EnumerationExtensionsTest extends TestBase {
     	settings.setXmlBinding(binding);
     	settings.setExpires(300000);
     	settings.setEndTo("http://host/endTo");
-    	
+
         settings.setFilterDialect("http://mydomain/my.filter.dialect");
         settings.setFilter("my/filter/expression");
 
-   	
+
     	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
-    	
+
         enu.prettyPrint(logfile);
-        
+
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
         e2.setXmlBinding(binding);
-        
+
         e2.prettyPrint(logfile);
         final Enumerate enu2 = e2.getEnumerate();
         assertEquals(expires, enu2.getExpires());
@@ -111,34 +118,34 @@ public class EnumerationExtensionsTest extends TestBase {
         assertEquals(settings.getFilter(), e2.getWsmanFilter().getContent().get(0));
         assertEquals(settings.getEnumerationMode(), e2.getMode());
     }
-    
+
     public void testEnumerateItemCountEstimateVisual() throws Exception {
-        
+
         final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_ACTION_URI);
-        
+
         enu.setEnumerate(null, false, false, 0, null, null, null);
-        
+
         enu.setRequestTotalItemsCountEstimate();
-        
+
         enu.prettyPrint(logfile);
-        
+
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
         e2.setXmlBinding(binding);
-        
+
         assertNotNull(e2.getRequestTotalItemsCountEstimate());
     }
-    
+
     public void testEnumerateTotalItemCountEstimateVisual() throws Exception {
         totalItemCountEstimateVisual(BigInteger.TEN);
         totalItemCountEstimateVisual(BigInteger.ONE);
         totalItemCountEstimateVisual(BigInteger.ZERO);
         // totalItemCountEstimateVisual(null);
     }
-    
+
     /**
      * Test ability to return EPRs in an enumeration
      * rather than objects
@@ -146,8 +153,8 @@ public class EnumerationExtensionsTest extends TestBase {
     public void testEnumerateEPR() throws Exception {
         enumerateTestWithEPRs(false);
     }
-    
-    
+
+
     /**
      * Test ability to return objects and their associated Endpoint References
      * in an enumeration
@@ -155,39 +162,39 @@ public class EnumerationExtensionsTest extends TestBase {
     public void testEnumerateObjectAndEPR() throws Exception {
         enumerateTestWithEPRs(true);
     }
-    
+
     public void totalItemCountEstimateVisual(final BigInteger itemCount) throws Exception {
-        
+
         final EnumerationExtensions enu = new EnumerationExtensions();
         enu.setXmlBinding(binding);
         enu.setAction(Enumeration.ENUMERATE_RESPONSE_URI);
-        
+
         enu.setEnumerateResponse(null, null, null, null, true);
         enu.setTotalItemsCountEstimate(itemCount);
-        
+
         enu.prettyPrint(logfile);
-        
+
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         enu.writeTo(bos);
         final EnumerationExtensions e2 = new EnumerationExtensions(new ByteArrayInputStream(bos.toByteArray()));
         e2.setXmlBinding(binding);
-        
+
         final AttributableNonNegativeInteger count = e2.getTotalItemsCountEstimate();
         assertNotNull(count);
         assertEquals(itemCount, count.getValue());
     }
-    
+
     /**
      * Workhorse method for the enumeration test with EPRs
      * @param includeObjects determines whether the objects should be included
      * in addition to the EPRs themselves
      */
     private void enumerateTestWithEPRs(final boolean includeObjects) throws Exception {
-        
+
         final String RESOURCE = "wsman:test/java/system/properties";
         // final String RESOURCE = "wsman:test/pull_source";
         // prepare the test
-        
+
         final DatatypeFactory factory = DatatypeFactory.newInstance();
 
         EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
@@ -195,20 +202,20 @@ public class EnumerationExtensionsTest extends TestBase {
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
     	settings.setTo(DESTINATION);
     	settings.setResourceUri(RESOURCE);
-    	
+
     	if (includeObjects) {
     		settings.setEnumerationMode(EnumerationExtensions.Mode.EnumerateObjectAndEPR);
     	} else {
     		settings.setEnumerationMode(EnumerationExtensions.Mode.EnumerateEPR);
-    		
+
     	}
     	settings.setXmlBinding(binding);
     	settings.setExpires(60000);
-    	
+
     	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
 
         enu.prettyPrint(logfile);
-        
+
         // retrieve the response
         final Addressing response = HttpClient.sendRequest(enu);
         response.setXmlBinding(binding);
@@ -221,12 +228,12 @@ public class EnumerationExtensionsTest extends TestBase {
             // system properties
             fail(response.getBody().getFault().getFaultString());
         }
-        
+
         // Prepare response objects
         final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
-        
+
         // walk the response
         boolean done = false;
         do {
@@ -235,7 +242,7 @@ public class EnumerationExtensionsTest extends TestBase {
         	settings.setMaxCharacters(0);
         	settings.setMaxElements(3);
         	settings.setTimeout(30000);
-        	
+
             // Set up a request to pull the next item of the enumeration
 
         	final Enumeration enuPull = EnumerationUtility.buildMessage(null, settings);
@@ -243,13 +250,13 @@ public class EnumerationExtensionsTest extends TestBase {
             final Addressing praddr = HttpClient.sendRequest(enuPull);
             praddr.setXmlBinding(binding);
             praddr.prettyPrint(logfile);
-            
+
             // Fail if response is an error
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);
                 fail(praddr.getBody().getFault().getFaultString());
             }
-            
+
             // Check the response for appropriate EPRs
             final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
             final PullResponse pr = pullResponse.getPullResponse();
@@ -258,7 +265,7 @@ public class EnumerationExtensionsTest extends TestBase {
             if (pr.getEnumerationContext() != null) {
                 context = (String) pr.getEnumerationContext().getContent().get(0);
             }
-            
+
             /*
              * The returned items are in one of two forms, if we are doing
              * an enumeration of the form EnumerateEPR, then every item will
@@ -287,41 +294,41 @@ public class EnumerationExtensionsTest extends TestBase {
                 	assertNull(item.getItem());
                 assertNotNull(item.getEndpointReference());
                 final EndpointReferenceType epr = item.getEndpointReference();
-                
+
                 // validate that the element is an EndpointReference
                 final String address = epr.getAddress().getValue();
                 assertEquals(address, DESTINATION);
-            }            
-            
+            }
+
             if (pr.getEndOfSequence() != null) {
                 done = true;
             }
         } while (!done);
     }
-    
+
     public void testOptimizedEnumeration() throws Exception {
-    	
+
     	final String resource = "wsman:test/java/system/properties";;
-        
+
     	// first do the tests with EPRs turned off
         optimizedEnumerationTest(null, 2, resource, null, null, null);
-        
+
         // do not specify MaxElements, letting it default to its implied value of 1
         optimizedEnumerationTest(null, -1, resource, null, null, null);
-        
+
         // now repeat the same tests with EPRs turned on
         optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, 2, resource, null, null, null);
-        
+
         // do not specify MaxElements, letting it default to its implied value of 1
         optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, -1, resource, null, null, null);
-        
+
         // finally, repeat the same tests with only EPRs (no items)
         optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, 2, resource, null, null, null);
-        
+
         // do not specify MaxElements, letting it default to its implied value of 1
         optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, -1, resource, null, null, null);
     }
-    
+
     public void optimizedEnumerationTest(
     		final EnumerationExtensions.Mode mode,
             final int maxElements,
@@ -329,7 +336,7 @@ public class EnumerationExtensionsTest extends TestBase {
     		final String dialect,
     		final String expression,
     		final Set<OptionType> options) throws Exception {
-    	
+
 
     	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
     	settings.setEnumerationMessageActionType(Enumeration.ENUMERATE_ACTION_URI);
@@ -340,7 +347,7 @@ public class EnumerationExtensionsTest extends TestBase {
     	settings.setMaxElements(maxElements);
     	settings.setRequestForOptimizedEnumeration(true);
     	settings.setRequestForTotalItemsCount(true);
-    	
+
         // Process any filter
          if ((expression != null) && (expression.length() > 0)) {
             if ((dialect != null) && (dialect.length() > 0))
@@ -348,8 +355,8 @@ public class EnumerationExtensionsTest extends TestBase {
                 settings.setFilterDialect(dialect);
             }
             settings.setFilter(expression);
-         } 
-    	
+         }
+
     	if (options != null) {
     		settings.setOptionSet(options);
     	}
@@ -366,23 +373,23 @@ public class EnumerationExtensionsTest extends TestBase {
             // system properties
             fail(response.getBody().getFault().getFaultString());
         }
-        
+
         final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
         final EnumerateResponse enr = enuResponse.getEnumerateResponse();
         String context = (String) enr.getEnumerationContext().getContent().get(0);
         for (final EnumerationItem item : enuResponse.getItems()) {
             assertMode(mode, item);
         }
-        
+
         final AttributableNonNegativeInteger ee = enuResponse.getTotalItemsCountEstimate();
         assertNotNull(ee);
         assertTrue(ee.getValue().intValue() > 0);
-        
+
 
         final DatatypeFactory factory = DatatypeFactory.newInstance();
         boolean done = enuResponse.isEndOfSequence();
         while (!done) {
-        	
+
         	settings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
         	settings.setEnumerationContext(context);
         	settings.setMaxCharacters(0);
@@ -391,11 +398,11 @@ public class EnumerationExtensionsTest extends TestBase {
         	settings.setTo(DESTINATION);
         	settings.setResourceUri(resource);
         	settings.setRequestForTotalItemsCount(true);
-        	
+
             // Set up a request to pull the next item of the enumeration
 
         	final Enumeration enuPull = EnumerationUtility.buildMessage(null, settings);
-        	
+
         	enuPull.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(enuPull);
             praddr.setXmlBinding(binding);
@@ -404,7 +411,7 @@ public class EnumerationExtensionsTest extends TestBase {
                 praddr.prettyPrint(System.err);
                 fail(praddr.getBody().getFault().getFaultString());
             }
-            
+
             final EnumerationExtensions pullResponse = new EnumerationExtensions(praddr);
             final PullResponse pr = pullResponse.getPullResponse();
             // update context for the next pull (if any)
@@ -417,19 +424,19 @@ public class EnumerationExtensionsTest extends TestBase {
             if (pr.getEndOfSequence() != null) {
                 done = true;
             }
-            
+
             final AttributableNonNegativeInteger pe = pullResponse.getTotalItemsCountEstimate();
             assertNotNull(pe);
             assertTrue(pe.getValue().intValue() > 0);
         }
     }
-    
+
     private static void assertMode(final EnumerationExtensions.Mode mode,
             final EnumerationItem item) {
-        
+
         final Object elt = item.getItem();
         final EndpointReferenceType epr = item.getEndpointReference();
-        
+
         if (mode == null) {
             assertNotNull(elt);
             assertNull(epr);

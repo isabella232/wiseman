@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: EnumerationItem.java,v 1.3 2006-12-19 15:25:46 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: EnumerationItem.java,v 1.4 2007-05-30 20:31:04 nbeers Exp $
  */
 
 package com.sun.ws.management.server;
@@ -25,7 +32,7 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
  * from a handler for the server to return elements for an enumeation request.
  */
 public final class EnumerationItem {
-    
+
     /**
      * Holds an enumeration item.
      */
@@ -35,14 +42,14 @@ public final class EnumerationItem {
      * Holds a reference to the item.
      */
     private final EndpointReferenceType endpointReference;
-   
+
     /**
      * Constructor.
-     * 
+     *
      * @param item an enumeration item that satisfies the request.
      *             The parameter type must be recognized by the Marshaller
      *             in order to allow marshalling & demarshalling this object.
-     *             @see com.sun.ws.management.xml.XmlBinding 
+     *             @see com.sun.ws.management.xml.XmlBinding
      * @param epr reference to the specified item.
      */
     public EnumerationItem(final Object item, final EndpointReferenceType epr) {
