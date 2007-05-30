@@ -19,22 +19,44 @@
 	<target name="clean">
 		<delete file="../traffic*.jar"/>
 		<delete file="../traffic.war"/>
+		<delete file="../users.war"/>
+		<delete file="../*users-client.jar"/>
 	</target>
 
 	<target name="build" depends="init">
-		<ant antfile="trafficlight_client/build.xml" inheritall="no" description="Build Traffic Light Client"/>
+		<ant antfile="trafficlight_client/build.xml" inheritall="no" 
+			description="Build Traffic Light Client"/>
 		<copy todir="..">
 			<fileset dir="trafficlight_client/dist">
 				<include name="**/traffic*.jar" />
 			</fileset>
 		</copy>
 
-		<ant antfile="trafficlight_server/build.xml" inheritall="no" description="Build Traffic Light Server"/>
+		<ant antfile="trafficlight_server/build.xml" inheritall="no" 
+			description="Build Traffic Light Server"/>
 		<copy todir="..">
 			<fileset dir="trafficlight_server/dist">
 				<include name="**/traffic.war"/>
 			</fileset>
 		</copy>
+
+		<!-- Build the contacts Client artifacts -->
+		<ant antfile="contacts_client/build.xml" inheritall="no" 
+			description="Build Contacts/Users Client"/>
+		<copy todir="..">
+			<fileset dir="contacts_client/dist">
+				<include name="**/*users-client.jar" />
+			</fileset>
+		</copy>
+
+		<ant antfile="contacts/build.xml" inheritall="no" 
+			description="Build Contacts/Users Server"/>
+		<copy todir="..">
+			<fileset dir="contacts/dist">
+				<include name="**/users.war"/>
+			</fileset>
+		</copy>
+		
 	</target>
 
 </project>

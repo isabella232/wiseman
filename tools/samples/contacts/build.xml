@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="users_server" default="war" basedir=".">
+
+	<!-- Test that a valid ant version is being used -->
+	<condition property="valid.ant.version">
+		<or>
+		  <contains substring="1.6.5" string="${ant.version}" />	
+		  <contains substring="1.7." string="${ant.version}" />	
+		</or>
+	</condition>
+	<fail message="You should be using ant 1.6.5 or better."
+	      unless="valid.ant.version"/>
+	
+	<property file="project.properties"/>
+	<property file="${user.home}/.ant.properties"/>
+
+	<!-- Test that the Wiseman root dir is set -->
+	<condition property="wiseman.root.set">
+		<length string="${wiseman.root}" trim="true" when="greater" length="0" />
+	</condition>
+	<fail message="You need to set the Wiseman root directory before proceeding." 
+		unless="wiseman.root.set"/>
+	
+<!-- Uncomment to enable proxy settings 
+	
+	<setproxy proxyhost="${http.proxyHost}" 
+	          proxyport="${http.proxyPort}" 
+	          nonproxyhosts="${http.nonProxyHosts}"/> -->
+
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="jaxb.compile.classpath">
+		<!-- <fileset dir="${extern.lib.dir}"> -->
+		<fileset dir="${extern.lib.dir}/jaxws">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!--  =================================================  -->
+	<!--   "init" - initializes props and dirs for targets   -->
+	<!--  =================================================  -->
+	<target name="init">
+		<!-- clean up earlier copies -->
+		<delete dir="${basedir}/${dist.dir}" />
+		<delete dir="${basedir}/${classes.dir}" />
+		
+		<!-- determine if user added an xsd to the dir -->
+		<fileset id="empty" dir="${xsd.dir}" includes="**/*.xsd"/>
+		<pathconvert property="nofiles.files" refid="empty"/>
+		<condition property="xsd.user.not.null">
+			<not>
+				<equals arg1="" arg2="${nofiles.files}"/>
+			</not>
+		</condition>
+		<mkdir dir="${basedir}/${dist.dir}" />
+		<mkdir dir="${basedir}/${classes.dir}" />
+		<mkdir dir="${basedir}/${gen.src.dir}" />
+	</target>
+
+
+	<!--  ===========================================================  -->
+	<!--   "compile" - Compiles source files in src and gen-src dirs   -->
+	<!--  ===========================================================  -->
+	<target name="compile" 
+		depends="init" 
+		description="Compiles source files in src and gen-src directories.">
+
+		<!-- generate jaxb artifacts. -->
+		<delete dir="${gen.src.dir}" />
+		<antcall target="jaxb"/>
+		
+		<!-- compile the jaxb src just generated -->
+		<javac destdir="${basedir}/${classes.dir}"
+                   debug="${debug}">
+			<classpath refid="compile.classpath" />
+			<src path="${basedir}/${gen.src.dir}" />
+		</javac>
+
+		<!-- compile the war src content -->
+		<javac destdir="${basedir}/${classes.dir}"
+                   debug="${debug}">
+			<classpath refid="compile.classpath" />
+			<src path="${basedir}/${src.dir}" />
+		</javac>
+
+		<!-- Copy all other artifacts over -->		
+		<copy todir="${basedir}/${classes.dir}">
+			<fileset dir="${basedir}/${src.dir}" includes="**/*.gif,**/*.properties,**/*.xml"/>
+		</copy> 
+
+		<copy todir="${basedir}/${classes.dir}">
+			<fileset dir="${basedir}/${src.dir}" includes="**/*.gif,**/*.properties"/>
+		</copy>
+	</target>
+
+	<!--  ===================================================================  -->
+	<!--   "jaxb" - Runs JAXB's XJC compiler on any .xsd files in the xsd dir  -->
+	<!--  ===================================================================  -->
+	<target name="jaxb" 
+		depends="init" if="xsd.user.not.null" 
+		description="Runs JAXB's XJC compiler on any .xsd files in the xsd directory.">
+		<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+            <classpath refid="jaxb.compile.classpath" />					
+		</taskdef>
+		<xjc destdir="${gen.src.dir}">
+			<!-- uncomment if HTTP proxies are needed for internet access, 
+                 define it in ${user.home}/.ant.properties 
+			<arg value="-httpproxy" />
+			<arg value="${http.proxy}" /> -->
+			<schema dir="${basedir}/${xsd.dir}" includes="user.xsd" />
+			<produces dir="${gen.src.dir}" includes="com.hp.examples.ws.wsman.user/*.java" />
+		</xjc>
+	</target>
+
+	<!--  =================================================  -->
+	<!--   "deploy" - Deploys the jar to a webapp's lib dir  -->
+	<!--  =================================================  -->
+	<path id="deployer.classpath">
+		<pathelement path="${catalina.home}/server/lib/catalina-ant.jar" />
+	</path>
+
+	<target name="deploy" depends="war">
+		<taskdef name="deploy" 
+			     classname="org.apache.catalina.ant.DeployTask" 
+			     classpathref="deployer.classpath" />
+		<deploy url="${catalina.manager.url}" 
+			    username="${catalina.manager.username}" 
+			    password="${catalina.manager.password}"
+		        path="${war.context.path}" 
+			    war="${basedir}/${dist.dir}/${war.filename}" 
+			    update="true" />
+	</target>
+	
+	<!--  =================================================  -->
+	<!--   "war" - Create the war file                       -->
+	<!--  =================================================  -->
+	<target name="war" depends="compile">
+		<war destfile="${basedir}/${dist.dir}/${war.filename}"
+	         webxml="${wiseman.root}/etc/web.xml"
+	         index="true">
+			<classes dir="${basedir}/${classes.dir}">
+				<include name="**" />
+			</classes>
+			<classes dir="etc">
+				<include name="binding.properties" />
+				<include name="metadata.properties" />
+				<include name="metadata-handlers.properties" />
+				<include name="wsman-exts.properties" />
+				<include name="users.store.xml" />
+			</classes>
+			<lib dir="${lib.dir}">
+				<include  name="wiseman.jar" />
+				<include  name="wiseman-core.jar" />
+				<include  name="velocity-1.4.jar" />
+				<include  name="velocity-dep-1.4.jar" />
+			</lib>
+			<lib dir="${extern.lib.dir}/jaxws">
+				<include  name="activation.jar" />
+				<include  name="jsr173_api.jar" />
+				<include  name="jaxb-api.jar" />
+				<include  name="jaxb-impl.jar" />
+			</lib>
+			<lib dir="${extern.lib.dir}/jaxws">
+				<include  name="saaj-api.jar" />
+				<include  name="saaj-impl.jar" />
+			</lib>
+			<metainf dir="${wiseman.root}/etc">
+				<include name="context.xml" />
+			</metainf>
+			<webinf dir="${wiseman.root}/etc">
+				<include name="sun-web.xml" />
+			</webinf>
+
+			<!-- the build runs with schema validation by default 
+	             to disable schema validation, see etc/xsd/README -->
+			<!-- schemas for schema validation (exclude any wiseman schemas) -->
+            <zipfileset dir="${basedir}/${xsd.dir}"
+                        prefix="xsd"
+                        includes="**/*.xsd"
+                        excludes="wiseman/**" />
+			
+			<!-- schemas for HTTP GET access -->
+            <zipfileset dir="${basedir}/${xsd.dir}"
+                        prefix="schemas"
+                        includes="**/*.xsd" />
+		</war>
+	</target>
+</project>

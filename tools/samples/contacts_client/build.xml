@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="users_client" default="dist" basedir=".">
+
+	<!-- Test that a valid ant version is being used -->
+	<condition property="valid.ant.version">
+		<or>
+		  <contains substring="1.6.5" string="${ant.version}" />	
+		  <contains substring="1.7." string="${ant.version}" />	
+		</or>
+	</condition>
+	<fail message="You should be using ant 1.6.5 or better."
+	      unless="valid.ant.version"/>
+
+	<!-- load the defined properties. -->
+	<property file="project.properties"/>
+	<property file="${user.home}/.ant.properties"/>
+
+	<!-- Test that the Wiseman root dir is set -->
+	<condition property="wiseman.root.set">
+		<length string="${wiseman.root}" trim="true" when="greater" length="0" />
+	</condition>
+	<fail message="You need to set the Wiseman root directory before proceeding." 
+		unless="wiseman.root.set"/>
+	
+	<setproxy proxyhost="${http.proxyHost}" 
+	          proxyport="${http.proxyPort}" 
+	          nonproxyhosts="${http.nonProxyHosts}"/>
+
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="jaxb.compile.classpath">
+		<fileset dir="${extern.lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!--  =================================================  -->
+	<!--   "init" - initializes props and dirs for targets   -->
+	<!--  =================================================  -->
+	<target name="init" depends="clean">
+		
+		<!-- determine if user added an xsd to the dir -->
+		<fileset id="empty" dir="${xsd.dir}" includes="**/*.xsd"/>
+		<pathconvert property="nofiles.files" refid="empty"/>
+		<condition property="xsd.user.not.null">
+			<not>
+				<equals arg1="" arg2="${nofiles.files}"/>
+			</not>
+		</condition>
+		
+		<!-- create the directories -->
+		<mkdir dir="${basedir}/${dist.dir}" />
+		<mkdir dir="${basedir}/${classes.dir}" />
+		<mkdir dir="${basedir}/${gen.src.dir}" />
+	</target>
+
+	<!--  ===================================================================  -->
+	<!--   "jar" - Compiles GUI source files in src dir and Jar them               -->
+	<!--  ===================================================================  -->
+	<target name="jar" depends="compile">
+		
+		<!-- Builds the cmd line client executable jar for simple testing-->
+		<jar destfile="${basedir}/${dist.dir}/${client.jar.file}">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Built-At" value="${DSTAMP}" />
+				<attribute name="Specification-Title" value="WS-Management" />
+				<attribute name="Specification-Version" value="1.0.0a" />
+				<attribute name="Implementation-Title" value="Users cmdline Client" />
+				<attribute name="Implementation-Version" value="1.0" />
+				<attribute name="Sealed" value="false" />
+				<attribute name="Main-Class" value="com.hp.examples.client.contacts.AccessContacts" />
+				<attribute name="Class-Path" value="lib/wiseman-client.jar lib/wiseman.jar 
+					lib/wiseman-core.jar lib/jaxws/jaxws-api.jar lib/jaxws/jaxws-rt.jar 
+					lib/wiseman-tools.jar 
+					lib/jaxws/activation.jar lib/jaxws/jaxb-api.jar lib/jaxws/jaxb-impl.jar 
+					lib/jaxws/jsr173_api.jar lib/jaxws/jsr181-api.jar lib/jaxws/jsr250-api.jar 
+					lib/jaxws/saaj-api.jar lib/jaxws/saaj-impl.jar" />
+			</manifest>
+			<fileset dir="${basedir}/${classes.dir}"/>
+		</jar>
+		
+		<!--Builds a simple GUI client executable jar for simple testing -->
+		<jar destfile="${basedir}/${dist.dir}/gui-${client.jar.file}">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Built-At" value="${DSTAMP}" />
+				<attribute name="Specification-Title" value="WS-Management"/>
+				<attribute name="Specification-Version" value="1.0.0a"/>
+				<attribute name="Implementation-Title" value="Users GUI Client"/>
+				<attribute name="Implementation-Version" value="1.0"/>
+				<attribute name="Sealed" value="false" />
+				<attribute name="Main-Class" value="com.hp.examples.client.contacts.ResourceAccessor" />
+				<attribute name="Class-Path" value="lib/wiseman-client.jar lib/wiseman.jar
+					lib/wiseman-core.jar lib/jaxws/jaxws-api.jar lib/jaxws/jaxws-rt.jar 
+					lib/jaxws/activation.jar lib/jaxws/jaxb-api.jar lib/jaxws/jaxb-impl.jar 
+					lib/jaxws/jsr173_api.jar lib/jaxws/jsr181-api.jar lib/jaxws/jsr250-api.jar 
+					lib/jaxws/saaj-api.jar lib/jaxws/saaj-impl.jar" />
+			</manifest>
+			<fileset dir="${basedir}/${classes.dir}"/>
+		</jar>
+	</target>
+
+	<!--  ==========================================================  -->
+	<!--   "compile" - Compiles source files in src dir               -->
+	<!--  ==========================================================  -->
+	<target name="compile" depends="jaxb">
+		<!-- Compile the jaxb src files  -->
+		<javac destdir="${basedir}/${classes.dir}"
+	           debug="${debug}">
+			<classpath refid="compile.classpath" />
+			<src path="${basedir}/${gen.src.dir}" />
+		</javac>
+		
+		<!-- Compile the src files  -->
+		<javac destdir="${basedir}/${classes.dir}"
+	           debug="${debug}">
+			<classpath refid="compile.classpath" />
+			<src path="${basedir}/${src.dir}" />
+		</javac>
+		<copy todir="${basedir}/${classes.dir}">
+			<fileset dir="${basedir}/${src.dir}">
+				<include name="**/*.properties" />
+			</fileset>
+		</copy>
+	</target>
+	
+	<!--  ===================================================================  -->
+	<!--   "clean" - Deletes the directories ${dist.dir} and ${classes.dir}    -->
+	<!--  ===================================================================  -->
+	<target name="clean" 
+		description="Deletes the directories ${dist.dir} and ${classes.dir}">
+		<delete dir="${basedir}/${dist.dir}"/>
+		<delete dir="${basedir}/${classes.dir}"/>
+	</target>
+
+	<target name="dist" depends="jar"/>
+
+	<!--  ===================================================================  -->
+	<!--   "jaxb" - Runs JAXB's XJC compiler on any .xsd files in the xsd dir  -->
+	<!--  ===================================================================  -->
+	<target name="jaxb" 
+		depends="init" if="xsd.user.not.null" 
+		description="Runs JAXB's XJC compiler on any .xsd files in the xsd directory.">
+		<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+            <classpath refid="jaxb.compile.classpath" />					
+		</taskdef>
+		<xjc destdir="${gen.src.dir}">
+			<!-- uncomment if HTTP proxies are needed for internet access, 
+                 define it in ${user.home}/.ant.properties 
+			<arg value="-httpproxy" />
+			<arg value="${http.proxy}" /> -->
+			<schema dir="${basedir}/${xsd.dir}" includes="user.xsd" />
+			<produces dir="${gen.src.dir}" includes="com.hp.examples.ws.wsman.user/*.java" />
+		</xjc>
+	</target>
+
+	<!--  ===================================================================  -->
+	<!--   "jaxb-http" - Runs JAXB's XJC compiler on .xsd file hosted via http  -->
+	<!--  ===================================================================  -->
+	<target name="jaxb-http" 
+		depends="init"  
+		description="Runs JAXB's XJC compiler on on .xsd file hosted via http.">
+		<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+            <classpath refid="jaxb.compile.classpath" />					
+		</taskdef>
+		<xjc destdir="${gen.src.dir}" schema="http://localhost:8080/users/schemas/user.xsd">
+			<!-- uncomment if HTTP proxies are needed for internet access, 
+                 define it in ${user.home}/.ant.properties 
+			<arg value="-httpproxy" />
+			<arg value="${http.proxy}" /> -->
+			<produces dir="${gen.src.dir}" includes="com.hp.examples.ws.wsman.user/*.java" />
+		</xjc>
+	</target>
+
+</project>

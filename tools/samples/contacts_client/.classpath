@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/jaxws/activation.jar"/>
+	<classpathentry kind="lib" path="lib/junit.jar"/>
+	<classpathentry kind="lib" path="lib/mViewer.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="lib/velocity-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/velocity-dep-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/wiseman_src.jar"/>
+	<classpathentry kind="lib" path="lib/wiseman_test.jar"/>
+	<classpathentry kind="lib" path="lib/wiseman.jar"/>
+	<classpathentry kind="lib" path="lib/wiseman-client.jar"/>
+	<classpathentry kind="lib" path="lib/wiseman-client-src.jar"/>
+	<classpathentry kind="lib" path="lib/wiseman-core.jar"/>
+	<classpathentry kind="lib" path="lib/wiseman-tools.jar"/>
+	<classpathentry kind="lib" path="lib/wsdl4j.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/FastInfoset.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/http.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jaxb-xjc.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jaxws-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jaxws-rt.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jaxws-tools.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jsr173_api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jsr181-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/jsr250-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/resolver.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/saaj-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/saaj-impl.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/sjsxp.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/stax-ex.jar"/>
+	<classpathentry kind="lib" path="lib/jaxws/streambuffer.jar"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>

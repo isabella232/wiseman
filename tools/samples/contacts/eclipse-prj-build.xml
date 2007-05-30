@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project name="contacts" default="build" basedir=".">
+    <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="../../"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.5"/>
+    <property name="source" value="1.5"/>
+    <path id="contacts.classpath">
+        <pathelement location="bin"/>
+        <pathelement location="lib/jaxws/activation.jar"/>
+        <pathelement location="lib/ant.jar"/>
+        <pathelement location="lib/ant-launcher.jar"/>
+        <pathelement location="lib/junit.jar"/>
+        <pathelement location="lib/mViewer.jar"/>
+        <pathelement location="lib/servlet-api.jar"/>
+        <pathelement location="lib/velocity-1.4.jar"/>
+        <pathelement location="lib/velocity-dep-1.4.jar"/>
+        <pathelement location="lib/wiseman_src.jar"/>
+        <pathelement location="lib/wiseman_test.jar"/>
+        <pathelement location="lib/wiseman.jar"/>
+        <pathelement location="lib/wiseman-client.jar"/>
+        <pathelement location="lib/wiseman-client-src.jar"/>
+        <pathelement location="lib/wiseman-core.jar"/>
+        <pathelement location="lib/wiseman-tools.jar"/>
+        <pathelement location="lib/wsdl4j.jar"/>
+        <pathelement location="lib/jaxws/FastInfoset.jar"/>
+        <pathelement location="lib/jaxws/http.jar"/>
+        <pathelement location="lib/jaxws/jaxb-api.jar"/>
+        <pathelement location="lib/jaxws/jaxb-impl.jar"/>
+        <pathelement location="lib/jaxws/jaxb-xjc.jar"/>
+        <pathelement location="lib/jaxws/jaxws-api.jar"/>
+        <pathelement location="lib/jaxws/jaxws-rt.jar"/>
+        <pathelement location="lib/jaxws/jaxws-tools.jar"/>
+        <pathelement location="lib/jaxws/jsr173_api.jar"/>
+        <pathelement location="lib/jaxws/jsr181-api.jar"/>
+        <pathelement location="lib/jaxws/jsr250-api.jar"/>
+        <pathelement location="lib/jaxws/resolver.jar"/>
+        <pathelement location="lib/jaxws/saaj-api.jar"/>
+        <pathelement location="lib/jaxws/saaj-impl.jar"/>
+        <pathelement location="lib/jaxws/sjsxp.jar"/>
+        <pathelement location="lib/jaxws/stax-ex.jar"/>
+        <pathelement location="lib/jaxws/streambuffer.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy todir="bin" includeemptydirs="false">
+            <fileset dir="src" excludes="**/*.launch, **/*.testsuite, **/*.deploy, **/*.location,
+            	**/*.execution, **/*.datapool, **/*.artifact, **/*.html, **/*.svg, **/*.java"/>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target name="cleanall" depends="clean"/>
+    <target name="build" depends="build-subprojects,build-project"/>
+    <target name="build-subprojects"/>
+    <target name="build-project" depends="init">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac destdir="bin" debug="true" debuglevel="${debuglevel}" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="contacts.classpath"/>
+        </javac>
+    </target>
+    <target name="build-refprojects" description="Build all projects which reference this project. 
+    	Useful to propagate changes."/>
+    <target name="init-eclipse-compiler" description="copy Eclipse compiler jars to ant lib directory">
+        <copy todir="${ant.library.dir}">
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </copy>
+        <unzip dest="${ant.library.dir}">
+            <patternset includes="jdtCompilerAdapter.jar"/>
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </unzip>
+    </target>
+    <target name="build-eclipse-compiler" description="compile project with Eclipse compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
+</project>

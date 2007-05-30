@@ -7,8 +7,11 @@ These tools require ant to be in the execution path.
    catalina.home: <J2EE server home directory>
  - execute 'ant' in samples directory
  - output of the build is placed in the root of the distribution
- - copy the traffic.war file to your application server webapps directory
- - execute the client: java -jar traffic-client.jar
+ - copy the traffic.war and users.war files to your application server webapps directory
+ - execute the clients with the following cmds: 
+ 	> java -jar traffic-client.jar
+ 	> java -jar users-client.jar
+ 	> java -jar gui-users-client.jar
  
  This project may be used with Eclipse.
  - In your Eclipse project
