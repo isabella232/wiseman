@@ -20,8 +20,10 @@ package com.sun.ws.management.transfer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -39,10 +41,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-// import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._09.transfer.ObjectFactory;
 
-import com.sun.ws.management.AlreadyExistsFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
@@ -138,37 +138,80 @@ public class TransferExtensions extends Transfer {
     }
     
     /**
-     * Sets the fragment header for the specified exprssion & dialect.
-     *
-     * @param expression
-     * @param dialect
+     * Sets the FragmentTransfer header in the message.
+     * 
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For the {@link XPath#NS_URI XPath} dialect this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        The {@link XPath#NS_URI XPath} dialect 
+	 *        can be used for XPath expressions.
      * @throws SOAPException
      * @throws JAXBException
      */
-    public void setFragmentHeader(final String expression, final String dialect) 
+    public void setFragmentHeader(final Object expression,
+    		                      final String dialect) 
     throws SOAPException, JAXBException {
+    	setFragmentHeader(expression, null, dialect);
+    }
+    
+    /**
+     * Sets the FragmentTransfer header in the message.
+     * 
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For the {@link XPath#NS_URI XPath} dialect this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        The {@link XPath#NS_URI XPath} dialect 
+	 *        can be used for XPath expressions. 
+     * @throws SOAPException
+     * @throws JAXBException
+     */
+    public void setFragmentHeader(final Object expression,
+			                      final Map<String, String> namespaces, 
+			                      final String dialect)
+			throws SOAPException, JAXBException {
 
         // remove existing, if any
         removeChildren(getHeader(), FRAGMENT_TRANSFER);
         
-        final DialectableMixedDataType dialectableMixedDataType = 
-                Management.FACTORY.createDialectableMixedDataType();
-        if (dialect != null) {
-            dialectableMixedDataType.setDialect(dialect);
-        }
-        dialectableMixedDataType.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, 
-                Boolean.TRUE.toString());
-        
-        //add the query string to the content of the FragmentTransfer Header
-        dialectableMixedDataType.getContent().add(expression);
-        
-        final JAXBElement<DialectableMixedDataType> fragmentTransfer =
-                Management.FACTORY.createFragmentTransfer(dialectableMixedDataType);
-        
-        //set the SOAP Header for Fragment Transfer
-        getXmlBinding().marshal(fragmentTransfer, getHeader());
-    }
-    
+		if (expression == null)
+			return;
+
+		final DialectableMixedDataType dialectableMixedDataType = Management.FACTORY
+				.createDialectableMixedDataType();
+		if (dialect != null) {
+			dialectableMixedDataType.setDialect(dialect);
+		}
+
+		dialectableMixedDataType.getOtherAttributes().put(SOAP.MUST_UNDERSTAND,
+				Boolean.TRUE.toString());
+
+		// add the query string to the content of the FragmentTransfer Header
+		dialectableMixedDataType.getContent().add(expression);
+
+		final JAXBElement<DialectableMixedDataType> fragmentTransfer = Management.FACTORY
+				.createFragmentTransfer(dialectableMixedDataType);
+
+		// set the SOAP Header for Fragment Transfer
+		getXmlBinding().marshal(fragmentTransfer, getHeader());
+		
+		// Add the expression namespaces, if any, to the fragment header
+		if ((namespaces != null) && (namespaces.size() > 0)) {
+			final SOAPHeaderElement header = getFragmentHeader();
+			final Iterator<Entry<String, String>> ni = namespaces.entrySet()
+					.iterator();
+			while (ni.hasNext()) {
+				final Entry<String, String> entry = ni.next();
+				header.addNamespaceDeclaration(entry.getKey(), entry.getValue());
+			}
+		}
+	}
+	
     /**
      * Inserts the FragmentTransferHeader into the SOAP Headers
      *
@@ -368,13 +411,13 @@ public class TransferExtensions extends Transfer {
      * @throws SOAPException
      * @throws JAXBException 
      */
-    public void setPutResponse(final Object obj)
+    public void setPutResponse(final Object content)
 			throws SOAPException, JAXBException {
 		// add the payload to the body if it's a fragment
-		if (obj instanceof Document) {
-			getBody().addDocument((Document) obj);
+		if (content instanceof Document) {
+			getBody().addDocument((Document) content);
 		} else {
-			getXmlBinding().marshal(obj, getBody());
+			getXmlBinding().marshal(content, getBody());
 		}
 	}    
     
@@ -395,7 +438,7 @@ public class TransferExtensions extends Transfer {
      * filter dialect in fragmentTransferHeader, if fragmentTransferHeader
      * is not null, otherwise a standard put response is done.
      *
-     * @param fragmentHeader The Fragement Transfer Header
+     * @param fragmentHeader the Fragement Transfer Header
      * to be returned in the headers, if any
      * @param resource  Resource to be returned for this Get. The binding must be
      *                  able to marshall this object.
@@ -420,46 +463,41 @@ public class TransferExtensions extends Transfer {
 		}
 	}
     
+    /**
+     * Inserts the fragment content as a Fragment-level Put response into the body 
+     * and adds the FragmentTransfer Header to the SOAP Headers.
+     * 
+     * @param fragmentHeader the Fragement Transfer Header
+     * to be returned in the headers
+     * @param content content to be inserted into the XmlFragment
+     * @throws SOAPException
+     * @throws JAXBException
+     */
+    public void setFragmentPutResponse(final SOAPHeaderElement fragmentHeader,
+			final List<Object> content) throws SOAPException,
+			JAXBException {
+
+		final JAXBElement<MixedDataType> xmlFragment = buildXmlFragment(content);
+
+		// set the fragment transfer header
+		setFragmentHeader(fragmentHeader);
+		// add payload to the body
+		getXmlBinding().marshal(xmlFragment, getBody());
+
+	}
+    
+    /**
+     * @deprecated Use {@link #setFragmentPutResponse(SOAPHeaderElement, List)}
+     */
     public void setFragmentPutResponse(final SOAPHeaderElement fragmentHeader, 
-            final List<Object> requestContent, final String expression, final List<Node> nodes) 
+                                       final List<Object> requestContent,
+                                       final String expression,
+                                       final List<Node> nodes) 
             throws SOAPException, JAXBException {
 
         final JAXBElement<MixedDataType> xmlFragment = buildXmlFragment(requestContent);
         
-        final Node resultNode = nodes.get(0);//TODO will there ever be more than one??
-        final Object o = requestContent.get(0);
-        if (resultNode instanceof Text) {
-            //okay this is text and we need to set it on a text node
-            if (o instanceof String) {
-                resultNode.setNodeValue((String) o);
-            } else {
-                throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_VALUES);
-            }
-        } else {
-            if (o instanceof Node) {
-                final Node parentNode = resultNode.getParentNode();
-                if (parentNode != null) {
-                    synchronized (parentNode) {
-                        final Node node = (Node) o;
-                        //node needs to be imported
-                        final Node copyNode = parentNode.getOwnerDocument().importNode(node, true);
-                        final Node replacedNode = parentNode.replaceChild(copyNode, resultNode);
-                        try {
-                            getXmlBinding().unmarshal(parentNode);
-                        } catch (JAXBException e) {
-                            parentNode.replaceChild(replacedNode, copyNode);
-                            throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_FRAGMENT);
-                        }
-                    }
-                } else {
-                    // TODO
-                }
-            } else {
-                //TODO fault
-            }
-        }
-        
-        //echo the fragment transfer header
+        //set the fragment transfer header
         setFragmentHeader(fragmentHeader);
         //add payload to the body
         getXmlBinding().marshal(xmlFragment, getBody());
@@ -473,7 +511,7 @@ public class TransferExtensions extends Transfer {
      * @throws SOAPException
      * @throws JAXBException 
      */
-    public void setCreateResponse(EndpointReferenceType epr)
+    public void setCreateResponse(final EndpointReferenceType epr)
 			throws SOAPException, JAXBException {
     	JAXBElement<EndpointReferenceType> jaxbEpr = FACTORY.createResourceCreated(epr);
     	
@@ -488,76 +526,45 @@ public class TransferExtensions extends Transfer {
      * @throws SOAPException
      * @throws JAXBException 
      */
-    public void setFragmentCreateResponse(
-			final SOAPHeaderElement fragmentHeader, EndpointReferenceType epr)
+    public void setFragmentCreateResponse(final SOAPHeaderElement fragmentHeader,
+    		                              final EndpointReferenceType epr)
 			throws SOAPException, JAXBException {
-		JAXBElement<EndpointReferenceType> jaxbEpr = FACTORY
-				.createResourceCreated(epr);
 
 		// add the fragment header if specified
 		if (fragmentHeader != null) {
 			setFragmentHeader(fragmentHeader);
 		}
 		// add payload to the body
-		getXmlBinding().marshal(jaxbEpr, getBody());
+		setCreateResponse(epr);
 	}
     
+    /**
+     * @deprecated use {@link #setFragmentCreateResponse(SOAPHeaderElement, EndpointReferenceType)}
+     * 
+     * @param fragmentHeader
+     * @param requestContent
+     * @param expression
+     * @param nodes
+     * @param epr
+     * @throws SOAPException
+     * @throws JAXBException
+     */
     public void setFragmentCreateResponse(final SOAPHeaderElement fragmentHeader, 
             final List<Object> requestContent, final String expression, final List<Node> nodes, 
             final EndpointReferenceType epr) throws SOAPException, JAXBException {
-        
-        final JAXBElement<MixedDataType> xmlFragment = buildXmlFragment(requestContent);
-        
-        final Node resultNode = nodes.get(0);//TODO will there ever be more than one??
-        final Object o = requestContent.get(0);
-        if (resultNode instanceof Text) {
-            //okay this is text and we need to set it on a text node
-            if (o instanceof String) {
-                if (resultNode.getNodeValue() == null) {
-                    resultNode.setNodeValue((String) o);
-                } else {
-                    throw new AlreadyExistsFault();//TODO is this correct?  or do I need to add the node to it
-                }
-            } else {
-                //TODO not sure what to do in this case..its invalid for sure
-            }
-        } else {  //TODO we may need to check if it is an array and if the element denoted by xpath already exists..if so throw exception
-            if (o instanceof Node) {
-                final Node parentNode = resultNode.getParentNode(); //right now this assumes that the xpath returned the last element in the array and we add another element
-                //I think the spec implies the xpath points to the spot in the array where they want it put...
-                if (parentNode != null) {
-                    synchronized (parentNode) {
-                        final Node node = (Node) o;
-                        //node needs to be imported
-                        final Node copyNode = parentNode.getOwnerDocument().importNode(node, true);
-                        final Node addedNode = parentNode.appendChild(copyNode);
-                        try {
-                            getXmlBinding().unmarshal(parentNode);
-                        } catch (JAXBException e) {
-                            parentNode.removeChild(addedNode);
-                            throw new InvalidRepresentationFault(InvalidRepresentationFault.Detail.INVALID_FRAGMENT);
-                        }
-                    }
-                } else {
-                    // TODO
-                }
-            } else {
-                //TODO fault
-            }
-        }
-        
-        //echo the fragment transfer header
-        setFragmentHeader(fragmentHeader);
-        //add EPR to the body
-        final JAXBElement<EndpointReferenceType> eprElement = Addressing.FACTORY.createEndpointReference(epr);
-        getXmlBinding().marshal(eprElement, getBody());
+		// add the fragment header if specified
+		if (fragmentHeader != null) {
+			setFragmentHeader(fragmentHeader);
+		}
+		// add payload to the body
+		setCreateResponse(epr);
         
     }
 
-	public Object getResource(QName element) throws JAXBException, SOAPException {
+	public Object getResource(final QName element) throws JAXBException, SOAPException {
 		Object resource = super.getResource(element);
 		if (resource == null) {
-	        resource = (JAXBElement<MixedDataType>) unbind(getBody(), XML_FRAGMENT);
+	        resource = unbind(getBody(), XML_FRAGMENT);
 		}
 		return resource;
 	}
@@ -607,7 +614,7 @@ public class TransferExtensions extends Transfer {
      * @param nodes Nodes to be inserted into the XmlFragment element.
      * @return XmlFragment JAXBElement object.
      */
-	public static JAXBElement<MixedDataType> createXmlFragment(List<Node> nodes) {
+	public static JAXBElement<MixedDataType> createXmlFragment(final List<Node> nodes) {
 		return BaseSupport.createXmlFragment(nodes);
 	}
 	
@@ -617,7 +624,7 @@ public class TransferExtensions extends Transfer {
 	 * @param nodes Nodes to be inserted into the XmlFragment element.
 	 * @return XmlFragment JAXBElement object.
 	 */
-	public static JAXBElement<MixedDataType> createXmlFragment(NodeList nodes) {
+	public static JAXBElement<MixedDataType> createXmlFragment(final NodeList nodes) {
 		return BaseSupport.createXmlFragment(nodes);
 	}
 }

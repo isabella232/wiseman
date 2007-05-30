@@ -2,6 +2,7 @@ package com.sun.ws.management.client;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -19,7 +20,7 @@ import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
- * An abstract representation of a WSManagement resource that focuses on 
+ * An abstract representation of a WS Management resource that focuses on 
  * WS-Transfer. Provides the basis for implementation of enumeration. 
  * 
  * @see EnumerableResource
@@ -39,7 +40,8 @@ public interface TransferableResource {
 
 
 
-	/** Generates a DELETE request over WS-Man protocol for this resource.
+	/** 
+	 * Generates a DELETE request over WS Management protocol for this resource.
 	 * 
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -51,11 +53,15 @@ public interface TransferableResource {
 	public abstract void delete() throws SOAPException, JAXBException,
 			IOException, FaultException, DatatypeConfigurationException;
 
-	/** Generates a fragment DELETE request over WS-Man protocol.
-	 * @param fragmentRequest fragment expression
-	 * @param fragmentDialect the dialect used in fragment expression.
-	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
-	 *        can be used for XPath expressions
+	/** 
+	 * Generates a fragment DELETE request over WS Management protocol.
+	 * 
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT}
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws IOException
@@ -63,13 +69,39 @@ public interface TransferableResource {
 	 * @throws DatatypeConfigurationException
 	 * @throws AccessDeniedFault
 	 */
-	public abstract void delete(String fragmentRequest, String fragmentDialect)
+	public abstract void delete(final Object expression, 
+			                    final String dialect)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException, AccessDeniedFault;
-   
 
-	/** Generates a PUT request over WS-Man protocol with contents of Document 
-	 *  passed in.
+	/** 
+	 * Generates a fragment DELETE request over WS Management protocol.
+	 * 
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 * @throws AccessDeniedFault
+	 */
+	public abstract void delete(final Object expression, 
+			                    final Map<String, String> namespaces,
+			                    final String dialect)
+			throws SOAPException, JAXBException, IOException, FaultException,
+			DatatypeConfigurationException, AccessDeniedFault;
+
+	/** 
+	 * Generates a PUT request over WS Management protocol with contents of Document 
+	 * passed in.
+	 * 
 	 * @param content a w3c document representing the resource to put
 	 * @return {@link ResourceState} representing the resource after the put
 	 * @throws SOAPException
@@ -78,18 +110,22 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract ResourceState put(Document content) throws SOAPException,
+	public abstract ResourceState put(final Document content) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 
-	/** Generates a fragment PUT request over WS-Man protocol with the fragment
-	 *  for update defined by fragmentExpression, using the fragmentDialect to be 
-	 *  updated with the contents of the Document passed in,.
+	/** 
+	 * Generates a fragment PUT request over WS Management protocol with the fragment
+	 * for update defined by fragmentExpression, using the fragmentDialect to be 
+	 * updated with the contents of the Document passed in.
+	 * 
 	 * @param content a w3c document representing the fragment resource to put
-	 * @param fragmentExpression fragment expression
-	 * @param fragmentDialect the dialect used in fragment expression.
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param dialect the dialect to be used in filter expressions.
 	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
-	 *        can be used for XPath expressions
 	 * @return {@link ResourceState} representing the resource after the put
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -97,12 +133,42 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract ResourceState put(Document content, String fragmentExpression,
-			String fragmentDialect) throws SOAPException, JAXBException,
+	public abstract ResourceState put(final Document content, 
+			                          final Object expression, 
+                                      final String dialect) throws SOAPException, JAXBException,
 			IOException, FaultException, DatatypeConfigurationException;
+	
+	/** 
+	 * Generates a fragment PUT request over WS Management protocol with the fragment
+	 * for update defined by fragmentExpression, using the fragmentDialect to be 
+	 * updated with the contents of the Document passed in.
+	 * 
+	 * @param content a w3c document representing the fragment resource to put
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 * @return {@link ResourceState} representing the resource after the put
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public abstract ResourceState put(final Document content, 
+                                      final Object expression, 
+                                      final Map<String, String> namespaces,
+                                      final String dialect) throws SOAPException, JAXBException,
+IOException, FaultException, DatatypeConfigurationException;
 
-	/** Generates a PUT request over WS-Man protocol with contents of ResourceState 
-	 *  passed in.
+	/** 
+	 * Generates a PUT request over WS Management protocol with contents of ResourceState 
+	 * passed in.
+	 * 
 	 * @param newState the resource to update
 	 * @return {@link ResourceState} representing the resource after the put
 	 * @throws SOAPException
@@ -111,13 +177,14 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public ResourceState put(ResourceState newState) throws SOAPException,
+	public ResourceState put(final ResourceState newState) throws SOAPException,
 			JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 
 	
-	/** Generates a WS-Man GET message and returns the contents of the Resource
-	 *  as a ResoruceState instance.
+	/** 
+	 * Generates a WS Management GET message and returns the contents of the Resource
+	 * as a ResoruceState instance.
 	 *  
 	 * @return {@link ResourceState} representing the resource obtained
 	 * @throws SOAPException
@@ -129,14 +196,17 @@ public interface TransferableResource {
 	public abstract ResourceState get() throws SOAPException, JAXBException,
 			IOException, FaultException, DatatypeConfigurationException;
 
-	/** Generates a WS-Man fragment GET message with fragmentExpression defining
-	 *  content to operate on in the agreed upon dialect and returns the contents 
-	 *  of the Resource as a ResoruceState instance.
+	/** 
+	 * Generates a WS Management fragment GET message with fragmentExpression defining
+	 * content to operate on in the agreed upon dialect and returns the contents 
+	 * of the Resource as a ResoruceState instance.
 	 *  
-	 * @param fragmentExpression fragment expression for selecting parts of a resource
-	 * @param dialect the dialect used in fragment expression.
-	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
-	 *        can be used for XPath expressions
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT}
 	 * @return {@link ResourceState} representing the fragment resource obtained
 	 * @throws SOAPException
 	 * @throws JAXBException
@@ -144,7 +214,35 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract ResourceState get(String fragmentExpression, String dialect)
+	public abstract ResourceState get(final Object expression, 
+                                      final String dialect)
+			throws SOAPException, JAXBException, IOException, FaultException,
+			DatatypeConfigurationException;
+	
+
+	/** 
+	 * Generates a WS Management fragment GET message with fragmentExpression defining
+	 * content to operate on in the agreed upon dialect and returns the contents 
+	 * of the Resource as a ResoruceState instance.
+	 *  
+	 * @param expression a filter expression to be applied against the resource.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaller.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT}
+	 * @return {@link ResourceState} representing the fragment resource obtained
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public abstract ResourceState get(final Object expression,
+			                          final Map<String, String> namespaces,
+                                      final String dialect)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException;
 
@@ -171,7 +269,7 @@ public interface TransferableResource {
 	 * Set the destination URL address of the resource.
 	 * @param destination URL address for this resource
 	 */
-	public abstract void setDestination(String destination);
+	public abstract void setDestination(final String destination);
 
 	/**
 	 * Get the currently set message timeout value. This value
@@ -191,7 +289,7 @@ public interface TransferableResource {
 	 * @param i number of milliseconds.
 	 * If &lt;= 0 <code>OperationTimeout</code> will not be set in the request message.
 	 */
-	public abstract void setMessageTimeout(long i);
+	public abstract void setMessageTimeout(final long i);
 	
 	/**
 	 * Sets the maximum envelope size desired for the SOAP response.
@@ -201,7 +299,7 @@ public interface TransferableResource {
 	 * @param i maximum desired size in characters.
 	 * If &lt;= 0 <code>MaxEnvelopeSize</code> will not be set in the request message.
 	 */
-	public abstract void setMaxEnvelopeSize(long i);
+	public abstract void setMaxEnvelopeSize(final long i);
 	
 	/**
 	 * Get the currently set maximum envelope size
@@ -226,7 +324,7 @@ public interface TransferableResource {
 	 * 
 	 * @param replyTo URL to reply to
 	 */
-	public abstract void setReplyTo(String replyTo);
+	public abstract void setReplyTo(final String replyTo);
 	
 	/**
 	 * Add an option to the option set
@@ -234,7 +332,8 @@ public interface TransferableResource {
 	 * @param name option name
 	 * @param value option value
 	 */
-	public abstract void addOption(String name, Object value);
+	public abstract void addOption(final String name, 
+			                       final Object value);
 	
 	/**
 	 * Add an option to the option set
@@ -243,7 +342,9 @@ public interface TransferableResource {
 	 * @param value option value
 	 * @param mustComply option must comply flag
 	 */
-	public abstract void addOption(String name, Object value, boolean mustComply);
+	public abstract void addOption(final String name, 
+			                       final Object value,
+			                       final boolean mustComply);
 	
 	/**
 	 * Add an option to the option set
@@ -253,7 +354,10 @@ public interface TransferableResource {
 	 * @param type qualified type of the option
 	 * @param mustComply option must comply flag
 	 */
-	public abstract void addOption(String name, Object value, QName type, boolean mustComply);
+	public abstract void addOption(final String name,
+			                       final Object value,
+			                       final QName type,
+			                       final boolean mustComply);
 	
 	/**
 	 * Add an option to the option set
@@ -262,7 +366,9 @@ public interface TransferableResource {
 	 * @param value option value
 	 * @param type qualified type of the option
 	 */
-	public abstract void addOption(String name, Object value, QName type);
+	public abstract void addOption(final String name,
+			                       final Object value,
+			                       final QName type);
 	
 	/**
 	 * Get the current option set

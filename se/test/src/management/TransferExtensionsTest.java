@@ -17,6 +17,25 @@
 
 package management;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.xml.bind.JAXBElement;
+import javax.xml.soap.SOAPHeaderElement;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.transfer.Transfer;
@@ -26,25 +45,8 @@ import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
-import foo.test.Foo;
-import foo.test.Is;
-import java.io.IOException;
-import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.soap.SOAPHeaderElement;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import foo.test.Foo;
 
 public class TransferExtensionsTest extends TestBase {
 
@@ -270,32 +272,51 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentDelete() throws Exception {
         
         //setup Transfer object for request
-    	TransferMessageValues settings = new TransferMessageValues();
-    	settings.setNamespaceMap(NAMESPACES);
-    	settings.setFragment("//jb:foo/jb:bar");
-    	settings.setFragmentDialect(XPath.NS_URI);
-    	settings.setTo(DESTINATION);
-    	settings.setResourceUri("wsman:test/fragment");
-    	settings.setTransferMessageActionType(Transfer.DELETE_ACTION_URI);
-    	
-    	Transfer xf = TransferUtility.buildMessage(null, settings);
-
-        //print contents of Transfer
-        xf.prettyPrint(logfile);
+        final TransferExtensions transfer = new TransferExtensions();
+        if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
+            // skip this test if JAXB is not initialized with the foo.test package
+            return;
+        }
+        transfer.addNamespaceDeclarations(NAMESPACES);
+        transfer.setAction(Transfer.DELETE_ACTION_URI);
+        transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         
-        final Addressing response = HttpClient.sendRequest(xf);
+        //xpath expression
+        final String expression = "//jb:foo/jb:bar";
+        //this call ensures the fragment header is initialized
+        transfer.setFragmentHeader(expression, XPath.NS_URI);
+        
+        //build XmlFragment for request
+        final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
+        final JAXBElement<MixedDataType> xmlFragment = Management.FACTORY.createXmlFragment(mixedDataType);
+        
+        //create request body content
+        final foo.test.ObjectFactory ob = new foo.test.ObjectFactory();
+        final JAXBElement<String> bar = ob.createBar("PUT request value");
+        mixedDataType.getContent().add(bar);
+        
+        //marshall XmlFragment into request body
+        new XmlBinding(null, JAXB_PACKAGE_FOO_TEST).marshal(xmlFragment, transfer.getBody());
+        
+        //send request to server
+        final Management mgmt = new Management(transfer);
+        mgmt.setTo(DESTINATION);
+        mgmt.setResourceURI("wsman:test/fragment");
+        //print contents of Transfer
+        mgmt.prettyPrint(logfile);
+        
+        final Addressing response = HttpClient.sendRequest(mgmt);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
         final TransferExtensions trans = new TransferExtensions(response);
         final SOAPHeaderElement fragmentTransferHeader = trans.getFragmentHeader();
-        assertNotNull("The fragment header was not returned.",fragmentTransferHeader);
-        assertEquals("Values not equal.",settings.getFragment(), fragmentTransferHeader.getTextContent());
-    	Attr dialect = fragmentTransferHeader.getAttributeNode(TransferExtensions.DIALECT.getLocalPart());
-        assertNotNull("Unable to locate attribute.",dialect);
-        assertEquals("Dialect value was not correct.",XPath.NS_URI, dialect.getValue());
-        
+        assertNotNull(fragmentTransferHeader);
+        assertEquals(expression, fragmentTransferHeader.getTextContent());
+        assertNotNull(fragmentTransferHeader.getAttributeValue(TransferExtensions.DIALECT));
+      
     }
     
     /**
@@ -323,8 +344,7 @@ public class TransferExtensionsTest extends TestBase {
         if (response.getBody().hasFault()) {
             assertNotNull(response.getBody().getFault().getFaultString());
         } else {
-            // TODO: a fault will not be thrown if the server is not in validation mode
-            // fail("A Fault should have been thrown and was not");
+            fail("A Fault should have been thrown and was not");
         }
     }
     
@@ -367,7 +387,7 @@ public class TransferExtensionsTest extends TestBase {
         requestContent.add(requestBarElement);
         
         //simulate server-side request to get the response
-        transfer.setFragmentPutResponse(fragmentHeader, requestContent, expression, content);
+        transfer.setFragmentPutResponse(fragmentHeader, requestContent);
         
         //print contents of Transfer
         transfer.prettyPrint(logfile);
@@ -443,45 +463,27 @@ public class TransferExtensionsTest extends TestBase {
      * @throws Exception
      */
     public void testFragmentPutFail() throws Exception {
-        //setup Transfer object for request
-        final TransferExtensions transfer = new TransferExtensions();
-        transfer.addNamespaceDeclarations(NAMESPACES);
-        transfer.setAction(Transfer.PUT_ACTION_URI);
-        transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        //xpath expression
-        final String expression = "//jb:foo/jb:bar";
-        //this call ensures the fragment header is initialized
-        transfer.setFragmentHeader(expression, XPath.NS_URI);
-        
-        //build XmlFragment for request
-        final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
-        final JAXBElement<MixedDataType> xmlFragment = Management.FACTORY.createXmlFragment(mixedDataType);
-        
-        //build request body content
-        final foo.test.ObjectFactory ob = new foo.test.ObjectFactory();
-        final Is is = ob.createIs();
-        mixedDataType.getContent().add(is);
-        
-        //marshall XmlFragment into the request body
-        new XmlBinding(null, JAXB_PACKAGE_FOO_TEST).marshal(xmlFragment, transfer.getBody());
-        
-        //send request to server
-        final Management mgmt = new Management(transfer);
-        mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/fragment");
+    	//send a request without the fragment in the body
+    	TransferMessageValues settings = new TransferMessageValues();
+    	settings.setNamespaceMap(NAMESPACES);
+    	settings.setFragment("//jb:foo");
+    	settings.setFragmentDialect(XPath.NS_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/fragment");
+    	settings.setTransferMessageActionType(Transfer.PUT_ACTION_URI);
+    	
+    	Transfer xf = TransferUtility.buildMessage(null, settings);
+    	
         //print contents of Transfer
-        mgmt.prettyPrint(logfile);
+        xf.prettyPrint(logfile);
         
-        final Addressing response = HttpClient.sendRequest(mgmt);
+        final Addressing response = HttpClient.sendRequest(xf);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             assertNotNull(response.getBody().getFault().getFaultString());
         } else {
-            fail("Fault was not thrown");
-        }
-        
+            fail("A Fault should have been thrown and was not");
+        } 
     }
     
     /**
@@ -523,7 +525,7 @@ public class TransferExtensionsTest extends TestBase {
         requestContent.add(requestFooElement);
 
         final EndpointReferenceType epr = Addressing.createEndpointReference(transfer.getTo(), null, null, null, null);
-        transfer.setFragmentCreateResponse(fragmentHeader, requestContent, expression, content, epr);
+        transfer.setFragmentCreateResponse(fragmentHeader, epr);
         
         //print contents of Transfer
         transfer.prettyPrint(logfile);
@@ -599,45 +601,27 @@ public class TransferExtensionsTest extends TestBase {
      * @throws Exception
      */
     public void testFragmentCreateFail() throws Exception {
-        //setup Transfer object for request
-        final TransferExtensions transfer = new TransferExtensions();
-        transfer.addNamespaceDeclarations(NAMESPACES);
-        transfer.setAction(Transfer.CREATE_ACTION_URI);
-        transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        transfer.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        //xpath expression
-        final String expression = "//jb:foo";
-        //this call ensures the fragment header is initialized
-        transfer.setFragmentHeader(expression, XPath.NS_URI);
-        
-        //build an XmlFragment from XmlBeans for adding request content to
-        final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
-        final JAXBElement<MixedDataType> xmlFragment = Management.FACTORY.createXmlFragment(mixedDataType);
-        
-        //request body content
-        final foo.test.ObjectFactory of = new foo.test.ObjectFactory();
-        final Is is = of.createIs();
-        mixedDataType.getContent().add(is);
-        
-        //marshall content into XmlFragment
-        new XmlBinding(null, JAXB_PACKAGE_FOO_TEST).marshal(xmlFragment, transfer.getBody());
-        
-        //send request
-        final Management mgmt = new Management(transfer);
-        mgmt.setTo(DESTINATION);
-        mgmt.setResourceURI("wsman:test/fragment");
+    	//send a request without the fragment in the body
+    	TransferMessageValues settings = new TransferMessageValues();
+    	settings.setNamespaceMap(NAMESPACES);
+    	settings.setFragment("//jb:foo");
+    	settings.setFragmentDialect(XPath.NS_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/fragment");
+    	settings.setTransferMessageActionType(Transfer.CREATE_ACTION_URI);
+    	
+    	Transfer xf = TransferUtility.buildMessage(null, settings);
+    	
         //print contents of Transfer
-        mgmt.prettyPrint(logfile);
+        xf.prettyPrint(logfile);
         
-        final Addressing response = HttpClient.sendRequest(mgmt);
+        final Addressing response = HttpClient.sendRequest(xf);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             assertNotNull(response.getBody().getFault().getFaultString());
         } else {
-            fail("A fault should have been thrown and wasn't");
+            fail("A Fault should have been thrown and was not");
         }
-        
     }
 
     private boolean checkIfBindingIsAvailable(final XmlBinding binding) throws IOException {

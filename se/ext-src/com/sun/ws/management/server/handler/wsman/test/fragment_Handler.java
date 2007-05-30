@@ -17,6 +17,20 @@
 
 package com.sun.ws.management.server.handler.wsman.test;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.soap.SOAPHeaderElement;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.FragmentDialectNotSupportedFault;
@@ -26,21 +40,10 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.BaseSupport;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.NamespaceMap;
+import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.ws.management.xml.XPath;
-import java.io.IOException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import javax.xml.soap.SOAPHeaderElement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 /**
  * A test handler for fragment level operations.
@@ -106,14 +109,17 @@ public class fragment_Handler extends base_Handler {
                 // this is a regular transfer: not a fragment transfer, update the entire doc
                 // TODO
             } else {
+            	final Object fragment = transExtRequest.getResource();
+            	if (fragment == null) {
+            		throw new InvalidRepresentationFault(SOAP.createFaultDetail("Missing XmlFragment", null, null, null));
+            	}
                 final Node xmlFragmentNode = (Node) transExtRequest.getBody().getChildElements().next();
                 final NodeList childNodes = xmlFragmentNode.getChildNodes();
                 final List<Object> nodeContent = new ArrayList<Object>();
                 for (int i = 0; i < childNodes.getLength(); i++) {
                     nodeContent.add(childNodes.item(i));
                 }
-                transExtResponse.setFragmentPutResponse(fragmentHeader, nodeContent,
-                        expression, XPath.filter(doc.getDocumentElement(), expression, nsMap));
+                transExtResponse.setFragmentPutResponse(fragmentHeader, nodeContent);
             }
             // dump the modified doc for debugging
             prettyPrint(doc);
@@ -128,6 +134,10 @@ public class fragment_Handler extends base_Handler {
                 // this is a regular transfer: not a fragment transfer, delete the entire doc
                 // TODO
             } else {
+            	final Object fragment = transExtRequest.getResource();
+            	if (fragment == null) {
+            		throw new InvalidRepresentationFault(SOAP.createFaultDetail("Missing XmlFragment", null, null, null));
+            	}
                 transExtResponse.setFragmentDeleteResponse(fragmentHeader);
             }
             // dump the modified doc for debugging
@@ -143,6 +153,10 @@ public class fragment_Handler extends base_Handler {
                 // this is a regular transfer: not a fragment transfer, create the entire doc
                 // TODO
             } else {
+            	final Object fragment = transExtRequest.getResource();
+            	if (fragment == null) {
+            		throw new InvalidRepresentationFault(SOAP.createFaultDetail("Missing XmlFragment", null, null, null));
+            	}
                 final Node xmlFragmentNode = (Node) transExtRequest.getBody().getChildElements().next();
                 final NodeList childNodes = xmlFragmentNode.getChildNodes();
                 final List<Object> nodeContent = new ArrayList<Object>();
@@ -152,9 +166,7 @@ public class fragment_Handler extends base_Handler {
                 final EndpointReferenceType epr =
                         Addressing.createEndpointReference(transExtRequest.getTo(),
                         null, null, null, null);
-                transExtResponse.setFragmentCreateResponse(fragmentHeader, nodeContent,
-                        expression, XPath.filter(doc.getDocumentElement(), expression, nsMap),
-                        epr);
+                transExtResponse.setFragmentCreateResponse(fragmentHeader, epr);
             }
             // dump the modified doc for debugging
             prettyPrint(doc);
