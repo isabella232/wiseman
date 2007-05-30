@@ -13,7 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferSupport.java,v 1.2 2007-05-28 09:24:27 denis_rachal Exp $
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ **$Log: not supported by cvs2svn $
+ **
+ * $Id: TransferSupport.java,v 1.3 2007-05-30 13:57:30 nbeers Exp $
  *
  */
 package com.sun.ws.management.framework.transfer;
@@ -63,11 +70,11 @@ public class TransferSupport implements Transferable {
 	}
 
 	public void create(HandlerContext context,Management request, Management response) {
-		throw new ActionNotSupportedFault();		
+		throw new ActionNotSupportedFault();
 	}
 
 	public void delete(HandlerContext context,Management request, Management response) {
-		throw new ActionNotSupportedFault();		
+		throw new ActionNotSupportedFault();
 	}
 
 	public void get(HandlerContext context,Management request, Management response) {
@@ -77,53 +84,53 @@ public class TransferSupport implements Transferable {
 	public void put(HandlerContext context,Management request, Management response) {
 		throw new ActionNotSupportedFault();
 	}
-	
+
 
 	/**
 	 * Utility method used to append a create response to a SOAP body.
 	 * May have to change as there is sctually no element called CreateResponse
 	 * in the spec version of this response.
 	 * @param response
-	 * @param resourceUri   
+	 * @param resourceUri
 	 * @param selectors
-	 * @throws JAXBException 
+	 * @throws JAXBException
 	 */
 	@SuppressWarnings("static-access")
 	protected void appendCreateResponse(Management response, String resourceUri,Map<String,String> selectors) throws JAXBException  {
 		EndpointReferenceType epr=null;
 		epr = response.createEndpointReference(Addressing.ANONYMOUS_ENDPOINT_URI, null,null,null,null);
 
-		JAXBElement<EndpointReferenceType> resp = xferFactory.createResourceCreated(epr); 
+		JAXBElement<EndpointReferenceType> resp = xferFactory.createResourceCreated(epr);
 
         // Build the reference parameters
         ReferenceParametersType refParams = new ReferenceParametersType();
         epr.setReferenceParameters(refParams);
         List<Object> paramList = refParams.getAny();
-        	        
+
         // Set our resource URI (Similar to our classname)
         AttributableURI resourceURI = new AttributableURI();
         resourceURI.setValue(resourceUri);
         paramList.add(managementFactory.createResourceURI(resourceURI));
-        
+
         // Set the selectors required to find this instance again
         SelectorSetType selectorSetType = new SelectorSetType();
         List<SelectorType> selectorList = selectorSetType.getSelector();
-        
+
         // Add a selector to the list
         for (String key : selectors.keySet()) {
             SelectorType nameSelector = new SelectorType();
-            nameSelector.setName(key);        
-            nameSelector.getContent().add(selectors.get(key));        
-            selectorList.add(nameSelector);			
+            nameSelector.setName(key);
+            nameSelector.getContent().add(selectors.get(key));
+            selectorList.add(nameSelector);
 		}
-        
+
         paramList.add(managementFactory.createSelectorSet(selectorSetType));
-       XmlBinding xmlBinding = response.getXmlBinding(); 
+       XmlBinding xmlBinding = response.getXmlBinding();
         /// Document responseDoc = Management.newDocument();
 		try {
 			xmlBinding.marshal(resp, response.getBody());
 		} catch (JAXBException e) {
-			final String explanation = 
+			final String explanation =
 				 "XML Binding marshall failed for object of type: "
                 + resp.getClass().getName();
 			throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
