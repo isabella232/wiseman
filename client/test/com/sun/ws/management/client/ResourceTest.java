@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/05/30 20:30:17  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: ResourceTest.java,v 1.4 2007-05-30 20:30:17 nbeers Exp $
+ * $Id: ResourceTest.java,v 1.5 2007-05-31 07:04:23 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -153,7 +156,8 @@ public class ResourceTest extends WsManBaseTestSupport {
 		assertNotNull(serverInfo.getBuildId());
 		assertEquals(serverInfo.getProductVendor(),"The Wiseman Project - https://wiseman.dev.java.net");
 //		assertEquals(serverInfo.getProductVersion(),"0.6");
-		assertEquals(serverInfo.getProductVersion(),"1.0_RC1");
+//		assertEquals(serverInfo.getProductVersion(),"1.0_RC1");
+		assertEquals(serverInfo.getProductVersion(),"1.0_RC2");
 		assertEquals(serverInfo.getProtocolVersion(),"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
 		assertEquals(serverInfo.getSpecVersion(),"1.0.0a");
 		// assertTrue(serverInfo.getBuildId().startsWith("2006"));
