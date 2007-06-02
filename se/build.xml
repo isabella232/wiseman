@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.63 2007-05-30 15:35:47 simeonpinder Exp $
+ $Id: build.xml,v 1.64 2007-06-02 04:00:54 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -616,7 +616,7 @@
         path="/events" war="${basedir}/${dist.dir}/${events.filename}" update="true" />
     </target>
   
-    <target name="test" depends="lib,test-compile"><!--,deploy,test-deploy">-->
+    <target name="test" depends="lib,test-compile,deploy"><!--,deploy,test-deploy">-->
         <copy todir="${ant.home}/lib" 
         file="${test.lib.dir}/junit.jar" />
         <taskdef name="junit"

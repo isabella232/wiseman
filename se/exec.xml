@@ -7,8 +7,8 @@
  -->
 <project name="Generate Wiseman Install Bundle" default="gen-exec-jar" basedir=".">
  	 <!-- Project variables -->
-	<property name="executable.jar" value="wiseman-1.0-rc1.jar"/>
-	<property name="install.bundle.name" value="WISEMAN_1.0_RC1-20070507.jar"/>
+	<property name="executable.jar" value="wiseman-1.0-rc2.jar"/>
+	<property name="install.bundle.name" value="WISEMAN_1.0_RC2-20070531.jar"/>
 	<property name="un.jar.dir" value="install-bundle"/>
 	<property name="install.build.file" value="execute-install.xml"/>
 	<!-- Intermediate executable jar file -->
@@ -21,8 +21,10 @@
 		<!--remove previous artifacts -->
 		<delete dir="${un.jar.dir}"/>
 		<mkdir dir="${un.jar.dir}"/>
-		<antcall target="additional"/>
-		<jar destfile="${wise.jar.name}">
+ 		<antcall target="additional"/> 
+		<!-- Remove the old ${wise.jar.name} instance and start fresh -->
+		<delete file="${wise.jar.name}"/>
+		<jar destfile="${wise.jar.name}" update="true">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Specification-Title" value="WS-Management" />
@@ -40,6 +42,7 @@
 				<include name="com/sun/ws/management/installer/*.txt"/>				
 			</fileset>
 			<fileset dir="../tools" casesensitive="true">
+				<exclude name="**/samples/**"/>
 				<include name="**/lib/ant.jar"/>  
 				<include name="**/lib/ant-launcher.jar"/>
 				<include name="**/lib/${executable.jar}"/>
@@ -49,7 +52,7 @@
 			</fileset>
 			<fileset dir="${un.jar.dir}">
 			  <include name="${install.additional}"/>	
-			</fileset>
+			</fileset>  
 		</jar>
 		<!-- Unbundle zip and rename the install-build-file to build.xml -->
 		<unzip src="${wise.jar.name}" dest="${un.jar.dir}"/>
@@ -66,18 +69,24 @@
 			src="${un.jar.dir}/${install.bundle.name}"/> 
 	</target> -->
 	
-	<!-- Meant to build artifacts in addition to the standard bundled autoextractable components -->
+	<!-- Meant to build artifacts in addition to the standard bundled autoextractable 
+		components -->
 	<target name="additional">
 		<jar destfile="${un.jar.dir}/${install.additional}">
-			<!-- formal docs -->
-			<fileset dir="../tools">
-			  <include name="docs/server_guide.doc"/>
-			  <include name="docs/tutorial.doc"/>
+			<!-- cmd line scripts -->
+			<fileset dir="..">
+			  <include name="tools/*.sh"/>
+			  <include name="tools/*.bat"/>
 			</fileset>
-			<!-- developer docs -->
 			<fileset dir="../tools">
-				<include name="docs/developer/*.doc"/>
-				<include name="docs/developer/*.java"/>
+			  <include name="docs/*.doc"/>
+			  <include name="docs/*.pdf"/>
+			  <include name="docs/developer/*.doc"/>
+			  <include name="docs/developer/*.pdf"/>
+			</fileset>
+			<!-- updated readme file -->
+			<fileset dir="..">
+				<include name="README.txt"/>
 			</fileset>
 		</jar>
 	</target>

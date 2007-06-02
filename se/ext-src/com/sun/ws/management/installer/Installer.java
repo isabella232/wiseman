@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/05/30 20:30:27  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: Installer.java,v 1.3 2007-05-30 20:30:27 nbeers Exp $
+ * $Id: Installer.java,v 1.4 2007-06-02 04:00:54 simeonpinder Exp $
  */
 package com.sun.ws.management.installer;
 
@@ -54,7 +57,7 @@ public class Installer {
 	
 	public Installer(){
 		//Frame details
-		launcher = new JFrame("Wiseman 1.0_RC1 installer");
+		launcher = new JFrame("Wiseman 1.0_RC2 installer");
 		launcher.setSize(400,400);
 		launcher.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		launcher.setLocationRelativeTo(null);

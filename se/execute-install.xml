@@ -1,20 +1,20 @@
 <!-- This build file was generated as a makeshift installer for the Wiseman project.
 	 The primary motivation for the installer was the requirement by the Sun Microsystems
 	 project owners that the users of the binary explicitly see that Wiseman is offered 
-	 under Apache 2.0 License, but uses JAXWS 2.1 libraries which are governed by CDDL 1.0
+	 under Apache 2.0 License, but uses JAXWS 2.1.1 libraries which are governed by CDDL 1.0
 	 license. 
 	 Design spec:
 	 	-Consumers of the Wiseman 0.6 bundle be informed of the above. 
 	 	-Consumers would have to agree to both license agreements before this installer
-	 	   could successfully build a functional installation of Wiseman 1.0_RC1.
+	 	   could successfully build a functional installation of Wiseman 1.0_RC2.
  -->
 <project name="Wiseman Installer" default="complete">
 	<!-- Project properties -->
 	<property name="wiseman.default.dir" value="wiseman"/>
-	<property name="jaxws.jar" value="${wiseman.default.dir}/JAXWS2.1FCS_20070202.jar"/>
+	<property name="jaxws.jar" value="${wiseman.default.dir}/JAXWS2.1.1_20070501.jar"/>
 	<property name="jaxws.lib.dir" value="${wiseman.default.dir}/lib/jaxws"/>
 	<property name="jaxws.root" value="jaxws-ri"/>
-	<property name="wise.self.extract.jar" value="wiseman-1.0-rc1.jar"/>
+	<property name="wise.self.extract.jar" value="wiseman-1.0-rc2.jar"/>
 	<property name="wise.additional.dir" value="additional"/>
 	<property name="install.additional" value="additional.jar"/>
 	
@@ -38,9 +38,9 @@
 			</and>
     	</condition>
     	<fail unless="completed.status" 
-    		message="You declined a license agreement, or there was an error installing Wiseman 1.0_RC1."/>
+    		message="You declined a license agreement, or there was an error installing Wiseman 1.0_RC2."/>
     	
-    	<echo message="You have successfully completed the installation of Wiseman 1.0_RC1"/>
+    	<echo message="You have successfully completed the installation of Wiseman 1.0_RC2"/>
     	<echo/>
     	<echo message="You may now delete the 'build.xml' file and the 'lib' directory to complete install cleanup."/>
     	<echo>Thank you for using Wiseman.</echo>
@@ -58,7 +58,7 @@
 	  	 message="		
 	    	You did not install the wiseman content to ${basedir}		 
 	    										OR 																				
-	    	there was an error running auto-extractable .jar for Wiseman 1.0_RC1 
+	    	there was an error running auto-extractable .jar for Wiseman 1.0_RC2 
 	    	">
 	     <condition>
 	       <not>
@@ -119,10 +119,13 @@
 	<target name="install-additional" depends="copy-jaxws-libs-to-wiseman">
 		<mkdir dir="${wise.additional.dir}"/>
 		<unjar dest="${wise.additional.dir}" src="${install.additional}" overwrite="true"/>
-    	<copy todir="${wiseman.default.dir}">
+    	<copy todir="${wiseman.default.dir}" overwrite="true">
     	    <fileset dir="${wise.additional.dir}">
+    	      <include name="**/*.sh"/>
+    	      <include name="**/*.bat"/>
     	      <include name="**/*.doc"/>
-    	      <include name="**/*.java"/>
+    	      <include name="**/*.txt"/>
+    	      <include name="**/*.pdf"/>
     	    </fileset>
     	</copy>
 	</target>
@@ -130,7 +133,8 @@
 	<!-- Clean up the additional files/dirs used when installing. What should remain is the original install
 		 bundle, the ${wiseman.default.dir} dir ready for use, this build.xml and ant jars running it. 
 	-->
-	<target name="clean-up" depends="install-additional">
+	<target name="clean-up" depends="install-additional"> 
+<!--	<target name="clean-up" depends="copy-jaxws-libs-to-wiseman"> -->
 	    <fail 
 	  	 message="There was an error copying required JAXWS libraries to your wiseman/lib/jaxws folder. Please copy them over for success.">
 	     <condition>
@@ -143,7 +147,7 @@
 		<delete dir="jaxws-ri" quiet="true" failonerror="false"/>
 		<delete dir="com" quiet="true" failonerror="false"/>
 		<delete dir="META-INF" quiet="true" failonerror="false"/>
-		<delete file="lib/wiseman-1.0-rc1.jar" quiet="true" failonerror="false" deleteonexit="true"/>
+		<delete file="lib/wiseman-1.0-rc2.jar" quiet="true" failonerror="false" deleteonexit="true"/>
 		<delete dir="build.xml" quiet="true" failonerror="false" deleteonexit="true"/>
 		<delete dir="${wise.additional.dir}" quiet="true" failonerror="false" deleteonexit="true"/>
 		<delete file="${install.additional}" quiet="true" failonerror="false" deleteonexit="true"/>
@@ -151,7 +155,7 @@
 	</target>
 	
 	<target name="check-clean-failure" unless="clean.up.success">
-	    <echo message="The installer was unable to clean up all install files for Wiseman 1.0_RC1. The install is still functional."/>
+	    <echo message="The installer was unable to clean up all install files for Wiseman 1.0_RC2. The install is still functional."/>
 	</target>
 	
 </project>

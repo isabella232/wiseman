@@ -1,3 +1,4 @@
+#!/bin/sh
 # /*
 #  * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
 #  *
@@ -20,15 +21,18 @@
 #  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
 #  **
 #  **$Log: not supported by cvs2svn $
+#  **Revision 1.2  2007/06/01 18:48:43  nbeers
+#  **Fix command line to pass in arguments
+#  **
 #  **Revision 1.1  2007/05/31 20:18:28  nbeers
 #  **Add HP copyright header.  Create new shell script for command line tool
 #  **
 #  ** 
 #  *
-#  * $Id: wise.sh,v 1.2 2007-06-01 18:48:43 nbeers Exp $
+#  * $Id: wise.sh,v 1.3 2007-06-02 04:00:54 simeonpinder Exp $
 #  */
 
 # set CLASSPATH
-set CP=../lib/wiseman-core.jar;../lib/wiseman-tools.jar;../lib/jaxws/saaj-api.jar;../lib/jaxws/jaxb-api.jar;../lib/jaxws/saaj-impl.jar;../lib/jaxws/jaxb-impl.jar;../lib/jaxws/jsr173_api.jar
+CP=../lib/wiseman-core.jar:../lib/wiseman-tools.jar:../lib/jaxws/saaj-api.jar:../lib/jaxws/jaxb-api.jar:../lib/jaxws/saaj-impl.jar:../lib/jaxws/jaxb-impl.jar:../lib/jaxws/jsr173_api.jar
 
-java -cp %CP% com.sun.ws.management.tools.WisemanCmdLine $@
+java -cp $CP com.sun.ws.management.tools.WisemanCmdLine "$@"
