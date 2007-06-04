@@ -20,14 +20,16 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.11  2007/05/30 20:31:05  nbeers
+ **Add HP copyright header
+ **
  **
  *
- * $Id: ManagementUtility.java,v 1.11 2007-05-30 20:31:05 nbeers Exp $
+ * $Id: ManagementUtility.java,v 1.12 2007-06-04 06:25:13 denis_rachal Exp $
  */
 package com.sun.ws.management;
 
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
@@ -43,7 +44,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
@@ -66,18 +66,11 @@ import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedURI;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
-import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
-import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
 
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.EnumerationMessageValues;
-//import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
-import com.sun.xml.fastinfoset.sax.Properties;
 
 /** This class is meant to provide general utility functionality for
  *  Management instances and all of their related extensions.
@@ -135,13 +128,15 @@ public class ManagementUtility {
 	 *
 	 *    is wrapped in the appropriate type that will look like
 	 *
-	 *  <wsman:SelectorSet>
-     * 	 <wsman:Selector Name="firstname">Get</wsman:Selector>
-     *    <wsman:Selector Name="lastname">Guy</wsman:Selector>
-     *  </wsman:SelectorSet>
+	 * <code>
+	 *  &lt;wsman:SelectorSet&gt;
+     * 	 &lt;wsman:Selector Name="firstname"&gt;Get&lt;/wsman:Selector&gt;
+     *    &lt;wsman:Selector Name="lastname"&gt;Guy&lt;/wsman:Selector&gt;
+     *  &lt;/wsman:SelectorSet&gt;
+     *  </code>
 	 *
 	 * @param selectorsAsProperties
-	 * @return
+	 * @return set of selectors
 	 */
 	public static Set<SelectorType> createSelectorType(
 			Map<String,String> selectorsAsProperties){
@@ -160,10 +155,10 @@ public class ManagementUtility {
 	}
 
 	/**The method takes a SelectorSetType instance and returns the Selectors defined
-	 * in a Map<String,String> instance, with Key,Value being the values respectively.
+	 * in a Map&lt;String,String&gt; instance, with Key,Value being the values respectively.
 	 *
 	 * @param selectorContainer
-	 * @return Map<String,String> being Selector values
+	 * @return Map&lt;String, String&gt; being Selector values
 	 */
 	public static Map<String,String> extractSelectorsAsMap(SelectorSetType selectorContainer){
 		//Create the Map instance to be returned
@@ -179,8 +174,8 @@ public class ManagementUtility {
 		return map;
 	}
 
-	/**The method takes a List<SelectorType> instance and returns the Selectors defined
-	 * in a Map<String,String> instance, with Key,Value being the values respectively.
+	/**The method takes a List&lt;SelectorType&gt; instance and returns the Selectors defined
+	 * in a Map&lt;String,String&gt; instance, with Key,Value being the values respectively.
 	 *
 	 * @param map
 	 * @param selectorsList
@@ -399,7 +394,7 @@ public class ManagementUtility {
 	}
 
 	/** Attempts to extract Selectors returned from a Management instance including
-	 * a CreateResponse type, as a Map<String,String> for convenience.
+	 * a CreateResponse type, as a Map&lt;String,String&gt; for convenience.
 	 *
 	 * @param managementMessage
 	 * @return extracted selectors
@@ -420,11 +415,9 @@ public class ManagementUtility {
 			 //Extract dom component
 			Node createContent = managementMessage.getBody().getFirstChild();
 			try{
-			 JAXBElement<EndpointReferenceType> unmarshal =
-				(JAXBElement<EndpointReferenceType>)
-				binding.unmarshal(createContent);
-			 crtType =
-				(EndpointReferenceType) unmarshal.getValue();
+			 final JAXBElement unmarshal = 
+				              (JAXBElement)binding.unmarshal(createContent);
+			 crtType = (EndpointReferenceType)unmarshal.getValue();
 			}catch(Exception ex){
 				ex.printStackTrace();
 				LOG.warning(ex.getMessage());
@@ -445,9 +438,8 @@ public class ManagementUtility {
 						Document nod = Management.newDocument();
 							binding.marshal(node, nod );
 
-						JAXBElement<SelectorSetType> selSet =
-							(JAXBElement<SelectorSetType>) binding
-										.unmarshal(nod);
+						final JAXBElement selSet =
+							(JAXBElement)binding.unmarshal(nod);
 						SelectorSetType sels = (SelectorSetType) selSet.getValue();
 			    		if(sels!=null){
 					      //extract the SelectorSet contents
@@ -486,55 +478,58 @@ public class ManagementUtility {
 		return located;
 	}
 
-	/**Attempts to extract the addressing components from a Management message
-	 * as an EPR type.
+	/**
+	 * Extrcts the addressing components from a Management message
+	 * as an EPR type. NOTE: The original EPR used to contruct a
+	 * message cannot be fully reconstructed from the message as
+	 * the metadata information marking the reference parameters
+	 * and properties is lost when the EPR is flattened out into
+	 * message headers.
 	 *
-	 * @param managementMesg
-	 * @return the EPR
+	 * @param message Management message
+	 * @return the Endpoint Reference extracted from the message
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 */
-	public static EndpointReferenceType extractEprType(Management managementMesg)
-	throws JAXBException, SOAPException {
-	  EndpointReferenceType epr = null;
-	  epr = addressing_factory.createEndpointReferenceType();
-	   AttributedURI to = addressing_factory.createAttributedURI();
-	   to.setValue(managementMesg.getTo());
-	  epr.setAddress(to);
-	    //######## REF PARAMETERS
-	    ReferenceParametersType refParams =
-		  addressing_factory.createReferenceParametersType();
-	    //add the resourceUri
-	     SOAPElement resourceURI = ManagementUtility.locateHeader(
-	    		managementMesg.getHeaders(), Management.RESOURCE_URI);
-	     if((resourceURI!=null)&&
-	    		(resourceURI.getTextContent().trim().length()>0)){
-	    	refParams.getAny().add(resourceURI);
-	     }
-	    //add the SelectorSet if defined
-	     SOAPElement selectorSet = ManagementUtility.locateHeader(
-	    		  managementMesg.getHeaders(), Management.SELECTOR_SET);
-	     if((selectorSet!=null)&&
-	    		 (selectorSet.hasChildNodes())){
-	        refParams.getAny().add(selectorSet);
-	     }
-	     //TODO: add for OptionSet processing.
-	    //######## REF PROPERTIES
-	    ReferencePropertiesType refProps =
-	    	addressing_factory.createReferencePropertiesType();
-	    boolean hasReferenceProperties = false;
-	  //Populate the Reference* just populated.
-	  if((refParams.getAny()!=null)&&(refParams.getAny().size()>0)){
-	   epr.setReferenceParameters(refParams);
-	  }
-	  if((refProps.getAny()!=null)&&(refProps.getAny().size()>0)){
-	    epr.setReferenceProperties(refProps);
-	  }
-	 return epr;
+	public static EndpointReferenceType extractEprType(Management message)
+			throws JAXBException, SOAPException {
+		final EndpointReferenceType epr = addressing_factory.createEndpointReferenceType();
+		
+		// ######## Address field
+		final AttributedURI to = addressing_factory.createAttributedURI();
+		to.setValue(message.getTo());
+		epr.setAddress(to);
+		
+		// ######## Reference Parameters
+		final ReferenceParametersType refParams = 
+			  addressing_factory.createReferenceParametersType();
+		
+		// add the resourceUri
+		final SOAPElement resourceURI = 
+			              ManagementUtility.locateHeader(message.getHeaders(),
+			            		                         Management.RESOURCE_URI);
+		if ((resourceURI != null)
+				&& (resourceURI.getTextContent().trim().length() > 0)) {
+			refParams.getAny().add(resourceURI);
+		}
+		
+		// add the SelectorSet if defined
+		final SOAPElement selectorSet = ManagementUtility.locateHeader(message.getHeaders(),
+				                                                 Management.SELECTOR_SET);
+		if ((selectorSet != null) && (selectorSet.hasChildNodes())) {
+			refParams.getAny().add(selectorSet);
+		}
+		
+		if ((refParams.getAny() != null) && (refParams.getAny().size() > 0)) {
+			epr.setReferenceParameters(refParams);
+		}
+
+		// ######## Reference Properties cannot be recontstructed from the headers
+		return epr;
 	}
 
 
-	//###################### GETTERS/SETTERS for instance
+	// ###################### GETTERS/SETTERS for instance
     /* Exposes the default uid scheme for the ManagementUtility instance.
      *
      */
@@ -551,7 +546,7 @@ public class ManagementUtility {
 
 	/**
 	 * Send an http request and return the response as a ResourceState
-	 * @param request SOAP request
+	 * @param response SOAP response
 	 * @return SOAP response as a ResourceState
 	 * @throws Exception
 	 */
@@ -560,12 +555,13 @@ public class ManagementUtility {
 
 	}
 
-	/**
-	 * Send an http request and return the response as a Addressing object
-	 * @param request SOAP request
-	 * @return SOAP response as a ResourceState
-	 * @throws Exception
-	 */
+    /**
+     * Send an http request and return the response as a Addressing object
+     * 
+     * @param request SOAP request
+     * @return SOAP response as a ResourceState
+     * @throws Exception
+     */
 	public static Addressing getRequest(Addressing request) throws Exception {
         // Send the get request to the server
         Addressing response = HttpClient.sendRequest(request);

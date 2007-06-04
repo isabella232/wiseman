@@ -20,14 +20,21 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.9  2007/05/30 20:30:29  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: WsManBaseTestSupport.java,v 1.9 2007-05-30 20:30:29 nbeers Exp $
+ * $Id: WsManBaseTestSupport.java,v 1.10 2007-06-04 06:25:12 denis_rachal Exp $
  */
 package util;
  
 import java.io.IOException;
 import java.util.Set;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -49,31 +56,61 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
-import com.sun.ws.management.ResourceStateDocument;
-import com.sun.ws.management.transfer.TransferMessageValues;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transfer.TransferMessageValues;
 import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
 
 public class WsManBaseTestSupport extends TestCase {
+	protected static Logger LOG = Logger.getLogger("com.sun.ws.management");
     protected static final int TEST_TIMEOUT = 30000;
+	private FileHandler LOG_HANDLER = null;
 	private XPath xpath;
 
 	public WsManBaseTestSupport() {
 		super();
 
+		// Set the level in logging.properties
+		// LOG.setLevel(Level.FINE);
+		LOG.setUseParentHandlers(false);
+		
 		final String basicAuth = System.getProperty("wsman.basicauthentication");
         if ("true".equalsIgnoreCase(basicAuth)) {
             HttpClient.setAuthenticator(new transport.BasicAuthenticator());
         }
 
-
 		xpath = XPathFactory.newInstance().newXPath();
 	}
+	
+	protected void setUp() throws Exception {
+		super.setUp();
+
+		if (LOG.getLevel() != Level.OFF) {
+		   LOG_HANDLER = new FileHandler(getClass().getName() + "." +
+                   getName() + ".Log.txt");
+		   LOG_HANDLER.setFormatter(new SimpleFormatter());
+	       LOG.addHandler(LOG_HANDLER);
+		}
+		try {
+			new Management();
+		} catch (SOAPException e) {
+			fail("Can't init wiseman");
+		}
+	}
+
+	protected void tearDown() throws Exception {
+		super.tearDown();
+		
+		if (LOG_HANDLER != null) {
+		   LOG.removeHandler(LOG_HANDLER);
+		   LOG_HANDLER.close();
+		}
+	}
+	
 	    protected Management sendCreateRequest(String destination, String resourceUri, Document propertyDocument) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
 
@@ -176,12 +213,10 @@ public class WsManBaseTestSupport extends TestCase {
 	        }
 
 	        try {
-	        	ResourceStateDocument rs = ManagementUtility.getAsResourceState(response);
+	        	ManagementUtility.getAsResourceState(response);
 	        
-//				System.out.println("age = " + rs.getValueText("//*[local-name()='age']"));
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				fail("Unexpected exception: \n" + e.getMessage());
 			} 
 	        return new Management(response);
 	    }
@@ -213,7 +248,6 @@ public class WsManBaseTestSupport extends TestCase {
 	                                                Object ctx) throws SOAPException, JAXBException, DatatypeConfigurationException, IOException
 	    {
 	        final Addressing response = sendEnumRequest(ctx, destination, resourceUri, Enumeration.PULL_ACTION_URI);
-//System.out.println("PullResponse:"+response.toString());
 	        if (response.getBody().hasFault())
 	        {
 	            fail(response.getBody().getFault().getFaultString());
@@ -273,7 +307,6 @@ public class WsManBaseTestSupport extends TestCase {
 		 * @param xPathExpression
 		 * @return A string containg the element text.
 		 * @throws XPathExpressionException
-		 * @throws NoMatchFoundException 
 		 */
 		public String getXPathText(String xPathExpression,Object stateDocument) throws XPathExpressionException{
 			Object resultOb = xpath.evaluate(xPathExpression, stateDocument, XPathConstants.STRING);
@@ -287,7 +320,6 @@ public class WsManBaseTestSupport extends TestCase {
 		 * @param xPathExpression
 		 * @return A list of matching nodes.
 		 * @throws XPathExpressionException
-		 * @throws NoMatchFoundException 
 		 */
 		public NodeList getXPathValues(String xPathExpression,Object stateDocument) throws XPathExpressionException{
 			Object nodes = xpath.evaluate(xPathExpression, stateDocument, XPathConstants.NODESET);

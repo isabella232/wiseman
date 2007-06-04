@@ -19,13 +19,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.19  2007/05/30 20:31:07  nbeers
+ **Add HP copyright header
  **
- * $Id: HttpClient.java,v 1.19 2007-05-30 20:31:07 nbeers Exp $
+ **
+ * $Id: HttpClient.java,v 1.20 2007-06-04 06:25:12 denis_rachal Exp $
  */
 
 package com.sun.ws.management.transport;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +39,6 @@ import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,18 +49,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.JAXBException;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
-//import org.apache.commons.httpclient.HttpClient;
-//import org.apache.commons.httpclient.HttpException;
-//import org.apache.commons.httpclient.UsernamePasswordCredentials;
-//import org.apache.commons.httpclient.auth.AuthScope;
-//import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
-//import org.apache.commons.httpclient.methods.PostMethod;
-
-import com.sun.ws.management.Management;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 
@@ -142,10 +134,19 @@ public final class HttpClient {
 //    	}
 ////        log(msg);
 
+		if (LOG.isLoggable(Level.FINE))
+			LOG.fine("<request>\n" + msg + "</request>\n");
         final HttpURLConnection http = initRequest(destination,
                 ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
         transfer(http, msg);
-        return readResponse(http);
+        final Addressing response = readResponse(http);
+		if (LOG.isLoggable(Level.FINE)) {
+			if (response.getBody().hasFault())
+				LOG.fine("<fault>\n" + response + "</fault>\n");
+			else
+			    LOG.fine("<response>\n" + response + "</response>\n");
+		}
+        return response;
     }
 
     public static Addressing sendRequest(final SOAPMessage msg, final String destination,Entry<String, String>... headers)
@@ -156,6 +157,8 @@ public final class HttpClient {
 //    	}
 ////        log(msg);
 
+		if (LOG.isLoggable(Level.FINE))
+			LOG.fine("<request>\n" + msg + "</request>\n");
         final HttpURLConnection http = initRequest(destination,
                 ContentType.createFromEncoding((String) msg.getProperty(SOAPMessage.CHARACTER_SET_ENCODING)));
         if (headers != null) {
@@ -165,7 +168,14 @@ public final class HttpClient {
         }
 
         transfer(http, msg);
-        return readResponse(http);
+        final Addressing response = readResponse(http);
+		if (LOG.isLoggable(Level.FINE)) {
+			if (response.getBody().hasFault())
+				LOG.fine("<fault>\n" + response + "</fault>\n");
+			else
+			    LOG.fine("<response>\n" + response + "</response>\n");
+		}
+        return response;
     }
 
 
@@ -178,6 +188,8 @@ public final class HttpClient {
 //    	}
 ////        log(msg);
 
+		if (LOG.isLoggable(Level.FINE))
+			LOG.fine("<request>\n" + msg + "</request>\n");
         final HttpURLConnection http = initRequest(msg.getTo(), msg.getContentType());
 
         if (headers != null) {
@@ -188,6 +200,12 @@ public final class HttpClient {
 
         transfer(http, msg);
         final Addressing response = readResponse(http);
+		if (LOG.isLoggable(Level.FINE)) {
+			if (response.getBody().hasFault())
+				LOG.fine("<fault>\n" + response + "</fault>\n");
+			else
+				LOG.fine("<response>\n" + response + "</response>\n");
+		}
         response.setXmlBinding(msg.getXmlBinding());
         return response;
 //    	return sendHttpRequest(msg, headers);
@@ -217,7 +235,6 @@ public final class HttpClient {
     public static HttpURLConnection createHttpConnection(
     				String destination,Object data) throws SOAPException,
     				JAXBException, IOException{
-    	InputStream response = null;
         final HttpURLConnection http = initRequest(destination, null);
 //        transfer(http, data);
 

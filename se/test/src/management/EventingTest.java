@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.18  2007/05/30 20:30:23  nbeers
+ **Add HP copyright header
  **
- * $Id: EventingTest.java,v 1.18 2007-05-30 20:30:23 nbeers Exp $
+ **
+ * $Id: EventingTest.java,v 1.19 2007-06-04 06:25:08 denis_rachal Exp $
  */
 
 package management;
@@ -111,12 +114,12 @@ public class EventingTest extends TestBase {
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
-        evt.prettyPrint(System.out);
+        evt.prettyPrint(logfile);
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
         final Eventing evt2 = new Eventing(new ByteArrayInputStream(bos.toByteArray()));
 
-        evt2.prettyPrint(System.out);
+        evt2.prettyPrint(logfile);
         final SubscribeResponse sr2 = evt2.getSubscribeResponse();
         assertNotNull("SubscriptionManager is null.",sr2.getSubscriptionManager());
         assertNotNull("Address is null.",sr2.getSubscriptionManager().getAddress());
@@ -323,7 +326,7 @@ public class EventingTest extends TestBase {
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
-    	evt.prettyPrint(System.out);
+    	evt.prettyPrint(logfile);
 
         final Addressing addr = HttpClient.sendRequest(evt);
         addr.prettyPrint(logfile);
@@ -371,7 +374,7 @@ public class EventingTest extends TestBase {
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
-    	evt.prettyPrint(System.out);
+    	evt.prettyPrint(logfile);
 
         final Addressing addr = HttpClient.sendRequest(evt);
         addr.prettyPrint(logfile);
@@ -409,7 +412,7 @@ public class EventingTest extends TestBase {
         settings.setResourceUri("wsman:test/eventing");
         settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
     	Eventing evt = EventingUtility.buildMessage(null, settings);
-    	evt.prettyPrint(System.out);
+    	evt.prettyPrint(logfile);
 
         final Addressing addr = HttpClient.sendRequest(evt);
         addr.prettyPrint(logfile);

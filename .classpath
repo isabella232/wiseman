@@ -6,7 +6,8 @@
 	<classpathentry kind="src" path="se/test/src"/>
 	<classpathentry kind="src" path="se/test/gen-src"/>
 	<classpathentry kind="src" path="client/src"/>
-	<classpathentry kind="src" path="client/test"/>
+	<classpathentry kind="src" path="client/test/src"/>
+        <classpathentry kind="src" path="client/test/gen-src"/>
 	<classpathentry kind="src" path="tools/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/model/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
@@ -18,6 +19,7 @@
 	<classpathentry exported="true" kind="lib" path="tools/lib/velocity-dep-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/velocity-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="tools/lib/ant.jar"/>
+        <classpathentry exported="true" kind="lib" path="tools/lib/ant-launcher.jar"/>
 	<classpathentry exported="true" kind="lib" path="se/test/lib/junit.jar"/>
 	<classpathentry kind="lib" path="se/lib/jaxws/activation.jar"/>
 	<classpathentry kind="lib" path="se/lib/jaxws/FastInfoset.jar"/>
@@ -35,6 +37,5 @@
 	<classpathentry kind="lib" path="se/lib/jaxws/saaj-api.jar"/>
 	<classpathentry kind="lib" path="se/lib/jaxws/saaj-impl.jar"/>
 	<classpathentry kind="lib" path="se/lib/jaxws/sjsxp.jar"/>
-	<classpathentry kind="lib" path="tools/lib/ant-launcher.jar"/>
 	<classpathentry kind="output" path="ebin"/>
 </classpath>

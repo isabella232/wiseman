@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/05/30 20:30:15  nbeers
+ **Add HP copyright header
  **
- * $Id: WSManServlet.java,v 1.4 2007-05-30 20:30:15 nbeers Exp $
+ **
+ * $Id: WSManServlet.java,v 1.5 2007-06-04 06:25:14 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -108,7 +111,7 @@ public abstract class WSManServlet extends HttpServlet {
 				final InputStream xsd = context.getResourceAsStream(xsdLoc);
 				schemas[i] = new StreamSource(xsd);
 				if (LOG.isLoggable(Level.FINE))
-					LOG.log(Level.SEVERE, "Custom schema " + xsdLoc);
+					LOG.log(Level.FINE, "Custom schema " + xsdLoc);
 			}
 		}
 		try {
@@ -120,7 +123,7 @@ public abstract class WSManServlet extends HttpServlet {
 	}
 
     private List<String> getFilenames(ServletContext context, String path) {
-    	final List<String> xsdFilenames =  new ArrayList();
+    	final List<String> xsdFilenames =  new ArrayList<String>();
 		final Set<String> xsdLocSet = context.getResourcePaths(path);
 
 		if ((xsdLocSet == null) || (xsdLocSet.size() == 0))

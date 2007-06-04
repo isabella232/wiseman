@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.9  2007/05/30 20:30:21  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: TransferableResource.java,v 1.9 2007-05-30 20:30:21 nbeers Exp $
+ * $Id: TransferableResource.java,v 1.10 2007-06-04 06:25:09 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -169,7 +172,9 @@ public interface TransferableResource {
 	 * for update defined by fragmentExpression, using the fragmentDialect to be 
 	 * updated with the contents of the Document passed in.
 	 * 
-	 * @param content a w3c document representing the fragment resource to put
+	 * @param content an object to be marshalled into the body of the request.
+	 *        If expression is not null this is expected to be a Document or
+	 *        DocumentFragment containing the XmlFragment.
 	 * @param expression a filter expression to be applied against the resource.
 	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
 	 *        containing the XPath expression. For other dialects this must be an
@@ -185,7 +190,7 @@ public interface TransferableResource {
 	 * @throws FaultException
 	 * @throws DatatypeConfigurationException
 	 */
-	public abstract ResourceState put(final Document content, 
+	public abstract ResourceState put(final Object content, 
                                       final Object expression, 
                                       final Map<String, String> namespaces,
                                       final String dialect) throws SOAPException, JAXBException,

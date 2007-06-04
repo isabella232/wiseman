@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.10  2007/05/30 20:30:28  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: ResourceImpl.java,v 1.10 2007-05-30 20:30:28 nbeers Exp $
+ * $Id: ResourceImpl.java,v 1.11 2007-06-04 06:25:10 denis_rachal Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -30,7 +33,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -55,9 +57,7 @@ import com.sun.ws.management.xml.XmlBinding;
 public class ResourceImpl extends EnumerationResourceImpl implements Resource {
 	
     protected static final String UUID_SCHEME = "uuid:";
-    private static Logger log = Logger.getLogger(ResourceImpl.class.getName());
 
-	
 	public ResourceImpl(String destination, String resourceURI, SelectorSetType selectors, XmlBinding binding) throws SOAPException, JAXBException{
 		super(destination, resourceURI, selectors, binding);//
 	}
@@ -89,17 +89,14 @@ public class ResourceImpl extends EnumerationResourceImpl implements Resource {
 
 		xf.getBody().addDocument(document);
 		
-        log.info("REQUEST:\n"+mgmt+"\n");
         //Send the request
         final Addressing response = HttpClient.sendRequest(mgmt);
 
         //Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-		log.info("RESPONSE:\n" + response + "\n");
         
         //parse response and retrieve contents.
         // Iterate through the create response to obtain the selectors

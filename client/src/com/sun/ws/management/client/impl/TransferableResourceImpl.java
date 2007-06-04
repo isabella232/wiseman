@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.15  2007/05/30 20:30:29  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: TransferableResourceImpl.java,v 1.15 2007-05-30 20:30:29 nbeers Exp $
+ * $Id: TransferableResourceImpl.java,v 1.16 2007-06-04 06:25:11 denis_rachal Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -35,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -61,6 +63,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -80,9 +83,6 @@ import com.sun.ws.management.xml.XmlBinding;
 public class TransferableResourceImpl implements TransferableResource {
 
 	protected static final String UUID_SCHEME = "uuid:";
-
-	private static Logger log = Logger.getLogger(TransferableResourceImpl.class
-			.getName());
 
 	public static final QName FRAGMENT_TRANSFER = new QName(Management.NS_URI,
 			"FragmentTransfer", Management.NS_PREFIX);
@@ -267,18 +267,14 @@ public class TransferableResourceImpl implements TransferableResource {
 		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
 
-		log.fine("REQUEST:\n" + mgmt + "\n");
-
 		// Send the request
 		final Addressing response = HttpClient.sendRequest(mgmt);
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-		log.info("RESPONSE:\n" + response + "\n");
 	}
 
 	/*
@@ -310,7 +306,7 @@ public class TransferableResourceImpl implements TransferableResource {
 	 * @see com.sun.ws.management.client.impl.TransferableResource#put(org.w3c.dom.Document,
 	 *      java.lang.Object, java.lang.Map, java.lang.String)
 	 */
-	public ResourceState put(final Document content, final Object expression,
+	public ResourceState put(final Object content, final Object expression,
 			final Map<String, String> namespaces, final String dialect)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
@@ -332,13 +328,27 @@ public class TransferableResourceImpl implements TransferableResource {
 			// Now take the created DOM and append it to the SOAP body
 
 			if (expression != null) {
-				if (content.getChildNodes() != null) {
-				    final Object xmlFragment = BaseSupport.createXmlFragment(content.getChildNodes());
-				    mgmt.getXmlBinding().marshal(xmlFragment, mgmt.getBody());
+				if (content instanceof Document) {
+					if (((Document)content).getChildNodes() != null) {
+						final Object xmlFragment = BaseSupport
+								.createXmlFragment(((Document)content).getChildNodes());
+						mgmt.getXmlBinding().marshal(xmlFragment, mgmt.getBody());
+					}
+				} else if (content instanceof DocumentFragment) {
+					if (((DocumentFragment)content).getChildNodes() != null) {
+						final Object xmlFragment = BaseSupport
+								.createXmlFragment(((DocumentFragment)content).getChildNodes());
+						mgmt.getXmlBinding().marshal(xmlFragment, mgmt.getBody());
+					}
 				}
 			} else {
 				// NON-FRAGMENT request processing.
-				mgmt.getBody().addDocument(content);
+				if (content instanceof Document) {
+				    mgmt.getBody().addDocument((Document)content);
+				} else {
+					// Try to marshall it
+					mgmt.getXmlBinding().marshal(content, mgmt.getBody());
+				}
 			}
 		}
 
@@ -355,17 +365,14 @@ public class TransferableResourceImpl implements TransferableResource {
 		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
 
-		log.info("REQUEST:\n" + mgmt + "\n");
 		// Send the request
 		final Addressing response = HttpClient.sendRequest(mgmt);
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-		log.info("RESPONSE:\n" + response + "\n");
 
 		// parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors
@@ -518,17 +525,14 @@ public class TransferableResourceImpl implements TransferableResource {
 		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
 
-		log.info("REQUEST:\n" + mgmt + "\n");
 		// Send the request
 		final Addressing response = HttpClient.sendRequest(mgmt);
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-		log.info("RESPONSE:\n" + response + "\n");
 
 		// parse response and retrieve contents.
 		// Iterate through the create response to obtain the selectors

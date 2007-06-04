@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.23  2007/05/30 20:30:28  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EnumerationResourceImpl.java,v 1.23 2007-05-30 20:30:28 nbeers Exp $
+ * $Id: EnumerationResourceImpl.java,v 1.24 2007-06-04 06:25:11 denis_rachal Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -33,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -78,8 +80,6 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	protected List<EnumerationItem> enumItems = null;
 
 	private boolean endOfSequence = false;
-	private static Logger log = Logger.getLogger(EnumerationResourceImpl.class
-			.getName());
 
 	public EnumerationResourceImpl(String destination, String resourceURI,
 			SelectorSetType selectors, XmlBinding binding) throws SOAPException, JAXBException {
@@ -263,17 +263,14 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 					null, null, enumerationMode, params);
 		}
 
-		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
 		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-		log.info("RESPONSE:\n" + response + "\n");
 
 		final EnumerationExtensions enuResponse = new EnumerationExtensions(
 				response);
@@ -488,18 +485,14 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 			enu.setRequestTotalItemsCountEstimate();
 		}
 
-		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
 		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-
-		log.info("RESPONSE:\n" + response + "\n");
 
 		final EnumerationExtensions enuResponse = new EnumerationExtensions(
 				response);
@@ -582,17 +575,14 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
 
-		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
 		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-		log.info("RESPONSE:\n" + response + "\n");
 	}
 
 	/**
@@ -618,17 +608,14 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);
 
-		log.info("REQUEST:\n" + mgmt + "\n");
 		final Addressing response = HttpClient.sendRequest(mgmt);
 		response.setXmlBinding(mgmt.getXmlBinding());
 
 		// Check for fault during message generation
 		if (response.getBody().hasFault()) {
-			log.severe("FAULT:\n" + response + "\n");
 			SOAPFault fault = response.getBody().getFault();
 			throw new FaultException(fault);
 		}
-		log.info("RESPONSE:\n" + response + "\n");
 	}
 
 	public Long getItemCount() {

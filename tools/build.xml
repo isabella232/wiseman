@@ -64,13 +64,13 @@
 	<!-- Compile -->
 	<target name="compile" depends="init">
 	  	<javac destdir="${build.classes.dir}"
-	           debug="${debug}">
+	           debug="${debug}" fork="yes">
 	      <classpath refid="compile.classpath" />
 		  <src path="${src.dir}" />
 	    </javac>
 		
 	  	<!--javac destdir="${test.build.classes.dir}"
-	           debug="${debug}">
+	           debug="${debug}" fork="yes">
 	      <classpath> 
 	      		<path refid="compile.classpath" />
           		<path path="${build.classes.dir}" />

@@ -41,6 +41,8 @@
 		<delete dir="${dist.dir}"/>
 	    <delete dir="${build.dir}" />
 	    <delete dir="${build.classes.dir}" />
+		<delete dir="${test.build.classes.dir}" />
+		<delete dir="${test.run.dir}" />
 	    <delete dir="${gen.src.dir}" />
 	    <delete dir="${apidocs.dir}" />	
 	</target>
@@ -52,6 +54,7 @@
 	    <mkdir dir="${build.dir}" />
 	    <mkdir dir="${build.classes.dir}" />
 	    <mkdir dir="${test.build.classes.dir}" />
+		<mkdir dir="${test.run.dir}" />
 	    <mkdir dir="${gen.src.dir}" />
 	    <mkdir dir="${lib.dir}" />
 	    <mkdir dir="${doc.dir}" />
@@ -62,16 +65,19 @@
 	<!-- Compile -->
 	<target name="compile" depends="init">
 	  	<javac destdir="${build.classes.dir}"
-	           debug="${debug}">
+	           debug="${debug}" fork="yes">
 	      <classpath refid="compile.classpath" />
 		  <src path="${src.dir}" />
 	    </javac>
 		
 	  	<javac destdir="${test.build.classes.dir}"
-	           debug="${debug}">
+	  		   debug="${debug}" fork="yes">
 	      <classpath> 
 	      		<path refid="compile.classpath" />
           		<path path="${build.classes.dir}" />
+	      	    <fileset dir="${wiseman.root}/${test.lib.dir}">
+	      	        <include name="junit.jar"/>
+	      	    </fileset>
 	      	</classpath>
 	      	<src path="${test.src.dir}" />
 	    </javac>
@@ -150,13 +156,17 @@
 	</target>
 	
     <target name="test" depends="jar" >
-        <junit showoutput="true"
+    	<echo message="********************************************"/>
+    	<echo message="* check client/test/run for logging output *"/>
+    	<echo message="********************************************"/>
+        <junit dir="${test.run.dir}"
+        	   showoutput="true"
                fork="true" haltonfailure="true">
           <assertions>
             <enable/>
           </assertions>
-            <batchtest>
-                <fileset dir="${test.dir}">
+            <batchtest todir="${test.run.dir}">
+                <fileset dir="${test.src.dir}">
                   <include name="**/*Test*.java"/>
                   <exclude name="**/*Interop*.java"/>
                 </fileset>
@@ -174,6 +184,7 @@
           <jvmarg value="-Dwsman.basicauthentication=true" />
           <jvmarg value="-Dcom.sun.ws.management.xml.custom.packagenames=foo.test,com.hp.examples.ws.wsman.user" />
           <jvmarg value="-Dcom.sun.ws.management.xml.validate=true" />
+          <jvmarg value="-Djava.util.logging.config.file=../logging.properties" />
         </junit>
     </target>
 	

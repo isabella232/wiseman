@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/05/30 20:30:25  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: AnnotationProcessor.java,v 1.6 2007-05-30 20:30:25 nbeers Exp $
+ * $Id: AnnotationProcessor.java,v 1.7 2007-06-04 06:25:13 denis_rachal Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 
@@ -59,7 +62,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.ws.soap.SOAPFaultException;
-import javax.xml.xpath.XPathConstants;
 
 import net.java.dev.wiseman.schemas.metadata.messagetypes.InputType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.MessageDefinitions;
@@ -69,7 +71,6 @@ import net.java.dev.wiseman.schemas.metadata.messagetypes.OutputType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemaType;
 import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemasType;
 
-import org.apache.tools.ant.types.mappers.FilterMapper;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
@@ -83,21 +84,14 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
-import org.xmlsoap.schemas.ws._2004._09.mex.ObjectFactory;
 
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationMessageValues;
-import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.server.Handler;
-import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.server.handler.wsman.metadata_Handler;
-import com.sun.ws.management.server.servlet.WSManServlet;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferUtility;
@@ -1000,7 +994,7 @@ public class AnnotationProcessor {
 	 * 
 	 * @param metaUidForAnnotatedResource  Ex. http://wiseman.dev.java.net/EventSource/eventcreator/uid-20000747652
 	 * @param wisemanServer Ex. http://localhost:8080/wsman/
-	 * @return
+	 * @return management object
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws DatatypeConfigurationException
@@ -1012,7 +1006,7 @@ public class AnnotationProcessor {
 			DatatypeConfigurationException, IOException 
 	{
 	  return findAnnotatedResourceByUID(metaUidForAnnotatedResource, 
-			  wisemanServer, true, null);	
+			  wisemanServer, true);	
 	}
 
 
@@ -1020,7 +1014,7 @@ public class AnnotationProcessor {
 	 * @param metaUidForAnnotatedResource
 	 * @param wisemanServer
 	 * @param locatedResource
-	 * @return
+	 * @return management object
 	 * @throws DatatypeConfigurationException 
 	 * @throws JAXBException 
 	 * @throws SOAPException 
