@@ -1,33 +1,5 @@
-/*
- * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *
- ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
- **  
- ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com), 
- ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
- **
- **$Log: not supported by cvs2svn $
- **Revision 1.2  2007/05/30 20:30:17  nbeers
- **Add HP copyright header
- **
- ** 
- *
- * $Id: Interop20060801Test.java,v 1.3 2007-06-04 08:39:08 denis_rachal Exp $
- */
 package com.sun.ws.management.client;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,11 +19,6 @@ import javax.xml.xpath.XPathExpressionException;
 import util.WsManBaseTestSupport;
 
 import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.client.EnumerationCtx;
-import com.sun.ws.management.client.Resource;
-import com.sun.ws.management.client.ResourceFactory;
-import com.sun.ws.management.client.ResourceState;
-import com.sun.ws.management.client.ServerIdentity;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.client.support.IdentifySupport;
