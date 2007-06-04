@@ -7,7 +7,6 @@
 	<classpathentry kind="src" path="se/test/gen-src"/>
 	<classpathentry kind="src" path="client/src"/>
 	<classpathentry kind="src" path="client/test/src"/>
-        <classpathentry kind="src" path="client/test/gen-src"/>
 	<classpathentry kind="src" path="tools/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/model/src"/>
 	<classpathentry kind="src" path="tools/samples/trafficlight_server/src"/>
