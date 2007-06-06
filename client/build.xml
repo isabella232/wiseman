@@ -188,6 +188,70 @@
         </junit>
     </target>
 	
+    <target name="test-interop" depends="jar" >
+    	<echo message="********************************************"/>
+    	<echo message="* check client/test/run for logging output *"/>
+    	<echo message="********************************************"/>
+        <junit dir="${test.run.dir}"
+        	   showoutput="true"
+               fork="true" haltonfailure="true">
+          <assertions>
+            <enable/>
+          </assertions>
+            <batchtest todir="${test.run.dir}">
+                <fileset dir="${test.src.dir}">
+                    <include name="**/*Interop*.java"/>
+                </fileset>
+             </batchtest>
+            <classpath>
+            	<path refid="compile.classpath" />
+        	    <path path="${build.classes.dir}" />
+        	    <path path="${test.build.classes.dir}" />
+            </classpath>
+          <formatter usefile="false" type="brief"/>
+          <formatter type="xml"/>
+          <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+          <jvmarg value="-Dwsman.user=wsman" />
+          <jvmarg value="-Dwsman.password=secret" />
+          <jvmarg value="-Dwsman.basicauthentication=true" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.custom.packagenames=foo.test,com.hp.examples.ws.wsman.user" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.validate=true" />
+          <jvmarg value="-Djava.util.logging.config.file=../logging.properties" />
+        </junit>
+    </target>
+    	
+    <target name="test-all" depends="jar" >
+    	<echo message="********************************************"/>
+    	<echo message="* check client/test/run for logging output *"/>
+    	<echo message="********************************************"/>
+        <junit dir="${test.run.dir}"
+        	   showoutput="true"
+               fork="true" haltonfailure="true">
+          <assertions>
+            <enable/>
+          </assertions>
+            <batchtest todir="${test.run.dir}">
+                <fileset dir="${test.src.dir}">
+                  <include name="**/*Test*.java"/>
+                </fileset>
+             </batchtest>
+            <classpath>
+            	<path refid="compile.classpath" />
+        	    <path path="${build.classes.dir}" />
+        	    <path path="${test.build.classes.dir}" />
+            </classpath>
+          <formatter usefile="false" type="brief"/>
+          <formatter type="xml"/>
+          <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+          <jvmarg value="-Dwsman.user=wsman" />
+          <jvmarg value="-Dwsman.password=secret" />
+          <jvmarg value="-Dwsman.basicauthentication=true" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.custom.packagenames=foo.test,com.hp.examples.ws.wsman.user" />
+          <jvmarg value="-Dcom.sun.ws.management.xml.validate=true" />
+          <jvmarg value="-Djava.util.logging.config.file=../logging.properties" />
+        </junit>
+    </target>
+	
 	<target name="autobuild" depends="javadoc,jar,test" />
 
 </project>
