@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.68 2007-06-08 15:38:39 denis_rachal Exp $
+ $Id: build.xml,v 1.69 2007-06-08 21:03:16 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -685,6 +685,7 @@
             <jvmarg value="-Dwsman.user=wsman" />
             <jvmarg value="-Dwsman.password=secret" />
             <jvmarg value="-Dwsman.basicauthentication=true" />
+        	<jvmarg value="-Djava.util.logging.config.file=../logging.properties" />
         </junit>
     </target> 
     
@@ -733,6 +734,7 @@
             <jvmarg value="-Dwsman.user=wsman" />
             <jvmarg value="-Dwsman.password=secret" />
             <jvmarg value="-Dwsman.basicauthentication=true" />
+        	<jvmarg value="-Djava.util.logging.config.file=../logging.properties" />
         </junit>
     </target>
     
@@ -761,6 +763,7 @@
             <jvmarg value="-Dwsman.user=wsman" />
             <jvmarg value="-Dwsman.password=secret" />
             <jvmarg value="-Dwsman.basicauthentication=true" />
+        	<jvmarg value="-Djava.util.logging.config.file=../logging.properties" />
         </junit>
     </target> 
   
