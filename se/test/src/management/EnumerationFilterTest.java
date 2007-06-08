@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/05/30 20:30:24  nbeers
+ **Add HP copyright header
  **
- * $Id: EnumerationFilterTest.java,v 1.6 2007-05-30 20:30:24 nbeers Exp $
+ **
+ * $Id: EnumerationFilterTest.java,v 1.7 2007-06-08 15:38:39 denis_rachal Exp $
  */
 
 package management;
@@ -29,13 +32,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.xml.bind.JAXBException;
-import javax.xml.datatype.DatatypeFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
-import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
@@ -115,7 +115,7 @@ public class EnumerationFilterTest extends TestBase {
 
     public void filterEnumerationTest(final String dialect, final String expression) throws Exception {
 
-    	final String resource = "wsman:auth/userenum";
+    	final String resource = "wsman:auth/user";
     	final int max = 10;
 
 

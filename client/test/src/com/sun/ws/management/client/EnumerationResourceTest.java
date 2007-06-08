@@ -20,12 +20,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/06/04 06:25:12  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.2  2007/05/30 20:30:17  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: EnumerationResourceTest.java,v 1.1 2007-06-04 06:25:12 denis_rachal Exp $
+ * $Id: EnumerationResourceTest.java,v 1.2 2007-06-08 15:38:38 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -47,7 +58,7 @@ import com.sun.ws.management.xml.XmlBinding;
 public class EnumerationResourceTest extends WsManBaseTestSupport  {
 
 	private static final String destUrl = "http://localhost:8080/wsman/";
-	private static final String resourceUri = "wsman:auth/userenum";
+	private static final String resourceUri = "wsman:auth/user";
 	private static final String USER_CUSTOM_DIALECT = "http://examples.hp.com/ws/wsman/user/filter/custom";
 	private static final long timeout=10000;
 	

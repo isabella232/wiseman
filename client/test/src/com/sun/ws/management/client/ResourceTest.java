@@ -20,6 +20,17 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/06/04 06:25:12  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.5  2007/05/31 07:04:23  denis_rachal
  **Switch test to check for RC2.
  **
@@ -28,11 +39,10 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.1 2007-06-04 06:25:12 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.2 2007-06-08 15:38:38 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
@@ -45,11 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBElement;
@@ -127,7 +132,6 @@ public class ResourceTest extends WsManBaseTestSupport {
 	private static final String USER_NS = "http://examples.hp.com/ws/wsman/user";
 
 	private XmlBinding binding = null;
-	private FileHandler LOG_HANDLER = null;
 	
 	protected void setUp() throws Exception {
 		super.setUp();

@@ -19,35 +19,31 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/05/30 20:30:24  nbeers
+ **Add HP copyright header
  **
- * $Id: MetadataTest.java,v 1.8 2007-05-30 20:30:24 nbeers Exp $
+ **
+ * $Id: MetadataTest.java,v 1.9 2007-06-08 15:38:39 denis_rachal Exp $
  */
 
 package management;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.namespace.QName;
@@ -65,15 +61,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import net.java.dev.wiseman.schemas.metadata.messagetypes.MessageDefinitions;
-import net.java.dev.wiseman.schemas.metadata.messagetypes.InputType;
-import net.java.dev.wiseman.schemas.metadata.messagetypes.OperationNodeType;
-import net.java.dev.wiseman.schemas.metadata.messagetypes.OperationsType;
-import net.java.dev.wiseman.schemas.metadata.messagetypes.OutputType;
-import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemaType;
-import net.java.dev.wiseman.schemas.metadata.messagetypes.SchemasType;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
@@ -91,11 +80,9 @@ import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.handler.wsman.auth.eventcreator_Handler;
-//import com.sun.ws.management.server.handler.wsman.auth.eventcreator_Handler;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferUtility;
-import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -575,8 +562,9 @@ public class MetadataTest extends TestBase {
 		located = checkDocument(urlToXsd, xsdParseFor);
     	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
 
-    	// Make the check using a default query string in the URL
+    	// Make the check using a default query string in the URL (user.xsd)
     	urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "?xsd";
+    	xsdParseFor="<xs:schema targetNamespace=\"http://examples.hp.com/ws/wsman/user\"";
 		located = checkDocument(urlToXsd, xsdParseFor);
     	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
     }
@@ -600,6 +588,7 @@ public class MetadataTest extends TestBase {
 
         // Make the check using a default query string in the URL
 		urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "?wsdl";
+		wsdlParseFor = "<service name=\"userService\">";
 		located = checkDocument(urlToWsdl, wsdlParseFor);
 		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
 

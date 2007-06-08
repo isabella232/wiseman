@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.10 2007-01-11 13:12:57 jfdenise Exp $
+ * $Id: TestBase.java,v 1.11 2007-06-08 15:38:39 denis_rachal Exp $
  */
 
 package management;
 
-import com.sun.ws.management.Message;
-import com.sun.ws.management.soap.SOAP;
-import junit.framework.*;
-import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.xml.XmlBinding;
 import java.io.FileOutputStream;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
+import junit.framework.TestCase;
+
+import com.sun.ws.management.Message;
+import com.sun.ws.management.transport.HttpClient;
 
 /**
  * Base class for Unit tests
@@ -38,15 +42,27 @@ public abstract class TestBase extends TestCase {
     protected static final String NS_PREFIX = "model";
     
     protected FileOutputStream logfile = null;
+	protected static Logger LOG = Logger.getLogger("com.sun.ws.management");
+	private FileHandler LOG_HANDLER = null;
     
     public TestBase(final String testName) {
         super(testName);
+        
+		// Set the level in logging.properties
+		// LOG.setLevel(Level.FINE);
+		LOG.setUseParentHandlers(false);
     }
     
     protected void setUp() throws java.lang.Exception {
         logfile = new FileOutputStream(getClass().getCanonicalName() + "." +
                 getName() + ".Output.xml");
 
+		if (LOG.getLevel() != Level.OFF) {
+			LOG_HANDLER = new FileHandler(getClass().getName() + "."
+					+ getName() + ".Log.txt");
+			LOG_HANDLER.setFormatter(new SimpleFormatter());
+			LOG.addHandler(LOG_HANDLER);
+		}
         final String basicAuth = System.getProperty("wsman.basicauthentication");
         if ("true".equalsIgnoreCase(basicAuth)) {
             HttpClient.setAuthenticator(new transport.BasicAuthenticator());
@@ -55,6 +71,11 @@ public abstract class TestBase extends TestCase {
     
     protected void tearDown() throws java.lang.Exception {
         logfile.close();
+        
+		if (LOG_HANDLER != null) {
+			LOG.removeHandler(LOG_HANDLER);
+			LOG_HANDLER.close();
+		}
     }
     
     public void log(final Message msg) throws Exception {

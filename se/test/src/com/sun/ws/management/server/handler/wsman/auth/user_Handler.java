@@ -20,22 +20,30 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/05/30 20:30:17  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: user_Handler.java,v 1.4 2007-05-30 20:30:17 nbeers Exp $
+ * $Id: user_Handler.java,v 1.5 2007-06-08 15:38:38 denis_rachal Exp $
  */
 package com.sun.ws.management.server.handler.wsman.auth;
 
+import java.util.logging.Logger;
+
 import management.MetadataTest;
 
+import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.eventing.EventingMessageValues.CreationTypes;
 import com.sun.ws.management.framework.handlers.DelegatingHandler;
 import com.sun.ws.management.metadata.annotations.WsManagementAddressDetailsAnnotation;
 import com.sun.ws.management.metadata.annotations.WsManagementDefaultAddressingModelAnnotation;
 import com.sun.ws.management.metadata.annotations.WsManagementOperationDefinitionAnnotation;
 import com.sun.ws.management.metadata.annotations.WsManagementQNamedNodeWithValueAnnotation;
+import com.sun.ws.management.server.EnumerationSupport;
 
 import framework.models.UserHandler;
+import framework.models.UserIteratorFactory;
 
 /**
  * This Handler Deligates to The UserHandler Class
@@ -75,6 +83,7 @@ import framework.models.UserHandler;
 )
 public class user_Handler extends DelegatingHandler {
 	public static final String categoryName = CreationTypes.SUBSCRIPTION_SOURCE.name();
+	public static final String RESOURCE_URI = "wsman:auth/user";
 
 	@WsManagementDefaultAddressingModelAnnotation(
 		getDefaultAddressDefinition = 
@@ -108,5 +117,12 @@ public class user_Handler extends DelegatingHandler {
 	
     public user_Handler() {
         super(new UserHandler());
+        
+		try {
+			EnumerationSupport.registerIteratorFactory(RESOURCE_URI,
+					new UserIteratorFactory(RESOURCE_URI));
+		} catch (Exception e) {
+			throw new InternalErrorFault(e.getMessage());
+		}
     }
 }

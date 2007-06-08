@@ -20,15 +20,17 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.12  2007/05/30 20:30:22  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: UserHandler.java,v 1.12 2007-05-30 20:30:22 nbeers Exp $
+ * $Id: UserHandler.java,v 1.13 2007-06-08 15:38:38 denis_rachal Exp $
  */
 package framework.models;
 
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -51,8 +53,10 @@ import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.framework.Utilities;
-import com.sun.ws.management.framework.transfer.TransferSupport;
+import com.sun.ws.management.framework.enumeration.EnumerationHandler;
+import com.sun.ws.management.server.Filter;
 import com.sun.ws.management.server.HandlerContext;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.transfer.TransferExtensions;
 
@@ -63,13 +67,15 @@ import com.sun.ws.management.transfer.TransferExtensions;
  * @author wire
  * 
  */
-public class UserHandler extends TransferSupport {
-	private static HashSet<UserModelObject> users = new HashSet<UserModelObject>(10);
+public class UserHandler extends EnumerationHandler {
 
-	private ObjectFactory FACTORY = new ObjectFactory();
-	private static String resourceUri = "wsman:auth/user";
+	private ObjectFactory FACTORY = new ObjectFactory();;
 	
 	public static final QName DIALECT = new QName("Dialect");
+	public static final String NS_URI = "http://examples.hp.com/ws/wsman/user";
+	public static final String NS_PREFIX = "user";
+	
+    public static final QName USER = new QName(NS_URI, "user", NS_PREFIX);
 
 	public UserHandler() {
 		super();
@@ -79,8 +85,6 @@ public class UserHandler extends TransferSupport {
 	@Override
 	public void create(HandlerContext context, Management request,
 			Management response) {
-		// create a new user class and add it to the list
-		UserModelObject userObject = new UserModelObject();
 
 		// Normal processing to create a new UserObject
 		UserType user = null;
@@ -101,9 +105,19 @@ public class UserHandler extends TransferSupport {
 
 		// Processing for FragmentCreate request
 		if (fragmentHeader != null) {
-			// retrieve the userModelObject instance to modify
-			userObject = findInstance(request);
-
+			// retrieve the instance to modify
+			final UserType userOrg = findInstance(request);
+			user = new UserType();
+			
+			// Copy the original values into the new object
+			user.setAddress(userOrg.getAddress());
+			user.setAge(userOrg.getAge());
+			user.setCity(userOrg.getCity());
+			user.setFirstname(userOrg.getFirstname());
+			user.setLastname(userOrg.getLastname());
+			user.setState(userOrg.getState());
+			user.setZip(userOrg.getZip());
+			
 			// now retrieve the server specific content to replace based on
 			// fragmentExp
 			try {
@@ -127,20 +141,19 @@ public class UserHandler extends TransferSupport {
 					if (obj instanceof Element) {
 						Element elem = (Element) obj;
 						if (elem.getLocalName().equals("firstname")) {
-							userObject.setFirstname(elem.getTextContent());
+							user.setFirstname(elem.getTextContent());
 						} else if (elem.getLocalName().equals("lastname")) {
-							userObject.setLastname(elem.getTextContent());
+							user.setLastname(elem.getTextContent());
 						} else if (elem.getLocalName().equals("address")) {
-							userObject.setAddress(elem.getTextContent());
+							user.setAddress(elem.getTextContent());
 						} else if (elem.getLocalName().equals("city")) {
-							userObject.setCity(elem.getTextContent());
+							user.setCity(elem.getTextContent());
 						} else if (elem.getLocalName().equals("state")) {
-							userObject.setState(elem.getTextContent());
+							user.setState(elem.getTextContent());
 						} else if (elem.getLocalName().equals("zip")) {
-							userObject.setZip(elem.getTextContent());
+							user.setZip(elem.getTextContent());
 						} else if (elem.getLocalName().equals("age")) {
-							userObject
-									.setAge(new Integer(elem.getTextContent()));
+							user.setAge(new Integer(elem.getTextContent()));
 						} else {
 							// Don't recognize this element
 						}
@@ -158,8 +171,9 @@ public class UserHandler extends TransferSupport {
 			try {
 				response.getHeader().addChildElement(fragmentHeader);
 			} catch (SOAPException e) {
-				e.printStackTrace();
+				throw new InternalErrorFault(e);
 			}
+			UserStore.update(userOrg, user);
 		}
 		// Processing for regular NON-Fragment request
 		else {
@@ -181,21 +195,12 @@ public class UserHandler extends TransferSupport {
 			}
 
 	        // Null out age as it's already set by default
-			userObject.setFirstname(user.getFirstname());
-			userObject.setLastname(user.getLastname());
-			userObject.setAddress(user.getAddress());
-			userObject.setCity(user.getCity());
-			userObject.setState(user.getState());
-			userObject.setZip(user.getZip());
-			if (user.getAge() != null) {
-				userObject.setAge(user.getAge());
-			}
-			users.add(userObject);
+			UserStore.add(user);
 		}
 
 		final HashMap<String, String> selectorMap = new HashMap<String, String>();
-		selectorMap.put("firstname", userObject.getFirstname());
-		selectorMap.put("lastname", userObject.getLastname());
+		selectorMap.put("firstname", user.getFirstname());
+		selectorMap.put("lastname", user.getLastname());
 		try {
 			TransferExtensions xferResponse = new TransferExtensions(response);
 			EndpointReferenceType epr = TransferExtensions
@@ -218,16 +223,7 @@ public class UserHandler extends TransferSupport {
 
 		try {
 			// Find an existing instance of this object in the model
-			final UserModelObject userOb = findInstance(request);
-			final UserType user = new UserType();
-
-			user.setFirstname(userOb.getFirstname());
-			user.setLastname(userOb.getLastname());
-			user.setAddress(userOb.getAddress());
-			user.setCity(userOb.getCity());
-			user.setState(userOb.getState());
-			user.setZip(userOb.getZip());
-			user.setAge(userOb.getAge());
+			final UserType user = findInstance(request);
 
 			final JAXBElement<UserType> resource = FACTORY.createUser(user);
 
@@ -243,36 +239,6 @@ public class UserHandler extends TransferSupport {
 		} catch (JAXBException e) {
 			throw new InternalErrorFault(e);
 		}
-	}
-
-	private UserModelObject findInstance(Management request) {
-		UserModelObject searchUser = new UserModelObject();
-		try {
-			searchUser.setFirstname(Utilities.getSelectorByName("firstname",
-					request.getSelectors()).getContent().get(0).toString());
-			searchUser.setLastname(Utilities.getSelectorByName("lastname",
-					request.getSelectors()).getContent().get(0).toString());
-		} catch (Exception e) {
-			throw new InvalidSelectorsFault(
-					InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
-		}
-
-		if (!users.contains(searchUser))
-			throw new InvalidSelectorsFault(
-					InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
-
-		UserModelObject userOb = null;
-		for (Iterator iter = users.iterator(); iter.hasNext();) {
-			UserModelObject userObTest = (UserModelObject) iter.next();
-			if (userObTest.hashCode() == searchUser.hashCode()) {
-				userOb = userObTest;
-				break;
-			}
-		}
-		if (userOb == null)
-			throw new InvalidRepresentationFault(
-					InvalidRepresentationFault.Detail.INVALID_VALUES);
-		return userOb;
 	}
 
 	public void customaction(HandlerContext context, Management request,
@@ -297,7 +263,7 @@ public class UserHandler extends TransferSupport {
 	public void put(HandlerContext context, Management request,
 			Management response) {
 		// Find an existing instance of this object in the model
-		final UserModelObject userOb = findInstance(request);
+		final UserType userOrg = findInstance(request);
 
 		// DONE: figure out if this is a fragment transfer request
 		try {
@@ -307,6 +273,15 @@ public class UserHandler extends TransferSupport {
 
 			// Check if this is a fragment request
 			if (fragmentHeader != null) {
+				final UserType user = new UserType();
+
+				user.setFirstname(userOrg.getFirstname());
+				user.setLastname(userOrg.getLastname());
+				user.setAddress(userOrg.getAddress());
+				user.setCity(userOrg.getCity());
+				user.setState(userOrg.getState());
+				user.setZip(userOrg.getZip());
+				user.setAge(userOrg.getAge());
 
 				final Object resource = xferRequest
 						.getResource(TransferExtensions.XML_FRAGMENT);
@@ -316,55 +291,42 @@ public class UserHandler extends TransferSupport {
 					throw new InvalidRepresentationFault(
 							InvalidRepresentationFault.Detail.INVALID_VALUES);
 				} else {
-					final JAXBElement<MixedDataType> fragment = (JAXBElement<MixedDataType>) resource;
-					
-                    users.remove(userOb);
+					final JAXBElement fragment = (JAXBElement) resource;
                     
 					// Update the user object with the fragment values
-					final List<Object> nodelist = fragment.getValue()
-							.getContent();
+					final List<Object> nodelist = 
+						((MixedDataType)fragment.getValue()).getContent();
 					for (int i = 0; i < nodelist.size(); i++) {
 						if (nodelist.get(i) instanceof Node) {
 							final Node node = (Node) nodelist.get(i);
 							if (node.getLocalName().equals("firstname")) {
-								userOb.setFirstname(node.getTextContent());
+								user.setFirstname(node.getTextContent());
 							} else if (node.getLocalName().equals("lastname")) {
-								userOb.setLastname(node.getTextContent());
+								user.setLastname(node.getTextContent());
 							} else if (node.getLocalName().equals("address")) {
-								userOb.setAddress(node.getTextContent());
+								user.setAddress(node.getTextContent());
 							} else if (node.getLocalName().equals("city")) {
-								userOb.setCity(node.getTextContent());
+								user.setCity(node.getTextContent());
 							} else if (node.getLocalName().equals("state")) {
-								userOb.setState(node.getTextContent());
+								user.setState(node.getTextContent());
 							} else if (node.getLocalName().equals("zip")) {
-								userOb.setZip(node.getTextContent());
+								user.setZip(node.getTextContent());
 							} else if (node.getLocalName().equals("age")) {
-								userOb
-										.setAge(new Integer(node
+								user.setAge(new Integer(node
 												.getTextContent()));
 							} else {
-								// Don't recognize this element. Ignore it.
+								throw new InvalidRepresentationFault(
+										InvalidRepresentationFault.Detail.INVALID_VALUES);
 							}
 						}
 					}
 
-					// Set the response
-					final UserType user = new UserType();
-
-					user.setFirstname(userOb.getFirstname());
-					user.setLastname(userOb.getLastname());
-					user.setAddress(userOb.getAddress());
-					user.setCity(userOb.getCity());
-					user.setState(userOb.getState());
-					user.setZip(userOb.getZip());
-					user.setAge(userOb.getAge());
-
 					final JAXBElement<UserType> userJaxb = FACTORY
 							.createUser(user);
 
-					users.add(userOb);
 					xferResponse.setFragmentPutResponse(fragmentHeader,
 							userJaxb);
+					UserStore.update(userOrg, user);
 				}
 			} else { // ELSE Process NON-FRAGMENT requests
 
@@ -380,27 +342,14 @@ public class UserHandler extends TransferSupport {
 						final JAXBElement ob = (JAXBElement) resource;
 						final UserType user = (UserType) ob.getValue();
 
-						// Set all fields to conform to the provided User
-						// document
-						users.remove(userOb);
-						
-						userOb.setFirstname(user.getFirstname());
-						userOb.setLastname(user.getLastname());
-						userOb.setAddress(user.getAddress());
-						userOb.setCity(user.getCity());
-						userOb.setState(user.getState());
-						userOb.setZip(user.getZip());
-						userOb.setAge(user.getAge());
-
-						users.add(userOb);
 						xferResponse.setPutResponse(ob);
+						UserStore.update(userOrg, user);
 					}
 				} catch (JAXBException e) {
 					throw new InvalidRepresentationFault(
 							InvalidRepresentationFault.Detail.INVALID_VALUES);
 				}
 			}
-			System.out.println("PutResp:"+response);
 		} catch (JAXBException e) {
 			throw new InternalErrorFault(e);
 		} catch (SOAPException e) {
@@ -412,44 +361,97 @@ public class UserHandler extends TransferSupport {
 	public void delete(HandlerContext context, Management request,
 			Management response) {
 		// Find an existing instance
-		UserModelObject searchUser = findInstance(request);
+		UserType userOrg = findInstance(request);
 
-		if (searchUser == null)
+		if (userOrg == null) {
 			throw new InvalidRepresentationFault(
 					InvalidRepresentationFault.Detail.INVALID_VALUES);
-		else {
+		} else {
 			try {
-				final TransferExtensions xferRequest = new TransferExtensions(request);
-				final TransferExtensions xferResponse = new TransferExtensions(response);
-				final SOAPHeaderElement fragmentHeader = xferRequest.getFragmentHeader();
+				final TransferExtensions xferRequest = new TransferExtensions(
+						request);
+				final TransferExtensions xferResponse = new TransferExtensions(
+						response);
+				final SOAPHeaderElement fragmentHeader = xferRequest
+						.getFragmentHeader();
 
-				// TODO: do delete only the described sub elements.
+				// delete only the described sub elements.
 				if (fragmentHeader != null) {
-					// Delete that one optional component from searchUser
-					users.remove(searchUser);
+					// Delete that one optional component from userOrg
+					final UserType user = new UserType();
 
-					UserModelObject withoutAge = new UserModelObject();
-					withoutAge.setAddress(searchUser.getAddress());
-					withoutAge.setCity(searchUser.getCity());
-					withoutAge.setFirstname(searchUser.getFirstname());
-					withoutAge.setLastname(searchUser.getLastname());
-					withoutAge.setState(searchUser.getState());
-					withoutAge.setZip(searchUser.getZip());
+					user.setFirstname(userOrg.getFirstname());
+					user.setLastname(userOrg.getLastname());
+					user.setAddress(userOrg.getAddress());
+					user.setCity(userOrg.getCity());
+					user.setState(userOrg.getState());
+					user.setZip(userOrg.getZip());
+					user.setAge(userOrg.getAge());
 					
-					users.add(withoutAge);
+					final JAXBElement<UserType> userJaxb = FACTORY.createUser(user);
+					final Filter filter = TransferExtensions.createFilter(xferRequest);
+					
+					final Document content = xferResponse.getDocumentBuilder().newDocument();
+					
+					try {
+						xferResponse.getXmlBinding().marshal(userJaxb, content);
+					} catch (Exception e) {
+						final String explanation = 
+							 "XML Binding marshall failed for object of type: UserType";
+						throw new InternalErrorFault(SOAP.createFaultDetail(explanation, null, e, null));
+					}
+				    // Evaluate & create the XmlFragmentElement
+					final JAXBElement<MixedDataType> fragment =
+						TransferExtensions.createXmlFragment(filter.evaluate(content.getDocumentElement()));
 
-					// add the Fragment header passed in to the response
-					xferResponse.setFragmentDeleteResponse(fragmentHeader);
-					// System.out.println("DelResp:"+response);
+						// Update the user object with the fragment values
+						final List<Object> nodelist = fragment.getValue().getContent();
+						for (int i = 0; i < nodelist.size(); i++) {
+							if (nodelist.get(i) instanceof Node) {
+								final Node node = (Node) nodelist.get(i);
+								if (node.getLocalName().equals("age")) {
+									user.setAge(null);
+								} else {
+									// Only allowed to delete the age component
+									throw new InvalidRepresentationFault(
+											InvalidRepresentationFault.Detail.INVALID_VALUES);
+								}
+							}
+						}
+
+						UserStore.update(userOrg, user);
+
+						// add the Fragment header passed in to the response
+						xferResponse.setFragmentDeleteResponse(fragmentHeader);
 				} else {// If NO Fragment processing then
-					users.remove(searchUser);
+					UserStore.delete(userOrg.getFirstname(), userOrg
+							.getLastname());
 				}
 			} catch (SOAPException e) {
 				throw new InvalidRepresentationFault(
 						InvalidRepresentationFault.Detail.INVALID_VALUES);
 			}
-
 		}
+	}
+	
+	// private methods follow
 
+	private UserType findInstance(Management request) {
+		final String firstname;
+		final String lastname;
+		try {
+			firstname = Utilities.getSelectorByName("firstname",
+					request.getSelectors()).getContent().get(0).toString();
+			lastname = Utilities.getSelectorByName("lastname",
+					request.getSelectors()).getContent().get(0).toString();
+		} catch (Exception e) {
+			throw new InvalidSelectorsFault(
+					InvalidSelectorsFault.Detail.INSUFFICIENT_SELECTORS);
+		}
+		final UserType userOb = UserStore.get(firstname, lastname);
+		if (userOb == null)
+			throw new InvalidRepresentationFault(
+					InvalidRepresentationFault.Detail.INVALID_VALUES);
+		return userOb;
 	}
 }

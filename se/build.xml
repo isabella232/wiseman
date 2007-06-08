@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.67 2007-06-06 09:06:46 denis_rachal Exp $
+ $Id: build.xml,v 1.68 2007-06-08 15:38:39 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -383,10 +383,24 @@
             includes="**/*.xml" />
             <zipfileset dir="${test.src.dir}"
             includes="**/*.xml" />
-        	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls" includes="**" excludes="light.wsdl"/>	
-        	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas" includes="**" excludes="light.xsd"/>	
-        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls" includes="light.wsdl*"/>	
-        	<zipfileset prefix="schemas" dir="${test.dir}/schemas" includes="light.xsd"/>	
+        	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls">
+                    <include name="**" />
+                    <exclude name="light.wsdl" />
+                    <exclude name="user.wsdl" />
+        	</zipfileset>	
+        	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas">	
+                    <include name="**" />
+                    <exclude name="**/light.xsd" />
+        		    <exclude name="**/user.xsd" />
+    	    </zipfileset>
+        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls">
+                    <include name="**/light.wsdl" />
+                    <include name="**/user.wsdl" />
+        	</zipfileset>	
+        	<zipfileset prefix="schemas" dir="${test.dir}/schemas">
+                <include name="**/light.xsd" />
+                <include name="**/user.xsd" />
+        	</zipfileset>
        </war>
     </target>
  
@@ -449,10 +463,24 @@
             includes="**/*.xml" />
             <zipfileset dir="${test.src.dir}"
             includes="**/*.xml" />
-        	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls" includes="**" excludes="light.wsdl"/>	
-        	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas" includes="**" excludes="light.xsd"/>	
-        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls" includes="light.wsdl*"/>	
-        	<zipfileset prefix="schemas" dir="${test.dir}/schemas" includes="light.xsd"/>	
+        	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls">
+                    <include name="**" />
+                    <exclude name="light.wsdl" />
+                    <exclude name="user.wsdl" />
+        	</zipfileset>	
+        	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas">	
+                    <include name="**" />
+                    <exclude name="**/light.xsd" />
+        		    <exclude name="**/user.xsd" />
+    	    </zipfileset>
+        	<zipfileset prefix="wsdls" dir="${test.dir}/wsdls">
+                    <include name="**/light.wsdl" />
+                    <include name="**/user.wsdl" />
+        	</zipfileset>	
+        	<zipfileset prefix="schemas" dir="${test.dir}/schemas">
+                <include name="**/light.xsd" />
+                <include name="**/user.xsd" />
+        	</zipfileset>
         </war>
     </target>
   
