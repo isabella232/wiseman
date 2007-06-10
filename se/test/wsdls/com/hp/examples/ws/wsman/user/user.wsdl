@@ -22,15 +22,15 @@ resource_uri=wsman:auth/user
         xmlns:wsman="http://schemas.xmlsoap.org/ws/2005/06/management" 
         targetNamespace="http://examples.hp.com/ws/wsman/user">
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
-                location="wiseman/transfer.wsdl" />
+                location="?wsdl=transfer.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
-                location="wiseman/enumeration.wsdl" />
+                location="?wsdl=enumeration.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
-                location="wiseman/eventing.wsdl" />
+                location="?wsdl=eventing.wsdl" />
         <types>
                 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                         elementFormDefault="qualified" blockDefault="#all"> 
-                        <xs:import namespace="http://examples.hp.com/ws/wsman/user" schemaLocation="com/hp/examples/ws/wsman/user/user.xsd"/>
+                        <xs:import namespace="http://examples.hp.com/ws/wsman/user" schemaLocation="?xsd=com/hp/examples/ws/wsman/user/user.xsd"/>
                 </xs:schema>
         </types>
         <!-- Custom Messages -->
