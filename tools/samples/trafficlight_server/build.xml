@@ -206,6 +206,8 @@
 	                    includes="**/*.wsdl" />
 			<zipfileset dir="${basedir}"
 	                    includes="**/*.xsd" />
+			<zipfileset dir="${basedir}/etc"
+	                    includes="index.html" />
 		</war>
 	</target>
 
@@ -227,10 +229,6 @@
 	<!--  ===================================================================  -->
 	<target name="genwsdl" description="Generates WSDL from State XSD">
 		<mkdir dir="${wsdl.dir}"/>
-		<mkdir dir="${xsd.dir}"/>
-		<copy todir="${xsd.dir}">
-			<fileset dir="${xsd.dir}/${user.namespace.path}" includes="light.xsd"/>
-		</copy>
 		<taskdef name="xsd2wsdl" 
 			     classname="com.sun.ws.management.tools.Xsd2WsdlTask">
 			<classpath>

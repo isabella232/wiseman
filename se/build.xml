@@ -15,7 +15,12 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.69 2007-06-08 21:03:16 denis_rachal Exp $
+  Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ 
+  Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com), 
+  Nancy Beers (nancy.beers@hp.com), William Reichardt 
+ 
+ $Id: build.xml,v 1.70 2007-06-14 07:28:08 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -366,7 +371,7 @@
                 <include name="context.xml" />
                 <include name="resource-handler-config.xml" />
             </metainf>
-            <webinf dir="etc/jaxws">
+            <webinf dir="test/etc/jaxws">
                 <include name="sun-jaxws.xml" />
             </webinf>
             <webinf dir="etc">
@@ -374,22 +379,17 @@
             </webinf>
             <!-- the build runs without schema validation by default 
             to enable schema validation, see etc/xsd/README -->
-            <zipfileset dir="etc/xsd"
-            prefix="xsd"
-            includes="*.xsd" />
-            <zipfileset dir="${build.classes.dir}"
-            includes="*.properties" />
-            <zipfileset dir="${src.ext.dir}"
-            includes="**/*.xml" />
-            <zipfileset dir="${test.src.dir}"
-            includes="**/*.xml" />
+            <zipfileset dir="etc/xsd" prefix="xsd" includes="*.xsd" />
+            <zipfileset dir="${build.classes.dir}" includes="*.properties" />
+            <zipfileset dir="${src.ext.dir}" includes="**/*.xml" />
+            <zipfileset dir="${test.src.dir}" includes="**/*.xml" />
         	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls">
-                    <include name="**" />
-                    <exclude name="light.wsdl" />
-                    <exclude name="user.wsdl" />
+                    <include name="*.wsdl" />
+                    <exclude name="**/light.wsdl" />
+                    <exclude name="**/user.wsdl" />
         	</zipfileset>	
         	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas">	
-                    <include name="**" />
+                    <include name="*.xsd" />
                     <exclude name="**/light.xsd" />
         		    <exclude name="**/user.xsd" />
     	    </zipfileset>
@@ -398,9 +398,26 @@
                     <include name="**/user.wsdl" />
         	</zipfileset>	
         	<zipfileset prefix="schemas" dir="${test.dir}/schemas">
+                    <include name="**/light.xsd" />
+                    <include name="**/user.xsd" />
+        	</zipfileset>
+        	<webinf prefix="WEB-INF/wsdl/wiseman" dir="${test.dir}/wsdls">
+                    <include name="*.wsdl" />
+                    <exclude name="**/light.wsdl" />
+                    <exclude name="**/user.wsdl" />
+        	</webinf>	
+        	<webinf prefix="WEB-INF/schemas/wiseman" dir="${test.dir}/schemas">	
+                    <include name="*.xsd" />
+                    <exclude name="**/light.xsd" />
+        		    <exclude name="**/user.xsd" />
+    	    </webinf>
+        	<webinf prefix="WEB-INF/wsdl" dir="${test.dir}/wsdls">
+                    <include name="com/hp/examples/ws/wsman/user/user.wsdl" />
+        	</webinf>	
+        	<webinf prefix="WEB-INF/schemas" dir="${test.dir}/schemas">
                 <include name="**/light.xsd" />
                 <include name="**/user.xsd" />
-        	</zipfileset>
+        	</webinf>
        </war>
     </target>
  
@@ -454,22 +471,18 @@
             </webinf>
             <!-- the build runs without schema validation by default 
             to enable schema validation, see etc/xsd/README -->
-            <zipfileset dir="etc/xsd"
-            prefix="xsd"
-            includes="*.xsd" />
-            <zipfileset dir="${build.classes.dir}"
-            includes="*.properties" />
-            <zipfileset dir="${src.ext.dir}"
-            includes="**/*.xml" />
-            <zipfileset dir="${test.src.dir}"
-            includes="**/*.xml" />
+            <zipfileset dir="etc/xsd" prefix="xsd" includes="*.xsd" />
+            <zipfileset dir="${test.dir}/etc" includes="index.html" />
+            <zipfileset dir="${build.classes.dir}" includes="*.properties" />
+            <zipfileset dir="${src.ext.dir}" includes="**/*.xml" />
+            <zipfileset dir="${test.src.dir}" includes="**/*.xml" />
         	<zipfileset prefix="wsdls/wiseman" dir="${test.dir}/wsdls">
-                    <include name="**" />
-                    <exclude name="light.wsdl" />
-                    <exclude name="user.wsdl" />
+                    <include name="*.wsdl" />
+                    <exclude name="**/light.wsdl" />
+                    <exclude name="**/user.wsdl" />
         	</zipfileset>	
         	<zipfileset prefix="schemas/wiseman" dir="${test.dir}/schemas">	
-                    <include name="**" />
+                    <include name="*.xsd" />
                     <exclude name="**/light.xsd" />
         		    <exclude name="**/user.xsd" />
     	    </zipfileset>
@@ -478,8 +491,8 @@
                     <include name="**/user.wsdl" />
         	</zipfileset>	
         	<zipfileset prefix="schemas" dir="${test.dir}/schemas">
-                <include name="**/light.xsd" />
-                <include name="**/user.xsd" />
+                    <include name="**/light.xsd" />
+                    <include name="**/user.xsd" />
         	</zipfileset>
         </war>
     </target>

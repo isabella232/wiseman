@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ sun-jaxws.xml
+ Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+ SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+-->
+
+<endpoints
+	xmlns="http://java.sun.com/xml/ns/jax-ws/ri/runtime"
+	version="2.0">
+	<endpoint
+       		name="WSManAgent"
+        	implementation="com.sun.ws.management.server.reflective.WSManReflectiveJAXWSEndpoint"
+        	wsdl="WEB-INF/wsdl/com/hp/examples/ws/wsman/user/user.wsdl"
+            service="{http://examples.hp.com/ws/wsman/user}userService"
+            port="{http://examples.hp.com/ws/wsman/user}userResource"
+		    url-pattern="/"
+            binding="http://www.w3.org/2003/05/soap/bindings/HTTP/">
+	</endpoint>
+</endpoints>

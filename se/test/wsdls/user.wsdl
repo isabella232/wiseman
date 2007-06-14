@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
 *****************************************
-Generated from file ${xsd_file}
-target_namespace=${target_namespace}
-xsd_file=${xsd_file}
-service_name=${service_name}
-resource_type=${resource_type}
-resource_name=${resource_name}
-resource_uri=${resource_uri}
+Generated from file user.xsd
+target_namespace=http://examples.hp.com/ws/wsman/user
+xsd_file=user.xsd
+service_name=user
+resource_type=UserType
+resource_name=user
+resource_uri=wsman:auth/user
 *****************************************
 -->
-<definitions xmlns:tns="${target_namespace}"
-        xmlns:state="${target_namespace}"
+<definitions xmlns:tns="http://examples.hp.com/ws/wsman/user"
+        xmlns:state="http://examples.hp.com/ws/wsman/user"
         xmlns:wxf="http://schemas.xmlsoap.org/ws/2004/09/transfer"
         xmlns:wsen="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
         xmlns:wse="http://schemas.xmlsoap.org/ws/2004/08/eventing"
@@ -20,7 +20,7 @@ resource_uri=${resource_uri}
         xmlns:xs="http://www.w3.org/2001/XMLSchema"
         xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
         xmlns:wsman="http://schemas.xmlsoap.org/ws/2005/06/management" 
-        targetNamespace="${target_namespace}">
+        targetNamespace="http://examples.hp.com/ws/wsman/user">
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
                 location="wiseman/transfer.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
@@ -30,12 +30,13 @@ resource_uri=${resource_uri}
         <types>
                 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                         elementFormDefault="qualified" blockDefault="#all"> 
-                        <xs:import namespace="${target_namespace}" schemaLocation="../schemas/${xsd_file}"/>
+                        <xs:import namespace="http://examples.hp.com/ws/wsman/user" 
+                                   schemaLocation="../schemas/com/hp/examples/ws/wsman/user/user.xsd"/>
                 </xs:schema>
         </types>
         <!-- Custom Messages -->
-        <message name="${resource_type}Message">
-                <part name="${resource_type}Message" element="state:${resource_name}" />
+        <message name="UserTypeMessage">
+                <part name="UserTypeMessage" element="state:user" />
         </message>
         <message name="CreateResponseMessage">
                 <part name="CreateResponseMessage"
@@ -64,7 +65,7 @@ resource_uri=${resource_uri}
 
         <!-- PortTypes -->
         
-        <portType name="${service_name}Resource">
+        <portType name="userResource">
                 <documentation>
                         This port type defines a resource that may be
                         read, written, created, deleted or enuumerated.
@@ -72,7 +73,7 @@ resource_uri=${resource_uri}
                 
                 <!-- WS-Transfer Operations -->
                 <operation name="Create">
-                        <input message="tns:${resource_type}Message"
+                        <input message="tns:UserTypeMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Create" />
                         <output message="tns:CreateResponseMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse" />
@@ -80,7 +81,7 @@ resource_uri=${resource_uri}
                 <operation name="Get">
                         <input message="wxf:EmptyMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/Get" />
-                        <output message="tns:${resource_type}Message"
+                        <output message="tns:UserTypeMessage"
                                 wsa:Action="http://schemas.xmlsoap.org/ws/2004/09/transfer/GetResponse" />
                 </operation>
                 <operation name="Put">
@@ -168,7 +169,7 @@ resource_uri=${resource_uri}
                 </operation>
         </portType>
 
-        <binding name="${service_name}ResourceBinding" type="tns:${service_name}Resource">
+        <binding name="userResourceBinding" type="tns:userResource">
           <wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
 
                 <!-- WS-Tranfer Operations -->
@@ -319,15 +320,15 @@ resource_uri=${resource_uri}
                 </operation>
         </binding>
 
-        <service name="${service_name}Service">
-          <documentation>${service_name} Service</documentation>                               
+        <service name="userService">
+          <documentation>user Service</documentation>                               
                 
-                <port name="${service_name}Resource" binding="tns:${service_name}ResourceBinding">
+                <port name="userResource" binding="tns:userResourceBinding">
                   <wsoap12:address location="$$SERVICE_URL/"/>
                   <wsa:EndpointReference>
                     <wsa:Address>$$SERVICE_URL/</wsa:Address>
                     <wsa:ReferenceParameters>
-                       <wsman:ResourceURI>${resource_uri}</wsman:ResourceURI>
+                       <wsman:ResourceURI>wsman:auth/user</wsman:ResourceURI>
                     </wsa:ReferenceParameters>
                   </wsa:EndpointReference>
                 </port>

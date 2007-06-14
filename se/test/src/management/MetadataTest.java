@@ -19,11 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.9  2007/06/08 15:38:39  denis_rachal
+ **The following enhanceent were made to the testing infrastructure:
+ **
+ **  * Capture of logs in files for junits test
+ **  * Added user.wsdl & user.xsd to wsman.war
+ **  * Consolidated userenum & user into single handler that is thread safe for load testing
+ **
  **Revision 1.8  2007/05/30 20:30:24  nbeers
  **Add HP copyright header
  **
  **
- * $Id: MetadataTest.java,v 1.9 2007-06-08 15:38:39 denis_rachal Exp $
+ * $Id: MetadataTest.java,v 1.10 2007-06-14 07:28:07 denis_rachal Exp $
  */
 
 package management;
@@ -660,10 +667,10 @@ public class MetadataTest extends TestBase {
 		final HttpURLConnection http = (HttpURLConnection) conn;
 		http.setRequestMethod("GET");
 		//Build HTTP GET request.
-		String get = "GET " + url + " \r\n";
+		// String get = "GET " + url + " \r\n";
 
-		OutputStream output = http.getOutputStream();
-		output.write(get.getBytes());
+		// OutputStream output = http.getOutputStream();
+		// output.write(get.getBytes());
 		//Retrieve HTTP response code
 		final int response = http.getResponseCode();
 
@@ -672,7 +679,7 @@ public class MetadataTest extends TestBase {
 			InputStream input = http.getInputStream();
 			br = new BufferedReader(new InputStreamReader(http
 					.getInputStream()));
-			output.write(get.getBytes());
+			// output.write(get.getBytes());
 		} else {
         	fail("Http request failed.");
         }

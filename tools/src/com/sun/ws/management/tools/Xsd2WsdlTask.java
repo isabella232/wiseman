@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/05/30 20:30:19  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: Xsd2WsdlTask.java,v 1.8 2007-05-30 20:30:19 nbeers Exp $
+ * $Id: Xsd2WsdlTask.java,v 1.9 2007-06-14 07:28:08 denis_rachal Exp $
  */
 package com.sun.ws.management.tools;
 
@@ -81,7 +84,7 @@ public class Xsd2WsdlTask extends Task {
 		String serviceName = xsdFileName.split("\\.")[0];
 		wsdlFileName=serviceName+".wsdl";
 		context.put("service_name",serviceName);
-		context.put("xsd_file",new File(xsdFile).toURI().toString());
+		context.put("xsd_file",new File(xsdFile).getName());
 	}
 	
 	public void setWsdlTemplate(String template) {

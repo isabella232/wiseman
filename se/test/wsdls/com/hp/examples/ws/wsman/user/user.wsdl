@@ -22,15 +22,16 @@ resource_uri=wsman:auth/user
         xmlns:wsman="http://schemas.xmlsoap.org/ws/2005/06/management" 
         targetNamespace="http://examples.hp.com/ws/wsman/user">
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
-                location="?wsdl=transfer.wsdl" />
+                location="../../../../../../wiseman/transfer.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/09/enumeration"
-                location="?wsdl=enumeration.wsdl" />
+                location="../../../../../../wiseman/enumeration.wsdl" />
         <import namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
-                location="?wsdl=eventing.wsdl" />
+                location="../../../../../../wiseman/eventing.wsdl" />
         <types>
                 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                         elementFormDefault="qualified" blockDefault="#all"> 
-                        <xs:import namespace="http://examples.hp.com/ws/wsman/user" schemaLocation="?xsd=com/hp/examples/ws/wsman/user/user.xsd"/>
+                        <xs:import namespace="http://examples.hp.com/ws/wsman/user" 
+                                   schemaLocation="../../../../../../../schemas/com/hp/examples/ws/wsman/user/user.xsd"/>
                 </xs:schema>
         </types>
         <!-- Custom Messages -->
@@ -323,9 +324,9 @@ resource_uri=wsman:auth/user
           <documentation>user Service</documentation>                               
                 
                 <port name="userResource" binding="tns:userResourceBinding">
-                  <wsoap12:address location="http://localhost:8080/wsman/"/>
+                  <wsoap12:address location="$$SERVICE_URL/"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://localhost:8080/wsman/</wsa:Address>
+                    <wsa:Address>$$SERVICE_URL/</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>wsman:auth/user</wsman:ResourceURI>
                     </wsa:ReferenceParameters>

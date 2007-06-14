@@ -19,11 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/06/04 06:25:14  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.4  2007/05/30 20:30:15  nbeers
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.5 2007-06-04 06:25:14 denis_rachal Exp $
+ * $Id: WSManServlet.java,v 1.6 2007-06-14 07:28:06 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -60,7 +71,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.xml.sax.SAXException;
@@ -85,15 +95,14 @@ public abstract class WSManServlet extends HttpServlet {
     private static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
     private static final String SERVICE_WSDL = "service.wsdl";
     private static final String SERVICE_XSD = "service.xsd";
+    private static final String SERVICE_URL = "$$SERVICE_URL";
 
     // This class implements all the WS-Man logic decoupled from transport
 
     WSManAgent agent;
 
     public void init() throws ServletException {
-		Schema schema = null;
-		final SchemaFactory schemaFactory = SchemaFactory
-				.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 		final ServletContext context = getServletContext();
 		final List<String> xsdLocSet = getFilenames(context, "/xsd");
 		Source[] schemas = null;
@@ -156,7 +165,16 @@ public abstract class WSManServlet extends HttpServlet {
                 throws ServletException,
 			IOException {
 
-		doPost(req, resp);
+        final ContentType contentType = ContentType.createFromHttpContentType(req.getContentType());
+		boolean isWsdlOrSchemaRequest = processForWsdlOrSchemaRequest(req);
+		if (!isWsdlOrSchemaRequest) {
+			resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
+		} else {
+			// insert method to generate HTTP response here
+			// if (redirectQuery(req, resp, contentType) == false)
+			processAsHttpRequest(req, resp, contentType);
+		}
+		return;
 	}
 
     public void doPost(final HttpServletRequest req,
@@ -164,16 +182,6 @@ public abstract class WSManServlet extends HttpServlet {
                 throws ServletException, IOException {
 
         final ContentType contentType = ContentType.createFromHttpContentType(req.getContentType());
-        if (contentType == null || !contentType.isAcceptable()) {
-			boolean isWsdlOrSchemaRequest = processForWsdlOrSchemaRequest(req);
-			if (!isWsdlOrSchemaRequest) {
-				resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
-			} else {
-				// insert method to generate HTTP response here
-				processAsHttpRequest(req, resp, contentType);
-			}
-			return;
-		}
 		if (contentType == null || !contentType.isAcceptable()) {
 			resp.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
 			return;
@@ -205,20 +213,46 @@ public abstract class WSManServlet extends HttpServlet {
         }
     }
 
-    /**Process the http request.
-     *
-     * @param req
-     * @param resp
-     * @throws IOException
-     */
+    /*
+    private boolean redirectQuery(HttpServletRequest req,
+			HttpServletResponse resp, ContentType contentType) throws IOException {
+		String query = req.getQueryString();
+		if ((query != null) && (query.trim().length() > 0)) {
+			query = query.toLowerCase().trim();
+			if ((query.equals("wsdl")) || (query.startsWith("wsdl="))
+					|| (query.equals("xsd")) || (query.startsWith("xsd="))) {
+				// Get the xsd/wsdl full request URL
+				final String filename = getQueryFilename(req);
+				String url = req.getRequestURL().toString();
+				// Remove any Servlet Path
+				final String servletPath = req.getServletPath().trim();
+				final int newlen = url.length() - servletPath.length();
+				if (newlen > 0)
+					url = url.substring(0, newlen) + filename;
+				// Redirect the request to the full path
+				final String encodedURL = resp.encodeRedirectURL(url);
+				resp.sendRedirect(encodedURL);
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	} */
+
+	/**
+	 * Process the http request.
+	 * 
+	 * @param req
+	 * @param resp
+	 * @throws IOException
+	 */
     private void processAsHttpRequest(HttpServletRequest req,
     		                          HttpServletResponse resp,
     		                          ContentType contentType) throws IOException {
     	//indicate that we agree to process
         resp.setStatus(HttpServletResponse.SC_OK);
-        if(contentType!=null){
-          resp.setContentType(contentType.toString());
-        }
 
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
@@ -228,35 +262,29 @@ public abstract class WSManServlet extends HttpServlet {
             is = new BufferedInputStream(req.getInputStream());
             os = new BufferedOutputStream(resp.getOutputStream());
 
-            String contentype = req.getContentType();
-            final Principal user = req.getUserPrincipal();
-            String charEncoding = req.getCharacterEncoding();
-            String url = req.getRequestURL().toString();
             Map<String, Object> props = new HashMap<String, Object>(1);
             props.put(HandlerContext.SERVLET_CONTEXT, getServletContext());
-//            final HandlerContext context = new HandlerContextImpl(user, contentype,
-//            		charEncoding, url, props, agent.getProperties());
-            final HandlerContext context = new HandlerContextImpl(user, contentype,
-                    charEncoding, url, props);
 
             // check for filename in URL query
             String filename = getQueryFilename(req);
 
 			if ((filename == null) || (filename.length() == 0)) {
 				// check for the filename in the path
-				String requestURI = req.getRequestURI();
-				if ((requestURI != null)
-						&& (requestURI.startsWith(req.getContextPath()))) {
-					// removing the contextPath in it's entirety
-					filename = requestURI.substring(req.getContextPath().trim()
-							.length());
-				}
+				filename = req.getServletPath().trim();
+				if ((filename.length() == 0) || (filename.equals("/")))
+					filename = "/index.html";
+			}
+			
+	        if (filename.equals("/index.html")) {
+				resp.setContentType("text/html");
+			} else {
+				resp.setContentType("text/xml");
 			}
 
             ServletContext srvContext = getServletContext();
              InputStream inputStream =
             	 srvContext.getResourceAsStream(filename);
-             Set paths = srvContext.getResourcePaths(filename);
+             // Set paths = srvContext.getResourcePaths(filename);
              if(inputStream==null){
             	resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             	String htmlResponse = "";
@@ -294,8 +322,18 @@ public abstract class WSManServlet extends HttpServlet {
 //            	inputStream = new ByteArrayInputStream(htmlResponse.getBytes());
 //             }
              BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-               String line = null;
-             while((line=br.readLine())!=null){
+        	 String replacement = req.getRequestURL().toString();
+        	 // Remove any Servlet Path
+        	 final String servletPath = req.getServletPath().trim();
+        	 int position = replacement.lastIndexOf(servletPath);
+        	 if (position < 0)
+        		  position = replacement.length() - 1;
+        	 if (position >= 0)
+            	  replacement = replacement.substring(0, position);
+             String line = null;
+             while ((line=br.readLine()) != null) {
+            	 // Replace any $$SERVICE_URL variables with the current service URL
+            	line = line.replace(SERVICE_URL, replacement);
           	    bos.write(line.getBytes());
              }
 
@@ -398,9 +436,11 @@ public abstract class WSManServlet extends HttpServlet {
 			} else {
 				LOG.log(Level.WARNING, "Error reading properties from "
 						+ WISEMAN_PROPERTY_FILE_NAME);
+				wisemanProperties = new Properties();
 			}
 		}
-		return wisemanProperties.getProperty(property);
+		final String value = wisemanProperties.getProperty(property);
+		return (value == null) ? "" : value;
 	}
 
 	private String generateHtmlResponse(String resourceURI,String title,String body) {
@@ -418,8 +458,8 @@ public abstract class WSManServlet extends HttpServlet {
     	if(req!=null){
     	   //parse the request URI for /wsdl* or /schema* or ?wsdl* or ?xsd*
     	   //if exists then set to true
-    	   String requestUri = req.getRequestURI();
-			if ((requestUri != null) && (requestUri.trim().length() > 0)) {
+    	   String requestUri = req.getServletPath().trim();
+			if ((requestUri != null) && (requestUri.length() > 0)) {
 				// Check query string first
 				String query = req.getQueryString();
 				if ((query != null) && (query.trim().length() > 0)) {
@@ -434,8 +474,10 @@ public abstract class WSManServlet extends HttpServlet {
 					// Check for addition to path
 					requestUri = requestUri.toLowerCase().trim();
 					// check for /wsdl or /schema
-					if ((requestUri.indexOf("/wsdl") > 0)
-							|| (requestUri.indexOf("/schema") > 0)) {
+					if ((requestUri.startsWith("/wsdls"))
+							|| (requestUri.startsWith("/schemas"))
+							|| (requestUri.equals("/"))
+							|| (requestUri.equals("/index.html"))) {
 						isWsdlSchemaReq = true;
 					}
 				}

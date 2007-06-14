@@ -37,7 +37,7 @@ resource_uri=${resource_uri}
                        <!--  xs:import
                                 namespace="http://schemas.xmlsoap.org/ws/2004/08/eventing"
                                 schemaLocation="http://schemas.xmlsoap.org/ws/2004/08/eventing/eventing.xsd" / -->                                                                
-                        <xs:import namespace="${target_namespace}" schemaLocation="../xsd/${xsd_file}"/>
+                        <xs:import namespace="${target_namespace}" schemaLocation="../schemas/${xsd_file}"/>
                 </xs:schema>
         </types>
         <!-- Custom Messages -->
@@ -262,9 +262,9 @@ resource_uri=${resource_uri}
           <documentation>${service_name} Service</documentation>                               
                 
                 <port name="${service_name}Resource" binding="tns:${service_name}ResourceBinding">
-                  <wsoap12:address location="${service_address}"/>
+                  <wsoap12:address location="$$SERVICE_URL/"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>${service_address}</wsa:Address>
+                    <wsa:Address>$$SERVICE_URL/</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>wsman:${service_name}/resource</wsman:ResourceURI>
                     </wsa:ReferenceParameters>
@@ -272,9 +272,9 @@ resource_uri=${resource_uri}
                 </port>        
                 
                 <port name="${service_name}Enumeration" binding="tns:${service_name}EnumerationBinding">
-                  <wsoap12:address location="http://${server_name}:${server_port}/${deployment_url}/"/>
+                  <wsoap12:address location="$$SERVICE_URL/"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://${server_name}:${server_port}/${deployment_url}</wsa:Address>
+                    <wsa:Address>$$SERVICE_URL/</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>wsman:${service_name}/list</wsman:ResourceURI>
                     </wsa:ReferenceParameters>
@@ -282,9 +282,9 @@ resource_uri=${resource_uri}
                 </port>        
 
                 <port name="${service_name}ResourceFactory" binding="tns:${service_name}ResourceFactoryBinding">
-                  <wsoap12:address location="http://${server_name}:${server_port}/${deployment_url}/"/>
+                  <wsoap12:address location="$$SERVICE_URL/"/>
                   <wsa:EndpointReference>
-                    <wsa:Address>http://${server_name}:${server_port}/${deployment_url}</wsa:Address>
+                    <wsa:Address>$$SERVICE_URL/</wsa:Address>
                     <wsa:ReferenceParameters>
                        <wsman:ResourceURI>${resource_uri}/factory</wsman:ResourceURI>
                     </wsa:ReferenceParameters>
