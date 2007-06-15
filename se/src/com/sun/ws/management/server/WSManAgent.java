@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.16  2007/05/30 20:31:04  nbeers
+ **Add HP copyright header
  **
- * $Id: WSManAgent.java,v 1.16 2007-05-30 20:31:04 nbeers Exp $
+ **
+ * $Id: WSManAgent.java,v 1.17 2007-06-15 12:13:20 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -94,7 +97,7 @@ public abstract class WSManAgent {
     private static final String WSMAN_PROPERTY_FILE_NAME = "/wsman.properties";
     public static final String WSMAN_EXTENSIONS_PROPERTY_FILE_NAME = "/wsman-exts.properties";
     public static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
-    private static final String OPERATION_TIMEOUT_DEFAULT = "OperationTimeoutDefault";
+    public static final String OPERATION_TIMEOUT_DEFAULT = "OperationTimeoutDefault";
     private static final String UUID_SCHEME = "uuid:";
     private static final String SCHEMA_PATH =
             "/com/sun/ws/management/resources/schemas/";
@@ -450,6 +453,9 @@ public abstract class WSManAgent {
         // the Future returned by pool.submit does not propagate
         // ExecutionException, perform the get on FutureTask itself
         getExecutorService().submit(task);
+       
+         if(LOG.isLoggable(Level.FINE))
+            LOG.log(Level.FINE, "timeout : " + defaultOperationTimeout);
         try {
             if (defaultOperationTimeout != DISABLED_TIMEOUT)
                 return task.get(timeout, TimeUnit.MILLISECONDS);
