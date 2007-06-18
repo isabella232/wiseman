@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/05/30 20:31:03  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EnumerationMessageValues.java,v 1.4 2007-05-30 20:31:03 nbeers Exp $
+ * $Id: EnumerationMessageValues.java,v 1.5 2007-06-18 17:57:11 nbeers Exp $
  */
 package com.sun.ws.management.enumeration;
 
@@ -59,7 +62,7 @@ public class EnumerationMessageValues extends ManagementMessageValues{
 
 	//In event of failure and to initialize these values are defined
 	public static final String DEFAULT_UID_SCHEME=ManagementMessageValues.DEFAULT_UID_SCHEME;
-	public static long DEFAULT_TIMEOUT_VALUE =ManagementMessageValues.DEFAULT_TIMEOUT;
+	public static long DEFAULT_MAXTIME_VALUE =ManagementMessageValues.DEFAULT_TIMEOUT;
 	public static final String DEFAULT_ENUMERATION_MESSAGE_ACTION_TYPE =
 		Enumeration.ENUMERATE_ACTION_URI;
 	public static final String DEFAULT_FILTER = "";
@@ -87,7 +90,7 @@ public class EnumerationMessageValues extends ManagementMessageValues{
 	
 	//Default property values.
 	private String uidScheme = DEFAULT_UID_SCHEME;
-	private long defaultTimeout =DEFAULT_TIMEOUT_VALUE;
+	private long maxTime =DEFAULT_MAXTIME_VALUE;
 	private String enumerationMessageActionType =
 		DEFAULT_ENUMERATION_MESSAGE_ACTION_TYPE;
 	private String filter = DEFAULT_FILTER;
@@ -146,15 +149,15 @@ public class EnumerationMessageValues extends ManagementMessageValues{
 	/**
 	 * @return the defaultTimeout
 	 */
-	public long getDefaultTimeout() {
-		return defaultTimeout;
+	public long getMaxTime() {
+		return maxTime;
 	}
 
 	/**
 	 * @param defaultTimeout the defaultTimeout to set
 	 */
-	public void setDefaultTimeout(long defaultTimeout) {
-		this.defaultTimeout = defaultTimeout;
+	public void setMaxTime(long defaultTimeout) {
+		this.maxTime = defaultTimeout;
 	}
 
 	/**

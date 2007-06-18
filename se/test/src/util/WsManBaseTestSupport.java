@@ -20,12 +20,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.10  2007/06/04 06:25:12  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.9  2007/05/30 20:30:29  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: WsManBaseTestSupport.java,v 1.10 2007-06-04 06:25:12 denis_rachal Exp $
+ * $Id: WsManBaseTestSupport.java,v 1.11 2007-06-18 17:57:28 nbeers Exp $
  */
 package util;
  
@@ -226,7 +237,7 @@ public class WsManBaseTestSupport extends TestCase {
 
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
 	    	settings.setFilter(filter);
-	    	settings.setDefaultTimeout(6000);
+	    	settings.setMaxTime(6000);
 	    	settings.setTo(destination);
 	    	settings.setResourceUri(resourceUri);
 	    	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
@@ -264,7 +275,7 @@ public class WsManBaseTestSupport extends TestCase {
 	    {
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
 	    	settings.setEnumerationMessageActionType(action);
-	    	settings.setDefaultTimeout(60000);
+	    	settings.setMaxTime(60000);
 	    	settings.setMaxElements(100);
 	    	settings.setEnumerationContext(ctx);
 	    	settings.setTo(destination);
@@ -290,7 +301,7 @@ public class WsManBaseTestSupport extends TestCase {
 	    {
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
 	    	settings.setEnumerationMessageActionType(Enumeration.RELEASE_ACTION_URI);
-	    	settings.setDefaultTimeout(60000);
+	    	settings.setMaxTime(60000);
 	    	settings.setEnumerationContext(ctx);
 	    	settings.setTo(destination);
 	    	settings.setResourceUri(resourceUri);

@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/05/30 20:30:19  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: WisemanCmdLine.java,v 1.4 2007-05-30 20:30:19 nbeers Exp $
+ * $Id: WisemanCmdLine.java,v 1.5 2007-06-18 17:57:28 nbeers Exp $
  */
 package com.sun.ws.management.tools;
 
@@ -229,7 +232,7 @@ public class WisemanCmdLine {
 		
     	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
     	//settings.setFilter(filter);
-    	settings.setDefaultTimeout(6000);
+    	settings.setMaxTime(6000);
     	settings.setTo(destination);
     	settings.setResourceUri(resourceUri);
     	settings.setMaxElements(maxElements);

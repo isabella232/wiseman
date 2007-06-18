@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.19  2007/05/30 20:31:03  nbeers
+ **Add HP copyright header
  **
- * $Id: Enumeration.java,v 1.19 2007-05-30 20:31:03 nbeers Exp $
+ **
+ * $Id: Enumeration.java,v 1.20 2007-06-18 17:57:11 nbeers Exp $
  */
 
 package com.sun.ws.management.enumeration;
@@ -166,6 +169,7 @@ public class Enumeration extends Addressing {
             throws JAXBException, SOAPException, DatatypeConfigurationException {
 
         removeChildren(getBody(), PULL);
+        removeChildren(getBody(), ENUMERATE);
         final Pull pull = FACTORY.createPull();
 
         final EnumerationContextType contextType = FACTORY.createEnumerationContextType();

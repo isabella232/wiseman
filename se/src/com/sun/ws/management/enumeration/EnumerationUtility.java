@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/05/30 20:31:03  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EnumerationUtility.java,v 1.3 2007-05-30 20:31:03 nbeers Exp $
+ * $Id: EnumerationUtility.java,v 1.4 2007-06-18 17:57:11 nbeers Exp $
  */
 package com.sun.ws.management.enumeration;
 
@@ -44,7 +47,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
@@ -116,31 +118,6 @@ public class EnumerationUtility {
 		
 		//processing Timeout/Duration and Filter
         final DatatypeFactory factory = DatatypeFactory.newInstance();
-        final FilterType filterType = Enumeration.FACTORY.createFilterType();
-        if((settings.getFilterDialect()!=null)&&
-           (settings.getFilterDialect().trim().length()>0)){
-           filterType.setDialect(settings.getFilterDialect());
-        }else{
-           filterType.setDialect(EnumerationMessageValues.DEFAULT_FILTER_DIALECT);	
-        }
-        	//filter component
-        if((settings.getFilter()!=null)&&
-            (settings.getFilter().trim().length()>0)){
-            filterType.getContent().add(settings.getFilter());
-        }
-        
-        if(settings.getTimeout()>-1){
-        	existingEnum.setEnumerate(null, 
-        			factory.newDuration(
-        					settings.getTimeout()).toString(),
-              settings.getFilter() == null ? null : filterType);
-        }else{
-        	existingEnum.setEnumerate(null, 
-        			factory.newDuration(
-        					settings.getTimeout()).toString(),
-              settings.getFilter() == null ? null : filterType);
-        }
-        
         //processing the EnumContext
         if(settings.getEnumerationContext()!=null){
         	//Process for PULL action
@@ -150,7 +127,7 @@ public class EnumerationUtility {
         		settings.getEnumerationContext(), 
         		   settings.getMaxCharacters(), 
         		   settings.getMaxElements(), 
-        		   EnumerationMessageValues.newDuration(settings.getDefaultTimeout()),
+        		   EnumerationMessageValues.newDuration(settings.getMaxTime()),
         		   settings.isRequestForTotalItemsCount());
         		existingEnum = new Enumeration(enx);
         	}else if(existingEnum.getAction().equals(Enumeration.ENUMERATE_ACTION_URI)){

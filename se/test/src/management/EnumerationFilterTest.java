@@ -19,11 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/06/08 15:38:39  denis_rachal
+ **The following enhanceent were made to the testing infrastructure:
+ **
+ **  * Capture of logs in files for junits test
+ **  * Added user.wsdl & user.xsd to wsman.war
+ **  * Consolidated userenum & user into single handler that is thread safe for load testing
+ **
  **Revision 1.6  2007/05/30 20:30:24  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EnumerationFilterTest.java,v 1.7 2007-06-08 15:38:39 denis_rachal Exp $
+ * $Id: EnumerationFilterTest.java,v 1.8 2007-06-18 17:57:27 nbeers Exp $
  */
 
 package management;
@@ -152,7 +159,7 @@ public class EnumerationFilterTest extends TestBase {
     	settings.setEnumerationMessageActionType(Enumeration.ENUMERATE_ACTION_URI);
     	settings.setTo(DESTINATION);
     	settings.setResourceUri(resource);
-    	settings.setDefaultTimeout(60000);
+    	settings.setMaxTime(60000);
     	settings.setMaxElements(maxElements);
     	settings.setRequestForOptimizedEnumeration(true);
     	settings.setRequestForTotalItemsCount(true);
@@ -204,7 +211,7 @@ public class EnumerationFilterTest extends TestBase {
 
         	settings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
         	settings.setEnumerationContext(context);
-        	settings.setDefaultTimeout(30000);
+        	settings.setMaxTime(30000);
         	settings.setMaxCharacters(0);
         	settings.setMaxElements(3);
 
