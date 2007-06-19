@@ -20,12 +20,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.24  2007/06/04 06:25:11  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.23  2007/05/30 20:30:28  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: EnumerationResourceImpl.java,v 1.24 2007-06-04 06:25:11 denis_rachal Exp $
+ * $Id: EnumerationResourceImpl.java,v 1.25 2007-06-19 19:50:39 nbeers Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -477,6 +488,9 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 		enu.setPull(enumerationContext.toString(), maxEnvelopeSize,
 				maxElements, timeout);
 		final Management mgmt = setManagementProperties(enu);
+		if (timeout != null) {
+			mgmt.setTimeout(timeout);
+		}
 
 		// Add any user defined options to the header
 		addOptionSetHeader(mgmt);

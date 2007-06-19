@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.27  2007/05/30 20:30:23  nbeers
+ **Add HP copyright header
  **
- * $Id: EnumerationTest.java,v 1.27 2007-05-30 20:30:23 nbeers Exp $
+ **
+ * $Id: EnumerationTest.java,v 1.28 2007-06-19 19:50:39 nbeers Exp $
  */
 
 package management;
@@ -342,6 +345,7 @@ public class EnumerationTest extends TestBase {
             final Management mp = new Management(pullRequest);
             mp.setTo(DESTINATION);
             mp.setResourceURI(RESOURCE);
+            mp.setTimeout(factory.newDuration(30000));
 
             mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);

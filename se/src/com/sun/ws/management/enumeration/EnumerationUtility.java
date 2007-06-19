@@ -20,12 +20,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/06/18 17:57:11  nbeers
+ **Fix for Issue #119 (EnumerationUtility.buildMessage() generates incorrect msg).
+ **
  **Revision 1.3  2007/05/30 20:31:03  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: EnumerationUtility.java,v 1.4 2007-06-18 17:57:11 nbeers Exp $
+ * $Id: EnumerationUtility.java,v 1.5 2007-06-19 19:50:39 nbeers Exp $
  */
 package com.sun.ws.management.enumeration;
 
@@ -40,6 +43,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
@@ -50,6 +54,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
+import com.sun.org.apache.xerces.internal.jaxp.datatype.DurationImpl;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
@@ -80,10 +85,12 @@ public class EnumerationUtility {
 			EnumerationMessageValues settings) 
 		throws SOAPException, JAXBException, DatatypeConfigurationException{
 		
+        final DatatypeFactory factory = DatatypeFactory.newInstance();
 		if(existingEnum == null){//build default instances
 			Management mgmt = ManagementUtility.buildMessage(null, settings);
-		   existingEnum = new Enumeration(mgmt);
-		}
+			mgmt.setTimeout(factory.newDuration(settings.getMaxTime()));
+    	    existingEnum = new Enumeration(mgmt);
+ 		}
 		if(settings ==null){//grab a default instance if 
 			settings = EnumerationMessageValues.newInstance();
 		}
@@ -117,7 +124,6 @@ public class EnumerationUtility {
 		}
 		
 		//processing Timeout/Duration and Filter
-        final DatatypeFactory factory = DatatypeFactory.newInstance();
         //processing the EnumContext
         if(settings.getEnumerationContext()!=null){
         	//Process for PULL action
