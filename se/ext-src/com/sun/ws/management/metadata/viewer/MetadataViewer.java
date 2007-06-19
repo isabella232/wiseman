@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/05/30 20:30:32  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: MetadataViewer.java,v 1.3 2007-05-30 20:30:32 nbeers Exp $
+ * $Id: MetadataViewer.java,v 1.4 2007-06-19 12:29:35 simeonpinder Exp $
  */
 package com.sun.ws.management.metadata.viewer;
 
@@ -43,15 +46,19 @@ import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTree;
+import javax.swing.ProgressMonitor;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.xml.bind.JAXBElement;
@@ -141,12 +148,28 @@ public class MetadataViewer extends JFrame {
 				initializeAuthenticationData();
 				//locate button contents
 				final String host = wisemanHost.getText().trim();
+//				JProgressBar progressBar = new JProgressBar(0, 100);
+//				progressBar.setValue(0);
+//				progressBar.setIndeterminate(true);
+//				progressBar.setStringPainted(true);
+////				final ProgressMonitor progressMonitor = new ProgressMonitor(null,
+////                        "Contacting server...",
+////                        "", 0, 100);
+//////				((JComponent)progressMonitor).setContentPane;
+//////				Thread thread = new Thread(){
+//////					public void run() {
+//////						progressMonitor.setProgress(0);
+//////					}
+//////				};
+//////				SwingUtilities.invokeLater(thread);
+////				progressMonitor.setProgress(0);
 				MetadataViewer.loadHostMetaData(host,model);  
 			}
 	    };
 	    load.addActionListener(butLis);
 	    //populate with good default data.
-	    wisemanHost = new JTextField("http://localhost:8080/wsman/",20);
+//	    wisemanHost = new JTextField("http://localhost:8080/wsman/",20);
+	    wisemanHost = new JTextField("http://<host>:<port>/<webapp name>/",20);
 	    topPanel.add(load); topPanel.add(wisemanHost);
 	    scrollpane = new JScrollPane(defaultTree);
 	    menuBar = new JMenuBar();
@@ -263,8 +286,6 @@ public class MetadataViewer extends JFrame {
 	        final Identify identify = new Identify();
 	        identify.setIdentify();
 	        
-//	        LOG.fine("Request message:"+identify.getMessage());
-	        
 	        //Send identify request
 	        final Addressing response = HttpClient.sendRequest(identify.getMessage(), host);
 	        if (response.getBody().hasFault()) {
@@ -274,7 +295,6 @@ public class MetadataViewer extends JFrame {
 	        
 	        //Parse the identify response
 	        final Identify id = new Identify(response);
-//	        final SOAPElement idr = id.getIdentifyResponse();
 	        SOAPElement el =IdentifyUtility.locateElement(id, 
 	        		AnnotationProcessor.META_DATA_RESOURCE_URI); 
 	         //retrieve the MetaData ResourceURI
@@ -289,12 +309,10 @@ public class MetadataViewer extends JFrame {
 	        Management m = null; 
 	        m =TransferUtility.createMessage(metTo, resUri,
 	        		Transfer.GET_ACTION_URI, null, null, 30000, null);
-	        
 	         //############ PROCESS THE METADATA RESPONSE ######################
 	         //Parse the getResponse for the MetaData
 	         final Addressing getResponse = HttpClient.sendRequest(m);
 	       Management mResp = new Management(getResponse);
-
 	       //Determine if any Metadata to display
 		    //########### TRANSLATE METADATA TO FAMILIAR MANAGEMENT NODES ##### 
 		     //Extract the MetaData node returned as Management instances
@@ -357,7 +375,6 @@ public class MetadataViewer extends JFrame {
 					   "Error occurred during processing...", 
 					   JOptionPane.ERROR_MESSAGE);
 				System.out.println("Exception occurred:"+message);
-//				messages.append(message);
 			}
 	  }
 
@@ -431,7 +448,7 @@ public class MetadataViewer extends JFrame {
 		        //Then add child content for schemas
 				SchemasType schemas = returnedMessage.getSchemas();
 				DefaultMutableTreeNode schemNode = 
-					new DefaultMutableTreeNode("schemas[prefix=schemaLocation]");
+					new DefaultMutableTreeNode("schemas[prefix=schemaLocation]-(accessible by HTTP)");
 				for(SchemaType schema: schemas.getSchema()){
 					addNodeForSchemaType(schemNode, schema);
 				}

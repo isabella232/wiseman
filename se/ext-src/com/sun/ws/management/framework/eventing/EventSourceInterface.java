@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/05/30 20:30:31  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EventSourceInterface.java,v 1.2 2007-05-30 20:30:31 nbeers Exp $
+ * $Id: EventSourceInterface.java,v 1.3 2007-06-19 12:29:33 simeonpinder Exp $
  */
 package com.sun.ws.management.framework.eventing;
 
@@ -33,9 +36,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.metadata.annotations.WsManagementDefaultAddressingModelAnnotation;
-import com.sun.ws.management.metadata.annotations.WsManagementEnumerationAnnotation;
+import com.sun.ws.management.server.Handler;
 import com.sun.ws.management.server.HandlerContext;
 
 /** This interface defines the required methods for a 
@@ -51,50 +52,75 @@ import com.sun.ws.management.server.HandlerContext;
  * 
  * @author Simeon
  */
-public interface EventSourceInterface {
+public interface EventSourceInterface extends Handler {
 	
-//	public void subscribe(HandlerContext context, Management eventRequest, 
-    public Management subscribe(HandlerContext context, Management eventRequest, 
-    		Management eventResponse) throws SOAPException, JAXBException, 
-    		DatatypeConfigurationException, IOException;
+	/**Fundamental method of an Event Source. See WS-Eventing
+	 * for more details about how this should be implemented.
+	 * 
+	 * @param context
+	 * @param eventRequest
+	 * @param eventResponse
+	 * @return
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws DatatypeConfigurationException
+	 * @throws IOException
+	 */
+	public Management subscribe(String resource,
+			HandlerContext context, Management request,
+			Management response) throws JAXBException, SOAPException,
+			DatatypeConfigurationException, IOException;
     
-    /* Implementors may optionally support this item to allow other entities 
+    /* Implementors should consider supporting this item to allow other entities
      * the ability to create events upon request from this entity.
      */
     public void create(HandlerContext context, Management request, 
-    		Management response);
+    		Management response) throws Exception;
     
     //Subscription Manager interaction details.
     /** Flag indicating whether this EventSource is also the
      *  SubscriptionManager instance as well. No soap message
-     *  communication with SubscriptionManager instance necessary. 
+     *  communication with SubscriptionManager instance necessary
+     *  if the Event Source and Subscription Manager are the same 
+     *  handler. 
      * 
      * @return boolean flag indicating the above status.
      */
     boolean isAlsoTheSubscriptionManager();
-//    Class getSubscriptionManagerClass();
- 
-//    public WsManagementDefaultAddressingModelAnnotation getMetadataForEventSource();
+
+    /**This is required to indicate how to 
+     * contact the remote Subscription Manager. The
+     * Management instance returned is expected to be
+     * a Wiseman Metadata artifact with all required
+     * Addressing information already populated.
+     * 
+     * @return
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws DatatypeConfigurationException
+     * @throws IOException
+     */
     public Management getMetadataForEventSource() throws SOAPException, 
     JAXBException, DatatypeConfigurationException, IOException;
-//    public WsManagementEnumerationAnnotation getMetadataForSubscriptionManager();
+
+    /**This is required to indicate how  
+     * the remote Subscription Manager is to communicate with the
+     * remote EventSource that it is managing subscriptions for. The
+     * Management instance returned is expected to be
+     * a Wiseman Metadata artifact with all required
+     * Addressing information already populated.  Most times the
+     * EventSource is already annotated with the information above,
+     * so you just need to retrieve the attached annotation and 
+     * run it through the AnnotationProcessing api.  See 
+     * SampleEventSourceHandler for an example.
+     * 
+     * @return
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws DatatypeConfigurationException
+     * @throws IOException
+     */
     public Management getMetadataForSubscriptionManager() throws SOAPException, 
     JAXBException, DatatypeConfigurationException, IOException;
-//    Management subscriptionManager = null;
-    public void setRemoteSubscriptionManager(Management subscriptionManagerMetaData);
-    
-//    SubscriptionManagerInterface subscriptionManager = null;
-//    /** Either set to this() or
-//     * 
-//     */ 
-//    void setSubscriptionManager(SubscriptionManagerInterface subscriptionManager);
-    
-    /** Either return this() or a SubscriptionManagerInterface instance that's responsible
-     * for handling subscriptionManager duties. 
-     * 
-     * @return SubscriptionManagerInterface
-     */
-//    SubscriptionManagerInterface getSubscriptionManager();
-    
-    
+
 }

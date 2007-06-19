@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/05/30 20:31:05  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EventingUtility.java,v 1.5 2007-05-30 20:31:05 nbeers Exp $
+ * $Id: EventingUtility.java,v 1.6 2007-06-19 12:29:33 simeonpinder Exp $
  */
 package com.sun.ws.management.eventing;
 
@@ -33,6 +36,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 
 import com.sun.ws.management.Management;
@@ -86,6 +91,21 @@ public class EventingUtility {
 	    //Process the EventingMessageValues instance passed in.
 		 //Processing SUBSCRIBE action for the message
 		if (settings.getEventingMessageActionType() == Eventing.SUBSCRIBE_ACTION_URI) {
+			
+			//Check to see if EventSinkDestination has been set
+			String value = null;
+			if(((value=settings.getEventSinkDestination())!=null)&&
+					(value.trim().length()>0)){
+			   //See whether a metadataUID has been added.
+			   ReferenceParametersType params = null;
+			   if(settings.getEventSinkReferenceParameterType()!=null){
+				  params = settings.getEventSinkReferenceParameterType(); 
+			   }
+			   EndpointReferenceType notifyToEl = Management.createEndpointReference(
+					   value.trim(), null, params, null, null);
+			   settings.setNotifyTo(notifyToEl);
+			}
+			
 			if (settings.getFilter() == null || settings.getFilter().length() <= 0) {
 				existingEvent.setSubscribe(settings.getEndTo(), 
 						settings.getDeliveryMode(), 

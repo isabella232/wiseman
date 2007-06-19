@@ -20,12 +20,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.12  2007/06/04 06:25:13  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.11  2007/05/30 20:31:05  nbeers
  **Add HP copyright header
  **
  **
  *
- * $Id: ManagementUtility.java,v 1.12 2007-06-04 06:25:13 denis_rachal Exp $
+ * $Id: ManagementUtility.java,v 1.13 2007-06-19 12:29:33 simeonpinder Exp $
  */
 package com.sun.ws.management;
 
@@ -513,6 +524,18 @@ public class ManagementUtility {
 			refParams.getAny().add(resourceURI);
 		}
 		
+		//add the MetadataResourceUID if present.
+	 	String NS_PREFIX ="wsmeta"; 
+		String NS_URI = "http://schemas.dmtf.org/wbem/wsman/1/wsman/version1.0.0.a/default-addressing-model.xsd";
+	    QName metResourceUID = new QName(NS_URI,"ResourceMetaDataUID",NS_PREFIX);
+	    SOAPElement metDataUID = ManagementUtility.locateHeader(
+	    		message.getHeaders(), metResourceUID);
+	    if((metDataUID!=null)&&
+	    		(metDataUID.getTextContent().trim().length()>0)){
+	    	refParams.getAny().add(metDataUID);
+	    }
+		
+		
 		// add the SelectorSet if defined
 		final SOAPElement selectorSet = ManagementUtility.locateHeader(message.getHeaders(),
 				                                                 Management.SELECTOR_SET);
@@ -593,5 +616,32 @@ public class ManagementUtility {
 		}
 		return null;
 	}
+	 
+//	  //
+//	  public static String locateClassInClasspath(String className) {
+//		  String message = "";
+//	      if (!className.startsWith("/")) {
+//	          className = "/" + className;
+//	        }
+//	        className = className.replace('.', '/');
+//	        className = className + ".class";
+//	  
+//	        java.net.URL classUrl =
+//	          new ManagementUtility().getClass().getResource(className);
+//	  
+//	        String exc = null;
+//	        if (classUrl != null) {
+//	          exc = "\nClass '" + className +
+//	            "' found in \n'" + classUrl.getFile() + "'";
+//	          System.out.println(exc);
+//	        } else {
+//	          exc = "\nClass '" + className +
+//	            "' not found in \n'";
+//	          exc+=System.getProperty("java.class.path") + "'";
+//	          System.out.println(exc);
+//	        }
+//	        message = exc;
+//	      return message;  
+//	 }
 
 }

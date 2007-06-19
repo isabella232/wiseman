@@ -20,7 +20,7 @@
   Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com), 
   Nancy Beers (nancy.beers@hp.com), William Reichardt 
  
- $Id: build.xml,v 1.70 2007-06-14 07:28:08 denis_rachal Exp $
+ $Id: build.xml,v 1.71 2007-06-19 12:29:34 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -38,7 +38,7 @@
     <fail message="You should be using ant 1.6.5 or better."
     unless="valid.ant.version"/>
 	
-    <target name="init">
+    <target name="init" depends="clean">
         <tstamp />
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${build.dir}" />
@@ -193,14 +193,13 @@
  
     <target name="compile" depends="lib-core">
         <javac destdir="${build.classes.ext.dir}"
-            target="1.5"
+            target="1.5" 
             debug="${debug}">
         	<classpath>
         	   <path refid="compile.ext.classpath" />
         	   <path refid="compile.ant.classpath" />
         	</classpath>
             <src path="${src.ext.dir}" />
-            <exclude name="com/sun/ws/management/server/handler/**" />
         </javac>
     </target>
 
@@ -215,6 +214,7 @@
             </fileset>
             <fileset dir="${build.classes.ext.dir}">
                 <include name="com/sun/ws/management/server/handler/wsman/*metadata_Handler*" />
+                <include name="com/sun/ws/management/server/handler/wsman/*eventsubman_Handler*" />
             </fileset>
             <fileset dir="${src.dir}">
                 <include name="com/sun/ws/management/resources/**" />
@@ -315,6 +315,29 @@
 				<attribute name="Implementation-Version" value="1.0" />
 				<attribute name="Sealed" value="false" />
 				<attribute name="Main-Class" value="com.sun.ws.management.metadata.viewer.MetadataViewer" />
+				<attribute name="Class-Path" value="wiseman-core.jar wiseman.jar wiseman-tools.jar 
+					jaxws/activation.jar jaxws/jaxb-api.jar jaxws/jaxb-impl.jar jaxws/jaxb-xjc.jar
+					jaxws/jaxws-api.jar jaxws/jaxws-rt.jar jaxws/jaxws-tools.jar
+					jaxws/jsr173_api.jar jaxws/jsr181-api.jar jaxws/jsr250-api.jar jaxws/saaj-api.jar 
+					jaxws/saaj-impl.jar jaxws/resolver.jar" />
+			</manifest>
+			<fileset dir="${basedir}/${build.classes.dir}"/>
+			<fileset dir="${basedir}/${build.classes.ext.dir}"/>
+		</jar>
+
+    	<!--  ===================================================================  -->
+    	<!--   builds the executable mAccessor jar               -->
+    	<!--  ===================================================================  -->
+		<jar destfile="${basedir}/${dist.dir}/mAccessor.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Built-At" value="${DSTAMP}" />
+				<attribute name="Specification-Title" value="WS-Management" />
+				<attribute name="Specification-Version" value="1.0.0a" />
+				<attribute name="Implementation-Title" value="Swing Metadata Resource Accessor" />
+				<attribute name="Implementation-Version" value="1.0" />
+				<attribute name="Sealed" value="false" />
+				<attribute name="Main-Class" value="com.sun.ws.management.metadata.accessor.MetadataResourceAccessor" />
 				<attribute name="Class-Path" value="wiseman-core.jar wiseman.jar wiseman-tools.jar 
 					jaxws/activation.jar jaxws/jaxb-api.jar jaxws/jaxb-impl.jar jaxws/jaxb-xjc.jar
 					jaxws/jaxws-api.jar jaxws/jaxws-rt.jar jaxws/jaxws-tools.jar
@@ -862,4 +885,26 @@
   	
     <target name="autobuild" depends="clean,deploy,test,javadoc" />
 
+	<!--  =================================================  -->
+	<!--   "compiled-properties" - Updated the compiled project.properties file -->
+	<!--  =================================================  -->
+	<target name="compiled-properties" depends="init" >
+		<property name="war-property-file-name" value="ProjectProperties.java"/>
+		<property name="war-hdr-prop-file-name" value="war-prj-props-header.txt"/>
+		<property name="war-properties" value="${src.ext.dir}/wiseman/properties/${war-property-file-name}"/>
+		<loadfile property="prj-prop-header" srcfile="etc/${war-hdr-prop-file-name}"/>
+		
+		<!-- build the new project property java file -->
+		<echo file="${war-properties}" message="${prj-prop-header} ${line.separator}" append="false"/>
+		<!-- Insert the rest of the java content -->
+		<echo file="${war-properties}" 
+			message="    public static final String WISEMAN_HOST=&quot;${wiseman.host}&quot;; ${line.separator}" append="true"/>
+		<echo file="${war-properties}" 
+			message="    public static final int WISEMAN_PORT=${wiseman.port}; ${line.separator}" append="true"/>
+		<echo file="${war-properties}" 
+			message="    public static final String WISEMAN_WAR_NAME=&quot;${war.name}&quot;; ${line.separator}" append="true"/>
+		<echo file="${war-properties}" 
+			message="    public static final String WISEMAN_DESTINATION=&quot;${service.address}&quot;; ${line.separator} }" append="true"/>
+	</target>
+	
 </project>

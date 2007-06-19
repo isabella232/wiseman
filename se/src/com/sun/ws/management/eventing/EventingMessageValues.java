@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/05/30 20:31:05  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EventingMessageValues.java,v 1.3 2007-05-30 20:31:05 nbeers Exp $
+ * $Id: EventingMessageValues.java,v 1.4 2007-06-19 12:29:33 simeonpinder Exp $
  */
 package com.sun.ws.management.eventing;
 
@@ -72,6 +75,10 @@ public class EventingMessageValues extends ManagementMessageValues {
     public static final QName EVENTING_COMMUNICATION_CONTEXT_ID = new 
     QName(EVENTING_COMMUNICATION_ACTION_URI,
     		"ContextId",EVENT_PREFIX);
+    //QName used during customized eventing message processing/generation
+    public static final QName EVENT_SOURCE_ID = new 
+    QName(EVENTING_COMMUNICATION_ACTION_URI,
+    		EVENT_SOURCE_NODE_NAME,EVENT_PREFIX);
     
     //QName used during EventingSourceDescription
     public static final QName EVENT_CONTEXT_INFO = new 
@@ -89,7 +96,8 @@ public class EventingMessageValues extends ManagementMessageValues {
     			EVENT_SINK_NODE_NAME,EVENT_PREFIX);
     
     public static final String SUBSCRIPTION_SOURCE = "SUBSCRIPTION_SOURCE";
-    public static enum CreationTypes { SUBSCRIPTION_SOURCE, NEW_SUBSCRIBER, NEW_EVENT};
+    public static final String EVENT_SINK_NAME = "EVENT_SINK";
+    public static enum CreationTypes { SUBSCRIPTION_SOURCE, NEW_SUBSCRIBER, NEW_EVENT,EVENT_SINK};
     
     //the package that generated JAXB types is put into, or used during binding/unbinding
     public static String TEST_EVENT_PACKAGE ="com.hp.examples.ws.wsman.test_event";

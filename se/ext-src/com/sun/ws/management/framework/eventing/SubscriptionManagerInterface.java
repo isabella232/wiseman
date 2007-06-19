@@ -19,14 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/05/30 20:30:31  nbeers
+ **Add HP copyright header
  **
- * $Id: SubscriptionManagerInterface.java,v 1.2 2007-05-30 20:30:31 nbeers Exp $
+ **
+ * $Id: SubscriptionManagerInterface.java,v 1.3 2007-06-19 12:29:33 simeonpinder Exp $
  *
  */
 package com.sun.ws.management.framework.eventing;
 
-import com.sun.ws.management.enumeration.Enumeration;
+import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.soap.SOAPException;
+
+import com.sun.ws.management.Management;
 import com.sun.ws.management.server.HandlerContext;
+import com.sun.ws.management.server.Handler;
 
 /** This interface defines the required methods for a 
  * SubscriptionManagerInterface instance.  A subscription manager
@@ -36,11 +44,38 @@ import com.sun.ws.management.server.HandlerContext;
  * 
  * @author Simeon
  */
-public interface SubscriptionManagerInterface {
+public interface SubscriptionManagerInterface extends Handler {
+	/** By extending Handler this requires that the instance be
+	 *  a Wiseman handler.  
+	 */
+	
 	String getSubscriptionManagerAddress();
     String getSubscriptionManagerResourceURI();
-    void renew(HandlerContext context,Enumeration enuRequest, Enumeration enuResponse);
-	void unsubsubscribe(HandlerContext context,Enumeration enuRequest, 
-	Enumeration enuResponse);
-
+    
+    /**This method is encouraged so that a remote Event Source
+     * can send Transfer.Create requests to create/register 
+     * new EventSources and new Event Sink(Subscribers) to this
+     * SubscriptionManager instance.  See eventsubman_Handler
+     * for a default implementation that is a suggestion for 
+     * how such a resource could be built.  
+     * 
+     * @param context Handler context if useful
+     * @param request Management message
+     * @param response Management message
+     */
+    Management create(HandlerContext context,Management request, 
+    		Management response) throws SOAPException, 
+			JAXBException, DatatypeConfigurationException ;
+    
+    /**Fundamental method for the remote SubscriptionManager.
+     * Should handle the task of registering a subscriber/eventsink
+     * from this Subscription Manager.
+     * 
+     * @param context Handler context if useful
+     * @param request Management message
+     * @param response Management message
+     */
+	Management unsubsubscribe(HandlerContext context,Management request, 
+	Management response);
+	
 }

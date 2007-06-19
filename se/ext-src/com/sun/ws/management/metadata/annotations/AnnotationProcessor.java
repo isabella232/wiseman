@@ -20,12 +20,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/06/04 06:25:13  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.6  2007/05/30 20:30:25  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: AnnotationProcessor.java,v 1.7 2007-06-04 06:25:13 denis_rachal Exp $
+ * $Id: AnnotationProcessor.java,v 1.8 2007-06-19 12:29:34 simeonpinder Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 
@@ -127,6 +138,8 @@ public class AnnotationProcessor {
 		RESOURCE_META_DATA_UID,
 		ENUMERATION_ACCESS_RECIPE,ENUMERATION_FILTER_USAGE,RESOURCE_MISC_INFO};
 	
+	public static final String NO_ACTION_NECESSARY= "(NO_ACTION_NECESSARY)";
+	
 	public static org.w3._2003._05.soap_envelope.ObjectFactory envFactory 
 	= new org.w3._2003._05.soap_envelope.ObjectFactory();
 	
@@ -156,12 +169,6 @@ public class AnnotationProcessor {
 	//Define default namespace context for Metadata processing
 	private static NamespaceContext META_DATA_NAMESPACE_CONTEXT = null;
 
-//	private static Object metadataIsStaticRef;
-//
-//	private static Boolean metadataContentIsStatic;
-//
-//	private static Management[] cachedMetadataList;
-	
 	/** Method takes a defaultAddressingModelAnnotation instance and places
 	 * all of the values into a Management instance. 
 	 * 
@@ -196,7 +203,6 @@ public class AnnotationProcessor {
 					Management.createReferenceParametersType(
 							META_DATA_CATEGORY,
 							defAddMod.metaDataCategory()));
-//			LOG.log(Level.FINE,"The MetaDataCategory is added");
 		}
 		if((defAddMod.metaDataDescription()!=null)&&
 				(defAddMod.metaDataDescription().trim().length()>0)){
@@ -563,7 +569,6 @@ public class AnnotationProcessor {
 			}
 			try{
 			env = envelope.getValue();
-//System.out.println("@@@ envelope:env:"+envelope+":"+env);			  
 			}
 			catch(ClassCastException cce){
 			   LOG.severe("Unable to locate metadata content:"+cce.getMessage());	
@@ -938,42 +943,61 @@ public class AnnotationProcessor {
 		}else{//Successfully located the Metadata for the service
 
 			//figure out whether to remove additional elements
-			if(emptyPayload){
-				locatedResource.getBody().removeContents();
-			}
-			//mechanism to remove arbitrary Header elements.
-			if((headersToPrune!=null)&&(headersToPrune.length>0)){
-				//Existing headers
-			  SOAPElement[] headerList = locatedResource.getHeaders();
-			   //The new header list
-			  ArrayList<SOAPElement> retainList = new ArrayList<SOAPElement>();
-			   //populate prune list.
-			  ArrayList<QName> pruneList = new ArrayList<QName>();
-			  for(QName tmp:headersToPrune){
-				  pruneList.add(tmp);
+			removeUnwantedMetadataContent(emptyPayload, locatedResource, headersToPrune);
+		}
+		return locatedResource;
+	}
+
+	/**
+	 * @param emptyPayload
+	 * @param locatedResource
+	 * @param headersToPrune
+	 * @throws SOAPException
+	 */
+	private static Management removeUnwantedMetadataContent(boolean emptyPayload, 
+			Management locatedResource, 
+			QName... headersToPrune) throws SOAPException {
+		
+		if(locatedResource==null){
+			String msg="The Management resource instance passed in cannot be NULL.";
+			throw new IllegalArgumentException(msg);
+		}
+		
+		if(emptyPayload){
+			locatedResource.getBody().removeContents();
+		}
+		//mechanism to remove arbitrary Header elements.
+		if((headersToPrune!=null)&&(headersToPrune.length>0)){
+			//Existing headers
+		  SOAPElement[] headerList = locatedResource.getHeaders();
+		   //The new header list
+		  ArrayList<SOAPElement> retainList = new ArrayList<SOAPElement>();
+		   //populate prune list.
+		  ArrayList<QName> pruneList = new ArrayList<QName>();
+		  for(QName tmp:headersToPrune){
+			  pruneList.add(tmp);
+		  }
+		  
+		  //iterate through the header and find elements to retain.
+		  for (int i = 0; i < headerList.length; i++) {
+			  SOAPElement header = headerList[i];
+			if(!pruneList.contains(header.getElementQName())){
+			  //add if it's not already been added.	
+			  if(!retainList.contains(header)){
+			    retainList.add(header);
 			  }
-			  
-			  //iterate through the header and find elements to retain.
-			  for (int i = 0; i < headerList.length; i++) {
-				  SOAPElement header = headerList[i];
-				if(!pruneList.contains(header.getElementQName())){
-				  //add if it's not already been added.	
-				  if(!retainList.contains(header)){
-				    retainList.add(header);
-				  }
-				}
-			  }
-			  //Reassign the header list if necessary
-			 if(!retainList.isEmpty()){
-			   //purge old	 
-			   locatedResource.getHeader().removeContents();
-			   //replace with the retain content
-			   for (Iterator iter = retainList.iterator(); iter.hasNext();) {
-				 SOAPElement element = (SOAPElement) iter.next();
-				 locatedResource.getHeader().addChildElement(element);
-			   }
-			 }
 			}
+		  }
+		  //Reassign the header list if necessary
+		 if(!retainList.isEmpty()){
+		   //purge old	 
+		   locatedResource.getHeader().removeContents();
+		   //replace with the retain content
+		   for (Iterator iter = retainList.iterator(); iter.hasNext();) {
+			 SOAPElement element = (SOAPElement) iter.next();
+			 locatedResource.getHeader().addChildElement(element);
+		   }
+		 }
 		}
 		return locatedResource;
 	}
@@ -1005,8 +1029,9 @@ public class AnnotationProcessor {
 			String wisemanServer) throws SOAPException, JAXBException, 
 			DatatypeConfigurationException, IOException 
 	{
+	  QName[] headersToTrim = null;
 	  return findAnnotatedResourceByUID(metaUidForAnnotatedResource, 
-			  wisemanServer, true);	
+			  wisemanServer, true, headersToTrim);	
 	}
 
 
@@ -1056,9 +1081,6 @@ public class AnnotationProcessor {
 				   }
 			    }	    	 
 	    	 }
-//	    	 if(metadataContentIsStatic){
-//	    		 cachedMetadataList=metaDataList; 
-//	    	 }
 	       }else{//response has fault in it
 	    	  throw new SOAPFaultException(response.getBody().getFault());    
 	       }
@@ -1134,38 +1156,12 @@ public class AnnotationProcessor {
 	 * @throws SOAPException
 	 */
 	public static Management stripMetadataContent(Management existing, 
-			boolean removeMetadataBody) throws SOAPException{
-//		Management message = new Management();
-//		if((existing!=null)&&(existing.getHeaders()!=null)){
-//			 for(SOAPElement header: existing.getHeaders()){
-//				  if(!AnnotationProcessor.isDescriptiveMetadataElement(
-//						  header.getElementQName())){
-//				     Node located = containsHeader(message.getHeader(),header);	
-//					 if(located!=null){
-//					   message.getHeader().removeChild(located);  
-//					 }
-//					 message.getHeader().addChildElement(header);
-//				  }
-//			}//End of iteratation through header list
-//			if(!removeMetadataBody){
-//			  if((message.getBody()!=null)&&
-//				(existing.getBody().getFirstChild()!=null)){
-//			   //TODO: does not work. Rework to remove from the Management instance passed in.	  
-////			   message.getBody().addDocument(existing.getBody().getFirstChild());
-//			  }
-//			}
-//		}
-//		return message;
+			boolean removeMetadataBody,QName... headersToPrune) throws SOAPException{
 		if((existing!=null)&&(existing.getHeaders()!=null)){
 			 for(SOAPElement header: existing.getHeaders()){
 			  if(AnnotationProcessor.isDescriptiveMetadataElement(
 					  header.getElementQName())){
 				 existing.getHeader().removeChild(header); 
-//			     Node located = containsHeader(message.getHeader(),header);	
-//				 if(located!=null){
-//				   message.getHeader().removeChild(located);  
-//				 }
-//				 message.getHeader().addChildElement(header);
 			  }
 		     }//End of iteratation through header list
 			 if(removeMetadataBody){
@@ -1173,11 +1169,12 @@ public class AnnotationProcessor {
 				(existing.getBody().getFirstChild()!=null)){
 				existing.getBody().removeContents();  
 			   //TODO: does not work. Rework to remove from the Management instance passed in.	  
-//			   message.getBody().addDocument(existing.getBody().getFirstChild());
 			  }
 			 }
 			
 		}
+		existing = removeUnwantedMetadataContent(removeMetadataBody, 
+				existing, headersToPrune);
 		return existing;
 	}
 	
