@@ -20,6 +20,13 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/06/08 15:38:38  denis_rachal
+ **The following enhanceent were made to the testing infrastructure:
+ **
+ **  * Capture of logs in files for junits test
+ **  * Added user.wsdl & user.xsd to wsman.war
+ **  * Consolidated userenum & user into single handler that is thread safe for load testing
+ **
  **Revision 1.1  2007/06/04 06:25:12  denis_rachal
  **The following fixes have been made:
  **
@@ -39,7 +46,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.2 2007-06-08 15:38:38 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.3 2007-06-19 13:08:08 simeonpinder Exp $
  */
 package com.sun.ws.management.client;
 
@@ -158,7 +165,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 				"The Wiseman Project - https://wiseman.dev.java.net");
 		// assertEquals(serverInfo.getProductVersion(),"0.6");
 		// assertEquals(serverInfo.getProductVersion(),"1.0_RC1");
-		assertEquals(serverInfo.getProductVersion(), "1.0_RC2");
+		assertEquals(serverInfo.getProductVersion(), "1.0");
 		assertEquals(serverInfo.getProtocolVersion(),
 				"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
 		assertEquals(serverInfo.getSpecVersion(), "1.0.0a");
