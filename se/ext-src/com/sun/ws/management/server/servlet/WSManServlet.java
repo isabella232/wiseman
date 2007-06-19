@@ -19,6 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/06/14 07:28:06  denis_rachal
+ **Issue number:  110
+ **Obtained from:
+ **Submitted by:  ywu
+ **Reviewed by:
+ **
+ **Updated wsman.war test warfile and sample traffic.war file along with tools to expose a WSDL file. Additionally added default index.html file for sample warfile.
+ **
  **Revision 1.5  2007/06/04 06:25:14  denis_rachal
  **The following fixes have been made:
  **
@@ -34,7 +42,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.6 2007-06-14 07:28:06 denis_rachal Exp $
+ * $Id: WSManServlet.java,v 1.7 2007-06-19 15:25:38 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -368,6 +376,8 @@ public abstract class WSManServlet extends HttpServlet {
 			if (query.equals("wsdl")) {
 				// Locate the default wsdl filename
 				filename = getWisemanProperty(SERVICE_WSDL);
+				if ((filename == null) || (filename.length() == 0))
+					filename = "service.wsdl";
 				if (filename.charAt(0) == '/')
 					filename = "/wsdls" + filename;
 				else
@@ -375,6 +385,8 @@ public abstract class WSManServlet extends HttpServlet {
 			} else if (query.equals("xsd")) {
 				// Locate the default xsd filename
 				filename = getWisemanProperty(SERVICE_XSD);
+				if ((filename == null) || (filename.length() == 0))
+					filename = "service.xsd";
 				if (filename.charAt(0) == '/')
 					filename = "/schemas" + filename;
 				else
@@ -383,6 +395,8 @@ public abstract class WSManServlet extends HttpServlet {
 				// extract the filename from the query
 				filename = req.getQueryString().trim().substring(
 						"wsdl=".length());
+				if ((filename == null) || (filename.length() == 0))
+					filename = "service.wsdl";
 				if (filename.charAt(0) != '/')
 					filename = "/" + filename;
 
@@ -399,6 +413,8 @@ public abstract class WSManServlet extends HttpServlet {
 				// extract the filename from the query
 				filename = req.getQueryString().trim().substring(
 						"xsd=".length());
+				if ((filename == null) || (filename.length() == 0))
+					filename = "service.xsd";
 				if (filename.charAt(0) != '/')
 					filename = "/" + filename;
 
