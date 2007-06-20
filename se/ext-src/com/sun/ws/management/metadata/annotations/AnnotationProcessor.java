@@ -20,6 +20,16 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/06/19 12:29:34  simeonpinder
+ **changes:
+ **-set 1.0 release implementation version
+ **-enable metadata ResourceURIs from extracted EPR
+ **-useful eventing constants and fix for notifyTo in utility.
+ **-cleaned up EventSourceInterface,SubscriptionManagerInterface definitions
+ **-added MetadataResourceAccessor draft
+ **-improved mechanism to strip unwanted headers from metadata decorated Management mesgs
+ **-added unregister mechanism to facilitate remote SubscriptionManager implementations
+ **
  **Revision 1.7  2007/06/04 06:25:13  denis_rachal
  **The following fixes have been made:
  **
@@ -36,7 +46,7 @@
  **
  ** 
  *
- * $Id: AnnotationProcessor.java,v 1.8 2007-06-19 12:29:34 simeonpinder Exp $
+ * $Id: AnnotationProcessor.java,v 1.9 2007-06-20 09:22:40 simeonpinder Exp $
  */
 package com.sun.ws.management.metadata.annotations;
 
@@ -938,7 +948,7 @@ public class AnnotationProcessor {
 		//####################################
 		if(locatedResource==null){
 			String msg = "Metadata with the ResourceID '"+metaUidForAnnotatedResource+
-				"' could not be found.";
+				"' could not be found at the server '"+wisemanServer+"'.";
 			throw new RuntimeException(msg);
 		}else{//Successfully located the Metadata for the service
 

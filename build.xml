@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.14 2007-06-14 07:28:07 denis_rachal Exp $
+ $Id: build.xml,v 1.15 2007-06-20 09:22:40 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
@@ -52,7 +52,8 @@
 		<ant antfile="tools/build.xml" inheritall="no" description="Build Wiseman Tooling" target="autobuild"/>
 	</target>
 
-	<target name="dist" depends="build">
+	<target name="dist" depends="build">  
+<!--	<target name="dist" > -->
 		<!-- Get the wiseman jars and put them in lib -->
 		<copy todir="${dist.dir}/lib">
 			<fileset dir="se/dist">
@@ -127,6 +128,7 @@
 		<copy todir="${dist.dir}">
 			<fileset dir="tools">
 				<include name="lib/*.jar" />
+				<exclude name="lib/wiseman*.jar" />
 			</fileset>
 		</copy>
 
@@ -134,6 +136,8 @@
 		<copy todir="${dist.dir}/docs">
 			<fileset dir="tools/docs">
 				<include name="*.pdf" />
+				<include name="*.doc" />
+				<exclude name="Creating*.*" />
 			</fileset>
 		</copy>
 
@@ -152,10 +156,14 @@
 				<include name="samples/**/*.bat" />
 				<include name="samples/**/*.txt" />
 				<include name="samples/**/*.wsdl" />
+				<include name="samples/templates/**/*.jar" />
 				<exclude name="samples/**/light.wsdl" />
+<!--				<exclude name="samples/**/classes/*" /> -->
+				<exclude name="samples/contacts/gen-src/*.java" />
+				<exclude name="samples/contacts_client/gen-src/*.java" />
 			</fileset>
 		</copy>
-
+<echo>copy 10</echo>
 		<!-- Get etc and put it in dist -->
 		<copy todir="${dist.dir}">
 			<fileset dir="se">

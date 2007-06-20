@@ -376,8 +376,12 @@ public class MetadataResourceAccessor extends JFrame {
 			meta = AnnotationProcessor.findAnnotatedResourceByUID(
 					metaDataUID, serviceAddress,false,trimHeaders);
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			String msg="There was an error retrieving information from the metadata server,\n";
+			msg+="'"+serviceAddress+"' when using the metadataResourceUID '";
+			msg+=metaDataUID+"'.\n";
+			msg+=e1.getMessage();
+			throw new RuntimeException(msg);
 		} 
 		if((meta!=null)&&(meta.getBody().getFirstChild()!=null)){
 		   Document mesgDefinition;
