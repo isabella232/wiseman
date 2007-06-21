@@ -18,6 +18,7 @@
 package ${package};
 
 import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.framework.handlers.ResourceHandler;
