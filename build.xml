@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.16 2007-06-22 06:13:55 simeonpinder Exp $
+ $Id: build.xml,v 1.17 2007-06-22 11:30:54 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
@@ -139,7 +139,7 @@
 		<copy todir="${dist.dir}/docs">
 			<fileset dir="tools/docs">
 				<include name="*.pdf" />
-				<include name="*.doc" />
+<!--				<include name="*.doc" /> -->
 				<exclude name="Creating*.*" />
 			</fileset>
 		</copy>
