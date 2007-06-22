@@ -20,12 +20,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/06/18 17:57:28  nbeers
+ **Fix for Issue #119 (EnumerationUtility.buildMessage() generates incorrect msg).
+ **
  **Revision 1.4  2007/05/30 20:30:19  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: WisemanCmdLine.java,v 1.5 2007-06-18 17:57:28 nbeers Exp $
+ * $Id: WisemanCmdLine.java,v 1.6 2007-06-22 06:13:56 simeonpinder Exp $
  */
 package com.sun.ws.management.tools;
 
@@ -405,6 +408,8 @@ public class WisemanCmdLine {
         System.out.println(MAX_ELEM_ARG + "\t Maximum number of items to return (Enumeration only).");
         System.out.println(USER_ARG + "\t User name for web service security.");
         System.out.println(PASSWORD_ARG + "\t Password for web service security.");
+        System.out.println();
+        System.out.println("i.e. " + "wise.bat" + " " + ACTION_ARG + " get " + DESTINATION_ARG + " \"http://localhost:8080/traffic/\"  " + RESOURCE_URI_ARG + " \"urn:resources.wiseman.dev.java.net/traffic/1/light\" " + SELECTOR_ARG + " name Light1");
         System.out.println();
         System.out.println("i.e. " + "java " + WisemanCmdLine.class.getName() + " " + ACTION_ARG + " get " + DESTINATION_ARG + " \"http://localhost:8080/traffic/\"  " + RESOURCE_URI_ARG + " \"urn:resources.wiseman.dev.java.net/traffic/1/light\" " + SELECTOR_ARG + " name Light1");
         System.out.println();

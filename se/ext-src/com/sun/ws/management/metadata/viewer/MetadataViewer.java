@@ -20,12 +20,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/06/19 12:29:35  simeonpinder
+ **changes:
+ **-set 1.0 release implementation version
+ **-enable metadata ResourceURIs from extracted EPR
+ **-useful eventing constants and fix for notifyTo in utility.
+ **-cleaned up EventSourceInterface,SubscriptionManagerInterface definitions
+ **-added MetadataResourceAccessor draft
+ **-improved mechanism to strip unwanted headers from metadata decorated Management mesgs
+ **-added unregister mechanism to facilitate remote SubscriptionManager implementations
+ **
  **Revision 1.3  2007/05/30 20:30:32  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: MetadataViewer.java,v 1.4 2007-06-19 12:29:35 simeonpinder Exp $
+ * $Id: MetadataViewer.java,v 1.5 2007-06-22 06:13:56 simeonpinder Exp $
  */
 package com.sun.ws.management.metadata.viewer;
 
@@ -59,6 +69,7 @@ import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.xml.bind.JAXBElement;
@@ -108,6 +119,7 @@ public class MetadataViewer extends JFrame {
 	  private static JTextArea messages = null;
 	  private DefaultMutableTreeNode rootNode = null;
 	  private JButton load = null;
+	  private boolean completed=false;
 	  private JTextField wisemanHost = null;
 	  private static MetadataViewer guiHandle = null;
 	  static DefaultMutableTreeNode emptyNode = null;
@@ -146,24 +158,40 @@ public class MetadataViewer extends JFrame {
 	    ActionListener butLis = new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				initializeAuthenticationData();
+				completed = false;
 				//locate button contents
 				final String host = wisemanHost.getText().trim();
-//				JProgressBar progressBar = new JProgressBar(0, 100);
-//				progressBar.setValue(0);
-//				progressBar.setIndeterminate(true);
-//				progressBar.setStringPainted(true);
-////				final ProgressMonitor progressMonitor = new ProgressMonitor(null,
-////                        "Contacting server...",
-////                        "", 0, 100);
-//////				((JComponent)progressMonitor).setContentPane;
-//////				Thread thread = new Thread(){
-//////					public void run() {
-//////						progressMonitor.setProgress(0);
-//////					}
-//////				};
-//////				SwingUtilities.invokeLater(thread);
-////				progressMonitor.setProgress(0);
-				MetadataViewer.loadHostMetaData(host,model);  
+				//add a progress bar.
+				final long sleep = 500;
+				UIManager.put("ProgressMonitor.progressText", "Loading");
+				final ProgressMonitor progressMonitor = 
+					new ProgressMonitor(guiHandle,
+                        "Loading metadata from server...",
+                        null, 50, 100);
+				progressMonitor.setMillisToDecideToPopup(0);
+				progressMonitor.setMillisToPopup(0);
+				//Run the work in thread to avoid locking up UI thread
+				new Thread(){
+					public void run() {
+						MetadataViewer.loadHostMetaData(host,model);
+						completed = true;
+					}
+				}.start();
+				//Run the work in thread to avoid locking up UI thread
+				new Thread(){
+				  public void run() {
+					  int inc = 50; int max = 500*2*60*2;//2 mins...
+					  while((!completed)&&(inc<max)){	
+						  progressMonitor.setProgress(inc++);
+						try {
+							Thread.sleep(sleep);
+						} catch (InterruptedException e) {
+						}
+					  }
+					  progressMonitor.close();
+					}
+				}.start();
+//				MetadataViewer.loadHostMetaData(host,model);  
 			}
 	    };
 	    load.addActionListener(butLis);

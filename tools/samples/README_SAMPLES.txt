@@ -24,3 +24,6 @@ These tools require ant to be in the execution path.
  - To build within Eclipse using ant:
    - right click on build.xml & select "Run As->Ant Build"
    
+ - Each of the samples(contacts/contacts_client/traffic_client/traffic_server) are separate
+ 	ant projects and can be loaded individually with your IDE. The project.properties
+ 	and .classpath files should populate automatically if using Eclipse.

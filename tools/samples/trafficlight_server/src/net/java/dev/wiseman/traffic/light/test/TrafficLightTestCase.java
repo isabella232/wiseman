@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/05/30 20:30:32  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: TrafficLightTestCase.java,v 1.4 2007-05-30 20:30:32 nbeers Exp $
+ * $Id: TrafficLightTestCase.java,v 1.5 2007-06-22 06:13:54 simeonpinder Exp $
  */
 package net.java.dev.wiseman.traffic.light.test;
 
@@ -39,11 +42,21 @@ import net.java.dev.wiseman.schemas.traffic._1.light.TrafficLightType;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
+import org.w3c.dom.Element;
 
 import util.WsManBaseTestSupport;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementMessageValues;
+import com.sun.ws.management.ManagementUtility;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
+import com.sun.ws.management.server.BaseSupport;
+import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
 
 public class TrafficLightTestCase extends WsManBaseTestSupport {
@@ -61,6 +74,7 @@ public class TrafficLightTestCase extends WsManBaseTestSupport {
 	private static final String RESOURCE_URI = "urn:resources.wiseman.dev.java.net/traffic/1/light";
 
 	private static final String DESTINATION = "http://localhost:8080/traffic/";
+//	private static final String DESTINATION = "http://192.168.0.6:8080/traffic/";
 
 	private static final String WSMAN_NS = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd";
 
@@ -189,5 +203,83 @@ public class TrafficLightTestCase extends WsManBaseTestSupport {
 		assertEquals(light.getY(), lightState.getY());
 
 	}
+	////FOLLOWING IS A SAMPLE UNIT TEST to exercise fragment GET/PUT functionality.
+	////SERVER side backend functionality is commented as well so will be unable to run valid tests.
+//	public void testFragmentLight() throws XPathExpressionException, JAXBException,
+//			SOAPException, DatatypeConfigurationException, IOException {
+//		
+//		String lightName="TrafficLight-Fragment";
+//		
+//		// Create a light document
+//		TrafficLightType light = lightFactory.createTrafficLightType();
+//		light.setColor("red");
+//		light.setName(lightName);
+//		light.setX(200);
+//		light.setY(200);
+//		
+//		// Submit this document
+//		Document doc = Management.newDocument();
+//		JAXBElement<TrafficLightType> lightElement = lightFactory
+//				.createTrafficlight(light);
+//		binding.marshal(lightElement, doc);
+//		Management fragmentMetadata = AnnotationProcessor.findAnnotatedResourceByUID(
+//				DESTINATION+lightName, 
+//				ManagementMessageValues.WSMAN_DESTINATION);
+//		Management ret = new Management(fragmentMetadata);
+//		//set action
+//		ret.setAction(Transfer.CREATE_ACTION_URI);
+//		//set put the body in.
+//		ret.getBody().addDocument(doc);
+//		ret = ManagementUtility.buildMessage(ret,null);
+//System.out.println("Request:"+ret);		
+//		Addressing resp = HttpClient.sendRequest(ret);
+//System.out.println("Response:"+resp);
+//		Management response = new Management(resp);
+//		
+//		//########## FRAGMENT GET REQUEST
+//		//Now do fragment get request
+//		Management fragGet = new Management(fragmentMetadata);
+//		//Set the action 
+//		fragGet.setAction(Transfer.GET_ACTION_URI);
+//		//set the fragment porting indicating what to return
+//		String xPathReq = "//*[local-name()='color']";
+//		TransferExtensions trnx = new TransferExtensions(fragGet);
+//		trnx.setFragmentHeader(xPathReq,null, XPath.NS_URI);
+//		fragGet = ManagementUtility.buildMessage(trnx,null);
+//		fragGet.getBody().removeContents();
+//System.out.println("Request:"+fragGet);		
+//		resp = HttpClient.sendRequest(fragGet);
+//System.out.println("Response:"+resp);
+//		response = new Management(resp);
+//		
+//		//########## FRAGMENT PUT REQUEST
+//		//Now do fragment get request
+//		Management fragPut = new Management(fragmentMetadata);
+//		//Set the action 
+//		fragGet.setAction(Transfer.PUT_ACTION_URI);
+//		//set the fragment porting indicating what to return
+//		xPathReq = "//*[local-name()='color']";
+//		trnx = new TransferExtensions(fragPut);
+//		  trnx.setFragmentHeader(xPathReq,null, XPath.NS_URI);
+//		  fragPut = ManagementUtility.buildMessage(trnx,null);
+//		  //build fragment put body
+//		  Document content =Management.newDocument();
+//		final DocumentFragment fragment = content.
+//							createDocumentFragment();
+//		// Insert the root element node
+//		//<tl:color>red</tl:color >
+//		final Element element = content.createElementNS(
+//				"http://schemas.wiseman.dev.java.net/traffic/1/light.xsd", "t1:color");
+//		element.setTextContent("green");
+//		fragment.appendChild(element);
+//		final Object xmlFragment = BaseSupport
+//			.createXmlFragment(((DocumentFragment)fragment).getChildNodes());
+//			fragPut.getXmlBinding().marshal(xmlFragment, fragPut.getBody());
+//System.out.println("Request-Put:"+fragPut);		
+//		resp = HttpClient.sendRequest(fragPut);
+//System.out.println("Response-PUT:"+resp);
+//		response = new Management(resp);
+//		
+//	}
 
 }

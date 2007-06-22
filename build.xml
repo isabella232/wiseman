@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.15 2007-06-20 09:22:40 simeonpinder Exp $
+ $Id: build.xml,v 1.16 2007-06-22 06:13:55 simeonpinder Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
@@ -99,6 +99,8 @@
 				<include  name="saaj-api.jar" />
 				<include  name="saaj-impl.jar" />
 				<include  name="sjsxp.jar" />
+				<include  name="stax-ex.jar" />
+				<include  name="streambuffer.jar" />
 			</fileset>
 		</copy>
 
@@ -115,7 +117,8 @@
 				<include name="**/*.zip" />
 			</fileset>
 		</copy>
-      	<zip destfile="${dist.dir}/docs/third-party-client-samples.zip" basedir="${devdocs.dir}" includes="*.java"/>
+      	<zip destfile="${dist.dir}/docs/third-party-client-samples.zip" 
+      		basedir="${devdocs.dir}" includes="*.java"/>
 
 		<!-- Get the wiseman tooling -->
 		<copy todir="${dist.dir}/lib">
@@ -163,7 +166,6 @@
 				<exclude name="samples/contacts_client/gen-src/*.java" />
 			</fileset>
 		</copy>
-<echo>copy 10</echo>
 		<!-- Get etc and put it in dist -->
 		<copy todir="${dist.dir}">
 			<fileset dir="se">
@@ -203,8 +205,6 @@
 				<include  name="transfer.xsd" />
 			</fileset>
 		</copy>
-
-		
 		
 		<zip destfile="wiseman_${version}.zip">
 			<zipfileset dir="dist">

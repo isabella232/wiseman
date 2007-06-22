@@ -20,12 +20,19 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/06/08 15:38:38  denis_rachal
+ **The following enhanceent were made to the testing infrastructure:
+ **
+ **  * Capture of logs in files for junits test
+ **  * Added user.wsdl & user.xsd to wsman.war
+ **  * Consolidated userenum & user into single handler that is thread safe for load testing
+ **
  **Revision 1.4  2007/05/30 20:30:17  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: user_Handler.java,v 1.5 2007-06-08 15:38:38 denis_rachal Exp $
+ * $Id: user_Handler.java,v 1.6 2007-06-22 06:13:57 simeonpinder Exp $
  */
 package com.sun.ws.management.server.handler.wsman.auth;
 
@@ -114,6 +121,20 @@ public class user_Handler extends DelegatingHandler {
 		metaDataCategory= "SUBSCRIPTION_SOURCE"
 	)
 	private final boolean ANNOTATION_HOLDER_VARIABLE_1 = true;
+	
+//	//Add a metadata reference for the traffic light
+//	@WsManagementDefaultAddressingModelAnnotation(
+//		getDefaultAddressDefinition = 
+//			@WsManagementAddressDetailsAnnotation(
+//				wsaTo="http://localhost:8080/traffic/",
+//				wsmanResourceURI="urn:resources.wiseman.dev.java.net/traffic/1/light",
+//				wsmanSelectorSetContents={"name="+user_Handler.trafFragString}
+//			),
+//		resourceMetaDataUID = "http://localhost:8080/traffic/"+user_Handler.trafFragString,
+//		metaDataCategory= "Traffic_Light"
+//	)
+//	private final boolean ANNOTATION_HOLDER_VARIABLE_2 = true;
+//	public static final String trafFragString ="TrafficLight-Fragment";
 	
     public user_Handler() {
         super(new UserHandler());

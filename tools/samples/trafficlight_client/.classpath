@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="dist/traffic-client.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/activation.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/ant.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/junit.jar"/>
@@ -31,5 +31,6 @@
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/saaj-api.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/saaj-impl.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/jaxws/sjsxp.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="classes"/>
 </classpath>

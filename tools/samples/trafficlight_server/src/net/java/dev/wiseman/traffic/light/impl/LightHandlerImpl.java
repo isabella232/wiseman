@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/05/30 20:30:18  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: LightHandlerImpl.java,v 1.3 2007-05-30 20:30:18 nbeers Exp $
+ * $Id: LightHandlerImpl.java,v 1.4 2007-06-22 06:13:56 simeonpinder Exp $
  */
 package net.java.dev.wiseman.traffic.light.impl;
 
@@ -39,6 +42,9 @@ import javax.xml.soap.SOAPException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.publicworks.light.model.TrafficLightModel;
 import org.publicworks.light.model.ui.TrafficLight;
+import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
+import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import net.java.dev.wiseman.schemas.traffic._1.light.ObjectFactory;
@@ -47,8 +53,10 @@ import net.java.dev.wiseman.schemas.traffic._1.light.TrafficLightType;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.InvalidSelectorsFault;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.framework.Utilities;
+import com.sun.ws.management.server.BaseSupport;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.transfer.TransferExtensions;
 
@@ -75,6 +83,57 @@ public class LightHandlerImpl {
 
 			TransferExtensions xferRequest = new TransferExtensions(request);
 			TransferExtensions xferResponse = new TransferExtensions(response);
+			
+////			###########################################
+//			//locate fragment header
+//			Document xmlObj = Management.newDocument();
+//			SOAPElement headerElement = null;
+//			Element element = null;
+//			try {
+//			   headerElement = ManagementUtility.locateHeader(
+//				request.getHeaders(), 
+//				TransferExtensions.FRAGMENT_TRANSFER);
+//				 //if header sent then pull out body for fragment parsing
+//			   if(headerElement!=null){
+//				  String content = headerElement.getTextContent();
+//				  //locate content for return
+//				 String NS = "http://schemas.wiseman.dev.java.net/traffic/1/light.xsd";
+//				  if((content!=null)&&(content.indexOf("color")>-1)){
+//					 element= xmlObj.createElementNS(NS, "t1:color");
+//					 element.setTextContent(light.getColor());
+//				  }
+//				  else if((content!=null)&&(content.indexOf("name")>-1)){
+//					 element= xmlObj.createElementNS(NS, "t1:name");
+//					 element.setTextContent(light.getName());
+//				  }
+//				  else if((content!=null)&&(content.indexOf("x")>-1)){
+//					 element= xmlObj.createElementNS(NS, "t1:x");
+//					 element.setTextContent(light.getX()+"");
+//				  }
+//				  else if((content!=null)&&(content.indexOf("y")>-1)){
+//					 element= xmlObj.createElementNS(NS, "t1:y");
+//					 element.setTextContent(light.getY()+"");
+//				  }
+//			   }
+//			} catch (SOAPException e1) {
+//				e1.printStackTrace();
+//			}
+//
+//			final DocumentFragment fragment = xmlObj.
+//				createDocumentFragment();
+//			fragment.appendChild(element);
+//			final Object xmlFragment = BaseSupport
+//				.createXmlFragment(((DocumentFragment)fragment).getChildNodes());
+//			if(headerElement!=null){
+//				xferResponse.setFragmentGetResponse(
+//						xferRequest.getFragmentHeader(), xmlFragment);
+//			}else{
+//				xferResponse.setFragmentGetResponse(
+//						xferRequest.getFragmentHeader(), createLight(light));
+//			}
+////	###########################################		
+////			xferResponse.setFragmentGetResponse(
+////					xferRequest.getFragmentHeader(), createLight(light));
 
 			xferResponse.setFragmentGetResponse(
 					xferRequest.getFragmentHeader(), createLight(light));

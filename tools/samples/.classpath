@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="trafficlight_client/src"/>
+	<classpathentry kind="src" path="contacts_client/src"/>
+	<classpathentry kind="src" path="contacts/src"/>
 	<classpathentry kind="src" path="trafficlight_server/src"/>
 	<classpathentry kind="src" path="trafficlight_server/model/src"/>
 	<classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB"/>
@@ -13,6 +15,7 @@
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman_src.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman_test.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman.jar"/>
+	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman-core.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman-client.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman-client-src.jar"/>
 	<classpathentry kind="var" path="WISEMAN_HOME/lib/wiseman-tools.jar"/>
