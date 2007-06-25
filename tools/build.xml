@@ -96,6 +96,7 @@
 		<copy todir="${project.root}/${dist.dir}/tools">
 			<fileset dir=".">
 				<include name="*.bat" />
+				<include name="*.sh" />
 			</fileset>
 		</copy>
     </target>

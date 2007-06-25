@@ -21,9 +21,9 @@ tr.blue-head { background-color: #ddeeff } tr.blue-row { background-color: #eeee
 
 <body>
 
-<p>Wiseman 1.0 has been released! The latest binary release of Wiseman 1.0 can be downloaded 
-<a href="https://wiseman.dev.java.net/files/documents/3436/60463/WISEMAN_1.0_FC-20070622.jar">here</a>. 
-See <a href="installation.html">install instructions</a>. 
+<p>Wiseman 1.0 has been released! The latest binary release of Wiseman 1.0 can be downloaded
+<a href="https://wiseman.dev.java.net/files/documents/3436/60463/WISEMAN_1.0_FC-20070622.jar">here</a>.
+See <a href="installation.html">install instructions</a>.
 Older binary releases can be found <a href="https://wiseman.dev.java.net/servlets/ProjectDocumentList?folderID=5814&expandFolder=5814&folderID=0">here</a>.</p>
 
 <p>The wiseman project is an implementation of the WS-Management
@@ -44,33 +44,33 @@ builds of Wiseman are supplied.</p>
 <p>The 1.0 binary release of the Wiseman project is now available.  Full coverage
 of the published version of WS-Management is provided along with formalized
 documentation on how to use this release.  Wiseman is a model agnostic implementation
-of WS-Management that can be used to build powerful web service implementations.    
+of WS-Management that can be used to build powerful web service implementations.
 <br>
 </p>
 
 <p style="font-weight: bold;">June 1st, 2007</p>
 
-<p>A second Release Candidate for 1.0 of the Wiseman project is <a 
-href="https://wiseman.dev.java.net/files/documents/3436/58777/WISEMAN_1.0_RC2-20070531.jar">available 
-here</a> with the <a href="installation.html">install instructions here</a>. 
+<p>A second Release Candidate for 1.0 of the Wiseman project is <a
+href="https://wiseman.dev.java.net/files/documents/3436/58777/WISEMAN_1.0_RC2-20070531.jar">available
+here</a> with the <a href="installation.html">install instructions here</a>.
 This should be the last release candidate before the finalized binary release of 1.0.  Thank you for your interest.<br>
 </p>
 
 <p style="font-weight: bold;">May 7th, 2007</p>
 
-<p>A Release Candidate for 1.0 of the Wiseman project is <a 
-href="https://wiseman.dev.java.net/files/documents/3436/57380/WISEMAN_1.0_RC1-20070507.jar">available 
-here</a> with the <a href="installation.html">install instructions here</a>. 
-After a few additional weeks of performance analysis and incremental updates we hope to put out 
+<p>A Release Candidate for 1.0 of the Wiseman project is <a
+href="https://wiseman.dev.java.net/files/documents/3436/57380/WISEMAN_1.0_RC1-20070507.jar">available
+here</a> with the <a href="installation.html">install instructions here</a>.
+After a few additional weeks of performance analysis and incremental updates we hope to put out
 a finalized binary release of 1.0 in a short time.<br>
 </p>
 
 <p style="font-weight: bold;">March 2nd, 2007</p>
 
-<p>The 0.6 binary release of the Wiseman project now features JAX-WS deployment. 
-We are in the process of adding more support to embrace the newer annotation focused 
-development of web services.  We are also renewing efforts to update the  
-documentation of the existing libraries/functionality for the next release. 
+<p>The 0.6 binary release of the Wiseman project now features JAX-WS deployment.
+We are in the process of adding more support to embrace the newer annotation focused
+development of web services.  We are also renewing efforts to update the
+documentation of the existing libraries/functionality for the next release.
 A few enhancements and bug fixes over the previous release have also been added.<br>
 </p>
 
@@ -95,22 +95,47 @@ web application. It also contains sample client and server applications.<br>
 
 </p>
 
+<h3>Wiseman in a Nutshell</h3>
+
+<p>WS-Management is an open standard that re-defines how existing WS-* specifications should be used
+and how additional service metadata can be detailed to build out compliant webservices.
+As an implementation of the WS-Management protocol, Wiseman provides both client and server side
+APIs for building valid WS-Management messages. Wiseman leverages the java Servlet Engine model as 
+as the funamental base, on the server side, for exposing WS-Management instances.  The wep application 
+model is an extensible mechanism for constructing webservices as enterprise level functionality is easily 
+achieved by embedding the webapp in a J2EE Application Server. Wiseman is model agnostic, and requires 
+that the XML representation of the model-specific elements of your service be desribed by Xml Schema 
+Definition(XSD) and ultimately representable as org.w3c.dom.* elements. Service developers may employ a 
+JAVA&lt;=&gt;XML binding technology of their choice for model specific serialization and now spend more time on
+application/model specific behavior than on protocol specific details.  The following figure may help to
+show how WS-Managment services are built with Wiseman:</br>
+<center><a><img src="images/wiseman-model.jpg" alt="Wiseman framework model" border="0"></a></center>
+
+</p>
 <h3>Developer Documentation</h3>
 
-<p> We are starting to add developer documentation to the
-project. There is a lot of catching up to do, but as you work with
-wiseman, please take notes, send emails, and look for useful
-documentation to add. Also, please start heavily JavaDoc'ing your code
-going forward. We would like to have a fully documnted build soon. Go
-to the <a href="documentation.html">documentation index</a>
-for more information. </p>
+<p> With the 1.0 release we have added a lot more formalized documentation 
+within the <i>&lt;Wiseman Install Dir&gt;/docs</i> directory generated upon 
+installation. In this location you will find:</br>
+<ul>
+ <li>Wiseman Server Developer's Guide.pdf</li>
+ <li>Wiseman Client Developer's Guide.pdf</li>
+ <li>Wiseman Tutorial.pdf</li>
+ <li>zipped API document information</li>
+</ul>
+A lot of effort has gone into defining instructions showing how the provided libraries
+should be used. You should begin here to learn more about the Wiseman framework.  
+Additional direction can be found within the unit tests and source implementation files 
+within CVS.       
+</p>
 
 <h3>Contributing</h3>
 
 <p>To contribute to the project, please join the project as an
 Observer, download, print and sign the <a href="ContributorAgreement.pdf">Contributor Agreement</a>
 and fax it back to Sun at +1 408-715-2540 or scan and email it to <a href="mailTo:sun_ca@sun.com">sun_ca@sun.com</a>.
-Once approved, the agreement will be then published on the <a href="http://www.sunsource.net/CA_signatories">Sun Contributor Agreement Signatories List</a>.
+Once approved, the agreement will be then published on the 
+<a href="http://www.sunsource.net/CA_signatories">Sun Contributor Agreement Signatories List</a>.
 Contributions can be accepted once the agreement has been received. After several
 high-quality contributions, an Observer may be upgraded to Developer
 and granted write access to the repository.</p>
@@ -146,34 +171,9 @@ list of people who have contributed to the project.</p>
 
     <tr class="green-row">
 
-      <td>Documentation</td>
-
-      <td>Add Javadoc and developer documentation</td>
-
-    </tr>
-
-    <tr class="green-row">
-
       <td>CIM Mapping</td>
 
       <td>Mapping CIM MOF to XML Schema and WSDL</td>
-
-    </tr>
-
-    <tr class="green-row">
-
-      <td>Catalog</td>
-
-      <td>Implementation of the WS-Management Catalog</td>
-
-    </tr>
-
-    <tr class="green-row">
-
-      <td>Advanced&nbsp;features</td>
-
-      <td>Fragment-level Transfer, Acknowledged Events,
-Hearbeats, etc.</td>
 
     </tr>
 
@@ -299,6 +299,27 @@ CIM and JMX</a></td>
 
     </tr>
 
+    <tr class="blue-row">
+      <td>Sep&nbsp;2005</td>
+      <td>First binary release(0.5) of Wiseman is made available.
+      </td>
+    </tr>
+    <tr class="blue-row">
+      <td>Dec&nbsp;2006</td>
+      <td>Wiseman at <a href="http://www.mandevcon.com">Management Developers Conference</a> 2006. Presentation slides
+          <a href="https://wiseman.dev.java.net/preso/mdc/MDC_2006_WSMan_and_Wiseman.pdf">available here.</a>
+      </td>
+    </tr>
+    <tr class="blue-row">
+      <td>Mar&nbsp;2007</td>
+      <td>Wiseman 0.6 released.
+      </td>
+    </tr>
+    <tr class="blue-row">
+      <td>Jun&nbsp;2007</td>
+      <td>Wiseman 1.0 released.
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -342,7 +363,12 @@ WS-Management supports the concept of multiple logical endpoints
 residing at the same network address, this specification defines a
 construct for a list of available logical endpoints or "resources",
 their summary forms, compatible actions, schemas, and WSDL
-representations.</p>
+representations.<br></br><b>***NOTE: This specification was never updated
+to use the DMTF namespace and is currently incompatible with the 
+WS-Management specification defined above.  When the Catalog specification
+is updated to be compatible then code supporting such changes 
+will be included.</b>
+</p>
 
 <p><a href="specs/2004/08/addressing.pdf">WS-Addressing,
 2004/08</a></p>
