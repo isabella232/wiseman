@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/06/19 13:08:08  simeonpinder
+ **update version check in identify.
+ **
  **Revision 1.2  2007/06/08 15:38:38  denis_rachal
  **The following enhanceent were made to the testing infrastructure:
  **
@@ -46,7 +49,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.3 2007-06-19 13:08:08 simeonpinder Exp $
+ * $Id: ResourceTest.java,v 1.4 2007-07-12 12:33:07 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -132,7 +135,7 @@ import com.sun.ws.management.xml.XmlBinding;
 public class ResourceTest extends WsManBaseTestSupport {
 
 	private static ObjectFactory userFactory = new ObjectFactory();
-	public static String destUrl = ManagementMessageValues.WSMAN_DESTINATION;
+	public static String destUrl = System.getProperty("wsman.dest", "http://localhost:8080/wsman/");;
 	public static String resourceUri = "wsman:auth/user";
 	public static long timeoutInMilliseconds = 9400000;
 

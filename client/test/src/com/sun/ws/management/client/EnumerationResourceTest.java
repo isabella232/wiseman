@@ -20,6 +20,13 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/06/08 15:38:38  denis_rachal
+ **The following enhanceent were made to the testing infrastructure:
+ **
+ **  * Capture of logs in files for junits test
+ **  * Added user.wsdl & user.xsd to wsman.war
+ **  * Consolidated userenum & user into single handler that is thread safe for load testing
+ **
  **Revision 1.1  2007/06/04 06:25:12  denis_rachal
  **The following fixes have been made:
  **
@@ -36,7 +43,7 @@
  **
  ** 
  *
- * $Id: EnumerationResourceTest.java,v 1.2 2007-06-08 15:38:38 denis_rachal Exp $
+ * $Id: EnumerationResourceTest.java,v 1.3 2007-07-12 12:33:07 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -57,14 +64,13 @@ import com.sun.ws.management.xml.XmlBinding;
 
 public class EnumerationResourceTest extends WsManBaseTestSupport  {
 
-	private static final String destUrl = "http://localhost:8080/wsman/";
+	private static String destUrl = System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
 	private static final String resourceUri = "wsman:auth/user";
 	private static final String USER_CUSTOM_DIALECT = "http://examples.hp.com/ws/wsman/user/filter/custom";
 	private static final long timeout=10000;
 	
 	protected void setUp() throws Exception {
 		super.setUp();
-		
 	}
 	
 	/** 
