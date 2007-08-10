@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: AddressingTest.java,v 1.3 2006-07-24 13:14:58 pmonday Exp $
+ * $Id: AddressingTest.java,v 1.4 2007-08-10 15:11:06 nbeers Exp $
  */
 
 package management;
@@ -144,5 +144,26 @@ public class AddressingTest extends TestBase {
             }
         }
         assertTrue(foundRefParam);
+    }
+    
+    public void testMissingAddress() throws Exception {
+    
+    	// Test that the createEndpointReference method checks for the required addressing param pre-condition
+    	try {
+            final EndpointReferenceType eprFrom =
+                Addressing.createEndpointReference(null, null, null, null, null);
+            
+
+    	}
+    	catch (IllegalArgumentException e) {
+            // correct exception thrown 
+            assertTrue(true);
+    		
+    	}
+    	catch (NullPointerException e) {
+            // correct exception not thrown 
+            assertTrue("Null Address value not caught.", false);
+    		
+    	}
     }
 }
