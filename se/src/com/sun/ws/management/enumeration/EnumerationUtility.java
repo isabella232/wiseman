@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/06/19 19:50:39  nbeers
+ **Set the DefaultTimeout header in addition to the maxElement header for enumeration pulls
+ **
  **Revision 1.4  2007/06/18 17:57:11  nbeers
  **Fix for Issue #119 (EnumerationUtility.buildMessage() generates incorrect msg).
  **
@@ -28,7 +31,7 @@
  **
  ** 
  *
- * $Id: EnumerationUtility.java,v 1.5 2007-06-19 19:50:39 nbeers Exp $
+ * $Id: EnumerationUtility.java,v 1.6 2007-09-06 16:19:07 simeonpinder Exp $
  */
 package com.sun.ws.management.enumeration;
 
@@ -88,7 +91,9 @@ public class EnumerationUtility {
         final DatatypeFactory factory = DatatypeFactory.newInstance();
 		if(existingEnum == null){//build default instances
 			Management mgmt = ManagementUtility.buildMessage(null, settings);
-			mgmt.setTimeout(factory.newDuration(settings.getMaxTime()));
+			if(settings!=null){
+			  mgmt.setTimeout(factory.newDuration(settings.getMaxTime()));
+			}
     	    existingEnum = new Enumeration(mgmt);
  		}
 		if(settings ==null){//grab a default instance if 
@@ -150,7 +155,7 @@ public class EnumerationUtility {
     				settings.isRequestForOptimizedEnumeration(), 
     				settings.getMaxElements(), 
 //    				Long.valueOf(settings.getDefaultTimeout()).toString(),
-    				factory.newDuration(settings.getExpires()).toString(),
+    				(settings.getExpires()<1? null :factory.newDuration(settings.getExpires()).toString()),
             		EnumerationMessageValues.newFilter(
             				settings.getFilter(), 
             				settings.getFilterDialect()), 
