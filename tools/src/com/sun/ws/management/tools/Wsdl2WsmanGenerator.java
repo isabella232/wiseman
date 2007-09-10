@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/05/30 20:30:19  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: Wsdl2WsmanGenerator.java,v 1.7 2007-05-30 20:30:19 nbeers Exp $
+ * $Id: Wsdl2WsmanGenerator.java,v 1.8 2007-09-10 18:43:51 nbeers Exp $
  */
 package com.sun.ws.management.tools;
 
@@ -298,7 +301,7 @@ public class Wsdl2WsmanGenerator {
 							if (element != null) {
 								NodeList elementsByTagNameNS = element
 										.getElementsByTagNameNS(
-												"http://schemas.xmlsoap.org/ws/2005/06/management",
+												"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd",
 												"ResourceURI");
 								for (int j = 0; j < elementsByTagNameNS
 										.getLength(); j++) {
