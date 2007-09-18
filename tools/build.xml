@@ -13,6 +13,7 @@
 	<!-- Load the properties -->
 	<property file="project.properties"/>
 	<property file="${user.home}/.ant.properties"/>
+	<property name="gentestdir" value="gentest" />
 
 	<!-- Test that a valid ant version is being used -->
 	<condition property="valid.ant.version">
@@ -115,6 +116,37 @@
 	<target name="install" depends="jar">
 	</target>
 	
+	<target name="test">
+		<mkdir dir="${gentestdir}"/>
+		<!-- copy traffic light sample into test directory -->
+		<copy todir="${gentestdir}" file="samples/templates/wsdl_war_template.jar"/>
+		<unjar src="${gentestdir}/wsdl_war_template.jar" dest="gentest"/>
+		<copy todir="${gentestdir}/xsd" file="samples/trafficlight_server/schemas/light.xsd"/>
+		<copy todir="${gentestdir}/schemas" file="samples/trafficlight_server/schemas/light.xsd"/>
+		<copy todir="${gentestdir}/schemas/schemas.wiseman.dev.java.net/traffic/1" file="samples/trafficlight_server/schemas/light.xsd"/>
+		<copy todir="${gentestdir}/etc" file="samples/trafficlight_server/etc/binding.properties" overwrite="true"/>
+		
+		<!-- Overwrite project.properties with our version that has correct lib dir for testing -->
+		<copy todir="${gentestdir}" file="lightgentest/project.properties" overwrite="true"/>
+		<copy todir="${gentestdir}/etc" file="lightgentest/resource-handler-config.xml" overwrite="true"/>
+		
+		<!-- generate wsdl and source from schema -->
+		<ant dir="${gentestdir}" target="generate" inheritAll="false"/>
+		<copy todir="${gentestdir}/src">
+			<fileset dir="${gentestdir}/gen-src"/>
+		</copy>
+		<!-- compile to make sure generated code is valid -->
+		<ant dir="${gentestdir}" target="compile" inheritAll="false"/>
+		
+		<!-- insert actual code -->
+		
+		<!-- build war and deploy -->
+		<ant dir="${gentestdir}" target="deploy" inheritAll="false"/>
+		
+		<!-- run junit test on deployed war -->
+		
+		
+	</target>
 	<!-- Task is meant to be an automated test of the 
 		 code generation framework.
 	 -->
