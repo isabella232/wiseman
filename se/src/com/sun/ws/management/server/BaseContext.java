@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.12  2007/05/30 20:31:04  nbeers
+ **Add HP copyright header
  **
- * $Id: BaseContext.java,v 1.12 2007-05-30 20:31:04 nbeers Exp $
+ **
+ * $Id: BaseContext.java,v 1.13 2007-09-18 13:06:56 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -59,7 +62,7 @@ public class BaseContext {
 		}
 	}
     
-    private final XMLGregorianCalendar expiration;
+    private XMLGregorianCalendar expiration;
     private final Filter filter;
     private boolean deleted;
     private final ContextListener listener;
@@ -92,6 +95,10 @@ public class BaseContext {
             return false;
         }
         return now.compare(expiration) > 0;
+    }
+    
+    public void renew(final XMLGregorianCalendar expires) {
+    	this.expiration = expires;
     }
     
     public boolean isDeleted() {

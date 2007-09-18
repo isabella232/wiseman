@@ -19,11 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.19  2007/06/04 06:25:08  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.18  2007/05/30 20:30:23  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EventingTest.java,v 1.19 2007-06-04 06:25:08 denis_rachal Exp $
+ * $Id: EventingTest.java,v 1.20 2007-09-18 13:06:57 denis_rachal Exp $
  */
 
 package management;
@@ -306,6 +317,78 @@ public class EventingTest extends TestBase {
         final String identifier2 = response2.getIdentifier();
         assertNotNull(identifier2);
         assertEquals(identifier, identifier2);
+    }
+    public void testRenew() throws Exception {
+
+        final String recvrAddress = "http://localhost:8080/events";
+        // Set a timeout for 5 seconds
+        final String expires = DatatypeFactory.newInstance().newDuration(5000).toString();
+        final EndpointReferenceType notifyToEPR = Addressing.createEndpointReference(recvrAddress, null, null, null, null);
+     	EventingMessageValues settings = new EventingMessageValues();
+    	settings.setDeliveryMode(Eventing.PUSH_DELIVERY_MODE);
+    	settings.setEndTo(null);
+    	settings.setExpires(expires);
+    	settings.setNotifyTo(notifyToEPR);
+    	settings.setEventingMessageActionType(Eventing.SUBSCRIBE_ACTION_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/eventing");
+    	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+
+    	Eventing evt = EventingUtility.buildMessage(null, settings);
+
+        final Addressing addr = HttpClient.sendRequest(evt);
+        addr.prettyPrint(logfile);
+        if (addr.getBody().hasFault()) {
+            fail(addr.getBody().getFault().getFaultString());
+        }
+
+        final Eventing response = new Eventing(addr);
+        final SubscribeResponse subr = response.getSubscribeResponse();
+        final EndpointReferenceType mgr = subr.getSubscriptionManager();
+        assertEquals(DESTINATION, mgr.getAddress().getValue());
+        final Object identifierElement = mgr.getReferenceParameters().getAny().get(1);
+        assertNotNull(identifierElement);
+        final String identifier = ((JAXBElement<String>) identifierElement).getValue();
+
+        // now send a renew request using the identifier for 300 seconds
+        evt.setAction(Eventing.RENEW_ACTION_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        final String renewExpires = DatatypeFactory.newInstance().newDuration(300000).toString();
+        evt.setRenew(renewExpires);
+        evt.setIdentifier(identifier);
+
+        evt.prettyPrint(logfile);
+        final Addressing addr2 = HttpClient.sendRequest(evt);
+        addr2.prettyPrint(logfile);
+        if (addr2.getBody().hasFault()) {
+            fail(addr2.getBody().getFault().getFaultString());
+        }
+        
+        final Eventing response2 = new Eventing(addr2);
+        final String identifier2 = response2.getIdentifier();
+        assertNotNull(identifier2);
+        assertEquals(identifier, identifier2);
+        
+        // Sleep for the initial timeout value
+        Thread.sleep(5000);
+        
+        // now send an unsubscribe request using the identifier
+        evt.setAction(Eventing.UNSUBSCRIBE_ACTION_URI);
+        evt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        evt.setUnsubscribe();
+        evt.setIdentifier(identifier);
+
+        evt.prettyPrint(logfile);
+        final Addressing addr3 = HttpClient.sendRequest(evt);
+        addr3.prettyPrint(logfile);
+        if (addr3.getBody().hasFault()) {
+            fail(addr3.getBody().getFault().getFaultString());
+        }
+
+        final Eventing response3 = new Eventing(addr2);
+        final String identifier3 = response3.getIdentifier();
+        assertNotNull(identifier3);
+        assertEquals(identifier, identifier3);
     }
 
     public void testBogusFilter() throws Exception {

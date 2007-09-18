@@ -19,11 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.24  2007/06/13 13:19:02  jfdenise
+ **Fix for BUG ID 115 : EventingSupport should be able to create an event msg
+ **
  **Revision 1.23  2007/05/30 20:31:04  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EventingSupport.java,v 1.24 2007-06-13 13:19:02 jfdenise Exp $
+ * $Id: EventingSupport.java,v 1.25 2007-09-18 13:06:56 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -57,6 +60,7 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Renew;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 
@@ -268,6 +272,36 @@ public final class EventingSupport extends BaseSupport {
         doc.appendChild(identifier);
         refp.getAny().add(doc.getDocumentElement());
         return Addressing.createEndpointReference(request.getTo(), null, refp, null, null);
+    }
+    
+    public static void renew(final HandlerContext handlerContext,
+            final Eventing request,
+            final Eventing response)
+            throws SOAPException, JAXBException, FaultException {
+        
+        final Renew renew = request.getRenew();
+        if (renew == null) {
+            throw new InvalidMessageFault("Missing Renew element");
+        }
+        
+        final String identifier = request.getIdentifier();
+        if (identifier == null) {
+            throw new InvalidMessageFault("Missing Identifier header element");
+            
+        }
+        
+        final Object found = renewContext(initExpiration(renew.getExpires()),
+                UUID.fromString(identifier));
+        if (found == null) {
+            /*
+             * TODO: Convert to InvalidContextFault when available in
+             * updated WS-Management specification
+             */
+            throw new InvalidMessageFault("Subscription with Identifier: " +
+                    identifier + " not found");
+        }
+        
+        response.setIdentifier(identifier);
     }
     
     public static void unsubscribe(final HandlerContext handlerContext,
@@ -609,7 +643,6 @@ public final class EventingSupport extends BaseSupport {
                 HttpClient.sendResponse(msg);
                 result = true;
             }
-            return true;
         }
         return result;
     }

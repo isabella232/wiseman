@@ -20,11 +20,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/06/04 06:25:08  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.2  2007/05/31 19:47:48  nbeers
  **Add HP copyright header
  **
  **
- * $Id: eventing_Handler.java,v 1.1 2007-06-04 06:25:08 denis_rachal Exp $
+ * $Id: eventing_Handler.java,v 1.2 2007-09-18 13:06:56 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.handler.wsman.test;
@@ -127,9 +138,12 @@ public class eventing_Handler implements Handler {
             final long DELAY = 1000;
             final long PERIOD = 500;
             eventTimer.schedule(sendEventTask, DELAY, PERIOD);
+        } else if (Eventing.RENEW_ACTION_URI.equals(action)) {
+            evtResponse.setAction(Eventing.RENEW_RESPONSE_URI);
+            EventingSupport.renew(context, evtRequest, evtResponse);
         } else if (Eventing.UNSUBSCRIBE_ACTION_URI.equals(action)) {
             evtResponse.setAction(Eventing.UNSUBSCRIBE_RESPONSE_URI);
-            EventingSupport.unsubscribe(context,evtRequest, evtResponse);
+            EventingSupport.unsubscribe(context, evtRequest, evtResponse);
         } else {
             throw new ActionNotSupportedFault(action);
         }

@@ -19,6 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/06/19 15:25:38  denis_rachal
+ **Issue number:  120
+ **Obtained from:
+ **Submitted by:  denis_rachal
+ **Reviewed by:
+ **
+ **Checks put in to check for missing filename.
+ **
  **Revision 1.6  2007/06/14 07:28:06  denis_rachal
  **Issue number:  110
  **Obtained from:
@@ -42,7 +50,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.7 2007-06-19 15:25:38 denis_rachal Exp $
+ * $Id: WSManServlet.java,v 1.8 2007-09-18 13:06:57 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -60,6 +68,7 @@ import java.io.OutputStream;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -518,16 +527,23 @@ public abstract class WSManServlet extends HttpServlet {
 
         request.setContentType(contentType);
 
-        String contentype = req.getContentType();
+        final String contentype = req.getContentType();
         final Principal user = req.getUserPrincipal();
-        String charEncoding = req.getCharacterEncoding();
-        String url = req.getRequestURL().toString();
-        Map<String, Object> props = new HashMap<String, Object>(1);
+        final String charEncoding = req.getCharacterEncoding();
+        final String url = req.getRequestURL().toString();
+        final Map<String, Object> props = new HashMap<String, Object>(2);
         props.put(HandlerContext.SERVLET_CONTEXT, getServletContext());
+        
+        final Map<String, Object> attributes = new HashMap<String, Object>();
+        for (final Enumeration<String> e = req.getAttributeNames(); e.hasMoreElements();) {
+        	final String name = e.nextElement();
+        	attributes.put(name, req.getAttribute(name));
+        }
+        props.put(HandlerContext.SERVLET_REQUEST_ATTRIBUTES, attributes);
         final HandlerContext context = new HandlerContextImpl(user, contentype,
-                charEncoding, url, props);
+                                                              charEncoding, url, props);
 
-        Message response = agent.handleRequest(request, context);
+        final Message response = agent.handleRequest(request, context);
 
         sendResponse(response, os, resp, agent.getValidEnvelopeSize(request));
     }

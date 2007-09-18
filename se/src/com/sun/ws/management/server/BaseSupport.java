@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.18  2007/05/30 20:31:04  nbeers
+ **Add HP copyright header
  **
- * $Id: BaseSupport.java,v 1.18 2007-05-30 20:31:04 nbeers Exp $
+ **
+ * $Id: BaseSupport.java,v 1.19 2007-09-18 13:06:56 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -73,12 +76,18 @@ public class BaseSupport {
             for (int i = 0; i < keys.length; i++) {
                 final UUID key = keys[i];
                 final BaseContext context = contextMap.get(key);
-                if (context != null) {
-					if (context.isExpired(nowXml)) {
-						removeContext(null, key);
+                synchronized (context) {
+					if ((context != null) && (context.isDeleted() == false)) {
+						if (context.isExpired(nowXml)) {
+							context.setDeleted();
+							if (context.getListener() != null) {
+								context.getListener().contextUnbound(null, key);
+							}
+							contextMap.remove(context);
+						}
 					}
 				}
-            }
+			}
         }
     };
 
@@ -313,17 +322,40 @@ public class BaseSupport {
         cleanupTimer.cancel();
         cleanupTimer = null;
     }
+    
+    protected synchronized static BaseContext renewContext(final XMLGregorianCalendar expiration,
+            final Object context) {
+    	BaseContext ctx = contextMap.get(context);
+    	if (ctx == null)
+    		return null;
+    	synchronized (ctx) {
+    		if (ctx.isDeleted() == false) {
+    			ctx.renew(expiration);
+    			return ctx;
+    		} else {
+    			return null;
+    		}
+    	}
+    }
 
     protected synchronized static BaseContext removeContext(final HandlerContext requestContext,
     		                                   final Object context) {
     	BaseContext ctx = contextMap.get(context);
     	if (ctx == null)
     		return null;
-    	// Set to deleted in case another thread still has a reference to this context.
-    	ctx.setDeleted();
-    	if (ctx.getListener() != null) {
-    		ctx.getListener().contextUnbound(requestContext, (UUID)context);
-    	}
-        return contextMap.remove(context);
-    }
+    	synchronized (ctx) {
+			// Set to deleted in case another thread still has a reference to
+			// this context.
+			if (ctx.isDeleted() == false) {
+				ctx.setDeleted();
+				if (ctx.getListener() != null) {
+					ctx.getListener().contextUnbound(requestContext,
+							(UUID) context);
+				}
+				return contextMap.remove(context);
+			} else {
+				return null;
+			}
+		}
+	}
 }
