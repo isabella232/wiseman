@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.25  2007/06/19 19:50:39  nbeers
+ **Set the DefaultTimeout header in addition to the maxElement header for enumeration pulls
+ **
  **Revision 1.24  2007/06/04 06:25:11  denis_rachal
  **The following fixes have been made:
  **
@@ -36,7 +39,7 @@
  **
  ** 
  *
- * $Id: EnumerationResourceImpl.java,v 1.25 2007-06-19 19:50:39 nbeers Exp $
+ * $Id: EnumerationResourceImpl.java,v 1.26 2007-09-18 20:08:56 nbeers Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -60,7 +63,11 @@ import javax.xml.xpath.XPathExpressionException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -443,7 +450,20 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 
 		SOAPBody body = executePull(enumerationContext, timeout, maxElements,
 				maxEnvelopeSize, getItemCount);
-		return new EnumerationResourceStateImpl(body.extractContentAsDocument());
+		
+		Document bodyDoc = body.extractContentAsDocument();
+		
+		// Copy all of the attributes from the root envelope to the body document to preserve namespace prefix mappings
+		NamedNodeMap nodeMap = body.getOwnerDocument().getFirstChild().getAttributes();
+
+		for (int i = 0; i < nodeMap.getLength(); ++i) {
+			Node attr = nodeMap.item(i);
+			Attr newAttr = bodyDoc.createAttributeNS(attr.getNamespaceURI(), attr.getNodeName());
+			newAttr.setNodeValue(attr.getNodeValue());
+			((Element)(bodyDoc.getDocumentElement())).setAttributeNode(newAttr);
+		}
+		
+		return new EnumerationResourceStateImpl(bodyDoc);
 	}
 
 	/**

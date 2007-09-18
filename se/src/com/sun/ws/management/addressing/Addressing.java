@@ -19,11 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.19  2007/08/10 15:11:06  nbeers
+ **Fix and test case for issue #106 (lack of assertion for precondition)
+ **
  **Revision 1.18  2007/05/30 20:31:06  nbeers
  **Add HP copyright header
  **
  **
- * $Id: Addressing.java,v 1.19 2007-08-10 15:11:06 nbeers Exp $
+ * $Id: Addressing.java,v 1.20 2007-09-18 20:08:55 nbeers Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -92,6 +95,10 @@ public class Addressing extends SOAP {
 
     public Addressing(final InputStream is) throws SOAPException, IOException {
         super(is);
+    }
+
+    public Addressing(final InputStream is, String contentType) throws SOAPException, IOException {
+        super(is, contentType);
     }
 
     public Addressing(final SOAPMessage msg) throws SOAPException {

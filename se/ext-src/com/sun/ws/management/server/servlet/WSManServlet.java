@@ -19,6 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/09/18 13:06:57  denis_rachal
+ **Issue number:  129, 130 & 132
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **129  ENHANC  P2  All  denis_rachal  NEW   Need support for ReNew Operation in Eventing
+ **130  DEFECT  P3  x86  jfdenise  NEW   Should return a boolean variable result not a constant true
+ **132  ENHANC  P3  All  denis_rachal  NEW   Make ServletRequest attributes available as properties in Ha
+ **
+ **Added enhancements and fixed issue # 130.
+ **
  **Revision 1.7  2007/06/19 15:25:38  denis_rachal
  **Issue number:  120
  **Obtained from:
@@ -50,7 +62,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.8 2007-09-18 13:06:57 denis_rachal Exp $
+ * $Id: WSManServlet.java,v 1.9 2007-09-18 20:08:56 nbeers Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -583,7 +595,9 @@ public abstract class WSManServlet extends HttpServlet {
 
         // response being null means that no reply is to be sent back.
         // The reply has been handled asynchronously
-        if(response != null)
-             os.write(content);
+        if(response != null) {
+            resp.setContentType(response.getMessage().getMimeHeaders().getHeader("Content-Type")[0]);
+            os.write(content);
+        }
     }
 }

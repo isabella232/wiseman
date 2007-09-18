@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.14  2007/05/30 20:31:05  nbeers
+ **Add HP copyright header
  **
- * $Id: Message.java,v 1.14 2007-05-30 20:31:05 nbeers Exp $
+ **
+ * $Id: Message.java,v 1.15 2007-09-18 20:08:55 nbeers Exp $
  */
 
 package com.sun.ws.management;
@@ -42,6 +45,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,6 +54,7 @@ import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.soap.AttachmentPart;
 import javax.xml.soap.MessageFactory;
 import javax.xml.soap.MimeHeaders;
 import javax.xml.soap.SOAPBody;
@@ -80,6 +85,8 @@ public abstract class Message {
     private SOAPEnvelope env = null;
     private SOAPHeader hdr = null;
     private SOAPBody body = null;
+    
+    private ArrayList<AttachmentPart> attachments = null;
 
     private static Map<String,String> extensionNamespaces =null;
 
@@ -141,6 +148,14 @@ public abstract class Message {
         init();
     }
 
+    public Message(final InputStream is, String inContentType) throws SOAPException, IOException {
+        assert msgFactory != null : UNINITIALIZED;
+        contentType = ContentType.DEFAULT_CONTENT_TYPE;
+        MimeHeaders inputSoapMimeHeader = new MimeHeaders();
+        inputSoapMimeHeader.setHeader("Content-Type", inContentType);
+        msg = msgFactory.createMessage(inputSoapMimeHeader, is);
+        init();
+    }
     public Message(final SOAPMessage message) throws SOAPException {
         assert msgFactory != null : UNINITIALIZED;
         String contentT = (String) message.getProperty(SOAPMessage.CHARACTER_SET_ENCODING);
@@ -157,6 +172,7 @@ public abstract class Message {
     public void setContentType(final ContentType ct) throws SOAPException {
         contentType = ct;
         msg.setProperty(SOAPMessage.CHARACTER_SET_ENCODING, contentType.getEncoding());
+        msg.getMimeHeaders().setHeader("Content-Type", contentType.getMimeType());
     }
 
     public abstract void validate() throws SOAPException, JAXBException, FaultException;
@@ -198,6 +214,13 @@ public abstract class Message {
         hdr = msg.getSOAPHeader();
         env = soap.getEnvelope();
         body = msg.getSOAPBody();
+        
+		Iterator iterator = msg.getAttachments();
+		attachments = new ArrayList<AttachmentPart>();
+		while (iterator.hasNext()) {
+			attachments.add(((AttachmentPart)(iterator.next())));
+		}
+		
     }
 
     private void addNamespaceDeclarations() throws SOAPException {
@@ -252,4 +275,22 @@ public abstract class Message {
     public SOAPBody getBody() {
         return body;
     }
+
+	public ArrayList<AttachmentPart> getAttachments() {
+		return attachments;
+	}
+	
+	public AttachmentPart getAttachment(String contentId) {
+		AttachmentPart part = null;
+		
+		Iterator iterator = attachments.iterator();
+		while (iterator.hasNext() && part == null) {
+			AttachmentPart attachment = (AttachmentPart)iterator.next();
+			String id = attachment.getContentId();
+			if (contentId.equals(id)) {
+				part = attachment;
+			}
+		}
+		return part;
+	}
 }

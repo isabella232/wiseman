@@ -19,11 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.20  2007/06/04 06:25:12  denis_rachal
+ **The following fixes have been made:
+ **
+ **   * Moved test source to se/test/src
+ **   * Moved test handlers to /src/test/src
+ **   * Updated logging calls in HttpClient & Servlet
+ **   * Fxed compiler warning in AnnotationProcessor
+ **   * Added logging files for client junit tests
+ **   * Added changes to support Maven builds
+ **   * Added JAX-WS libraries to CVS ignore
+ **
  **Revision 1.19  2007/05/30 20:31:07  nbeers
  **Add HP copyright header
  **
  **
- * $Id: HttpClient.java,v 1.20 2007-06-04 06:25:12 denis_rachal Exp $
+ * $Id: HttpClient.java,v 1.21 2007-09-18 20:08:55 nbeers Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -354,7 +365,7 @@ public final class HttpClient {
 
         final Addressing addr;
         try {
-            addr = new Addressing(is);
+            addr = new Addressing(is, responseType);
         } finally {
             if (is != null) { is.close(); }
         }
