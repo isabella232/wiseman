@@ -41,6 +41,17 @@
 	    </fileset>
 	  </path>	
 	
+    <path id="test.compile.classpath">
+    	<path path="${test.gen.classes.dir}" />
+        <path refid="compile.classpath" />
+     </path>
+	
+    <path id="test.run.classpath">
+    	<path path="${test.build.classes.dir}" />
+        <path refid="test.compile.classpath" />
+     </path>
+
+	
 	<target name="clean">
 		<delete dir="${dist.dir}"/>
 	    <delete dir="${build.dir}" />
@@ -70,15 +81,6 @@
 		  <src path="${src.dir}" />
 	    </javac>
 		
-	  	<!--javac destdir="${test.build.classes.dir}"
-	           debug="${debug}" fork="yes">
-	      <classpath> 
-	      		<path refid="compile.classpath" />
-          		<path path="${build.classes.dir}" />
-	      	</classpath>
-	      	<src path="${test.src.dir}" />
-	    </javac -->
-
 		<copy todir="${build.classes.dir}">
 	      <fileset dir="${src.dir}">
 	        <include name="**/*.properties" />
@@ -116,7 +118,7 @@
 	<target name="install" depends="jar">
 	</target>
 	
-	<target name="test">
+	<target name="gen-test">
 		<mkdir dir="${gentestdir}"/>
 		<!-- copy traffic light sample into test directory -->
 		<copy todir="${gentestdir}" file="samples/templates/wsdl_war_template.jar"/>
@@ -143,7 +145,47 @@
 		<!-- build war and deploy -->
 		<ant dir="${gentestdir}" target="deploy" inheritAll="false"/>
 		
+		</target>
+
+	<!-- Compile tests -->
+	<target name="compile-test" depends="init, gen-test"> 
+	  	<javac destdir="${test.build.classes.dir}"
+	           debug="${debug}" fork="yes">
+	      <classpath> 
+	      		<path refid="test.compile.classpath" />
+          		<!--path path="${build.classes.dir}" />
+      			<path path="${test.gen.classes.dir}" /-->
+	      	</classpath>
+	      	<src path="${test.src.dir}" />
+	    </javac>
+		
+	</target>
+
+	<target name="test" depends="compile-test"> 
 		<!-- run junit test on deployed war -->
+        <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" />
+    	<echo message="****************************************"/>
+    	<echo message="* check tools/test/run for logging output *"/>
+    	<echo message="****************************************"/>
+        <junit dir="${test.run.dir}"
+            showoutput="true"
+            fork="true" haltonfailure="true" printsummary="on">
+            <assertions>
+                <enable/>
+            </assertions>
+            <batchtest todir="${test.run.dir}">
+                <fileset dir="${test.src.dir}">
+                    <include name="**/*TestCase.java" />
+                 </fileset>
+            </batchtest>
+            <classpath refid="test.run.classpath" />
+            <formatter usefile="false" type="brief"/>
+            <formatter type="xml"/>
+            <jvmarg value="-Dwsman.user=wsman" />
+            <jvmarg value="-Dwsman.password=secret" />
+            <jvmarg value="-Dwsman.basicauthentication=true" />
+        	<jvmarg value="-Djava.util.logging.config.file=../logging.properties" />
+        </junit>
 		
 		
 	</target>
