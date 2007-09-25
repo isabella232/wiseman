@@ -21,6 +21,7 @@
 		<delete file="../traffic.war"/>
 		<delete file="../users.war"/>
 		<delete file="../*users-client.jar"/>
+		<delete file="../servicetype.war"/>
 	</target>
 
 	<target name="build" depends="init">
@@ -57,6 +58,13 @@
 			</fileset>
 		</copy>
 		
+		<ant antfile="ServiceType/build.xml" inheritall="no" 
+			description="Build Service Type (attachments example)"/>
+		<copy todir="..">
+			<fileset dir="ServiceType/dist">
+				<include name="**/servicetype.war"/>
+			</fileset>
+		</copy>
 	</target>
 
 </project>
