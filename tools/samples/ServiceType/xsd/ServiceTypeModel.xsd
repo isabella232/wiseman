@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://www.hp.com/itil/2007/05/ServiceType" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:rbs-tm="http://www.hp.com/itil/2007/05/ServiceType" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">
+	<xs:import namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" schemaLocation="wiseman/addressing.xsd"/>
+	<!-- Service Type Model Schema Definition.
+		Copyright (c) 2007 Hewlett Packard Development Company L.P.
+	-->
+	<!-- TYPES -->
+	<xs:simpleType name="OperationModeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="StateBased"/>
+			<xs:enumeration value="TaskBased"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="FormalParameterType">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string"/>
+			<xs:element name="type" type="xs:anyType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>
+						Workflow parameter type is not mandatory						
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ServiceTypeACLType">
+		<xs:sequence>
+			<xs:element name="AccessControlList" type="xs:string" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RollbackPolicyType">
+		<xs:sequence>
+			<xs:element name="IsRollbackAllowed" type="xs:boolean"/>
+			<xs:element name="RollbackRulesList" type="xs:string" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ServiceTypeMetadataType">
+		<xs:sequence>
+			<xs:element name="ExpectedDurationTime" type="xs:double" default="0.0">
+				<xs:annotation>
+					<xs:documentation>
+						Sum of expected duration time estimated for each workflow of this type.							
+						Measured in seconds.
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="AverageDurationTime" type="xs:double" default="0.0">
+				<xs:annotation>
+					<xs:documentation>
+						Average between all workflow instances running time, of this workflow type.
+						Measured in seconds.
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="TotalNumberOfInstances" type="xs:long" default="0">
+				<xs:annotation>
+					<xs:documentation>
+						Total number of created instances of THIS workflow type.
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="DiscoveryDate" type="xs:dateTime">
+				<xs:annotation>
+					<xs:documentation>
+						Date of workflow service discovery
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- ###### -->
+	<!-- ELEMENTS -->
+	<xs:element name="Type" type="rbs-tm:OperationModeType"/>
+	<xs:element name="Version" type="xs:string"/>
+	<xs:element name="ServiceTypeNameId" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>
+				The identifier of the workflow in workflow database repository						
+			</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="FormalParameterList" type="rbs-tm:FormalParameterType"/>
+	<xs:element name="ServiceTypeACL" type="rbs-tm:ServiceTypeACLType">
+		<xs:annotation>
+			<xs:documentation>
+				The (optional) list of allowed users
+			</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="ServiceDefinition" type="xs:anyType" >
+		<xs:annotation>
+			<xs:documentation>
+				The structure of the service to be accessed (e.g. the list of workflow steps, or a pointer to the set of steps)
+			</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="RollbackPolicy" type="rbs-tm:RollbackPolicyType">
+		<xs:annotation>
+			<xs:documentation>
+				The (optional) rollback policy
+			</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<!-- Statistics related, extracted from old usage endpoint model -->
+	<xs:element name="ServiceTypeMetadata" type="rbs-tm:ServiceTypeMetadataType">
+		<xs:annotation>
+			<xs:documentation>
+				Statistics related to all workflow instances of this workflow type.
+				It is created by collecting the "observed states" along the workflow life-time
+			</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<!-- ######## -->
+	<xs:complexType name="ServiceTypeType">
+		<xs:sequence>
+			<xs:element ref="rbs-tm:Type"/>
+			<xs:element ref="rbs-tm:Version"/>
+			<xs:element ref="rbs-tm:FormalParameterList" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element ref="rbs-tm:ServiceTypeACL" minOccurs="0"/>
+			<xs:element ref="rbs-tm:ServiceDefinition"/>
+			<xs:element ref="rbs-tm:RollbackPolicy" minOccurs="0"/>
+			<xs:element ref="rbs-tm:ServiceTypeMetadata"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="ServiceTypeModel" type="rbs-tm:ServiceTypeType"/>
+</xs:schema>
