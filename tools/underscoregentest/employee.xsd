@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://schemas.wiseman.dev.java.net/employee" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:emp="http://schemas.wiseman.dev.java.net/employee" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:complexType name="Employee_Type">
+		<xs:sequence>
+			<xs:element name="Email" type="xs:string"/>
+			<xs:element name="Address" type="xs:string"/>
+			<xs:element name="Function" type="xs:string"/>
+			<xs:element name="EmpNumber" type="xs:long"/>
+			<xs:element name="StartDate" type="xs:date"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Employee" type="emp:Employee_Type"/>
+</xs:schema>
