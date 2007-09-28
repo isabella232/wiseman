@@ -20,12 +20,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/09/10 18:43:51  nbeers
+ **Fix namespace of ResourceURI attribute in WSDL search.
+ **
  **Revision 1.7  2007/05/30 20:30:19  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: Wsdl2WsmanGenerator.java,v 1.8 2007-09-10 18:43:51 nbeers Exp $
+ * $Id: Wsdl2WsmanGenerator.java,v 1.9 2007-09-28 15:10:03 nbeers Exp $
  */
 package com.sun.ws.management.tools;
 
@@ -72,6 +75,7 @@ import org.xml.sax.SAXParseException;
 
 import com.sun.codemodel.JCodeModel;
 import com.sun.tools.xjc.AbortException;
+import com.sun.tools.xjc.BadCommandLineException;
 import com.sun.tools.xjc.ConsoleErrorReporter;
 import com.sun.tools.xjc.ErrorReceiver;
 import com.sun.tools.xjc.Language;
@@ -396,6 +400,20 @@ public class Wsdl2WsmanGenerator {
 			options.setSchemaLanguage(Language.WSDL);
 			options.targetDir = m_outputDir;
 			options.addGrammar(m_wsdl);
+			try {
+				options.setNameConverter(new NameConverter.Standard(), null);
+			} catch (BadCommandLineException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			// Get the name that JAXB will generate for our data type (missing underscores and any other illegal characters
+			String genName = null;
+			if (options.getNameConverter() != null) {
+				genName = options.getNameConverter().toClassName(m_resourceType);
+				// reset type name to the name JAXB wants
+				m_resourceType = genName;
+			}
 			// options.entityResolver = new XMLCatalog();
 
 			ErrorReceiver errorReceiver = new ErrorReceiver() {
@@ -434,6 +452,7 @@ public class Wsdl2WsmanGenerator {
 				}
 
 				model.codeModel.build(m_outputDir);
+				
 
 			} catch (IOException e) {
 				throw new RuntimeException("unable to write files: "
