@@ -20,11 +20,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/09/19 18:03:34  nbeers
+ **Test case for testing "empty" auto-generated traffic web service
+ **
  **Revision 1.1  2007/09/18 18:19:03  nbeers
  **test case to test empty automatically generated web service.
  **
  *
- * $Id: EmptyTrafficLightTestCase.java,v 1.1 2007-09-19 18:03:34 nbeers Exp $
+ * $Id: EmptyTrafficLightTestCase.java,v 1.2 2007-09-28 15:18:05 nbeers Exp $
  */
 package net.java.dev.wiseman.traffic.light.test;
 
@@ -44,6 +47,7 @@ import org.w3c.dom.Document;
 
 import util.WsManBaseTestSupport;
 
+import com.hp.itil._2007._05.servicetype.ServiceTypeType;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
 import com.sun.ws.management.transport.HttpClient;
@@ -77,13 +81,15 @@ public class EmptyTrafficLightTestCase extends WsManBaseTestSupport {
 	private net.java.dev.wiseman.schemas.traffic._1.light.ObjectFactory lightFactory = new net.java.dev.wiseman.schemas.traffic._1.light.ObjectFactory();
 
 	public static final org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory managementFactory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
+	
+	private com.hp.itil._2007._05.servicetype.ObjectFactory serviceFactory = new com.hp.itil._2007._05.servicetype.ObjectFactory();
 
 	private XmlBinding binding;
 
 	public EmptyTrafficLightTestCase() {
 		super();
 		try {
-			binding = new XmlBinding(null, "net.java.dev.wiseman.schemas.traffic._1.light");
+			binding = new XmlBinding(null, "net.java.dev.wiseman.schemas.traffic._1.light", "com.hp.itil._2007._05.servicetype");
 		} catch (JAXBException e) {
 			fail(e.getMessage());
 		}
@@ -167,9 +173,16 @@ public class EmptyTrafficLightTestCase extends WsManBaseTestSupport {
 		}		
 
 	}
-/*	public void testAttachments() throws XPathExpressionException, JAXBException,
+	public void testAttachments() throws XPathExpressionException, JAXBException,
 	SOAPException, DatatypeConfigurationException, IOException {
 
+		ServiceTypeType svc = serviceFactory.createServiceTypeType();
+		svc.setVersion("1.0");
+		Document doc = Management.newDocument();
+		JAXBElement<ServiceTypeType> userElement =serviceFactory.createServiceTypeModel(svc);		 
+		binding.marshal(userElement,doc);
+		
+		sendCreateRequest(DESTINATION_2, RESOURCE_URI_2, doc);
 //		Now request the state of TestLight2
 		SelectorType nameSelectorType = managementFactory.createSelectorType();
 		nameSelectorType.setName("version");
@@ -179,11 +192,11 @@ public class EmptyTrafficLightTestCase extends WsManBaseTestSupport {
 		try {
 			Management response = sendGetRequest(DESTINATION_2, RESOURCE_URI_2, selectorsHash,
 					null);
-			System.out.println(response.getAttachment("myData").getContent());
+			assertNotNull(response.getAttachment("myData").getContent());
 		} catch (SOAPException e) {
 			e.printStackTrace();
 		}		
 
 	}
-*/
+
 }
