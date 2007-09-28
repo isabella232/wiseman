@@ -14,6 +14,8 @@
 	<property file="project.properties"/>
 	<property file="${user.home}/.ant.properties"/>
 	<property name="gentestdir" value="gentest" />
+	<property name="underscoredir" value="underscoregentest" />
+	<property name="underscoretestdir" value="underscoretest" />
 
 	<!-- Test that a valid ant version is being used -->
 	<condition property="valid.ant.version">
@@ -119,10 +121,11 @@
 	</target>
 	
 	<target name="gen-test">
+		<delete dir="${gentestdir}"/>
 		<mkdir dir="${gentestdir}"/>
 		<!-- copy traffic light sample into test directory -->
 		<copy todir="${gentestdir}" file="samples/templates/wsdl_war_template.jar"/>
-		<unjar src="${gentestdir}/wsdl_war_template.jar" dest="gentest"/>
+		<unjar src="${gentestdir}/wsdl_war_template.jar" dest="${gentestdir}"/>
 		<copy todir="${gentestdir}/xsd" file="samples/trafficlight_server/schemas/light.xsd"/>
 		<copy todir="${gentestdir}/schemas" file="samples/trafficlight_server/schemas/light.xsd"/>
 		<copy todir="${gentestdir}/schemas/schemas.wiseman.dev.java.net/traffic/1" file="samples/trafficlight_server/schemas/light.xsd"/>
@@ -130,7 +133,6 @@
 		
 		<!-- Overwrite project.properties with our version that has correct lib dir for testing -->
 		<copy todir="${gentestdir}" file="lightgentest/project.properties" overwrite="true"/>
-		<copy todir="${gentestdir}/etc" file="lightgentest/resource-handler-config.xml" overwrite="true"/>
 		
 		<!-- generate wsdl and source from schema -->
 		<ant dir="${gentestdir}" target="generate" inheritAll="false"/>
@@ -140,10 +142,31 @@
 		<!-- compile to make sure generated code is valid -->
 		<ant dir="${gentestdir}" target="compile" inheritAll="false"/>
 		
-		<!-- insert actual code -->
-		
-		<!-- build war and deploy -->
+    	<!-- build war and deploy -->
 		<ant dir="${gentestdir}" target="deploy" inheritAll="false"/>
+		
+		<!-- Test that the underscore in a schema name works -->
+		<mkdir dir="${underscoretestdir}"/>
+		<!-- copy traffic light sample into test directory -->
+		<copy todir="${underscoretestdir}" file="samples/templates/wsdl_war_template.jar"/>
+		<unjar src="${underscoretestdir}/wsdl_war_template.jar" dest="${underscoretestdir}"/>
+		<copy todir="${underscoretestdir}/xsd" file="${underscoredir}/employee.xsd"/>
+		<copy todir="${underscoretestdir}/schemas" file="${underscoredir}/employee.xsd"/>
+		<copy todir="${underscoretestdir}/xsd/schemas.wiseman.dev.java.net/employee" file="${underscoredir}/employee.xsd"/>
+		<copy todir="${underscoretestdir}/etc" file="${underscoredir}/binding.properties" overwrite="true"/>
+		
+		<!-- Overwrite project.properties with our version that has correct lib dir for testing -->
+		<copy todir="${underscoretestdir}" file="${underscoredir}/project.properties" overwrite="true"/>
+		
+		<!-- generate wsdl and source from schema -->
+		<ant dir="${underscoretestdir}" target="generate" inheritAll="false"/>
+		<copy todir="${underscoretestdir}/src">
+			<fileset dir="${underscoretestdir}/gen-src"/>
+		</copy>
+		<!-- compile to make sure generated code is valid -->
+		<ant dir="${underscoretestdir}" target="compile" inheritAll="false"/>
+		
+		
 		
 		</target>
 
