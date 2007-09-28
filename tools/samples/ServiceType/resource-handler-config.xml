@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<resource-handlers xmlns="http://wiseman.dev.java.net/server/handler/config/1/resource-handler-config.xsd">
+  <resource-handler>
+     <resource-pattern>urn:resources.www.hp.com/itil/2007/05/ServiceType/</resource-pattern>
+     <resource-handler-class>com.sun.ws.management.server.handler.com.hp.itil._2007._05.servicetype.servicetypemodelservice.servicetypemodelresource_Handler</resource-handler-class>
+  </resource-handler>
+</resource-handlers>
