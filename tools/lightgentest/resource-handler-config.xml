@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<resource-handlers xmlns="http://wiseman.dev.java.net/server/handler/config/1/resource-handler-config.xsd">
-  <resource-handler>
-     <resource-pattern>urn:resources.wiseman.dev.java.net/traffic/1/light</resource-pattern>
-     <resource-handler-class>com.sun.ws.management.server.handler.net.java.dev.wiseman.schemas.traffic._1.light_xsd.lightservice.lightresource_Handler</resource-handler-class>
-  </resource-handler>
-</resource-handlers>
