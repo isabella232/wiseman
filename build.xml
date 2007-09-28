@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.17 2007-06-22 11:30:54 simeonpinder Exp $
+ $Id: build.xml,v 1.18 2007-09-28 15:10:40 nbeers Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
@@ -164,6 +164,7 @@
 <!--				<exclude name="samples/**/classes/*" /> -->
 				<exclude name="samples/contacts/gen-src/*.java" />
 				<exclude name="samples/contacts_client/gen-src/*.java" />
+				<exclude name="samples/ServiceType/**/*.*" />
 			</fileset>
 		</copy>
 		<!-- Get etc and put it in dist -->
