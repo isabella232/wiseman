@@ -20,6 +20,10 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/09/06 16:19:07  simeonpinder
+ **Issue 131:
+ **modified to allow for removal of Enumeration/Expires requests.  Setting the EnumerationMessageValues.setExpires() to a value < 0 will result in no Expires node being generated.
+ **
  **Revision 1.5  2007/06/19 19:50:39  nbeers
  **Set the DefaultTimeout header in addition to the maxElement header for enumeration pulls
  **
@@ -31,7 +35,7 @@
  **
  ** 
  *
- * $Id: EnumerationUtility.java,v 1.6 2007-09-06 16:19:07 simeonpinder Exp $
+ * $Id: EnumerationUtility.java,v 1.7 2007-10-02 10:27:19 jfdenise Exp $
  */
 package com.sun.ws.management.enumeration;
 
@@ -57,7 +61,6 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
-import com.sun.org.apache.xerces.internal.jaxp.datatype.DurationImpl;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
