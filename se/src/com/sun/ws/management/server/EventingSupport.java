@@ -19,6 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.25  2007/09/18 13:06:56  denis_rachal
+ **Issue number:  129, 130 & 132
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **129  ENHANC  P2  All  denis_rachal  NEW   Need support for ReNew Operation in Eventing
+ **130  DEFECT  P3  x86  jfdenise  NEW   Should return a boolean variable result not a constant true
+ **132  ENHANC  P3  All  denis_rachal  NEW   Make ServletRequest attributes available as properties in Ha
+ **
+ **Added enhancements and fixed issue # 130.
+ **
  **Revision 1.24  2007/06/13 13:19:02  jfdenise
  **Fix for BUG ID 115 : EventingSupport should be able to create an event msg
  **
@@ -26,7 +38,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingSupport.java,v 1.25 2007-09-18 13:06:56 denis_rachal Exp $
+ * $Id: EventingSupport.java,v 1.26 2007-10-02 10:43:44 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -126,7 +138,7 @@ public final class EventingSupport extends BaseSupport {
             final ContextListener listener)
             throws DatatypeConfigurationException, SOAPException,
             JAXBException, FaultException {
-        return subscribe(handlerContext, request, response, false, DEFAULT_QUEUE_SIZE, listener);
+        return subscribe(handlerContext, request, response, listener, null);
     }
     
     // the EventingExtensions.PULL_DELIVERY_MODE is handled by
@@ -134,9 +146,19 @@ public final class EventingSupport extends BaseSupport {
     public static UUID subscribe(final HandlerContext handlerContext,
             final Eventing request,
             final Eventing response,
+            final ContextListener listener, final EventingIteratorFactory factory)
+            throws DatatypeConfigurationException, SOAPException,
+            JAXBException, FaultException {
+        return subscribe(handlerContext, request, response, false, DEFAULT_QUEUE_SIZE, listener, factory);
+    }
+    
+     public static UUID subscribe(final HandlerContext handlerContext,
+            final Eventing request,
+            final Eventing response,
             final boolean isFiltered,
             final int queueSize,
-            final ContextListener listener)
+            final ContextListener listener, 
+            EventingIteratorFactory factory)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         
         final Subscribe subscribe = request.getSubscribe();
@@ -163,14 +185,12 @@ public final class EventingSupport extends BaseSupport {
             final EventingExtensions evtxRequest = new EventingExtensions(
                     request);
             
-            EnumerationIterator iterator = newIterator(handlerContext,
+            EnumerationIterator iterator = newIterator(factory, handlerContext,
                     request,
                     response,
                     isFiltered,
                     queueSize);
-            
-            
-            
+
             if (iterator.isFiltered() == false) {
                 // We will do the filtering
                 try {
@@ -253,6 +273,20 @@ public final class EventingSupport extends BaseSupport {
                     response, context), ctx.getExpiration());
             return context;
         }
+     }
+    
+    // the EventingExtensions.PULL_DELIVERY_MODE is handled by
+    // EnumerationSupport
+    public static UUID subscribe(final HandlerContext handlerContext,
+            final Eventing request,
+            final Eventing response,
+            final boolean isFiltered,
+            final int queueSize,
+            final ContextListener listener)
+            throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
+         final Management mgmt = new Management(request);
+         EventingIteratorFactory factory = registeredIterators.get(mgmt.getResourceURI());
+         return subscribe(handlerContext, request, response, isFiltered, queueSize, listener, factory);
     }
     
     public static EndpointReferenceType createSubscriptionManagerEpr(
@@ -470,13 +504,12 @@ public final class EventingSupport extends BaseSupport {
     }
     
     private synchronized static EnumerationIterator newIterator(
+            final EventingIteratorFactory factory,
             final HandlerContext context,
             final Eventing request,
             final Eventing response,
             final boolean isFiltered,
             final int queueSize) throws SOAPException, JAXBException {
-        final Management mgmt = new Management(request);
-        final EventingIteratorFactory factory = registeredIterators.get(mgmt.getResourceURI());
         final DocumentBuilder db = response.getDocumentBuilder();
         
         if (factory == null) {

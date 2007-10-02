@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.51  2007/05/30 20:31:04  nbeers
+ **Add HP copyright header
  **
- * $Id: EnumerationSupport.java,v 1.51 2007-05-30 20:31:04 nbeers Exp $
+ **
+ * $Id: EnumerationSupport.java,v 1.52 2007-10-02 10:43:43 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -143,11 +146,7 @@ public final class EnumerationSupport extends BaseSupport {
             final Enumeration response)
             throws FaultException, DatatypeConfigurationException,
             SOAPException, JAXBException {
-        final EnumerationIterator iterator = newIterator(context, request, response);
-        if (iterator == null) {
-            throw new ActionNotSupportedFault();
-        }
-        enumerate(context, request, response, iterator, null);
+        enumerate(context, request, response, null);
     }
 
     /**
@@ -190,13 +189,31 @@ public final class EnumerationSupport extends BaseSupport {
             final ContextListener listener)
             throws FaultException, DatatypeConfigurationException,
             SOAPException, JAXBException {
-        final EnumerationIterator iterator = newIterator(context, request, response);
+         final Management mgmt = new Management(request);
+        final IteratorFactory factory = registeredIterators.get(mgmt
+                .getResourceURI());
+        
+        enumerate(context, request, response, listener, factory);
+    }
+    
+    public static void enumerate(final HandlerContext handlerContext,
+            final Enumeration request,
+            final Enumeration response,
+            final ContextListener listener, 
+            final IteratorFactory factory)
+            throws DatatypeConfigurationException, SOAPException,
+            JAXBException, FaultException {
+        
+        final EnumerationIterator iterator = newIterator(factory, 
+                handlerContext, request, response);
+        
         if (iterator == null) {
             throw new ActionNotSupportedFault();
         }
-        enumerate(context, request, response, iterator, listener);
+        
+       enumerate(handlerContext, request, response, iterator, listener);
     }
-
+    
     private static void enumerate(final HandlerContext handlerContext,
             final Enumeration request,
             final Enumeration response,
@@ -876,14 +893,14 @@ public final class EnumerationSupport extends BaseSupport {
 
     @SuppressWarnings("static-access")
     private synchronized static EnumerationIterator newIterator(
+            final IteratorFactory factory,
             final HandlerContext context, final Enumeration request,
             final Enumeration response) throws SOAPException, JAXBException {
-        final Management mgmt = new Management(request);
-        final IteratorFactory factory = registeredIterators.get(mgmt
-                .getResourceURI());
+
         if (factory == null) {
             return null;
         }
+        
         final DocumentBuilder db = response.getDocumentBuilder();
         final Boolean includeItem;
         final Boolean includeEPR;
