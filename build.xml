@@ -15,7 +15,7 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
- $Id: build.xml,v 1.18 2007-09-28 15:10:40 nbeers Exp $
+ $Id: build.xml,v 1.19 2007-10-05 19:50:49 nbeers Exp $
 -->
 
 <project name="wiseman" default="dist" basedir=".">
@@ -47,9 +47,9 @@
 	</target>
 		
 	<target name="build" depends="init">
-		<ant antfile="se/build.xml" inheritall="no" description="Build Wiseman" target="autobuild"/>
-		<ant antfile="client/build.xml" inheritall="no" description="Build Wiseman Client" target="autobuild"/>
-		<ant antfile="tools/build.xml" inheritall="no" description="Build Wiseman Tooling" target="autobuild"/>
+		<ant dir="se" antfile="build.xml" inheritall="no" description="Build Wiseman" target="autobuild"/>
+		<ant dir="client" antfile="build.xml" inheritall="no" description="Build Wiseman Client" target="autobuild"/>
+		<ant dir="tools" antfile="build.xml" inheritall="no" description="Build Wiseman Tooling" target="autobuild"/>
 	</target>
 
 	<target name="dist" depends="build">  
