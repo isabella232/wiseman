@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/10/10 18:56:48  nbeers
+ **Dummy checkin -- Test automated build
+ **
  **Revision 1.2  2007/09/28 15:18:05  nbeers
  **Add test case for SOAP with attachments
  **
@@ -30,7 +33,7 @@
  **test case to test empty automatically generated web service.
  **
  *
- * $Id: EmptyTrafficLightTestCase.java,v 1.3 2007-10-10 18:56:48 nbeers Exp $
+ * $Id: EmptyTrafficLightTestCase.java,v 1.4 2007-10-10 19:53:34 nbeers Exp $
  */
 package net.java.dev.wiseman.traffic.light.test;
 
@@ -148,7 +151,7 @@ public class EmptyTrafficLightTestCase extends WsManBaseTestSupport {
 	/**
 	 * A unit tests that test a get after a create. Checjks that the correct "not supported" exception is thrown.
 	 * 
-	 * @throws XPathExpressionException  
+	 * @throws XPathExpressionException    
 	 * @throws JAXBException
 	 * @throws SOAPException
 	 * @throws DatatypeConfigurationException
