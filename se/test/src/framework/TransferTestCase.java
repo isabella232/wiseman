@@ -25,7 +25,7 @@
  **
  ** 
  *
- * $Id: TransferTestCase.java,v 1.4 2007-10-11 15:27:49 nbeers Exp $
+ * $Id: TransferTestCase.java,v 1.5 2007-10-11 15:37:02 nbeers Exp $
  */
 package framework;
 
@@ -279,7 +279,6 @@ public class TransferTestCase extends WsManBaseTestSupport {
 		assertEquals("NJ",user.getState());
 		assertEquals("08054",user.getZip());
 		assertEquals(16,(int)user.getAge());
-		assertTrue(false);
 		
 	}
 
