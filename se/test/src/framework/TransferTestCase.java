@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/05/30 20:30:30  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: TransferTestCase.java,v 1.3 2007-05-30 20:30:30 nbeers Exp $
+ * $Id: TransferTestCase.java,v 1.4 2007-10-11 15:27:49 nbeers Exp $
  */
 package framework;
 
@@ -276,6 +279,7 @@ public class TransferTestCase extends WsManBaseTestSupport {
 		assertEquals("NJ",user.getState());
 		assertEquals("08054",user.getZip());
 		assertEquals(16,(int)user.getAge());
+		assertTrue(false);
 		
 	}
 
