@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ *  
  *
  ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
  **  
@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/10/11 14:45:32  nbeers
+ **Dummy checkin -- Test automated build
+ **
  **Revision 1.7  2007/10/11 14:09:23  nbeers
  **Dummy checkin -- Test automated build
  **
@@ -45,7 +48,7 @@
  **test case to test empty automatically generated web service.
  **
  *
- * $Id: EmptyTrafficLightTestCase.java,v 1.8 2007-10-11 14:45:32 nbeers Exp $
+ * $Id: EmptyTrafficLightTestCase.java,v 1.9 2007-10-12 19:36:22 nbeers Exp $
  */
 package net.java.dev.wiseman.traffic.light.test;
 
