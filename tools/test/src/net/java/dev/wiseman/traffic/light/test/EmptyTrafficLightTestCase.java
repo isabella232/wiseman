@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.11  2007/10/15 15:41:17  nbeers
+ **Dummy checkin -- Test automated build
+ **
  **Revision 1.10  2007/10/15 15:31:07  nbeers
  **Dummy checkin -- Test automated build
  **
@@ -54,7 +57,7 @@
  **test case to test empty automatically generated web service.
  **
  *
- * $Id: EmptyTrafficLightTestCase.java,v 1.11 2007-10-15 15:41:17 nbeers Exp $
+ * $Id: EmptyTrafficLightTestCase.java,v 1.12 2007-10-15 18:03:22 nbeers Exp $
  */
 package net.java.dev.wiseman.traffic.light.test;
 
@@ -119,7 +122,7 @@ public class EmptyTrafficLightTestCase extends WsManBaseTestSupport {
 			binding = new XmlBinding(null, "net.java.dev.wiseman.schemas.traffic._1.light", "com.hp.itil._2007._05.servicetype");
 		} catch (JAXBException e) {
 			fail(e.getMessage());
-		}
+		}  
 
 		// Enable basic authenticaton for tests
 		System.getProperties().put("wsman.user", "wsman");
