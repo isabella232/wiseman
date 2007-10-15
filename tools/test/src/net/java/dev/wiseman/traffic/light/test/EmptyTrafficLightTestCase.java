@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.9  2007/10/12 19:36:22  nbeers
+ **Dummy checkin -- Test automated build
+ **
  **Revision 1.8  2007/10/11 14:45:32  nbeers
  **Dummy checkin -- Test automated build
  **
@@ -48,7 +51,7 @@
  **test case to test empty automatically generated web service.
  **
  *
- * $Id: EmptyTrafficLightTestCase.java,v 1.9 2007-10-12 19:36:22 nbeers Exp $
+ * $Id: EmptyTrafficLightTestCase.java,v 1.10 2007-10-15 15:31:07 nbeers Exp $
  */
 package net.java.dev.wiseman.traffic.light.test;
 
@@ -89,7 +92,7 @@ public class EmptyTrafficLightTestCase extends WsManBaseTestSupport {
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
-	}
+	}  
 
 	private static final String RESOURCE_URI = "urn:resources.wiseman.dev.java.net/traffic/1/light";
 
