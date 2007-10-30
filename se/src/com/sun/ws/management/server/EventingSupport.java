@@ -19,6 +19,10 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.26  2007/10/02 10:43:44  jfdenise
+ **Fix for bug ID 134, Enumeration Iterator look up is static
+ **Applied to Enumeration and Eventing
+ **
  **Revision 1.25  2007/09/18 13:06:56  denis_rachal
  **Issue number:  129, 130 & 132
  **Obtained from:
@@ -38,11 +42,15 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingSupport.java,v 1.26 2007-10-02 10:43:44 jfdenise Exp $
+ * $Id: EventingSupport.java,v 1.27 2007-10-30 09:27:47 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
+import com.sun.ws.management.Message;
+import com.sun.ws.management.server.message.SAAJMessage;
+import com.sun.ws.management.server.message.WSEventingRequest;
+import com.sun.ws.management.server.message.WSEventingResponse;
 import java.io.IOException;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -54,6 +62,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPBody;
@@ -129,7 +138,6 @@ public final class EventingSupport extends BaseSupport {
         }
         return false;
     }
-    
     // the EventingExtensions.PULL_DELIVERY_MODE is handled by
     // EnumerationSupport
     public static UUID subscribe(final HandlerContext handlerContext,
@@ -160,7 +168,62 @@ public final class EventingSupport extends BaseSupport {
             final ContextListener listener, 
             EventingIteratorFactory factory)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
-        
+         SAAJMessage msg = new SAAJMessage(new Management(request));
+         SAAJMessage resp = new SAAJMessage(new Management(response));
+         return subscribe(handlerContext, msg, resp, isFiltered, queueSize, listener, factory);
+     }
+     
+    // the EventingExtensions.PULL_DELIVERY_MODE is handled by
+    // EnumerationSupport
+    public static UUID subscribe(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
+            final ContextListener listener)
+            throws DatatypeConfigurationException, SOAPException,
+            JAXBException, FaultException {
+        return subscribe(handlerContext, request, response, listener, null);
+    }
+    
+    // the EventingExtensions.PULL_DELIVERY_MODE is handled by
+    // EnumerationSupport
+    public static UUID subscribe(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
+            final ContextListener listener, final WSEventingIteratorFactory factory)
+            throws DatatypeConfigurationException, SOAPException,
+            JAXBException, FaultException {
+        return subscribe(handlerContext, request, response, false, DEFAULT_QUEUE_SIZE, listener, factory);
+    }
+    
+    public static UUID subscribe(final HandlerContext handlerContext,
+            final Eventing request,
+            final Eventing response,
+            final boolean isFiltered,
+            final int queueSize,
+            final ContextListener listener)
+            throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
+         return subscribe(handlerContext, request, response,isFiltered,queueSize,listener, null);
+    }
+    
+    public static UUID subscribe(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
+            final boolean isFiltered,
+            final int queueSize,
+            final ContextListener listener, 
+            final WSEventingIteratorFactory factory)
+            throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
+         return subscribe(handlerContext, request, response,isFiltered,queueSize,listener,(Object)factory);
+    }
+    
+    private static UUID subscribe(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
+            final boolean isFiltered,
+            final int queueSize,
+            final ContextListener listener,
+            final Object factory)
+            throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         final Subscribe subscribe = request.getSubscribe();
         if (subscribe == null) {
             throw new InvalidMessageFault();
@@ -182,8 +245,6 @@ public final class EventingSupport extends BaseSupport {
         
         if (deliveryMode.equals(EventingExtensions.PULL_DELIVERY_MODE)) {
             // this is a pull event mode subscribe request so setup an enumeration
-            final EventingExtensions evtxRequest = new EventingExtensions(
-                    request);
             
             EnumerationIterator iterator = newIterator(factory, handlerContext,
                     request,
@@ -214,10 +275,7 @@ public final class EventingSupport extends BaseSupport {
             // Set single thread use of this context
             synchronized (ctx) {
                 final UUID context = initContext(handlerContext, ctx);
-                // this is a pull event mode subscribe request
-                final EventingExtensions evtx = new EventingExtensions(
-                        response);
-                evtx.setSubscribeResponse(EventingSupport
+                response.setSubscribeResponse(EventingSupport
                         .createSubscriptionManagerEpr(request, response,
                         context), ctx.getExpiration(), context
                         .toString());
@@ -226,6 +284,8 @@ public final class EventingSupport extends BaseSupport {
             
         } else {
             // one of the push modes
+            // XXX REVISIT ONLY DONE WITH OLD WAY
+            // NEED TO FIX THE NAMESPACE MAP
             if (isFiltered == false) {
                 // We will do the filtering
                 try {
@@ -269,7 +329,7 @@ public final class EventingSupport extends BaseSupport {
                     .getExpires()), filter, notifyTo, listener);
             
             final UUID context = initContext(handlerContext, ctx);
-            response.setSubscribeResponse(createSubscriptionManagerEpr(request,
+            response.setSubscribeResponseExt(createSubscriptionManagerEpr(request,
                     response, context), ctx.getExpiration());
             return context;
         }
@@ -278,39 +338,65 @@ public final class EventingSupport extends BaseSupport {
     // the EventingExtensions.PULL_DELIVERY_MODE is handled by
     // EnumerationSupport
     public static UUID subscribe(final HandlerContext handlerContext,
-            final Eventing request,
-            final Eventing response,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
             final boolean isFiltered,
             final int queueSize,
             final ContextListener listener)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
-         final Management mgmt = new Management(request);
-         EventingIteratorFactory factory = registeredIterators.get(mgmt.getResourceURI());
+         EventingIteratorFactory factory = registeredIterators.get(request.getResourceURIForEventing());
          return subscribe(handlerContext, request, response, isFiltered, queueSize, listener, factory);
     }
-    
-    public static EndpointReferenceType createSubscriptionManagerEpr(
+     public static EndpointReferenceType createSubscriptionManagerEpr(
             final Eventing request, final Eventing response,
+            final Object context) throws SOAPException, JAXBException {
+         SAAJMessage msg = new SAAJMessage(new Management(request));
+         SAAJMessage resp = new SAAJMessage(new Management(response));
+         return createSubscriptionManagerEpr(msg, resp,context);
+     }
+     
+    public static EndpointReferenceType createSubscriptionManagerEpr(
+            final WSEventingRequest request, final WSEventingResponse response,
             final Object context) throws SOAPException, JAXBException {
         
         final ReferenceParametersType refp = Addressing.FACTORY.createReferenceParametersType();
         final AttributableURI attributableURI = Management.FACTORY.createAttributableURI();
-        Management mgmt = new Management(request);
-        attributableURI.setValue(mgmt.getResourceURI());
+        attributableURI.setValue(request.getResourceURIForEventing().toString());
         refp.getAny().add(Management.FACTORY.createResourceURI(attributableURI));
         
-        final Document doc = response.newDocument();
+        final Document doc = Message.newDocument();
         final Element identifier = doc.createElementNS(Eventing.IDENTIFIER.getNamespaceURI(),
                 Eventing.IDENTIFIER.getPrefix() + ":" + Eventing.IDENTIFIER.getLocalPart());
         identifier.setTextContent(context.toString());
         doc.appendChild(identifier);
         refp.getAny().add(doc.getDocumentElement());
-        return Addressing.createEndpointReference(request.getTo(), null, refp, null, null);
+        String to;
+        try {
+            to = request.getAddressURI().toString();
+        }catch(Exception ex) {
+            if(ex instanceof SOAPException) {
+                throw (SOAPException)ex;
+            }
+            if(ex instanceof JAXBException) {
+                throw (JAXBException)ex;
+            }
+            throw new RuntimeException(ex.toString());
+        }
+        
+        return Addressing.createEndpointReference(to, null, refp, null, null);
     }
-    
     public static void renew(final HandlerContext handlerContext,
             final Eventing request,
             final Eventing response)
+            throws SOAPException, JAXBException, FaultException {
+         SAAJMessage msg = new SAAJMessage(new Management(request));
+         SAAJMessage resp = new SAAJMessage(new Management(response));
+         renew(handlerContext, msg, resp);
+    }
+    
+    public static void renew(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response)
             throws SOAPException, JAXBException, FaultException {
         
         final Renew renew = request.getRenew();
@@ -341,6 +427,15 @@ public final class EventingSupport extends BaseSupport {
     public static void unsubscribe(final HandlerContext handlerContext,
             final Eventing request,
             final Eventing response)
+            throws SOAPException, JAXBException, FaultException {
+          SAAJMessage msg = new SAAJMessage(new Management(request));
+         SAAJMessage resp = new SAAJMessage(new Management(response));
+         unsubscribe(handlerContext, msg, resp);
+    }
+     
+    public static void unsubscribe(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response)
             throws SOAPException, JAXBException, FaultException {
         
         final Unsubscribe unsubscribe = request.getUnsubscribe();
@@ -417,7 +512,7 @@ public final class EventingSupport extends BaseSupport {
         return true;
     }
     
-    /**
+        /**
      * Create a Filter from an Eventing request
      *
      * @return Returns a Filter object if a filter exists in the request, otherwise null.
@@ -425,11 +520,27 @@ public final class EventingSupport extends BaseSupport {
      */
     public static Filter createFilter(final Eventing request)
     throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
+        SAAJMessage msg;
         try {
-            final EventingExtensions evtxRequest = new EventingExtensions(request);
-            final Subscribe subscribe = evtxRequest.getSubscribe();
+            msg = new SAAJMessage(new Management(request));
+        } catch (SOAPException ex) {
+            throw new InternalErrorFault(ex.getMessage());
+        }
+        return createFilter(msg);
+    }
+    
+    /**
+     * Create a Filter from an Eventing request
+     *
+     * @return Returns a Filter object if a filter exists in the request, otherwise null.
+     * @throws CannotProcessFilterFault, FilteringRequestedUnavailableFault, InternalErrorFault
+     */
+    public static Filter createFilter(final WSEventingRequest request)
+    throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
+        try {
+            final Subscribe subscribe = request.getSubscribe();
             final org.xmlsoap.schemas.ws._2004._08.eventing.FilterType evtFilter = subscribe.getFilter();
-            final DialectableMixedDataType evtxFilter = evtxRequest.getWsmanFilter();
+            final DialectableMixedDataType evtxFilter = request.getWsmanEventingFilter();
             
             if ((evtFilter == null) && (evtxFilter == null)) {
                 return null;
@@ -457,9 +568,24 @@ public final class EventingSupport extends BaseSupport {
         }
     }
     
-    private static NamespaceMap getNamespaceMap(final Eventing request) {
+    public static NamespaceMap getNamespaceMap(final Eventing request) {
+        SAAJMessage msg;
+        try {
+            msg = new SAAJMessage(new Management(request));
+        } catch (SOAPException ex) {
+            throw new InternalErrorFault(ex.getMessage());
+        }
+         return getNamespaceMap(msg);
+    }
+    
+    public static NamespaceMap getNamespaceMap(final WSEventingRequest request) {
         final NamespaceMap nsMap;
-        final SOAPBody body = request.getBody();
+        SOAPBody body;
+        try {
+            body = request.toSOAPMessage().getSOAPBody();
+        }catch(Exception ex) {
+           throw new RuntimeException(ex.toString());
+        }
         
         NodeList wsmanFilter = body.getElementsByTagNameNS(EventingExtensions.FILTER.getNamespaceURI(),
                 EventingExtensions.FILTER.getLocalPart());
@@ -476,7 +602,6 @@ public final class EventingSupport extends BaseSupport {
         }
         return nsMap;
     }
-    
     
     /**
      * Add an iterator factory to EnumerationSupport.
@@ -504,20 +629,30 @@ public final class EventingSupport extends BaseSupport {
     }
     
     private synchronized static EnumerationIterator newIterator(
-            final EventingIteratorFactory factory,
+            final Object factory,
             final HandlerContext context,
-            final Eventing request,
-            final Eventing response,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
             final boolean isFiltered,
             final int queueSize) throws SOAPException, JAXBException {
-        final DocumentBuilder db = response.getDocumentBuilder();
         
         if (factory == null) {
             // Build a default iterator for pull
             return new EventingIterator(isFiltered, queueSize);
         } else {
             // Build a custom iterator for pull
-            return factory.newIterator(context, request, db, true, false);
+            if(factory instanceof EventingIteratorFactory) {
+                Management mgt;
+                try {
+                    mgt = new Management(request.toSOAPMessage());
+                }catch (Exception ex) {
+                   throw new SOAPException(ex.toString());
+                }
+                Eventing evt = new Eventing(mgt);
+                return ((EventingIteratorFactory)factory).newIterator(context, evt, Message.getDocumentBuilder(), true, false);
+            } else {
+               return ((WSEventingIteratorFactory)factory).newIterator(context, request, true, false);
+            }
         }
     }
     

@@ -19,12 +19,16 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.13  2007/05/30 20:31:05  nbeers
+ **Add HP copyright header
  **
- * $Id: Eventing.java,v 1.13 2007-05-30 20:31:05 nbeers Exp $
+ **
+ * $Id: Eventing.java,v 1.14 2007-10-30 09:27:29 jfdenise Exp $
  */
 
 package com.sun.ws.management.eventing;
 
+import com.sun.ws.management.MessageUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -111,41 +115,12 @@ public class Eventing extends Addressing {
             throws SOAPException, JAXBException {
 
         removeChildren(getBody(), SUBSCRIBE);
-        final Subscribe sub = FACTORY.createSubscribe();
-
-        if (endTo != null) {
-            sub.setEndTo(endTo);
-        }
-
-        final DeliveryType delivery = FACTORY.createDeliveryType();
-
-        if (deliveryMode != null) {
-            delivery.setMode(deliveryMode);
-        }
-
-        if (notifyTo != null) {
-        	delivery.getContent().add((FACTORY.createNotifyTo(notifyTo)));
-        }
-
-        if (extensions != null) {
-            for (final Object ext : extensions) {
-                delivery.getContent().add(ext);
-            }
-        }
-
-        sub.setDelivery(delivery);
-
-        if (expires != null) {
-            sub.setExpires(expires);
-        }
-
-        if (filter != null) {
-            sub.setFilter(filter);
-        }
+        final Subscribe sub = MessageUtil.createSubscribe(endTo, deliveryMode, 
+                notifyTo, expires, filter, extensions);
 
         getXmlBinding().marshal(sub, getBody());
     }
-
+    
     public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires,
             final Object... extensions)
             throws SOAPException, JAXBException {
@@ -197,28 +172,8 @@ public class Eventing extends Addressing {
 
     public void setSubscriptionEnd(final EndpointReferenceType mgr,
             final String status, final String reason) throws SOAPException, JAXBException {
-
-        if (!DELIVERY_FAILURE_STATUS.equals(status) &&
-                !SOURCE_SHUTTING_DOWN_STATUS.equals(status) &&
-                !SOURCE_CANCELING_STATUS.equals(status)) {
-            throw new IllegalArgumentException("Status must be one of " +
-                    DELIVERY_FAILURE_STATUS + ", " +
-                    SOURCE_SHUTTING_DOWN_STATUS + " or " +
-                    SOURCE_CANCELING_STATUS);
-        }
-
+        final SubscriptionEnd end = MessageUtil.createSubscriptionEnd(mgr, status, reason);
         removeChildren(getBody(), SUBSCRIPTION_END);
-        final SubscriptionEnd end = FACTORY.createSubscriptionEnd();
-        end.setSubscriptionManager(mgr);
-        end.setStatus(status);
-
-        if (reason != null) {
-            final LanguageSpecificStringType localizedReason = FACTORY.createLanguageSpecificStringType();
-            localizedReason.setLang(XML.DEFAULT_LANG);
-            localizedReason.setValue(reason);
-            end.getReason().add(localizedReason);
-        }
-
         getXmlBinding().marshal(end, getBody());
     }
 

@@ -20,14 +20,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.15  2007/05/30 20:31:06  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: TransferExtensions.java,v 1.15 2007-05-30 20:31:06 nbeers Exp $
+ * $Id: TransferExtensions.java,v 1.16 2007-10-30 09:27:47 jfdenise Exp $
  */
 
 
 package com.sun.ws.management.transfer;
 
+import com.sun.ws.management.MessageUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -183,45 +187,31 @@ public class TransferExtensions extends Transfer {
      * @throws JAXBException
      */
     public void setFragmentHeader(final Object expression,
-			                      final Map<String, String> namespaces, 
-			                      final String dialect)
-			throws SOAPException, JAXBException {
-
+            final Map<String, String> namespaces,
+            final String dialect)
+            throws SOAPException, JAXBException {
+        
         // remove existing, if any
         removeChildren(getHeader(), FRAGMENT_TRANSFER);
+
+        final JAXBElement<DialectableMixedDataType> fragmentTransfer = MessageUtil.createFragmentHeader(expression, namespaces, dialect);
+        if(fragmentTransfer == null)
+            return;
         
-		if (expression == null)
-			return;
-
-		final DialectableMixedDataType dialectableMixedDataType = Management.FACTORY
-				.createDialectableMixedDataType();
-		if (dialect != null) {
-			dialectableMixedDataType.setDialect(dialect);
-		}
-
-		dialectableMixedDataType.getOtherAttributes().put(SOAP.MUST_UNDERSTAND,
-				Boolean.TRUE.toString());
-
-		// add the query string to the content of the FragmentTransfer Header
-		dialectableMixedDataType.getContent().add(expression);
-
-		final JAXBElement<DialectableMixedDataType> fragmentTransfer = Management.FACTORY
-				.createFragmentTransfer(dialectableMixedDataType);
-
-		// set the SOAP Header for Fragment Transfer
-		getXmlBinding().marshal(fragmentTransfer, getHeader());
-		
-		// Add the expression namespaces, if any, to the fragment header
-		if ((namespaces != null) && (namespaces.size() > 0)) {
-			final SOAPHeaderElement header = getFragmentHeader();
-			final Iterator<Entry<String, String>> ni = namespaces.entrySet()
-					.iterator();
-			while (ni.hasNext()) {
-				final Entry<String, String> entry = ni.next();
-				header.addNamespaceDeclaration(entry.getKey(), entry.getValue());
-			}
-		}
-	}
+        // set the SOAP Header for Fragment Transfer
+        getXmlBinding().marshal(fragmentTransfer, getHeader());
+        
+        // Add the expression namespaces, if any, to the fragment header
+        if ((namespaces != null) && (namespaces.size() > 0)) {
+            final SOAPHeaderElement header = getFragmentHeader();
+            final Iterator<Entry<String, String>> ni = namespaces.entrySet()
+            .iterator();
+            while (ni.hasNext()) {
+                final Entry<String, String> entry = ni.next();
+                header.addNamespaceDeclaration(entry.getKey(), entry.getValue());
+            }
+        }
+    }
 	
     /**
      * Inserts the FragmentTransferHeader into the SOAP Headers
@@ -351,48 +341,10 @@ public class TransferExtensions extends Transfer {
     public void setFragmentGetResponse(final SOAPHeaderElement fragmentTransferHeader, 
             final List<Object> content) throws JAXBException, SOAPException {
         
-        final JAXBElement<MixedDataType> xmlFragment = buildXmlFragment(content);
+        final JAXBElement<MixedDataType> xmlFragment = MessageUtil.buildXmlFragment(content);
 
         setFragmentGetResponse(fragmentTransferHeader, xmlFragment);
     }
-    
-    /**
-     * Builds the XmlFragment element with the supplied content
-     *
-     * @param content
-     * @return JAXBElement<MixedDataType>
-     */
-    private JAXBElement<MixedDataType> buildXmlFragment(final List<Object> content) throws SOAPException {
-        //build the JAXB Wrapper Element
-        final MixedDataType mixedDataType = Management.FACTORY.createMixedDataType();
-		final StringBuffer buf = new StringBuffer();
-		
-		for (int j = 0; j < content.size(); j++) {
-			// Check if it is a text node from text() function
-			if (content.get(j) instanceof Text) {
-				buf.append(((Text)content.get(j)).getTextContent());
-			} else {
-				if (buf.length() > 0) {
-					mixedDataType.getContent().add(buf.toString());
-					buf.setLength(0);
-				}
-			    mixedDataType.getContent().add(content.get(j));
-			}
-		}
-		if (buf.length() > 0) {
-			mixedDataType.getContent().add(buf.toString());
-			buf.setLength(0);
-		}
-        //create the XmlFragmentElement
-        final JAXBElement<MixedDataType> xmlFragment = 
-                Management.FACTORY.createXmlFragment(mixedDataType);
-        //if there was no content, then this is NIL
-        if (content.size() <= 0) {
-            xmlFragment.setNil(true);
-        }
-        return xmlFragment;
-    }
-    
     
     /**
      * Handles the Delete operation response
@@ -488,7 +440,7 @@ public class TransferExtensions extends Transfer {
 			final List<Object> content) throws SOAPException,
 			JAXBException {
 
-		final JAXBElement<MixedDataType> xmlFragment = buildXmlFragment(content);
+		final JAXBElement<MixedDataType> xmlFragment = MessageUtil.buildXmlFragment(content);
 
 		// set the fragment transfer header
 		setFragmentHeader(fragmentHeader);
@@ -506,7 +458,7 @@ public class TransferExtensions extends Transfer {
                                        final List<Node> nodes) 
             throws SOAPException, JAXBException {
 
-        final JAXBElement<MixedDataType> xmlFragment = buildXmlFragment(requestContent);
+        final JAXBElement<MixedDataType> xmlFragment = MessageUtil.buildXmlFragment(requestContent);
         
         //set the fragment transfer header
         setFragmentHeader(fragmentHeader);

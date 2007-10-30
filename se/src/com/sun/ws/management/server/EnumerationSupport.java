@@ -19,16 +19,27 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.52  2007/10/02 10:43:43  jfdenise
+ **Fix for bug ID 134, Enumeration Iterator look up is static
+ **Applied to Enumeration and Eventing
+ **
  **Revision 1.51  2007/05/30 20:31:04  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EnumerationSupport.java,v 1.52 2007-10-02 10:43:43 jfdenise Exp $
+ * $Id: EnumerationSupport.java,v 1.53 2007-10-30 09:27:30 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
+import com.sun.ws.management.Message;
+import com.sun.ws.management.server.message.SAAJMessage;
+import com.sun.ws.management.server.message.WSEnumerationRequest;
+import com.sun.ws.management.server.message.WSEnumerationResponse;
+import com.sun.xml.ws.api.message.Header;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -40,6 +51,7 @@ import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -47,7 +59,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 import javax.xml.xpath.XPathException;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
@@ -64,6 +78,7 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
@@ -94,23 +109,21 @@ import com.sun.ws.management.soap.SOAP;
  * @see EnumerationIterator
  */
 public final class EnumerationSupport extends BaseSupport {
-
+    
     private static final int DEFAULT_ITEM_COUNT = 1;
     private static final int DEFAULT_EXPIRATION_MILLIS = 60000;
     private static final long DEFAULT_MAX_TIMEOUT_MILLIS = 300000;
     private static final Map<String, IteratorFactory> registeredIterators = new HashMap<String, IteratorFactory>();
-
     private static Duration defaultExpiration = null;
-
+    
     static {
         defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
     }
-
+    
     private EnumerationSupport() {
         // super();
     }
-
-    /**
+     /**
      * Initiate an
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
      * operation. Handlers calling this method must first register an
@@ -203,42 +216,64 @@ public final class EnumerationSupport extends BaseSupport {
             final IteratorFactory factory)
             throws DatatypeConfigurationException, SOAPException,
             JAXBException, FaultException {
-        
+        SAAJMessage req = new SAAJMessage(new Management(request));
+        SAAJMessage resp = new SAAJMessage(new Management(response));
         final EnumerationIterator iterator = newIterator(factory, 
+                handlerContext, req, resp);
+        
+        if (iterator == null) {
+            throw new ActionNotSupportedFault();
+        }
+        
+       enumerate(handlerContext, req, resp, iterator, listener);
+    }
+    
+    
+    
+    public static void enumerate(final HandlerContext handlerContext,
+            final WSEnumerationRequest request,
+            final WSEnumerationResponse response,
+            final ContextListener listener,
+            final WSEnumerationIteratorFactory factory)
+            throws DatatypeConfigurationException, SOAPException,
+            JAXBException, FaultException {
+        
+        final EnumerationIterator iterator = newIterator(factory,
                 handlerContext, request, response);
         
         if (iterator == null) {
             throw new ActionNotSupportedFault();
         }
         
-       enumerate(handlerContext, request, response, iterator, listener);
+        enumerate(handlerContext, request, response, iterator, listener);
     }
     
     private static void enumerate(final HandlerContext handlerContext,
-            final Enumeration request,
-            final Enumeration response,
+            final WSEnumerationRequest request,
+            final WSEnumerationResponse response,
             final EnumerationIterator iterator,
             final ContextListener listener)
             throws DatatypeConfigurationException, SOAPException,
             JAXBException, FaultException {
         EnumerationContext ctx = null;
         UUID context = null;
-
+        
         try {
             assert datatypeFactory != null : UNINITIALIZED;
             assert defaultExpiration != null : UNINITIALIZED;
-
+            
             String expires = null;
             Filter filter = null;
-
+            
             final Enumerate enumerate = request.getEnumerate();
             EnumerationModeType enumerationMode = null;
             boolean optimize = false;
             int maxElements = DEFAULT_ITEM_COUNT;
-
+            
+            // XXX REVISIT, IS ENUMERATE USED FOR EVENTING, NEED TO DO IT THE OLD WAY
             if (enumerate == null) {
                 // see if this is a pull event mode subscribe request
-                final EventingExtensions evtxRequest = new EventingExtensions(request);
+                final EventingExtensions evtxRequest = new EventingExtensions((Enumeration)request);
                 final Subscribe subscribe = evtxRequest.getSubscribe();
                 if (subscribe == null) {
                     throw new InvalidMessageFault();
@@ -248,49 +283,53 @@ public final class EnumerationSupport extends BaseSupport {
                     filter = EventingSupport.createFilter(evtxRequest);
                 }
                 expires = subscribe.getExpires();
-
+                
                 if (subscribe.getEndTo() != null) {
                     throw new UnsupportedFeatureFault(
                             UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
                 }
             } else {
+                // XXX REVISIT OLD WAY ONLY FOR THIS BRANCH
                 if (iterator.isFiltered() == false) {
                     // We will do the filtering
                     filter = createFilter(request);
                 }
+                
                 if (enumerate.getEndTo() != null) {
                     throw new UnsupportedFeatureFault(
                             UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
                 }
-                final EnumerationExtensions ext = new EnumerationExtensions(request);
+                
                 expires = enumerate.getExpires();
-                enumerationMode = ext.getModeType();
-                optimize = ext.getOptimize();
-                maxElements = ext.getMaxElements();
+                enumerationMode = request.getModeType();
+                optimize = request.getOptimize();
+                maxElements = request.getMaxElements();
             }
-
+            
             XMLGregorianCalendar expiration = initExpiration(expires);
             if (expiration == null) {
                 final GregorianCalendar now = new GregorianCalendar();
                 expiration = datatypeFactory.newXMLGregorianCalendar(now);
                 expiration.add(defaultExpiration);
             }
-
+            
             ctx = new EnumerationContext(expiration, filter, enumerationMode,
                     iterator, listener);
-
+            
             context = initContext(handlerContext, ctx);
+            // XXX REVISIT ONLY OLD WAY FOR THIS BRANCH
             if (enumerate == null) {
                 // this is a pull event mode subscribe request
-                final EventingExtensions evtxRequest = new EventingExtensions(request);
-                final EventingExtensions evtxResponse = new EventingExtensions(response);
+                final EventingExtensions evtxRequest = new EventingExtensions((Eventing)request);
+                final EventingExtensions evtxResponse = new EventingExtensions((Eventing)response);
                 evtxResponse.setSubscribeResponse(EventingSupport
                         .createSubscriptionManagerEpr(evtxRequest,
                         evtxResponse, context), ctx.getExpiration(),
                         context.toString());
             } else {
                 if (optimize) {
-                    final Duration maxTime = new Management(request).getTimeout();
+                    Duration maxTime = request.getMaxTime();
+                    
                     final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
                     final boolean more = doPull(handlerContext,
                             request,
@@ -300,10 +339,8 @@ public final class EnumerationSupport extends BaseSupport {
                             maxTime,
                             passed,
                             maxElements);
-
-                    final EnumerationExtensions enxResponse = new EnumerationExtensions(
-                            response);
-                    enxResponse.setEnumerateResponse(context.toString(),
+                    
+                    response.setEnumerateResponse(context.toString(),
                             ctx.getExpiration(),
                             passed,
                             enumerationMode,
@@ -330,7 +367,7 @@ public final class EnumerationSupport extends BaseSupport {
             throw new InternalErrorFault(t);
         }
     }
-
+    
     /**
      * Handle a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
      * request.
@@ -358,28 +395,60 @@ public final class EnumerationSupport extends BaseSupport {
             final Enumeration request,
             final Enumeration response)
             throws SOAPException, JAXBException, FaultException {
-
+        SAAJMessage req = new SAAJMessage(new Management(request));
+        SAAJMessage resp = new SAAJMessage(new Management(response));
+        pull(handlerContext, req, resp);
+    }
+    
+    /**
+     * Handle a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+     * request.
+     *
+     * @param request
+     *            The incoming SOAP message that contains the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+     *            request.
+     *
+     * @param response
+     *            The empty SOAP message that will contain the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
+     *
+     * @throws InvalidEnumerationContextFault
+     *             if the supplied context is missing, is not understood or is
+     *             not found because it has expired or the server has been
+     *             restarted.
+     *
+     * @throws TimedOutFault
+     *             if the data source fails to provide the items to be returned
+     *             within the specified
+     *             {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}.
+     */
+    public static void pull(final HandlerContext handlerContext,
+            final WSEnumerationRequest request,
+            final WSEnumerationResponse response)
+            throws SOAPException, JAXBException, FaultException {
+        
         assert datatypeFactory != null : UNINITIALIZED;
-
+        
         final Pull pull = request.getPull();
         if (pull == null) {
             throw new InvalidEnumerationContextFault();
         }
-
+        
         final BigInteger maxChars = pull.getMaxCharacters();
         if (maxChars != null) {
             // TODO: add support for maxChars
             throw new UnsupportedFeatureFault(
                     UnsupportedFeatureFault.Detail.MAX_ENVELOPE_SIZE);
         }
-
+        
         final EnumerationContextType contextType = pull.getEnumerationContext();
         final UUID context = extractContext(contextType);
         final EnumerationContext ctx = (EnumerationContext) getContext(context);
         if (ctx == null) {
             throw new InvalidEnumerationContextFault();
         }
-
+        
         if (ctx.isDeleted()) {
             throw new InvalidEnumerationContextFault();
         }
@@ -389,7 +458,7 @@ public final class EnumerationSupport extends BaseSupport {
             removeContext(handlerContext, context);
             throw new InvalidEnumerationContextFault();
         }
-
+        
         final BigInteger maxElementsBig = pull.getMaxElements();
         final int maxElements;
         if (maxElementsBig == null) {
@@ -398,47 +467,43 @@ public final class EnumerationSupport extends BaseSupport {
             // NOTE: downcasting from BigInteger to int
             maxElements = maxElementsBig.intValue();
         }
-
-        Duration maxTime = new Management(request).getTimeout();
+        
+        Duration maxTime = request.getMaxTime();
         if (maxTime == null) {
             maxTime = pull.getMaxTime();
         }
         final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
         final boolean more = doPull(handlerContext, request, response, context,
                 ctx, maxTime, passed, maxElements);
-
-        final EnumerationExtensions wsmanResponse = new EnumerationExtensions(
-                response);
+        
         if (more) {
-            wsmanResponse.setPullResponse(passed, context.toString(), true,
+            response.setPullResponse(passed, context.toString(), true,
                     ctx.getEnumerationMode());
         } else {
-            wsmanResponse.setPullResponse(passed, null, false,
+            response.setPullResponse(passed, null, false,
                     ctx.getEnumerationMode());
         }
     }
-
+    
     private static boolean doPull(final HandlerContext handlerContext,
-            final Enumeration request,
-            final Enumeration response,
+            final WSEnumerationRequest request,
+            final WSEnumerationResponse response,
             final UUID context,
             final EnumerationContext ctx,
             final Duration maxTimeout,
             final List<EnumerationItem> passed,
             final int maxElements)
             throws SOAPException, JAXBException, FaultException {
-
+        
         final EnumerationIterator iterator = ctx.getIterator();
         final GregorianCalendar start = new GregorianCalendar();
-
+        
         long timeout = DEFAULT_MAX_TIMEOUT_MILLIS;
         if (maxTimeout != null) {
             timeout = maxTimeout.getTimeInMillis(start);
         }
         final long end = start.getTimeInMillis() + timeout;
-
-        final SOAPEnvelope env = response.getEnvelope();
-
+        
         // Check the enumeration mode
         boolean includeItem = false;
         boolean includeEPR = false;
@@ -463,20 +528,33 @@ public final class EnumerationSupport extends BaseSupport {
             }
         }
         Boolean fragmentCheck = null;
-
+        
         // Synchronize on the iterator
         synchronized (iterator) {
             try {
                 if (iterator instanceof EnumerationPullIterator) {
+                    Management mgt;
+                    try {
+                        mgt = new Management(request.toSOAPMessage());
+                    } catch (Exception ex) {
+                       throw new SOAPException(ex.toString());
+                    }
+                    
+                    Enumeration en = new Enumeration(mgt);
                     ((EnumerationPullIterator) iterator).startPull(
+                            handlerContext, en);
+                } else {
+                    if(iterator instanceof WSEnumerationPullIterator)
+                        ((WSEnumerationPullIterator) iterator).startPull(
                             handlerContext, request);
                 }
+                
                 while ((passed.size() < maxElements) && (iterator.hasNext())) {
                     if (ctx.isDeleted()) {
                         // Context was deleted. Abort the request.
                         throw new InvalidEnumerationContextFault();
                     }
-
+                    
                     // Check for a timeout
                     if (new GregorianCalendar().getTimeInMillis() >= end) {
                         if (passed.size() == 0) {
@@ -519,13 +597,13 @@ public final class EnumerationSupport extends BaseSupport {
                             break;
                         }
                     }
-
+                    
                     // apply filter, if any
                     //
                     // retrieve the document element from the enumeration
                     // element
                     final Object element = ee.getItem();
-
+                    
                     // Check if request matches data provided:
                     // data only, EPR only, or data and EPR
                     if ((includeEPR == true)
@@ -544,7 +622,7 @@ public final class EnumerationSupport extends BaseSupport {
                     } else {
                         if (element != null) {
                             final Element item;
-
+                            
                             if (element instanceof Element) {
                                 item = (Element) element;
                             } else if (element instanceof Document) {
@@ -560,7 +638,7 @@ public final class EnumerationSupport extends BaseSupport {
                             } else {
                                 Document doc = Management.newDocument();
                                 try {
-                                    response.getXmlBinding().marshal(element,
+                                    response.getJAXBContext().createMarshaller().marshal(element,
                                             doc);
                                 } catch (Exception e) {
                                     removeContext(handlerContext, context);
@@ -608,9 +686,9 @@ public final class EnumerationSupport extends BaseSupport {
                                 final String nsURI = item.getNamespaceURI();
                                 final String nsPrefix = item.getPrefix();
                                 if (nsPrefix != null && nsURI != null) {
-                                    env
-                                            .addNamespaceDeclaration(nsPrefix,
-                                            nsURI);
+                                    Map<String, String> ns = new HashMap<String, String>();
+                                    ns.put(nsPrefix, nsURI);
+                                    response.addNamespaceDeclarations(ns);
                                 }
                             }
                         } else {
@@ -623,13 +701,23 @@ public final class EnumerationSupport extends BaseSupport {
                 }
             } finally {
                 if (iterator instanceof EnumerationPullIterator) {
-                    ((EnumerationPullIterator) iterator).endPull(response);
+                    Management mgt;
+                    try {
+                        mgt = new Management(request.toSOAPMessage());
+                    }catch (Exception ex) {
+                       throw new SOAPException(ex.toString());
+                    }
+                    Enumeration en = new Enumeration(mgt);
+                    ((EnumerationPullIterator) iterator).endPull(en);
+                } else {
+                    if(iterator instanceof WSEnumerationPullIterator)
+                        ((WSEnumerationPullIterator) iterator).endPull(response);
                 }
             }
-
+            
             // place an item count estimate if one was requested
             insertTotalItemCountEstimate(request, response, ctx.getIterator());
-
+            
             if (iterator.hasNext() == false) {
                 // remove the context -
                 // a subsequent release will fault with an invalid context
@@ -639,7 +727,7 @@ public final class EnumerationSupport extends BaseSupport {
             return iterator.hasNext();
         }
     }
-
+    
     /**
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release} an
      * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumeration}
@@ -660,19 +748,49 @@ public final class EnumerationSupport extends BaseSupport {
      *             not found because it has expired or the server has been
      *             restarted.
      */
-    public static void release(final HandlerContext handlerContext,
+     public static void release(final HandlerContext handlerContext,
             final Enumeration request,
             final Enumeration response)
             throws SOAPException, JAXBException, FaultException {
-
+        SAAJMessage req = new SAAJMessage(new Management(request));
+        SAAJMessage resp = new SAAJMessage(new Management(response));
+        release(handlerContext, req, resp);
+     }
+     
+     /**
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release} an
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumeration}
+     * in progress.
+     *
+     * @param request
+     *            The incoming SOAP message that contains the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release}
+     *            request.
+     *
+     * @param response
+     *            The empty SOAP message that will contain the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Release Release}
+     *            response.
+     *
+     * @throws InvalidEnumerationContextFault
+     *             if the supplied context is missing, is not understood or is
+     *             not found because it has expired or the server has been
+     *             restarted.
+     */
+    public static void release(final HandlerContext handlerContext,
+            final WSEnumerationRequest request,
+            final WSEnumerationResponse response)
+            throws SOAPException, JAXBException, FaultException {
+        
         final Release release = request.getRelease();
+        // XXX THIS IS DONE ONLY WITH OLD WAY
         if (release == null) {
             // this might be a pull-mode unsubscribe request
-            final Eventing evt = new Eventing(request);
+            final Eventing evt = new Eventing((Addressing)request);
             final Unsubscribe unsub = evt.getUnsubscribe();
             if (unsub != null) {
                 EventingSupport.unsubscribe(handlerContext, evt, new Eventing(
-                        response));
+                        (Addressing)response));
                 return;
             }
             throw new InvalidEnumerationContextFault();
@@ -690,7 +808,7 @@ public final class EnumerationSupport extends BaseSupport {
         if ((ctx instanceof EnumerationContext) == false) {
             throw new InvalidEnumerationContextFault();
         }
-
+        
         // Set single thread use of this context
         // synchronized (ctx) {
         if (ctx.isDeleted()) {
@@ -708,7 +826,7 @@ public final class EnumerationSupport extends BaseSupport {
         }
         // }
     }
-
+    
     /**
      * Utility method to create an EPR for accessing individual elements of an
      * enumeration directly.
@@ -725,16 +843,16 @@ public final class EnumerationSupport extends BaseSupport {
     public static EndpointReferenceType createEndpointReference(final String address,
             final String resource,
             final Map<String, String> selectorMap) {
-
+        
         final ReferenceParametersType refp = Addressing.FACTORY
                 .createReferenceParametersType();
-
+        
         final AttributableURI attributableURI = Management.FACTORY
                 .createAttributableURI();
         attributableURI.setValue(resource);
         refp.getAny()
         .add(Management.FACTORY.createResourceURI(attributableURI));
-
+        
         if (selectorMap != null) {
             final SelectorSetType selectorSet = Management.FACTORY
                     .createSelectorSetType();
@@ -751,11 +869,10 @@ public final class EnumerationSupport extends BaseSupport {
             refp.getAny()
             .add(Management.FACTORY.createSelectorSet(selectorSet));
         }
-
+        
         return Addressing.createEndpointReference(address, null, refp, null,
                 null);
     }
-
     /**
      * Create a Filter from an Enumeration request
      *
@@ -767,14 +884,28 @@ public final class EnumerationSupport extends BaseSupport {
     public static Filter createFilter(final Enumeration request)
     throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
         try {
-            final EnumerationExtensions enxRequest = new EnumerationExtensions(
-                    request);
-            final Enumerate enumerate = enxRequest.getEnumerate();
-            final org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType enuFilter = enumerate
-                    .getFilter();
-            final DialectableMixedDataType enxFilter = enxRequest
-                    .getWsmanFilter();
-
+            return createFilter(new SAAJMessage(new Management(request)));
+        } catch(SOAPException ex) {
+            throw new InternalErrorFault(ex);
+        }
+    }
+    
+    /**
+     * Create a Filter from an Enumeration request
+     *
+     * @return Returns a Filter object if a filter exists in the request,
+     *         otherwise null.
+     * @throws CannotProcessFilterFault,
+     *             FilteringRequestedUnavailableFault, InternalErrorFault
+     */
+    public static Filter createFilter(final WSEnumerationRequest request)
+    throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
+        try {
+            final Enumerate enumerate = request.getEnumerate();
+            final org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType enuFilter = request.getEnumerationFilter();
+            final DialectableMixedDataType enxFilter = request
+                    .getWsmanEnumerationFilter();
+            
             if ((enuFilter == null) && (enxFilter == null)) {
                 return null;
             }
@@ -786,10 +917,10 @@ public final class EnumerationSupport extends BaseSupport {
                         "Both wsen:Filter and wsman:Filter were specified in the request. Only one is allowed.",
                         null, null, null));
             }
-
+            
             // This is the namespaces used in the filter expression itself
             final NamespaceMap nsMap = getNamespaceMap(request);
-
+            
             if (enxFilter != null)
                 return createFilter(enxFilter.getDialect(), enxFilter
                         .getContent(), nsMap);
@@ -802,11 +933,17 @@ public final class EnumerationSupport extends BaseSupport {
             throw new InternalErrorFault(e);
         }
     }
-
-    private static NamespaceMap getNamespaceMap(final Enumeration request) {
+    
+    public static NamespaceMap getNamespaceMap(final WSEnumerationRequest request) {
         final NamespaceMap nsMap;
-        final SOAPBody body = request.getBody();
-
+        final SOAPBody body;
+        try {
+            body = request.toSOAPMessage().getSOAPBody();
+        }catch(Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("Impossible to convert to SOAPMessage");
+        }
+        
         NodeList wsmanFilter = body.getElementsByTagNameNS(
                 EnumerationExtensions.FILTER.getNamespaceURI(),
                 EnumerationExtensions.FILTER.getLocalPart());
@@ -824,14 +961,14 @@ public final class EnumerationSupport extends BaseSupport {
         }
         return nsMap;
     }
-
+    
     private static UUID extractContext(final EnumerationContextType contextType)
     throws FaultException {
-
+        
         if (contextType == null) {
             throw new InvalidEnumerationContextFault();
         }
-
+        
         final String contextString = (String) contextType.getContent().get(0);
         UUID context;
         try {
@@ -839,28 +976,26 @@ public final class EnumerationSupport extends BaseSupport {
         } catch (IllegalArgumentException argex) {
             throw new InvalidEnumerationContextFault();
         }
-
+        
         return context;
     }
-
-    private static void insertTotalItemCountEstimate(final Enumeration request,
-            final Enumeration response, final EnumerationIterator iterator)
+    
+    private static void insertTotalItemCountEstimate(final WSEnumerationRequest request,
+            final WSEnumerationResponse response, final EnumerationIterator iterator)
             throws SOAPException, JAXBException {
         // place an item count estimate if one was requested
-        final EnumerationExtensions enx = new EnumerationExtensions(request);
-        if (enx.getRequestTotalItemsCountEstimate() != null) {
-            final EnumerationExtensions rx = new EnumerationExtensions(response);
+        if (request.getRequestTotalItemsCountEstimate() != null) {
             final int estimate = iterator.estimateTotalItems();
             if (estimate < 0) {
                 // estimate not available
-                rx.setTotalItemsCountEstimate(null);
+                response.setTotalItemsCountEstimate(null);
             } else {
-                rx.setTotalItemsCountEstimate(new BigInteger(Integer
+                response.setTotalItemsCountEstimate(new BigInteger(Integer
                         .toString(estimate)));
             }
         }
     }
-
+    
     /**
      * Add an iterator factory to EnumerationSupport.
      *
@@ -878,7 +1013,7 @@ public final class EnumerationSupport extends BaseSupport {
             IteratorFactory iteratorFactory) throws Exception {
         registeredIterators.put(resourceURI, iteratorFactory);
     }
-
+    
     /**
      * Gets an IteratorFactory for the specified resource URI.
      *
@@ -890,35 +1025,28 @@ public final class EnumerationSupport extends BaseSupport {
             String resourceURI) {
         return registeredIterators.get(resourceURI);
     }
-
+    
     @SuppressWarnings("static-access")
     private synchronized static EnumerationIterator newIterator(
-            final IteratorFactory factory,
-            final HandlerContext context, final Enumeration request,
-            final Enumeration response) throws SOAPException, JAXBException {
-
+            final Object factory,
+            final HandlerContext context, final WSEnumerationRequest request,
+            final WSEnumerationResponse response) throws SOAPException, JAXBException {
+        
         if (factory == null) {
             return null;
         }
-        
-        final DocumentBuilder db = response.getDocumentBuilder();
         final Boolean includeItem;
         final Boolean includeEPR;
-
-        final EnumerationExtensions ext = new EnumerationExtensions(request);
-        final EnumerationModeType mode = ext.getModeType();
+        
+        final EnumerationExtensions.Mode mode = request.getMode();
         if (mode == null) {
             includeItem = true;
             includeEPR = false;
         } else {
-            final String modeString = mode.value();
-            if (modeString.equals(EnumerationExtensions.Mode.EnumerateEPR
-                    .toString())) {
+            if (mode.equals(EnumerationExtensions.Mode.EnumerateEPR)) {
                 includeItem = false;
                 includeEPR = true;
-            } else if (modeString
-                    .equals(EnumerationExtensions.Mode.EnumerateObjectAndEPR
-                    .toString())) {
+            } else if (mode.equals(EnumerationExtensions.Mode.EnumerateObjectAndEPR)) {
                 includeItem = true;
                 includeEPR = true;
             } else {
@@ -926,7 +1054,20 @@ public final class EnumerationSupport extends BaseSupport {
                         UnsupportedFeatureFault.Detail.ENUMERATION_MODE);
             }
         }
-        return factory.newIterator(context, request, db, includeItem,
+        if(factory instanceof IteratorFactory) {
+            IteratorFactory fact = (IteratorFactory) factory;
+            Management req;
+            try {
+                req = new Management(request.toSOAPMessage());
+            } catch (Exception ex) {
+                throw new SOAPException(ex.toString());
+            }
+            Enumeration en = new Enumeration(req);
+            return fact.newIterator(context, en, Message.getDocumentBuilder(), includeItem,
                 includeEPR);
+        } else {
+            return ((WSEnumerationIteratorFactory) factory).newIterator(context, request, includeItem,
+                includeEPR);
+        }
     }
 }
