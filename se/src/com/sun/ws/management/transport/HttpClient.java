@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.21  2007/09/18 20:08:55  nbeers
+ **Add support for SOAP with attachments.  Issue #136.
+ **
  **Revision 1.20  2007/06/04 06:25:12  denis_rachal
  **The following fixes have been made:
  **
@@ -34,7 +37,7 @@
  **Add HP copyright header
  **
  **
- * $Id: HttpClient.java,v 1.21 2007-09-18 20:08:55 nbeers Exp $
+ * $Id: HttpClient.java,v 1.22 2007-10-30 09:52:56 denis_rachal Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -351,7 +354,7 @@ public final class HttpClient {
         final ContentType contentType = ContentType.createFromHttpContentType(responseType);
         if (contentType==null||!contentType.isAcceptable()) {
             // dump the first 4k bytes of the response for help in debugging
-            if (LOG.isLoggable(Level.INFO)) {
+            if ((LOG.isLoggable(Level.INFO)) && (null != is)) {
                 final byte[] buffer = new byte[4096];
                 final int nread = is.read(buffer);
                 if (nread > 0) {
