@@ -14,6 +14,7 @@ import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.EventingSupport;
 import com.sun.ws.management.server.NamespaceMap;
+import com.sun.ws.management.server.WSEnumerationSupport;
 import com.sun.ws.management.server.message.WSManagementRequest;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
@@ -429,7 +430,7 @@ public class MessageUtil {
     public static NamespaceContext getNamespaceContext(WSManagementRequest req) throws Exception {
         String action = req.getActionURI().toString();
         if(action.equals(Enumeration.ENUMERATE_ACTION_URI)) {
-            return EnumerationSupport.getNamespaceMap(req);
+            return WSEnumerationSupport.getNamespaceMap(req);
         }
         if(action.equals(Eventing.SUBSCRIBE_ACTION_URI)) {
             return EventingSupport.getNamespaceMap(req);
