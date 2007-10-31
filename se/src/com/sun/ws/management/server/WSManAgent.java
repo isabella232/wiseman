@@ -19,6 +19,10 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.18  2007/10/30 09:27:47  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.17  2007/06/15 12:13:20  jfdenise
  **Cosmetic change. Make OPERATION_TIMEOUT_DEFAULT public and added a trace.
  **
@@ -26,49 +30,23 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgent.java,v 1.18 2007-10-30 09:27:47 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.19 2007-10-31 09:53:55 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.server.message.SAAJMessage;
-import com.sun.ws.management.server.message.WSManagementRequest;
-import com.sun.ws.management.server.message.WSManagementResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.UUID;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBException;
-import javax.xml.datatype.Duration;
-import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.xml.sax.SAXException;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
@@ -77,13 +55,14 @@ import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.Message;
-import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.server.message.SAAJMessage;
+import com.sun.ws.management.server.message.WSManagementRequest;
+import com.sun.ws.management.server.message.WSManagementResponse;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * WS-MAN agent decoupled from transport. Can be used in Servlet / JAX-WS / ...
@@ -94,6 +73,7 @@ import com.sun.ws.management.xml.XmlBinding;
 public abstract class WSManAgent extends WSManAgentSupport {
     private static final Logger LOG = Logger.getLogger(WSManAgent.class.getName());
     private static final String UUID_SCHEME = "uuid:";
+    private static final long MIN_ENVELOPE_SIZE = 8192;
     
     private class RequestDispatcherWrapper extends WSManRequestDispatcher {
         private RequestDispatcher dispatcher;
@@ -220,62 +200,73 @@ public abstract class WSManAgent extends WSManAgentSupport {
                     "message " + response);
         
         Management mgtResp = (Management) response;
-        return handleResponse(mgtResp, null, maxEnvelopeSize, false);
+        return handleResponse(mgtResp, null, maxEnvelopeSize);
     }
     
     private static Message handleResponse(final Management response,
-            final FaultException fex, final long maxEnvelopeSize,
-            boolean responseTooBig) throws SOAPException, JAXBException,
+            final FaultException fex, final long maxEnvelopeSize) throws SOAPException, JAXBException,
             IOException {
         if (fex != null)
             response.setFault(fex);
         
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        response.writeTo(baos);
-        final byte[] content = baos.toByteArray();
-        
         logMessage(LOG, response);
         
-        if (content.length > maxEnvelopeSize) {
-            
-            // although we check earlier that the maxEnvelopeSize is > 8192, we still
-            // need to use the responseTooBig flag to break possible infinite recursion if
-            // the serialization of the EncodingLimitFault happens to exceed 8192 bytes
-            if (responseTooBig) {
-                LOG.warning("MaxEnvelopeSize set too small to send an EncodingLimitFault");
-                // Let's try the underlying stack to send the reply. Best effort
-            } else {
-                if(LOG.isLoggable(Level.FINE))
-                    LOG.log(Level.FINE, "Response actual size is bigger than maxSize.");
-                handleResponse(response,
-                        new EncodingLimitFault(Integer.toString(content.length),
-                        EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED), maxEnvelopeSize, true);
-            }
-        }else
-            if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Response actual size is smaller than maxSize.");
-        
+        if (maxEnvelopeSize < MIN_ENVELOPE_SIZE) {
+			final String err = "MaxEnvelopeSize of '" + maxEnvelopeSize
+					+ "' is set too small to encode faults "
+					+ "(needs to be at least " + MIN_ENVELOPE_SIZE + ")";
+			LOG.fine(err);
+			final EncodingLimitFault fault = new EncodingLimitFault(err,
+					EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE);
+			response.setFault(fault);
+		} else {
+			if (maxEnvelopeSize >= Integer.MAX_VALUE) {
+				// Don't check MaxEnvelopeSize if not specified or set to maximum.
+				// NOTE: The official maximum is actually Long.MAX_VALUE,
+				//        but the ByteArrayOutputStream we use has a maximum
+				//        size of Integer.MAX_VALUE. We therefore cannot actually
+				//        check if the size exceeds Integer.MAX_VALUE.
+				LOG.fine("MaxEnvelopeSize not specified or set to maxiumum value.");
+			} else {
+				final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				response.writeTo(baos);
+				int length = baos.size();
+
+				if (length > maxEnvelopeSize) {
+					final String err = "MaxEnvelopeSize of '"
+							+ maxEnvelopeSize
+							+ "' is smaller than the size of the response message: "
+							+ Integer.toString(length);
+					LOG.fine(err);
+					final EncodingLimitFault fault = new EncodingLimitFault(
+							err,
+							EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED);
+					response.setFault(fault);
+				} else {
+					// Message size is OK.
+					LOG.fine("Response actual size is smaller than specified MaxEnvelopeSize.");
+				}
+			}
+		}
         
         final String dest = response.getTo();
         if (!Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
-            if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Non anonymous reply to send to : " + dest);
-            final int status = sendAsyncReply(response.getTo(), content, response.getContentType());
+            LOG.fine("Non anonymous reply to send to : " + dest);
+            final int status = sendAsyncReply(response);
             if (status != HttpURLConnection.HTTP_OK) {
                 throw new IOException("Response to " + dest + " returned " + status);
             }
             return null;
         }
         
-        if(LOG.isLoggable(Level.FINE))
-            LOG.log(Level.FINE, "Anonymous reply to send.");
+        LOG.fine("Anonymous reply to send.");
         
         return response;
     }
     
-    private static int sendAsyncReply(final String to, final byte[] bits, final ContentType contentType)
+    private static int sendAsyncReply(final Management response)
     throws IOException, SOAPException, JAXBException {
-        return HttpClient.sendResponse(to, bits, contentType);
+        return HttpClient.sendResponse(response);
     }
     
     static void logMessage(Logger logger,
@@ -291,7 +282,7 @@ public abstract class WSManAgent extends WSManAgentSupport {
             msg.writeTo(baos);
             final byte[] content = baos.toByteArray();
             
-            String encoding = msg.getContentType() == null ? null :
+            final String encoding = msg.getContentType() == null ? null :
                 msg.getContentType().getEncoding();
             
             logger.fine("Encoding [" + encoding + "]");
