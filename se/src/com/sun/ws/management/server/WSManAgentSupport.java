@@ -19,6 +19,10 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/10/30 09:28:22  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.17  2007/06/15 12:13:20  jfdenise
  **Cosmetic change. Make OPERATION_TIMEOUT_DEFAULT public and added a trace.
  **
@@ -26,7 +30,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgentSupport.java,v 1.1 2007-10-30 09:28:22 jfdenise Exp $
+ * $Id: WSManAgentSupport.java,v 1.2 2007-10-31 11:59:35 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -97,7 +101,7 @@ public abstract class WSManAgentSupport {
     
     private static final Logger LOG = Logger.getLogger(WSManAgentSupport.class.getName());
     private static final long DEFAULT_TIMEOUT = 30000;
-    private static final long MIN_ENVELOPE_SIZE = 8192;
+    protected static final long MIN_ENVELOPE_SIZE = 8192;
     private static final long DISABLED_TIMEOUT = -1;
     
     public static final String OPERATION_TIMEOUT =

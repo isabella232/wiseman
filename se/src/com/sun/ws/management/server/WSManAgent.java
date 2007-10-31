@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.19  2007/10/31 09:53:55  denis_rachal
+ **Fixed error where incorrect fault is returned when setting MaxEnvelopeSize too small. Additionally added performance enhancement to not computer MaxEnvelope size if it is not specified in the request, or it is set to the maximum.
+ **
  **Revision 1.18  2007/10/30 09:27:47  jfdenise
  **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
  **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
@@ -30,7 +33,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgent.java,v 1.19 2007-10-31 09:53:55 denis_rachal Exp $
+ * $Id: WSManAgent.java,v 1.20 2007-10-31 11:59:24 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -103,9 +106,14 @@ public abstract class WSManAgent extends WSManAgentSupport {
         return new RequestDispatcherWrapper(createDispatcher(new Management(request.toSOAPMessage()), 
                 context));
     }
+    
     public long getValidEnvelopeSize(Management request) throws JAXBException, SOAPException {
-        return getEnvelopeSize(new SAAJMessage((request)));
+        long maxEnvelopeSize = getEnvelopeSize(new SAAJMessage((request)));
+         if(maxEnvelopeSize < MIN_ENVELOPE_SIZE)
+            maxEnvelopeSize =  Long.MAX_VALUE;
+        return maxEnvelopeSize;
     }
+    
     /**
      * Hook your own dispatcher
      * @param agent
@@ -130,7 +138,7 @@ public abstract class WSManAgent extends WSManAgentSupport {
                         request.getContentType());
             saajResponse.setContentType(request.getContentType());
             
-            Message ret = handleResponse(saajResponse, getEnvelopeSize(req));
+            Message ret = handleResponse(saajResponse, getValidEnvelopeSize(request));
             return ret;
         }catch(Exception ex) {
             try {
