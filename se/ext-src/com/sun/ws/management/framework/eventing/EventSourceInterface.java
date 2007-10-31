@@ -20,12 +20,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/06/19 12:29:33  simeonpinder
+ **changes:
+ **-set 1.0 release implementation version
+ **-enable metadata ResourceURIs from extracted EPR
+ **-useful eventing constants and fix for notifyTo in utility.
+ **-cleaned up EventSourceInterface,SubscriptionManagerInterface definitions
+ **-added MetadataResourceAccessor draft
+ **-improved mechanism to strip unwanted headers from metadata decorated Management mesgs
+ **-added unregister mechanism to facilitate remote SubscriptionManager implementations
+ **
  **Revision 1.2  2007/05/30 20:30:31  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: EventSourceInterface.java,v 1.3 2007-06-19 12:29:33 simeonpinder Exp $
+ * $Id: EventSourceInterface.java,v 1.4 2007-10-31 09:54:21 denis_rachal Exp $
  */
 package com.sun.ws.management.framework.eventing;
 
@@ -57,10 +67,11 @@ public interface EventSourceInterface extends Handler {
 	/**Fundamental method of an Event Source. See WS-Eventing
 	 * for more details about how this should be implemented.
 	 * 
+	 * @param resource
 	 * @param context
-	 * @param eventRequest
-	 * @param eventResponse
-	 * @return
+	 * @param request
+	 * @param response
+	 * @return Management object
 	 * @throws SOAPException
 	 * @throws JAXBException
 	 * @throws DatatypeConfigurationException
@@ -94,7 +105,7 @@ public interface EventSourceInterface extends Handler {
      * a Wiseman Metadata artifact with all required
      * Addressing information already populated.
      * 
-     * @return
+     * @return Management message for response
      * @throws SOAPException
      * @throws JAXBException
      * @throws DatatypeConfigurationException
@@ -114,7 +125,7 @@ public interface EventSourceInterface extends Handler {
      * run it through the AnnotationProcessing api.  See 
      * SampleEventSourceHandler for an example.
      * 
-     * @return
+     * @return Management message for response
      * @throws SOAPException
      * @throws JAXBException
      * @throws DatatypeConfigurationException

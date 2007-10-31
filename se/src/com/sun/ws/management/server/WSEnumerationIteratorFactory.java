@@ -20,7 +20,6 @@ public interface WSEnumerationIteratorFactory {
      * 
      * @param context the HandlerContext
      * @param request the Enumeration request that this iterator is to fufill
-     * @param db the DocumentBuilder to use for items created by this iterator
      * @param includeItem if true the requester wants the item returned, otherwise
      * just the EPR if includeEPR is true
      * @param includeEPR if true the requestor wants the EPR for each item returned, otherwise
