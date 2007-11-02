@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.54  2007/10/31 12:25:17  jfdenise
+ **Split between new support and previous one.
+ **
  **Revision 1.53  2007/10/30 09:27:30  jfdenise
  **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
  **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
@@ -31,7 +34,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationSupport.java,v 1.54 2007-10-31 12:25:17 jfdenise Exp $
+ * $Id: EnumerationSupport.java,v 1.55 2007-11-02 14:20:52 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -203,7 +206,7 @@ public final class EnumerationSupport extends WSEnumerationBaseSupport {
             }
             
             EnumerationContext ctx = WSEnumerationSupport.createContext(handlerContext, expires, filter,
-                    null, iterator, listener);
+                    null, iterator, listener, null, null);
             
             UUID context = initContext(handlerContext, ctx);
             // this is a pull event mode subscribe request

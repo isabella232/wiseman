@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/10/31 12:25:38  jfdenise
+ **Split between new support and previous one.
+ **
  **Revision 1.53  2007/10/30 09:27:30  jfdenise
  **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
  **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
@@ -31,46 +34,35 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.1 2007-10-31 12:25:38 jfdenise Exp $
+ * $Id: WSEnumerationSupport.java,v 1.2 2007-11-02 14:20:52 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Message;
-import com.sun.ws.management.server.message.WSEnumerationRequest;
-import com.sun.ws.management.server.message.WSEnumerationResponse;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
 
-import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
-import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
-import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
@@ -78,16 +70,20 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.Message;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.ActionNotSupportedFault;
-import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.enumeration.FilteringNotSupportedFault;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
+import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
 import com.sun.ws.management.enumeration.TimedOutFault;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
+import com.sun.ws.management.server.message.WSEnumerationRequest;
+import com.sun.ws.management.server.message.WSEnumerationResponse;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 
@@ -95,13 +91,13 @@ import com.sun.ws.management.soap.SOAP;
  * A helper class that encapsulates some of the arcane logic to allow data
  * sources to be enumerated using the WS-Enumeration protocol.
  *
- * @see IteratorFactory
+ * @see WSEnumerationIteratorFactory
  * @see EnumerationIterator
  */
 public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
     
     private static final int DEFAULT_ITEM_COUNT = 1;
-    private static final int DEFAULT_EXPIRATION_MILLIS = 60000;
+    private static final int DEFAULT_EXPIRATION_MILLIS = 600000; // 10 minutes
     private static final long DEFAULT_MAX_TIMEOUT_MILLIS = 300000;
     private static Duration defaultExpiration = null;
     
@@ -112,7 +108,40 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
     private WSEnumerationSupport() {
         // super();
     }
-    
+      
+    /**
+     * Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
+     * operation.
+     *
+     * @param handlerContext
+     *            The handler context for this request
+     * @param request
+     *            The incoming SOAP message that contains the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
+     *            request.
+     * @param response
+     *            The empty SOAP message that will contain the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse EnumerateResponse}.
+     * @param factory
+     *            The iterator factory to use to create the iterator
+     *            to use for this enumeration request.
+     * @param listener
+     *            Will be called when the enumeration is successfully created and
+     *            when deleted.
+     *             
+     * @throws FilteringNotSupportedFault
+     *             if filtering is not supported.
+     *
+     * @throws InvalidExpirationTimeFault
+     *             if the expiration time specified in the request is
+     *             syntactically-invalid or is in the past.
+     *
+     * @throws FaultException
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     */
     public static void enumerate(final HandlerContext handlerContext,
             final WSEnumerationRequest request,
             final WSEnumerationResponse response,
@@ -128,29 +157,98 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             throw new ActionNotSupportedFault();
         }
         
-        enumerate(handlerContext, request, response, iterator, listener);
+        enumerate(handlerContext, request, response, iterator, listener, null, null);
     }
-    
-    static EnumerationContext createContext(HandlerContext handlerContext,
-            String expires, Filter filter,
-            EnumerationModeType enumerationMode, EnumerationIterator iterator,
-            ContextListener listener) {
-        XMLGregorianCalendar expiration = initExpiration(expires);
-        if (expiration == null) {
-            final GregorianCalendar now = new GregorianCalendar();
-            expiration = datatypeFactory.newXMLGregorianCalendar(now);
-            expiration.add(defaultExpiration);
-        }
-        EnumerationContext ctx = new EnumerationContext(expiration, filter, enumerationMode,
-                iterator, listener);
-        return ctx;
-    }
-    
+   
+    /**
+     * Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
+     * operation.
+     *
+     * @param handlerContext
+     *            The handler context for this request
+     * @param request
+     *            The incoming SOAP message that contains the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
+     *            request.
+     * @param response
+     *            The empty SOAP message that will contain the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse EnumerateResponse}.
+     * @param iterator
+     *            The iterator to use for this enumeration request.
+     * @param listener
+     *            Will be called when the enumeration is successfully created and
+     *            when deleted.
+     *                
+     * @throws FilteringNotSupportedFault
+     *             if filtering is not supported.
+     *
+     * @throws InvalidExpirationTimeFault
+     *             if the expiration time specified in the request is
+     *             syntactically-invalid or is in the past.
+     *
+     * @throws FaultException
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     */
     public static void enumerate(final HandlerContext handlerContext,
             final WSEnumerationRequest request,
             final WSEnumerationResponse response,
             final EnumerationIterator iterator,
             final ContextListener listener)
+            throws DatatypeConfigurationException, SOAPException,
+            JAXBException, FaultException {
+    	enumerate(handlerContext, request, response, iterator, listener, null, null);
+    }
+    
+    /**
+     * Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
+     * operation.
+     *
+     * @param handlerContext
+     *            The handler context for this request
+     * @param request
+     *            The incoming SOAP message that contains the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate Enumerate}
+     *            request.
+     * @param response
+     *            The empty SOAP message that will contain the
+     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse EnumerateResponse}.
+     * @param iterator
+     *            The iterator to use for this enumeration request.
+     * @param listener
+     *            Will be called when the enumeration is successfully created and
+     *            when deleted.
+     * @param defExpiration 
+     *             The default expiration for this request
+     *             if none is specified by the request.
+     *             If null the system default of 10 minutes is used.           
+     * @param maxExpiration
+     *             The maximum value a client is allowed to set the Expiration to.
+     *             If the requested Expiration exceeds this value, it will be set
+     *             to this value. If null infinity is the maximum.
+     *             
+     * @throws FilteringNotSupportedFault
+     *             if filtering is not supported.
+     *
+     * @throws InvalidExpirationTimeFault
+     *             if the expiration time specified in the request is
+     *             syntactically-invalid or is in the past.
+     *
+     * @throws FaultException
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     */
+    public static void enumerate(final HandlerContext handlerContext,
+            final WSEnumerationRequest request,
+            final WSEnumerationResponse response,
+            final EnumerationIterator iterator,
+            final ContextListener listener,
+            final Duration defExpiration,
+            final Duration maxExpiration)
             throws DatatypeConfigurationException, SOAPException,
             JAXBException, FaultException {
         EnumerationContext ctx = null;
@@ -164,6 +262,10 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             Filter filter = null;
             
             final Enumerate enumerate = request.getEnumerate();
+            if (enumerate == null) {
+            	iterator.release();
+                throw new InvalidMessageFault();
+            }
             EnumerationModeType enumerationMode = null;
             boolean optimize = false;
             int maxElements = DEFAULT_ITEM_COUNT;
@@ -174,6 +276,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             }
             
             if (enumerate.getEndTo() != null) {
+            	iterator.release();
                 throw new UnsupportedFeatureFault(
                         UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
@@ -184,7 +287,8 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             maxElements = request.getMaxElements();
             
             ctx = createContext(handlerContext, expires, filter,
-                    enumerationMode, iterator, listener);
+                                enumerationMode, iterator, listener,
+                                defExpiration, maxExpiration);
             
             context = initContext(handlerContext, ctx);
             
@@ -292,7 +396,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         if (maxElementsBig == null) {
             maxElements = DEFAULT_ITEM_COUNT;
         } else {
-            // NOTE: downcasting from BigInteger to int
+            // NOTE: down casting from BigInteger to Integer
             maxElements = maxElementsBig.intValue();
         }
         
@@ -311,6 +415,38 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             response.setPullResponse(passed, null, false,
                     ctx.getEnumerationMode());
         }
+    }
+    
+    static EnumerationContext createContext(HandlerContext handlerContext,
+            String expires, Filter filter,
+            EnumerationModeType enumerationMode, EnumerationIterator iterator,
+            ContextListener listener,
+            Duration defExpiration, Duration maxExpiration) {
+    	
+        final GregorianCalendar now = new GregorianCalendar();
+    	XMLGregorianCalendar expiration = null;    	
+    	if ((expires != null) && (expires.length() >= 0))
+    		expiration = initExpiration(expires);
+        if (expiration == null) {
+            expiration = datatypeFactory.newXMLGregorianCalendar(now);
+            // Check if the application supplied a default value.
+            if (defExpiration != null)
+            	expiration.add(defExpiration);
+            else
+            	expiration.add(defaultExpiration);
+        }
+        if (maxExpiration != null) {
+        	// A maximum Expiration was specified.
+        	final XMLGregorianCalendar max = datatypeFactory.newXMLGregorianCalendar(now);
+        	max.add(maxExpiration);
+        	if (expiration.compare(max) == DatatypeConstants.GREATER) {
+        		expiration = max;
+        	}	
+        }
+        	
+        EnumerationContext ctx = new EnumerationContext(expiration, filter, enumerationMode,
+                iterator, listener);
+        return ctx;
     }
     
     private static boolean doPull(final HandlerContext handlerContext,
