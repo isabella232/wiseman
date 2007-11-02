@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/05/30 20:30:30  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EnumerationTestCase.java,v 1.4 2007-05-30 20:30:30 nbeers Exp $
+ * $Id: EnumerationTestCase.java,v 1.5 2007-11-02 06:16:41 denis_rachal Exp $
  */
 package framework;
 
@@ -75,15 +78,19 @@ public class EnumerationTestCase extends WsManBaseTestSupport
         PullResponse pullResponse = sendPullRequest(DESTINATION, RESOURCE_URI, content.get(0));
         assertNotNull(pullResponse);
 
+        if (pullResponse.getEndOfSequence() == null) {
+        	Addressing response = sendReleaseRequest(DESTINATION, RESOURCE_URI, content.get(0));
+        	assertFalse(response.getBody().hasFault());
+        }
         Addressing response = sendReleaseRequest(DESTINATION, RESOURCE_URI, content.get(0));
-        assertTrue(response.getBody().hasFault());//should have fault since the pull request forced a release
-
+        assertTrue(response.getBody().hasFault());//should have fault since we ensured it was released
 
         enumerateResponse = sendEnumerateRequest(DESTINATION, RESOURCE_URI, null);
         assertNotNull(enumerateResponse);
         enumerationContext = enumerateResponse.getEnumerationContext();
         content = enumerationContext.getContent();
         response = sendReleaseRequest(DESTINATION, RESOURCE_URI, content.get(0));
+        assertFalse(response.getBody().hasFault());
         response = sendEnumRequest(content.get(0),DESTINATION, RESOURCE_URI, Enumeration.PULL_ACTION_URI);
         assertTrue(response.getBody().hasFault());//should have a fault because it should have been released
 
