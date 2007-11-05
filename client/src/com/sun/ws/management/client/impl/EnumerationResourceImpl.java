@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.26  2007/09/18 20:08:56  nbeers
+ **Add support for SOAP with attachments.  Issue #136.
+ **
  **Revision 1.25  2007/06/19 19:50:39  nbeers
  **Set the DefaultTimeout header in addition to the maxElement header for enumeration pulls
  **
@@ -39,7 +42,7 @@
  **
  ** 
  *
- * $Id: EnumerationResourceImpl.java,v 1.26 2007-09-18 20:08:56 nbeers Exp $
+ * $Id: EnumerationResourceImpl.java,v 1.27 2007-11-05 12:58:07 denis_rachal Exp $
  */
 package com.sun.ws.management.client.impl;
 
@@ -120,7 +123,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	 * @param filter a filter expression to be applied against the enumeration.
 	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
 	 *        containing the XPath expression. For other dialects this must be an
-	 *        object recognized by the marshaller.
+	 *        object recognized by the marshaler.
 	 * @param namespaces prefix and namespace map for namespaces used in the filter
 	 *        expression.
 	 * @param dialect the dialect to be used in filter expressions.
@@ -144,7 +147,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 			DatatypeConfigurationException {
 		Object[] params = new Object[]{};
 		return enumerate(filter, namespaces, dialect, getEpr, getResource,
-				true, false, 0, 0, params);
+				true, false, 0, 0, null, params);
 
 	}
 	
@@ -156,7 +159,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	 * @param filter a filter expression to be applied against the enumeration.
 	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
 	 *        containing the XPath expression. For other dialects this must be an
-	 *        object recognized by the marshaller.
+	 *        object recognized by the marshaler.
 	 * @param namespaces prefix and namespace map for namespaces used in the filter
 	 *        expression.
 	 * @param dialect the dialect to be used in filter expressions.
@@ -193,7 +196,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 			DatatypeConfigurationException {
 		Object[] params = new Object[]{};
 		return enumerate(filter, namespaces, dialect, getEpr, getResource,
-				         getItemCount, optimized, timeout, maxElements, params);
+				         getItemCount, optimized, timeout, maxElements, null, params);
 	}
 	
 	/**
@@ -204,7 +207,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	 * @param filter a filter expression to be applied against the enumeration.
 	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
 	 *        containing the XPath expression. For other dialects this must be an
-	 *        object recognized by the marshaller.
+	 *        object recognized by the marshaler.
 	 * @param namespaces prefix and namespace map for namespaces used in the filter
 	 *        expression.
 	 * @param dialect the dialect to be used in filter expressions.
@@ -224,7 +227,7 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 	 *        If &lt;= 0 this parameter is ignored.
 	 * @param maxElements
 	 *        the maximum number of elements which should be returned
-	 * @param params additional parameters to be marshalled into the <code>Enumerate</code>
+	 * @param params additional parameters to be marshaled into the <code>Enumerate</code>
 	 *        element in the Body of the request.
 	 * @return an enumeration context
 	 * @throws SOAPException
@@ -240,6 +243,63 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 			final long timeout, final long maxElements, final Object... params)
 			throws SOAPException, JAXBException, IOException, FaultException,
 			DatatypeConfigurationException {
+		return enumerate(filter, namespaces, dialect, getEpr, getResource,
+		         getItemCount, optimized, timeout, maxElements, null, params);
+	}
+	
+	/**
+	 * Initiates an enumeration transaction by obtaining an enumeration context.
+	 * This is a ticket which must be used in all future calls to access this
+	 * enumeration.
+	 * 
+	 * @param filter a filter expression to be applied against the enumeration.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaler.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 *        can be used for XPath expressions. 
+	 * @param getEpr indicates that the EndpointReference (EPR) for each item is to
+	 *        returned in the pull.
+	 * @param getResource indicates that the individual items are to be returned in
+	 *        the pull.
+	 * @param getItemCount if true indicates that the estimated item count should be returned
+	 * @param optimized if true the EnumerationItems will be requested to be returned
+	 *        in the enumerate call. Call {@link #getEnumerationItems()} to get the
+	 *        list of resources returned in this call.
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
+	 * @param maxElements
+	 *        the maximum number of elements which should be returned.
+	 *        Ignored if optimized is false.
+	 * @param expires the <code>Expiration</code>. This is a string containing
+	 *        an expiration time for the enumeration context that will be
+	 *        created on the server. It is expressed as either a Duration
+	 *        or Datetime. See ISO 8601 for details.
+	 *        NOTE: The server may ignore this value and override it.
+	 *        If null the Expiration is not set in the request
+	 *        and will be set with a server default value.
+	 * @param params additional parameters to be marshaled into the <code>Enumerate</code>
+	 *        element in the Body of the request.
+	 * @return an enumeration context
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public EnumerationCtx enumerate(final Object filter, 
+			final Map<String, String> namespaces, final String dialect,
+			final boolean getEpr, final boolean getResource, 
+			final boolean getItemCount, final boolean optimized, 
+			final long timeout, final long maxElements,  
+			final String expires, final Object... params)
+	throws SOAPException, JAXBException, IOException,
+	       FaultException, DatatypeConfigurationException {
 
 		String enumerationContextId = "";
 
@@ -274,11 +334,11 @@ public class EnumerationResourceImpl extends TransferableResourceImpl implements
 			filterType.getContent().add(filter);
 
 			enu.setEnumerate(null, getItemCount, optimized, (int) maxElements,
-					null, filterType, enumerationMode, params);
+					expires, filterType, enumerationMode, params);
 			enu.setFilterNamespaces(namespaces);
 		} else {
 			enu.setEnumerate(null, getItemCount, optimized, (int) maxElements,
-					null, null, enumerationMode, params);
+					expires, null, enumerationMode, params);
 		}
 
 		final Addressing response = HttpClient.sendRequest(mgmt);

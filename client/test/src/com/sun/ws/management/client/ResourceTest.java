@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/07/12 12:33:07  denis_rachal
+ **Allo configuring destination URL for testing.
+ **
  **Revision 1.3  2007/06/19 13:08:08  simeonpinder
  **update version check in identify.
  **
@@ -49,7 +52,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.4 2007-07-12 12:33:07 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.5 2007-11-05 12:58:08 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -1088,6 +1091,48 @@ public class ResourceTest extends WsManBaseTestSupport {
 		try {
 			retrievedValues = retEnumRes.pull(enumContext, maxTime,
 					maxElements, maxChar);
+			fail("This context should have been destroyed.");
+		} catch (FaultException ex) {
+			// Do nothing, should fail.
+		}
+	}
+	
+	public void testEnumerationExpiration() throws SOAPException, JAXBException,
+			IOException, FaultException, DatatypeConfigurationException {
+
+		// define enumeration handler url
+		String resourceUri = "wsman:auth/userenum";
+
+		SelectorSetType selectors = null;
+		// test that Find works to retrieve the Enumeration instance.
+		Resource[] enumerableResources = ResourceFactory.find(
+				ResourceTest.destUrl, resourceUri,
+				ResourceTest.timeoutInMilliseconds, selectors);
+
+		assertEquals("Expected one resource.", 1, enumerableResources.length);
+		Resource retrieved = enumerableResources[0];
+		assertTrue(retrieved instanceof EnumerableResource);
+
+		// Retrieve the Enumeration context.
+		final String expires = "PT1S"; // 1 second
+		EnumerationCtx enumContext = retrieved.enumerate(null,
+				null, null, false, false, false, false, 0,
+				0, expires, new Object[0]);
+		assertNotNull("Enum context retrieval problem.", enumContext);
+		assertTrue("Context id is empty.", (enumContext.getContext().trim()
+				.length() > 0));
+
+		// The cleanup interval is 60 seconds, so we'll need to wait at least 60 seconds
+		try {
+			Thread.sleep(60000);
+		} catch (InterruptedException e) {
+			// Should not have been interrupted.
+			fail("Unexpected interrupt during sleep().");
+		}
+		
+		// Try to release the context. We should get a fault.
+		try {
+			retrieved.release(enumContext);
 			fail("This context should have been destroyed.");
 		} catch (FaultException ex) {
 			// Do nothing, should fail.

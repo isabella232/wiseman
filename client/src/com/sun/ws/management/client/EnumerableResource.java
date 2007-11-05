@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.9  2007/05/30 20:30:21  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: EnumerableResource.java,v 1.9 2007-05-30 20:30:21 nbeers Exp $
+ * $Id: EnumerableResource.java,v 1.10 2007-11-05 12:58:07 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -55,7 +58,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @param filter a filter expression to be applied against the enumeration.
 	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
 	 *        containing the XPath expression. For other dialects this must be an
-	 *        object recognized by the marshaller.
+	 *        object recognized by the marshaler.
 	 * @param namespaces prefix and namespace map for namespaces used in the filter
 	 *        expression.
 	 * @param dialect the dialect to be used in filter expressions.
@@ -86,7 +89,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @param filter a filter expression to be applied against the enumeration.
 	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
 	 *        containing the XPath expression. For other dialects this must be an
-	 *        object recognized by the marshaller.
+	 *        object recognized by the marshaler.
 	 * @param namespaces prefix and namespace map for namespaces used in the filter
 	 *        expression.
 	 * @param dialect the dialect to be used in filter expressions.
@@ -130,7 +133,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @param filter a filter expression to be applied against the enumeration.
 	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
 	 *        containing the XPath expression. For other dialects this must be an
-	 *        object recognized by the marshaller.
+	 *        object recognized by the marshaler.
 	 * @param namespaces prefix and namespace map for namespaces used in the filter
 	 *        expression.
 	 * @param dialect the dialect to be used in filter expressions.
@@ -151,7 +154,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * @param maxElements
 	 *        the maximum number of elements which should be returned.
 	 *        Ignored if optimized is false.
-	 * @param params additional parameters to be marshalled into the <code>Enumerate</code>
+	 * @param params additional parameters to be marshaled into the <code>Enumerate</code>
 	 *        element in the Body of the request.
 	 * @return an enumeration context
 	 * @throws SOAPException
@@ -169,6 +172,60 @@ public interface EnumerableResource extends TransferableResource {
 	       FaultException, DatatypeConfigurationException;
 	
 	/**
+	 * Initiates an enumeration transaction by obtaining an enumeration context.
+	 * This is a ticket which must be used in all future calls to access this
+	 * enumeration.
+	 * 
+	 * @param filter a filter expression to be applied against the enumeration.
+	 *        For {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} this should be a string
+	 *        containing the XPath expression. For other dialects this must be an
+	 *        object recognized by the marshaler.
+	 * @param namespaces prefix and namespace map for namespaces used in the filter
+	 *        expression.
+	 * @param dialect the dialect to be used in filter expressions.
+	 *        {@link Resource#XPATH_DIALECT Resource.XPATH_DIALECT} 
+	 *        can be used for XPath expressions. 
+	 * @param getEpr indicates that the EndpointReference (EPR) for each item is to
+	 *        returned in the pull.
+	 * @param getResource indicates that the individual items are to be returned in
+	 *        the pull.
+	 * @param getItemCount if true indicates that the estimated item count should be returned
+	 * @param optimized if true the EnumerationItems will be requested to be returned
+	 *        in the enumerate call. Call {@link #getEnumerationItems()} to get the
+	 *        list of resources returned in this call.
+	 * @param timeout the <code>OperationTimeout</code>. This is the
+	 *        maximum amount of time in milliseconds the client is willing
+	 *        to wait for the operation to complete.
+	 *        If &lt;= 0 this parameter is ignored.
+	 * @param maxElements
+	 *        the maximum number of elements which should be returned.
+	 *        Ignored if optimized is false.
+	 * @param expires the <code>Expiration</code>. This is a string containing
+	 *        an expiration time for the enumeration context that will be
+	 *        created on the server. It is expressed as either a Duration
+	 *        or Datetime. See ISO 8601 for details.
+	 *        NOTE: The server may ignore this value and override it.
+	 *        If null the Expiration is not set in the request
+	 *        and will be set with a server default value.
+	 * @param params additional parameters to be marshaled into the <code>Enumerate</code>
+	 *        element in the Body of the request.
+	 * @return an enumeration context
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws FaultException
+	 * @throws DatatypeConfigurationException
+	 */
+	public abstract EnumerationCtx enumerate(final Object filter, 
+			final Map<String, String> namespaces, final String dialect,
+			final boolean getEpr, final boolean getResource, 
+			final boolean getItemCount, final boolean optimized, 
+			final long timeout, final long maxElements, 
+			final String expires, final Object... params)
+	throws SOAPException, JAXBException, IOException,
+	       FaultException, DatatypeConfigurationException;
+	
+	/**
 	 * Assumes getEpr was set to true in the original
 	 * {@link #enumerate(Object, Map, String, boolean, boolean)} call.
 	 * Each EPR that is found in the
@@ -178,7 +235,7 @@ public interface EnumerableResource extends TransferableResource {
 	 * Map, String, boolean, boolean) enumerate()} call.
 	 * 
 	 * @param enumerationContext the context created in your call to enumerate
-	 * @param maxTime the maxium timeout you are willing to wait for a response
+	 * @param maxTime the maximum timeout you are willing to wait for a response
 	 * @param maxElements the maximum number of elements which should be returned
 	 * @param maxCharacters the total number of the characters to be contained in
 	 *        the returned message. If &lt;= 0 this parameter is ignored.
@@ -200,13 +257,13 @@ public interface EnumerableResource extends TransferableResource {
 			DatatypeConfigurationException, XPathExpressionException, NoMatchFoundException;
 	
 	/**
-	 * Requests a list of eprs or objects. If you request EPRs or some fragment
+	 * Requests a list of EPRs or objects. If you request EPRs or some fragment
 	 * of the state of an object this version of pull will just return them as
 	 * a resource state and you will have to extract the EPRs yourself. Use pullResources
 	 * for better access to EPRs.
 	 * 
 	 * @param enumerationContext the context created in your call to enumerate
-	 * @param maxTime the maxium timeout you are willing to wait for a response
+	 * @param maxTime the maximum timeout you are willing to wait for a response
 	 * @param maxElements the maximum number of elements which should be returned
 	 * @param maxCharacters the total number of the characters to be contained in
 	 *        the returned message. If &lt;= 0 this parameter is ignored.
