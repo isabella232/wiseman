@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/10/31 12:25:38  jfdenise
+ **Split between new support and previous one.
+ **
  **Revision 1.27  2007/10/30 09:27:47  jfdenise
  **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
  **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
@@ -46,23 +49,22 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingBaseSupport.java,v 1.1 2007-10-31 12:25:38 jfdenise Exp $
+ * $Id: WSEventingBaseSupport.java,v 1.2 2007-11-07 11:15:36 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.server.message.WSEventingRequest;
 import java.io.IOException;
 import java.util.GregorianCalendar;
 import java.util.UUID;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -78,6 +80,8 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.eventing.InvalidSubscriptionException;
+import com.sun.ws.management.server.message.WSEventingRequest;
 import com.sun.ws.management.soap.SOAP;
 
 /**
@@ -135,13 +139,13 @@ public class WSEventingBaseSupport extends BaseSupport {
         return nsMap;
     }
     
-    protected static BaseContext retrieveContext(UUID id) {
+    protected static BaseContext retrieveContext(UUID id) 
+                     throws InvalidSubscriptionException {
         assert datatypeFactory != null : UNINITIALIZED;
         
-        boolean result = false;
         BaseContext bctx = contextMap.get(id);
         if ((bctx == null) || (bctx.isDeleted())) {
-            throw new RuntimeException("Context not found: subscription expired?");
+            throw new InvalidSubscriptionException("Context not found: subscription does not exist");
         }
         
         // Check if context is expired
@@ -149,17 +153,17 @@ public class WSEventingBaseSupport extends BaseSupport {
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
         if (bctx.isExpired(nowXml)) {
             removeContext(null, bctx);
-            throw new RuntimeException("Subscription expired");
+            throw new InvalidSubscriptionException("Subscription expired");
         }
         return bctx;
     }
     
     protected static Addressing createPushEventMessage(BaseContext bctx,
             Object content)
-            throws SOAPException, JAXBException, IOException {
+            throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
         // Push mode, send the data
         if (!(bctx instanceof EventingContext)) {
-            throw new RuntimeException("Context not found");
+            throw new InvalidSubscriptionException("Context not found");
         }
         final EventingContext ctx = (EventingContext) bctx;
         
@@ -257,7 +261,7 @@ public class WSEventingBaseSupport extends BaseSupport {
      * the WS-Man request for the provided content.
      */
     public static Addressing createPushEventMessage(UUID id, Object content)
-    throws SOAPException, JAXBException, IOException {
+    throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
         
         BaseContext bctx = retrieveContext(id);
         return createPushEventMessage(bctx, content);

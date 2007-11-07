@@ -19,6 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/11/02 14:20:52  denis_rachal
+ **Issue number:  144 & 146
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **144: Default expiration timeout for enumerate is never set
+ **146: Enhance to allow specifying default expiration per IteratorF
+ **
  **Revision 1.1  2007/10/31 12:25:38  jfdenise
  **Split between new support and previous one.
  **
@@ -34,7 +42,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.2 2007-11-02 14:20:52 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.3 2007-11-07 11:15:36 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -364,7 +372,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         
         final Pull pull = request.getPull();
         if (pull == null) {
-            throw new InvalidEnumerationContextFault();
+            throw new InvalidMessageFault();
         }
         
         final BigInteger maxChars = pull.getMaxCharacters();
@@ -421,31 +429,20 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             String expires, Filter filter,
             EnumerationModeType enumerationMode, EnumerationIterator iterator,
             ContextListener listener,
-            Duration defExpiration, Duration maxExpiration) {
+            Duration defExpiration,
+            Duration maxExpiration) {
     	
-        final GregorianCalendar now = new GregorianCalendar();
-    	XMLGregorianCalendar expiration = null;    	
-    	if ((expires != null) && (expires.length() >= 0))
-    		expiration = initExpiration(expires);
-        if (expiration == null) {
-            expiration = datatypeFactory.newXMLGregorianCalendar(now);
-            // Check if the application supplied a default value.
-            if (defExpiration != null)
-            	expiration.add(defExpiration);
-            else
-            	expiration.add(defaultExpiration);
-        }
-        if (maxExpiration != null) {
-        	// A maximum Expiration was specified.
-        	final XMLGregorianCalendar max = datatypeFactory.newXMLGregorianCalendar(now);
-        	max.add(maxExpiration);
-        	if (expiration.compare(max) == DatatypeConstants.GREATER) {
-        		expiration = max;
-        	}	
-        }
-        	
-        EnumerationContext ctx = new EnumerationContext(expiration, filter, enumerationMode,
-                iterator, listener);
+    	// Use the WSEnumerationSupport default if none is supplied.
+    	if (null == defExpiration)
+    		defExpiration = defaultExpiration;
+    	final XMLGregorianCalendar expiration = initExpiration(expires,
+    			                                               defExpiration,
+    			                                               maxExpiration);    	        	
+        EnumerationContext ctx = new EnumerationContext(expiration,
+        		                                        filter,
+        		                                        enumerationMode,
+                                                        iterator,
+                                                        listener);
         return ctx;
     }
     

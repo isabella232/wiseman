@@ -19,11 +19,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.19  2007/09/18 13:06:56  denis_rachal
+ **Issue number:  129, 130 & 132
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **129  ENHANC  P2  All  denis_rachal  NEW   Need support for ReNew Operation in Eventing
+ **130  DEFECT  P3  x86  jfdenise  NEW   Should return a boolean variable result not a constant true
+ **132  ENHANC  P3  All  denis_rachal  NEW   Make ServletRequest attributes available as properties in Ha
+ **
+ **Added enhancements and fixed issue # 130.
+ **
  **Revision 1.18  2007/05/30 20:31:04  nbeers
  **Add HP copyright header
  **
  **
- * $Id: BaseSupport.java,v 1.19 2007-09-18 13:06:56 denis_rachal Exp $
+ * $Id: BaseSupport.java,v 1.20 2007-11-07 11:15:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -63,7 +75,9 @@ public class BaseSupport {
 
     protected static final String UUID_SCHEME = "urn:uuid:";
     protected static final String UNINITIALIZED = "uninitialized";
+    private static final int DEFAULT_EXPIRATION_MILLIS = 600000; // 10 minutes
     protected static DatatypeFactory datatypeFactory = null;
+    private static Duration defaultExpiration = null;
 
     public static final Map<UUID, BaseContext> contextMap = new ConcurrentHashMap<UUID, BaseContext>();
 
@@ -107,6 +121,7 @@ public class BaseSupport {
                 xpathFilter);
         try {
             datatypeFactory = DatatypeFactory.newInstance();
+            defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
             // try{
             cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
         /*} catch(java.lang.IllegalStateException e){
@@ -295,6 +310,34 @@ public class BaseSupport {
             throw new InvalidExpirationTimeFault();
         }
         return expiration;
+    }
+    
+    protected static XMLGregorianCalendar initExpiration(final String expires,
+    		                                             final Duration defExpiration,
+    		                                             final Duration maxExpiration)
+    throws InvalidExpirationTimeFault {
+    	
+        final GregorianCalendar now = new GregorianCalendar();
+    	XMLGregorianCalendar expiration = null;    	
+    	if ((expires != null) && (expires.length() >= 0))
+    		expiration = initExpiration(expires);
+        if (expiration == null) {
+            expiration = datatypeFactory.newXMLGregorianCalendar(now);
+            // Check if the application supplied a default value.
+            if (defExpiration != null)
+            	expiration.add(defExpiration);
+            else
+            	expiration.add(defaultExpiration);
+        }
+        if (maxExpiration != null) {
+        	// A maximum Expiration was specified.
+        	final XMLGregorianCalendar max = datatypeFactory.newXMLGregorianCalendar(now);
+        	max.add(maxExpiration);
+        	if (expiration.compare(max) == DatatypeConstants.GREATER) {
+        		expiration = max;
+        	}	
+        }
+    	return expiration;
     }
 
     protected static UUID initContext(final HandlerContext requestContext,

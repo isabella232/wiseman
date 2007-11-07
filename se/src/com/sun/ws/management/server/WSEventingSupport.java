@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/10/31 12:25:38  jfdenise
+ **Split between new support and previous one.
+ **
  **Revision 1.27  2007/10/30 09:27:47  jfdenise
  **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
  **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
@@ -46,18 +49,14 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.1 2007-10-31 12:25:38 jfdenise Exp $
+ * $Id: WSEventingSupport.java,v 1.2 2007-11-07 11:15:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Message;
-import com.sun.ws.management.server.message.WSEventingRequest;
-import com.sun.ws.management.server.message.WSEventingResponse;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.xml.bind.JAXBElement;
@@ -68,12 +67,10 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
-import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -88,6 +85,7 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
+import com.sun.ws.management.Message;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
@@ -97,6 +95,9 @@ import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
+import com.sun.ws.management.eventing.InvalidSubscriptionException;
+import com.sun.ws.management.server.message.WSEventingRequest;
+import com.sun.ws.management.server.message.WSEventingResponse;
 import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
@@ -106,10 +107,41 @@ import com.sun.ws.management.transport.HttpClient;
  * subscriptions using the WS-Eventing protocol.
  */
 public final class WSEventingSupport extends WSEventingBaseSupport {
+	
+    private static final int DEFAULT_EXPIRATION_MILLIS = 1000 * 60 * 60 * 24; // 1 day
+    private static Duration defaultExpiration = null;
+    
+    static {
+        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
+    }
+    
     private WSEventingSupport() {}
     
-    // the EventingExtensions.PULL_DELIVERY_MODE is handled by
-    // EnumerationSupport
+    /**
+     *  Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     * operation.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *        The incoming SOAP message that contains the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     *        request.
+     * @param response
+     *        The empty SOAP message that will contain the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse SubscribeResponse}.
+     * @param listener
+     *        Will be called when the subscription is successfully created and
+     *        when deleted.
+     *        
+     * @return UUID that identifies the subscription created
+     * 
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws FaultException
+     */
     public static UUID subscribe(final HandlerContext handlerContext,
             final WSEventingRequest request,
             final WSEventingResponse response,
@@ -119,17 +151,89 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         return subscribe(handlerContext, request, response, listener, null);
     }
     
-    // the EventingExtensions.PULL_DELIVERY_MODE is handled by
-    // EnumerationSupport
+    /**
+     *  Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     * operation.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *        The incoming SOAP message that contains the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     *        request.
+     * @param response
+     *        The empty SOAP message that will contain the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse SubscribeResponse}.
+     * @param listener
+     *        Will be called when the subscription is successfully created and
+     *        when deleted.
+     * @param factory
+     *        The iterator factory to use to create the iterator
+     *        for pull type subscriptions.
+     *        If null and this is a pull type subscription, then the default
+     *        iterator EventingIterator will be created.
+     *        {@link #sendEvent(UUID, Object)}
+     *        may be called to add events to this iterator.
+     *        
+     * @return UUID that identifies the subscription created
+     * 
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws FaultException
+     */
     public static UUID subscribe(final HandlerContext handlerContext,
             final WSEventingRequest request,
             final WSEventingResponse response,
-            final ContextListener listener, final WSEventingIteratorFactory factory)
+            final ContextListener listener,
+            final WSEventingIteratorFactory factory)
             throws DatatypeConfigurationException, SOAPException,
             JAXBException, FaultException {
-        return subscribe(handlerContext, request, response, false, DEFAULT_QUEUE_SIZE, listener, factory);
+        return subscribe(handlerContext, request, response, false, DEFAULT_QUEUE_SIZE, listener, factory, null, null);
     }
     
+    /**
+     *  Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     * operation.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *        The incoming SOAP message that contains the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     *        request.
+     * @param response
+     *        The empty SOAP message that will contain the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse SubscribeResponse}.
+     * @param isFiltered
+     *        Indicates that events have been pre-filtered and that this module
+     *        should not filter events.
+     * @param queueSize
+     *        If the request is a pull type subscription and the default iterator
+     *        factory is used, this indicates how large to make the queue for this iterator.
+     *        If {@link #sendEvent(UUID, Object)}
+     *        is called and the queue size is exceeded
+     *        the oldest entry is deleted and the new entry is added at the end of the queue.
+     * @param listener
+     *        Will be called when the subscription is successfully created and
+     *        when deleted.
+     * @param factory
+     *        The iterator factory to use to create the iterator
+     *        for pull type subscriptions.
+     *        If null and this is a pull type subscription, then the default
+     *        iterator EventingIterator will be created.
+     *        {@link #sendEvent(UUID, Object)}
+     *        may be called to add events to this iterator.
+     *        
+     * @return UUID that identifies the subscription created
+     * 
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws FaultException
+     */
     public static UUID subscribe(final HandlerContext handlerContext,
             final WSEventingRequest request,
             final WSEventingResponse response,
@@ -138,9 +242,50 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             final ContextListener listener, 
             final WSEventingIteratorFactory factory)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
-         return subscribe(handlerContext, request, response,isFiltered,queueSize,listener,(Object)factory);
+         return subscribe(handlerContext, request, response, isFiltered, queueSize, listener, (Object)factory, null, null);
     }
     
+    /**
+     *  Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     * operation.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *        The incoming SOAP message that contains the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     *        request.
+     * @param response
+     *        The empty SOAP message that will contain the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse SubscribeResponse}.
+     * @param isFiltered
+     *        Indicates that events have been pre-filtered and that this module
+     *        should not filter events.
+     * @param queueSize
+     *        If the request is a pull type subscription and the default iterator
+     *        factory is used, this indicates how large to make the queue for this iterator.
+     *        If {@link #sendEvent(UUID, Object)}
+     *        is called and the queue size is exceeded
+     *        the oldest entry is deleted and the new entry is added at the end of the queue.
+     * @param listener
+     *        Will be called when the subscription is successfully created and
+     *        when deleted.
+     * @param factory
+     *        The iterator factory to use to create the iterator
+     *        for pull type subscriptions.
+     *        If null and this is a pull type subscription, then the default
+     *        iterator EventingIterator will be created.
+     *        {@link #sendEvent(UUID, Object)}
+     *        may be called to add events to this iterator.
+     *        
+     * @return UUID that identifies the subscription created
+     * 
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws FaultException
+     */
     public static UUID subscribe(final HandlerContext handlerContext,
             final WSEventingRequest request,
             final WSEventingResponse response,
@@ -148,6 +293,68 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             final int queueSize,
             final ContextListener listener,
             final Object factory)
+            throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
+    	return subscribe(handlerContext, request, response, isFiltered, queueSize, listener, factory, null, null);
+    }
+    
+    /**
+     *  Initiate an
+     * {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     * operation.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *        The incoming SOAP message that contains the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
+     *        request.
+     * @param response
+     *        The empty SOAP message that will contain the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse SubscribeResponse}.
+     * @param isFiltered
+     *        Indicates that events have been pre-filtered and that this module
+     *        should not filter events.
+     * @param queueSize
+     *        If the request is a pull type subscription and the default iterator
+     *        factory is used, this indicates how large to make the queue for this iterator.
+     *        If {@link #sendEvent(UUID, Object)}
+     *        is called and the queue size is exceeded
+     *        the oldest entry is deleted and the new entry is added at the end of the queue.
+     * @param listener
+     *        Will be called when the subscription is successfully created and
+     *        when deleted.
+     * @param factory
+     *        The iterator factory to use to create the iterator
+     *        for pull type subscriptions.
+     *        If null and this is a pull type subscription, then the default
+     *        iterator EventingIterator will be created.
+     *        {@link #sendEvent(UUID, Object)}
+     *        may be called to add events to this iterator.
+     * @param defExpiration 
+     *        The default expiration for this subscription
+     *        if none is specified by the request.
+     *        If null the system default of 24 hours is used.           
+     * @param maxExpiration
+     *        The maximum value a client is allowed to set the Expiration to.
+     *        If the requested Expiration exceeds this value, it will be set
+     *        to this value. If null infinity is the maximum.
+     *                     
+     * @return UUID that identifies the subscription created
+     * 
+     * @throws DatatypeConfigurationException
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws FaultException
+     */
+    public static UUID subscribe(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
+            final boolean isFiltered,
+            final int queueSize,
+            final ContextListener listener,
+            final Object factory,
+            final Duration defExpiration,
+            final Duration maxExpiration)
             throws DatatypeConfigurationException, SOAPException, JAXBException, FaultException {
         final Subscribe subscribe = request.getSubscribe();
         if (subscribe == null) {
@@ -193,9 +400,19 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                         UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
             
+        	// Use the WSEventingSupport default if none is supplied.
+            Duration subscribeDefault = defaultExpiration;
+        	if (null != defExpiration)
+        		subscribeDefault = defExpiration;
+        	final XMLGregorianCalendar expiration = initExpiration(subscribe.getExpires(),
+        	                                                       subscribeDefault,
+        			                                               maxExpiration); 
             // create and register an EnumerationContext
-            EnumerationContext ctx = new EnumerationContext(initExpiration(subscribe.getExpires()),
-                    filter, null, iterator, listener);
+            final EnumerationContext ctx = new EnumerationContext(expiration,
+                                                                  filter,
+                                                                  null,
+                                                                  iterator,
+                                                                  listener);
             
             // Set single thread use of this context
             synchronized (ctx) {
@@ -228,8 +445,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             
             EndpointReferenceType notifyTo = null;
             for (final Object content : delivery.getContent()) {
-                final Class contentClass = content.getClass();
-                if (JAXBElement.class.equals(contentClass)) {
+                if (JAXBElement.class.equals(content.getClass())) {
                     final JAXBElement element = (JAXBElement) content;
                     final QName name = element.getName();
                     final Object item = element.getValue();
@@ -250,8 +466,17 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                         "Event destination not specified: missing NotifyTo.Address element");
             }
             
-            EventingContext ctx = new EventingContext(initExpiration(subscribe
-                    .getExpires()), filter, notifyTo, listener);
+        	// Use the WSEventingSupport default if none is supplied.
+            Duration subscribeDefault = defaultExpiration;
+        	if (null != defExpiration)
+        		subscribeDefault = defExpiration;
+        	final XMLGregorianCalendar expiration = initExpiration(subscribe.getExpires(),
+        	                                                       subscribeDefault,
+        			                                               maxExpiration); 
+            final EventingContext ctx = new EventingContext(expiration,
+            		                                        filter,
+            		                                        notifyTo,
+            		                                        listener);
             
             final UUID context = initContext(handlerContext, ctx);
             response.setSubscribeResponseExt(createSubscriptionManagerEpr(request,
@@ -260,6 +485,18 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         }
      }
      
+    /**
+     * Create a subscription Manager EPR for the given subscription request.
+     * 
+     * @param request subscription request
+     * @param response response object
+     * @param context subscription context
+     * 
+     * @return EPR to the subscription manager of this subscription
+     * 
+     * @throws SOAPException
+     * @throws JAXBException
+     */
     public static EndpointReferenceType createSubscriptionManagerEpr(
             final WSEventingRequest request, final WSEventingResponse response,
             final Object context) throws SOAPException, JAXBException {
@@ -275,26 +512,40 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         identifier.setTextContent(context.toString());
         doc.appendChild(identifier);
         refp.getAny().add(doc.getDocumentElement());
+        
         String to;
-        try {
-            to = request.getAddressURI().toString();
-        }catch(Exception ex) {
-            if(ex instanceof SOAPException) {
-                throw (SOAPException)ex;
-            }
-            if(ex instanceof JAXBException) {
-                throw (JAXBException)ex;
-            }
-            throw new RuntimeException(ex.toString());
-        }
+		try {
+			to = request.getAddressURI().toString();
+		} catch (URISyntaxException e) {
+			// This should never happen, but if it does throw a RuntimeException
+			throw new RuntimeException(e);
+		}
         
         return Addressing.createEndpointReference(to, null, refp, null, null);
     }
     
+    /**
+     * Renews an existing subscription. The subscription must still be
+     * active and not already canceled.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *      The incoming SOAP message that contains the
+     *      {@link org.xmlsoap.schemas.ws._2004._08.eventing.Renew Renew}
+     *      request.
+     * @param response
+     *        The empty SOAP message that will contain the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.RenewResponse RenewResponse}.
+     *        
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws InvalidMessageFault if the subscription does not exist
+     */
     public static void renew(final HandlerContext handlerContext,
             final WSEventingRequest request,
             final WSEventingResponse response)
-            throws SOAPException, JAXBException, FaultException {
+            throws SOAPException, JAXBException, InvalidMessageFault {
         
         final Renew renew = request.getRenew();
         if (renew == null) {
@@ -320,11 +571,28 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         
         response.setIdentifier(identifier);
     }
-     
+    
+    /**
+     * Unsubscribe an existing subscription. This method cancels
+     * an existing subscription.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *      The incoming SOAP message that contains the
+     *      {@link org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe Unsubscribe}
+     *      request.
+     * @param response
+     *        The empty SOAP message that will contain the unsubscribe response.
+     *        
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws InvalidMessageFault if the subscription does not exist
+     */
     public static void unsubscribe(final HandlerContext handlerContext,
             final WSEventingRequest request,
             final WSEventingResponse response)
-            throws SOAPException, JAXBException, FaultException {
+            throws SOAPException, JAXBException, InvalidMessageFault {
         
         final Unsubscribe unsubscribe = request.getUnsubscribe();
         if (unsubscribe == null) {
@@ -343,10 +611,17 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
     }
     
     /**
-     * In some cases, Unsubscribe is due to explicit server side unsubscription
-     * not related to any received request.
+     * Unsubscribe an existing subscription. This method cancels
+     * an existing subscription.
+     * 
+     * @param identifier
+     *        UUID that identifies the subscription to cancel.
+     *        
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws InvalidMessageFault if the subscription does not exist
      */
-    public static void unsubscribe(String identifier) throws FaultException {
+    public static void unsubscribe(String identifier) throws InvalidMessageFault {
         unsubscribe(identifier, null);
     }
     
@@ -403,6 +678,14 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         }
     }
     
+    /**
+     * Returns a namespace map in the context of the SOAP Body
+     * of the specified request.
+     * 
+     * @param request Eventing request to build the namespace map from
+     * 
+     * @return the namespace map
+     */
     public static NamespaceMap getNamespaceMap(final WSEventingRequest request) {
         final NamespaceMap nsMap;
         SOAPBody body;
@@ -428,6 +711,117 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         return nsMap;
     }
     
+    /**
+     * Send an event for a specified subscription id. If the subscription
+     * is of type pull the event will be added to the pull iterator.
+     * If the subscription is of type push the event will be sent
+     * immidiately to the subscriber.
+     * NOTE: For push this method currently blocks until the event
+     *       has been successfully delivered to the client.
+     * 
+     * @param id UUID identifying the subscription this event is for
+     * @param content the event to send to the subscriber
+     * 
+     * @return true if the event was successfully queued or delivered,
+     *         otherwise false
+     * 
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws IOException
+     * @throws InvalidSubscriptionException 
+     */
+    public static boolean sendEvent(final UUID id,
+    		                        final Object content)
+    throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
+    
+        // TODO: avoid blocking the sender - use a thread pool to send notifications
+        final BaseContext bctx = retrieveContext(id);
+        
+        boolean result = false;
+        
+        if (bctx instanceof EnumerationContext) {
+            // Pull, add data to iterator
+            final EnumerationContext ctx = (EnumerationContext) bctx;
+            final EventingIterator iterator = (EventingIterator) ctx.getIterator();
+            synchronized (iterator) {
+                if (iterator != null) {
+                    result = iterator.add(new EnumerationItem(content, null));
+                    iterator.notifyAll();
+                }
+            }
+        } else {
+             final Addressing msg = createPushEventMessage(bctx, content);
+            // Push mode, send the data
+            if(msg == null)
+                result = false;
+            else {
+                HttpClient.sendResponse(msg);
+                result = true;
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Send an event for a specified subscription context.
+     * 
+     * @param id UUID identifying the subscription this event is for
+     * @param msg message to use when sending the event
+     * 
+     * @return true is the event was successfully sent, otherwise false
+     * 
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws IOException
+     * @throws XPathExpressionException
+     * @throws InvalidSubscriptionException
+     * @throws Exception
+     */
+    public static boolean sendEvent(final UUID id,
+    		                        final Addressing msg)
+            throws SOAPException, JAXBException, IOException, 
+                   XPathExpressionException, InvalidSubscriptionException, Exception {
+        
+    	// TODO: XXX REVISIT: Change interface to use "WSAddressingRequest msg".
+        // TODO: avoid blocking the sender - use a thread pool to send notifications
+        assert datatypeFactory != null : UNINITIALIZED;
+        
+        final BaseContext bctx = retrieveContext(id);
+
+        if (!(bctx instanceof EventingContext)) {
+            throw new InvalidSubscriptionException("Eventing subscription context invalid");
+        }
+        final EventingContext ctx = (EventingContext) bctx;
+        
+        final GregorianCalendar now = new GregorianCalendar();
+        final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
+        if (ctx.isExpired(nowXml)) {
+            removeContext(null, id);
+            throw new InvalidSubscriptionException("Subscription expired");
+        }
+        
+        // the filter is only applied to the first child in soap body
+        if (ctx.getFilter() != null) {
+            final Node content = msg.getBody().getFirstChild();
+            if (ctx.evaluate(content) == null)
+                return false;
+        }
+        
+        final EndpointReferenceType notifyTo = ctx.getNotifyTo();
+        msg.setTo(notifyTo.getAddress().getValue());
+        final ReferenceParametersType refparams = notifyTo.getReferenceParameters();
+        if (refparams != null) {
+            msg.addHeaders(refparams);
+        }
+        final ReferencePropertiesType refprops = notifyTo.getReferenceProperties();
+        if (refprops != null) {
+            msg.addHeaders(refprops);
+        }
+        msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        HttpClient.sendResponse(msg);
+        return true;
+    }
+    
     private synchronized static EnumerationIterator newIterator(
             final Object factory,
             final HandlerContext context,
@@ -449,7 +843,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                    throw new SOAPException(ex.toString());
                 }
                 // XXX Need to make these calls using reflection
-                // to remove de[endency on Eventing and EventingIteratorFactory
+                // to remove dependency on Eventing and EventingIteratorFactory
                 Eventing evt = new Eventing(mgt);
                 return ((EventingIteratorFactory)factory).newIterator(context, evt, Message.getDocumentBuilder(), true, false);
             } else {
@@ -457,6 +851,4 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             }
         }
     }
-    
-
 }
