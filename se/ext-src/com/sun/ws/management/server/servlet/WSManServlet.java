@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.9  2007/09/18 20:08:56  nbeers
+ **Add support for SOAP with attachments.  Issue #136.
+ **
  **Revision 1.8  2007/09/18 13:06:57  denis_rachal
  **Issue number:  129, 130 & 132
  **Obtained from:
@@ -62,7 +65,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.9 2007-09-18 20:08:56 nbeers Exp $
+ * $Id: WSManServlet.java,v 1.10 2007-11-09 12:33:33 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -589,15 +592,16 @@ public abstract class WSManServlet extends HttpServlet {
             }
         }
 
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        response.writeTo(baos);
-        final byte[] content = baos.toByteArray();
+        // final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        // response.writeTo(baos);
+        // final byte[] content = baos.toByteArray();
 
         // response being null means that no reply is to be sent back.
         // The reply has been handled asynchronously
         if(response != null) {
             resp.setContentType(response.getMessage().getMimeHeaders().getHeader("Content-Type")[0]);
-            os.write(content);
+            // os.write(content);
+            response.writeTo(os);
         }
     }
 }

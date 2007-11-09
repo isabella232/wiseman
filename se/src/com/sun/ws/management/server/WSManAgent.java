@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.20  2007/10/31 11:59:24  jfdenise
+ **Faulty maxEnvelopSize computation linked to recent putback
+ **
  **Revision 1.19  2007/10/31 09:53:55  denis_rachal
  **Fixed error where incorrect fault is returned when setting MaxEnvelopeSize too small. Additionally added performance enhancement to not computer MaxEnvelope size if it is not specified in the request, or it is set to the maximum.
  **
@@ -33,7 +36,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgent.java,v 1.20 2007-10-31 11:59:24 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.21 2007-11-09 12:33:34 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -103,8 +106,9 @@ public abstract class WSManAgent extends WSManAgentSupport {
     protected WSManRequestDispatcher createDispatcher(WSManagementRequest request,
             WSManagementResponse response,
             HandlerContext context) throws Exception {
-        return new RequestDispatcherWrapper(createDispatcher(new Management(request.toSOAPMessage()), 
-                context));
+    	final Management req = new Management(request.toSOAPMessage());
+    	req.setXmlBinding(getXmlBinding());
+        return new RequestDispatcherWrapper(createDispatcher(req, context));
     }
     
     public long getValidEnvelopeSize(Management request) throws JAXBException, SOAPException {
@@ -132,6 +136,7 @@ public abstract class WSManAgent extends WSManAgentSupport {
             
             WSManagementResponse response = handleRequest(req, resp, context);
             Management saajResponse = new Management(response.toSOAPMessage());
+            saajResponse.setXmlBinding(getXmlBinding());
             fillReturnAddress(request, saajResponse);
             if(LOG.isLoggable(Level.FINE))
                 LOG.log(Level.FINE, "Request / Response content type " +
