@@ -19,6 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.20  2007/11/07 11:15:35  denis_rachal
+ **Issue number:  142 & 146
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **142: EventingSupport.retrieveContext(UUID) throws RuntimeException
+ **
+ **Fixed WSEventingSupport to not throw RuntimeException. Instead it throws a new InvalidSubscriptionException. EventingSupport methods still throw RuntimeException to maintain backward compatibility.
+ **
+ **146: Enhance to allow specifying default expiration per enumeration
+ **
+ **Also enhanced WSEventingSupport to allow setting the default expiration per subscription. Default if not set by developer or client is now 24 hours for subscriptions.
+ **
+ **Additionally added javadoc to both EventingSupport and WSEventingSupport.
+ **
  **Revision 1.19  2007/09/18 13:06:56  denis_rachal
  **Issue number:  129, 130 & 132
  **Obtained from:
@@ -35,7 +51,7 @@
  **Add HP copyright header
  **
  **
- * $Id: BaseSupport.java,v 1.20 2007-11-07 11:15:35 denis_rachal Exp $
+ * $Id: BaseSupport.java,v 1.21 2007-11-16 15:12:13 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -72,7 +88,30 @@ import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.xml.XPathFilterFactory;
 
 public class BaseSupport {
-
+    static class EnumerationTask extends TimerTask {
+        private UUID context;
+        EnumerationTask(UUID context) {
+            this.context = context;
+        }
+        
+        public void run() {
+            BaseContext ctx = contextMap.get(context);
+            
+            if(ctx == null || ctx.isDeleted()) return;
+            
+            final GregorianCalendar now = new GregorianCalendar();
+            final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
+            if(ctx.isExpired(nowXml)) {
+                ctx.setDeleted();
+                if(ctx.getListener() != null)
+                    ctx.getListener().contextUnbound(null, context);
+                contextMap.remove(context);
+            } else {
+                // Re-do tracking
+                schedule(context, null, ctx);
+            }
+        }
+    }
     protected static final String UUID_SCHEME = "urn:uuid:";
     protected static final String UNINITIALIZED = "uninitialized";
     private static final int DEFAULT_EXPIRATION_MILLIS = 600000; // 10 minutes
@@ -81,33 +120,8 @@ public class BaseSupport {
 
     public static final Map<UUID, BaseContext> contextMap = new ConcurrentHashMap<UUID, BaseContext>();
 
-    protected static final TimerTask ttask = new TimerTask() {
-        public void run() {
-            final GregorianCalendar now = new GregorianCalendar();
-            final XMLGregorianCalendar nowXml =
-                    datatypeFactory.newXMLGregorianCalendar(now);
-            final UUID[] keys = contextMap.keySet().toArray(new UUID[contextMap.size()]);
-            for (int i = 0; i < keys.length; i++) {
-                final UUID key = keys[i];
-                final BaseContext context = contextMap.get(key);
-                synchronized (context) {
-					if ((context != null) && (context.isDeleted() == false)) {
-						if (context.isExpired(nowXml)) {
-							context.setDeleted();
-							if (context.getListener() != null) {
-								context.getListener().contextUnbound(null, key);
-							}
-							contextMap.remove(context);
-						}
-					}
-				}
-			}
-        }
-    };
-
     private static final Logger LOG = Logger.getLogger(BaseSupport.class.getName());
 
-    private static final int CLEANUP_INTERVAL = 60000;
     private static Timer cleanupTimer = new Timer(true);
 
     private static Map<String, FilterFactory> supportedFilters =
@@ -122,14 +136,6 @@ public class BaseSupport {
         try {
             datatypeFactory = DatatypeFactory.newInstance();
             defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
-            // try{
-            cleanupTimer.schedule(ttask, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
-        /*} catch(java.lang.IllegalStateException e){
-            // NOTE: the cleanup timer has been throwing this
-            // exception during unit tests. Re-initalizing it should not
-            // cause it to fail so this exception is being silenced.
-            LOG.fine("Base support was re-initalized.");
-        }*/
         } catch(Exception ex) {
             throw new RuntimeException("Fail to initialize BaseSupport " + ex);
         }
@@ -339,14 +345,27 @@ public class BaseSupport {
         }
     	return expiration;
     }
-
+    
+    private static void schedule(final UUID uuid, final HandlerContext requestContext,
+            final BaseContext context) {
+        EnumerationTask task = new EnumerationTask(uuid);
+        try {
+            cleanupTimer.schedule(task, context.getExpirationDate());
+        }catch(Exception ex) {
+            context.getListener().contextUnbound(requestContext, uuid);
+            contextMap.remove(uuid);
+            throw new InvalidExpirationTimeFault();
+        }
+    }
+    
     protected static UUID initContext(final HandlerContext requestContext,
-    		                          final BaseContext context) {
+            final BaseContext context) {
         final UUID uuid = UUID.randomUUID();
         contextMap.put(uuid, context);
-		if (context.getListener() != null) {
-			context.getListener().contextBound(requestContext, uuid);
-		}
+        if (context.getListener() != null) {
+            context.getListener().contextBound(requestContext, uuid);
+        }
+        schedule(uuid, requestContext, context);
         return uuid;
     }
 

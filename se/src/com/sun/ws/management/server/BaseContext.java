@@ -19,16 +19,29 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.13  2007/09/18 13:06:56  denis_rachal
+ **Issue number:  129, 130 & 132
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **129  ENHANC  P2  All  denis_rachal  NEW   Need support for ReNew Operation in Eventing
+ **130  DEFECT  P3  x86  jfdenise  NEW   Should return a boolean variable result not a constant true
+ **132  ENHANC  P3  All  denis_rachal  NEW   Make ServletRequest attributes available as properties in Ha
+ **
+ **Added enhancements and fixed issue # 130.
+ **
  **Revision 1.12  2007/05/30 20:31:04  nbeers
  **Add HP copyright header
  **
  **
- * $Id: BaseContext.java,v 1.13 2007-09-18 13:06:56 denis_rachal Exp $
+ * $Id: BaseContext.java,v 1.14 2007-11-16 15:12:13 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -87,6 +100,10 @@ public class BaseContext {
     
     public Filter getFilter() {
     	return this.filter;
+    }
+    
+    public Date getExpirationDate() {
+        return expiration.toGregorianCalendar().getTime();
     }
     
     public boolean isExpired(final XMLGregorianCalendar now) {
