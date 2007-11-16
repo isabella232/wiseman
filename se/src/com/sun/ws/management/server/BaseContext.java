@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.14  2007/11/16 15:12:13  jfdenise
+ **Fix for bug 147 and 148
+ **
  **Revision 1.13  2007/09/18 13:06:56  denis_rachal
  **Issue number:  129, 130 & 132
  **Obtained from:
@@ -35,7 +38,7 @@
  **Add HP copyright header
  **
  **
- * $Id: BaseContext.java,v 1.14 2007-11-16 15:12:13 jfdenise Exp $
+ * $Id: BaseContext.java,v 1.15 2007-11-16 17:03:01 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -103,6 +106,7 @@ public class BaseContext {
     }
     
     public Date getExpirationDate() {
+        if(expiration == null) return null;
         return expiration.toGregorianCalendar().getTime();
     }
     

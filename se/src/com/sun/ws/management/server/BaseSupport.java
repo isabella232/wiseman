@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.21  2007/11/16 15:12:13  jfdenise
+ **Fix for bug 147 and 148
+ **
  **Revision 1.20  2007/11/07 11:15:35  denis_rachal
  **Issue number:  142 & 146
  **Obtained from:
@@ -51,11 +54,12 @@
  **Add HP copyright header
  **
  **
- * $Id: BaseSupport.java,v 1.21 2007-11-16 15:12:13 jfdenise Exp $
+ * $Id: BaseSupport.java,v 1.22 2007-11-16 17:03:00 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
 
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -122,7 +126,7 @@ public class BaseSupport {
 
     private static final Logger LOG = Logger.getLogger(BaseSupport.class.getName());
 
-    private static Timer cleanupTimer = new Timer(true);
+    private static Timer cleanupTimer;
 
     private static Map<String, FilterFactory> supportedFilters =
             new HashMap<String, FilterFactory>();
@@ -346,12 +350,21 @@ public class BaseSupport {
     	return expiration;
     }
     
+    private static synchronized Timer getTimer() {
+        if(cleanupTimer == null)
+            cleanupTimer = new Timer(true);
+        return cleanupTimer;
+    }
+    
     private static void schedule(final UUID uuid, final HandlerContext requestContext,
             final BaseContext context) {
         EnumerationTask task = new EnumerationTask(uuid);
         try {
-            cleanupTimer.schedule(task, context.getExpirationDate());
+            Date date = context.getExpirationDate();
+            if(date != null)
+                getTimer().schedule(task, date);
         }catch(Exception ex) {
+           // ex.printStackTrace();
             context.getListener().contextUnbound(requestContext, uuid);
             contextMap.remove(uuid);
             throw new InvalidExpirationTimeFault();
@@ -376,7 +389,7 @@ public class BaseSupport {
     protected static BaseContext putContext(final UUID context, final BaseContext ctx) {
         return contextMap.put(context, ctx);
     }
-
+    
     public static synchronized void stopTimer() {
         if(LOG.isLoggable(Level.FINER))
             LOG.log(Level.FINER, "Stopping timer " + cleanupTimer);
