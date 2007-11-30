@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/10/31 11:59:35  jfdenise
+ **Faulty maxEnvelopSize computation linked to recent putback
+ **
  **Revision 1.1  2007/10/30 09:28:22  jfdenise
  **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
  **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
@@ -30,28 +33,21 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgentSupport.java,v 1.2 2007-10-31 11:59:35 jfdenise Exp $
+ * $Id: WSManAgentSupport.java,v 1.3 2007-11-30 14:32:38 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.Message;
-import com.sun.ws.management.server.message.WSManagementRequest;
-import com.sun.ws.management.server.message.WSManagementResponse;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.Collections;
-import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.UUID;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,34 +58,28 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBContext;
-
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.xml.sax.SAXException;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import com.sun.ws.management.AccessDeniedFault;
 import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
-import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.server.message.WSManagementRequest;
+import com.sun.ws.management.server.message.WSManagementResponse;
 import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.transport.ContentType;
-import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
 /**
  * WS-MAN agent decoupled from transport. Can be used in Servlet / JAX-WS / ...
@@ -100,12 +90,11 @@ import com.sun.ws.management.xml.XmlBinding;
 public abstract class WSManAgentSupport {
     
     private static final Logger LOG = Logger.getLogger(WSManAgentSupport.class.getName());
-    private static final long DEFAULT_TIMEOUT = 30000;
+    protected static final long DEFAULT_TIMEOUT = 30000;
     protected static final long MIN_ENVELOPE_SIZE = 8192;
-    private static final long DISABLED_TIMEOUT = -1;
     
     public static final String OPERATION_TIMEOUT =
-            WSManAgent.class.getPackage().getName() + ".operation.timeout";
+        WSManAgent.class.getPackage().getName() + ".operation.timeout";
     private static final String WSMAN_PROPERTY_FILE_NAME = "/wsman.properties";
     public static final String WSMAN_EXTENSIONS_PROPERTY_FILE_NAME = "/wsman-exts.properties";
     public static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
@@ -119,9 +108,9 @@ public abstract class WSManAgentSupport {
     
     private Map<String, String> localproperties = null;
     
-    protected long defaultOperationTimeout = 0;
+    protected final long defaultOperationTimeout;
     
-    // XXX REVISIT, SHOULD BE STATIC BUT CURRENTLY CAN'T Due to openess of JAXBContext
+    // XXX REVISIT, SHOULD BE STATIC BUT CURRENTLY CAN'T Due to openness of JAXBContext
     private XmlBinding binding;
     private Schema schema;
     private Map<String,String> bindingConf;
@@ -246,13 +235,17 @@ public abstract class WSManAgentSupport {
         localproperties = Collections.unmodifiableMap(propertySet);
         
         String opTimeout = System.getProperty(OPERATION_TIMEOUT);
-        if(opTimeout == null)
+        if ((opTimeout == null) || (opTimeout.length() != 0))
             opTimeout = localproperties.get(OPERATION_TIMEOUT_DEFAULT);
         
-        if(opTimeout == null)
+        if ((opTimeout == null) || (opTimeout.length() != 0))
             this.defaultOperationTimeout = DEFAULT_TIMEOUT;
-        else
-            this.defaultOperationTimeout = Long.parseLong(opTimeout);
+        else {
+        	long defTimeout = Long.parseLong(opTimeout);
+        	if (defTimeout < 0)
+        		defTimeout = Long.MAX_VALUE;
+            this.defaultOperationTimeout = defTimeout;
+        }
         
         schema = createSchema(customSchemas);
         this.bindingConf = bindingConf;
@@ -352,19 +345,16 @@ public abstract class WSManAgentSupport {
         long timeout = defaultOperationTimeout;
         final Duration timeoutDuration = request.getTimeout();
         if (timeoutDuration != null) {
-            timeout = timeoutDuration.getTimeInMillis(new Date());
+            timeout = timeoutDuration.getTimeInMillis(new GregorianCalendar());
         }
         return timeout;
     }
     
-    public WSManagementResponse handleRequest(final WSManagementRequest request, final WSManagementResponse response,
-            final HandlerContext context) {
+    public WSManagementResponse handleRequest(final WSManagementRequest request,
+    		                                  final WSManagementResponse response,
+                                              final HandlerContext context) {
         
         try {
-            long timeout = DISABLED_TIMEOUT;
-            if (defaultOperationTimeout != DISABLED_TIMEOUT)
-                timeout = getTimeout(request);
-            
             isValidEnvelopSize(getEnvelopeSize(request), response);
             
             if(!response.containsFault()) {
@@ -378,7 +368,7 @@ public abstract class WSManAgentSupport {
                     return response;
                 
                 dispatcher.validateRequest();
-                return dispatch(dispatcher, timeout);
+                return dispatch(dispatcher);
                 
                 // XXX REVISIT
                 // We have no more way to compute response size. JAX-WS Headers are no more at this level
@@ -400,33 +390,55 @@ public abstract class WSManAgentSupport {
         return response;
     }
     
-    private WSManagementResponse dispatch(final Callable dispatcher, final long timeout)
-    throws Throwable {
+    private WSManagementResponse dispatch(final WSManRequestDispatcher dispatcher)
+            throws Throwable {
+
+		final WSManagementRequest request = dispatcher.getRequest();
+        final long timeout = getTimeout(request);
         
-        FutureTask<WSManagementResponse> task = null;
-        if(LOG.isLoggable(Level.FINE))
-            LOG.log(Level.FINE, "timeout : " + defaultOperationTimeout);
-        try {
-            if (defaultOperationTimeout != DISABLED_TIMEOUT) {
-                task = new FutureTask<WSManagementResponse>(dispatcher);
-                // the Future returned by pool.submit does not propagate
-                // ExecutionException, perform the get on FutureTask itself
-                getExecutorService().submit(task);
-                return task.get(timeout, TimeUnit.MILLISECONDS);
-            } else
-                return (WSManagementResponse) dispatcher.call();
-        } catch (ExecutionException ex) {
-            throw ex.getCause();
-        } catch (InterruptedException ix) {
-            // ignore
-        } catch (TimeoutException tx) {
-            throw new TimedOutFault();
-        } finally {
-            if(task != null)
-                task.cancel(true);
-        }
-        return null;
-    }
+		FutureTask<WSManagementResponse> task = null;
+
+		if (LOG.isLoggable(Level.FINE))
+			LOG.log(Level.FINE, "Dispatching operation with OperationTimeout=" + timeout);
+		try {
+			final GregorianCalendar start = new GregorianCalendar();
+			final long end = start.getTimeInMillis() + timeout;
+
+			task = new FutureTask<WSManagementResponse>(dispatcher);
+			// The Future returned by pool.submit does not propagate
+			// ExecutionException, perform the get on FutureTask itself
+			getExecutorService().submit(task);
+			long timeLeft = end - new GregorianCalendar().getTimeInMillis();
+			while (timeLeft > 0) {
+				try {
+					return task.get(timeLeft, TimeUnit.MILLISECONDS);
+				} catch (ExecutionException ex) {
+					throw ex.getCause();
+				} catch (InterruptedException ix) {
+					timeLeft = end - new GregorianCalendar().getTimeInMillis();
+					continue;
+				} catch (TimeoutException tx) {
+					try {
+						request.cancel();
+					} catch (IllegalStateException e) {
+						// Request is committed. Wait for the response. It's on its way.
+						return task.get();
+					}
+					throw new TimedOutFault();
+				}	
+			}
+			try {
+				request.cancel();
+			} catch (IllegalStateException e) {
+				// Request is committed. Wait for the response. It's on its way.
+				return task.get();
+			}
+			throw new TimedOutFault();
+		} finally {
+			if (task != null)
+				task.cancel(true);
+		}
+	}
     
     public JAXBContext getJAXBContext() {
         return getXmlBinding().getJAXBContext();
@@ -469,7 +481,6 @@ public abstract class WSManAgentSupport {
             }
         }
         if((extensionsFile!=null)&&(propertySet.size()==0)){
-//    	 crud
             WSManAgent.getProperties(WSMAN_EXTENSIONS_PROPERTY_FILE_NAME, propertySet);
         }
         if((!propertySet.isEmpty()&&

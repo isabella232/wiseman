@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/06/18 17:57:27  nbeers
+ **Fix for Issue #119 (EnumerationUtility.buildMessage() generates incorrect msg).
+ **
  **Revision 1.7  2007/06/08 15:38:39  denis_rachal
  **The following enhanceent were made to the testing infrastructure:
  **
@@ -30,7 +33,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationFilterTest.java,v 1.8 2007-06-18 17:57:27 nbeers Exp $
+ * $Id: EnumerationFilterTest.java,v 1.9 2007-11-30 14:32:37 denis_rachal Exp $
  */
 
 package management;
@@ -159,7 +162,7 @@ public class EnumerationFilterTest extends TestBase {
     	settings.setEnumerationMessageActionType(Enumeration.ENUMERATE_ACTION_URI);
     	settings.setTo(DESTINATION);
     	settings.setResourceUri(resource);
-    	settings.setMaxTime(60000);
+    	settings.setTimeout(60000);
     	settings.setMaxElements(maxElements);
     	settings.setRequestForOptimizedEnumeration(true);
     	settings.setRequestForTotalItemsCount(true);

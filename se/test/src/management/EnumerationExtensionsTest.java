@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.13  2007/05/30 20:30:24  nbeers
+ **Add HP copyright header
  **
- * $Id: EnumerationExtensionsTest.java,v 1.13 2007-05-30 20:30:24 nbeers Exp $
+ **
+ * $Id: EnumerationExtensionsTest.java,v 1.14 2007-11-30 14:32:37 denis_rachal Exp $
  */
 
 package management;
@@ -28,29 +31,31 @@ package management;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
-import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
+import org.w3._2003._05.soap_envelope.Fault;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
-import com.sun.ws.management.Management;
+import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -59,19 +64,15 @@ import com.sun.ws.management.xml.XmlBinding;
  */
 public class EnumerationExtensionsTest extends TestBase {
 
-	XmlBinding binding;
+	final XmlBinding binding;
 
-    public EnumerationExtensionsTest(final String testName) {
+    public EnumerationExtensionsTest(final String testName) throws JAXBException {
         super(testName);
 
 		// Set the system property to always create bindings with our package
 		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
 				"com.hp.examples.ws.wsman.user");
-		try {
-			binding = new XmlBinding(null, "com.hp.examples.ws.wsman.user");
-		} catch (JAXBException e) {
-			fail(e.getMessage());
-		}
+		binding = new XmlBinding(null, "com.hp.examples.ws.wsman.user");
     }
 
     public static junit.framework.Test suite() {
@@ -347,6 +348,7 @@ public class EnumerationExtensionsTest extends TestBase {
     	settings.setMaxElements(maxElements);
     	settings.setRequestForOptimizedEnumeration(true);
     	settings.setRequestForTotalItemsCount(true);
+    	settings.setXmlBinding(binding);
 
         // Process any filter
          if ((expression != null) && (expression.length() > 0)) {
@@ -363,7 +365,6 @@ public class EnumerationExtensionsTest extends TestBase {
     	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
 
         final Addressing response = HttpClient.sendRequest(enu);
-        response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
@@ -405,7 +406,6 @@ public class EnumerationExtensionsTest extends TestBase {
 
         	enuPull.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(enuPull);
-            praddr.setXmlBinding(binding);
             praddr.prettyPrint(logfile);
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);
@@ -449,5 +449,137 @@ public class EnumerationExtensionsTest extends TestBase {
         } else {
             fail("invalid mode");
         }
+    }
+       
+    public void testOperationTimeout() throws Exception {
+    	
+    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
+    	settings.setEnumerationMessageActionType(Enumeration.ENUMERATE_ACTION_URI);
+    	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/timeout");
+    	settings.setMaxElements(5);
+    	settings.setRequestForOptimizedEnumeration(true);
+    	settings.setRequestForTotalItemsCount(true);
+    	settings.setTimeout(1000);
+    	settings.setXmlBinding(binding);
+
+    	final Enumeration request = EnumerationUtility.buildMessage(null, settings);
+
+    	request.prettyPrint(logfile);
+        final GregorianCalendar start = new GregorianCalendar();
+        final Addressing response = HttpClient.sendRequest(request);
+        final GregorianCalendar end = new GregorianCalendar();
+        
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault() == false) {
+            response.prettyPrint(System.err);
+            fail("Expected TimedOutFault");
+        }
+
+        final Fault fault = response.getFault();
+        assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
+        assertEquals(TimedOutFault.TIMED_OUT, fault.getCode().getSubcode().getValue());
+        assertEquals(TimedOutFault.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
+        
+        long diff = end.getTimeInMillis()-start.getTimeInMillis();
+        assertTrue("Timeout was " + diff + " milliseconds, expected 1000 milliseconds.",(diff >= 1000));
+        assertTrue("Timeout was " + diff + " milliseconds, expected 1000 milliseconds.",(diff<= 3000));
+    }
+    
+    public void testOperationTimeoutPull() throws Exception {
+    	
+    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
+    	settings.setEnumerationMessageActionType(Enumeration.ENUMERATE_ACTION_URI);
+    	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/timeout");
+    	settings.setRequestForOptimizedEnumeration(false);
+    	settings.setRequestForTotalItemsCount(true);
+    	settings.setTimeout(2000);
+    	settings.setXmlBinding(binding);
+
+    	final Enumeration request = EnumerationUtility.buildMessage(null, settings);
+
+    	request.prettyPrint(logfile);
+        Addressing response = HttpClient.sendRequest(request);
+        
+        response.prettyPrint(logfile);
+        
+        if (response.getBody().hasFault() == true) {
+            response.prettyPrint(System.err);
+            fail(response.getBody().getFault().getFaultString());
+        }
+        
+        final EnumerationExtensions enuResponse = new EnumerationExtensions(response);
+        final EnumerateResponse enr = enuResponse.getEnumerateResponse();
+        
+        boolean done = enuResponse.isEndOfSequence();
+        assertFalse("EOS was unexpectedly set.", done);
+        
+        EnumerationContextType ctx = enr.getEnumerationContext();
+        assertNotNull("Enumeration Context was not set.", ctx);
+        String context = (String) ctx.getContent().get(0);
+        
+    	settings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
+    	settings.setEnumerationContext(context);
+    	settings.setMaxElements(10);
+    	settings.setTimeout(5100);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri("wsman:test/timeout");
+    	settings.setRequestForTotalItemsCount(true);
+
+        // Set up a request to pull the next item of the enumeration
+    	Enumeration enuPull = EnumerationUtility.buildMessage(null, settings);
+
+    	enuPull.prettyPrint(logfile);
+        GregorianCalendar start = new GregorianCalendar();
+        response = HttpClient.sendRequest(enuPull);
+        GregorianCalendar end = new GregorianCalendar();
+        
+        response.setXmlBinding(binding);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault() == false) {
+            response.prettyPrint(System.err);
+            fail("Expected TimedOutFault");
+        }
+		final Fault fault = response.getFault();
+		assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
+		assertEquals(TimedOutFault.TIMED_OUT, fault.getCode().getSubcode().getValue());
+		assertEquals(TimedOutFault.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
+        
+        long diff = end.getTimeInMillis() - start.getTimeInMillis();
+        assertTrue("Timeout was " + diff + " milliseconds, expected 5100 milliseconds.",(diff >= 5100));
+        assertTrue("Timeout was " + diff + " milliseconds, expected 5100 milliseconds.",(diff <= 7000));
+        
+        // Try the pull again, but with more time. We should get all 10 items.
+        settings.setTimeout(6000);
+    	enuPull = EnumerationUtility.buildMessage(null, settings);
+
+    	enuPull.prettyPrint(logfile);
+        start = new GregorianCalendar();
+        response = HttpClient.sendRequest(enuPull);
+        end = new GregorianCalendar();
+
+        response.setXmlBinding(binding);
+        response.prettyPrint(logfile);
+        
+        // We don't expect a timeout here
+        if (response.getBody().hasFault()) {
+        	response.prettyPrint(System.err);
+            fail(response.getBody().getFault().getFaultString());
+        }
+
+        final EnumerationExtensions pullResponse = new EnumerationExtensions(response);
+        final PullResponse pr = pullResponse.getPullResponse();
+        // Check if more items are available. should only be 10.
+        assertTrue("Expected EOS missing.", (pr.getEndOfSequence() != null));
+        assertTrue("Unexpected context returned.", (pr.getEnumerationContext() == null));
+        assertEquals("Expected number of items received.", 10, pullResponse.getItems().size());
+
+        final AttributableNonNegativeInteger pe = pullResponse.getTotalItemsCountEstimate();
+        assertNotNull(pe);
+        assertEquals("Expected TotalItemsCountEstimate", 10, pe.getValue().intValue());
+
     }
 }

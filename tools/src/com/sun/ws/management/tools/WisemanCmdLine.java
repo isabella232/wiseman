@@ -20,6 +20,17 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/06/22 06:13:56  simeonpinder
+ **numerous changes made for final build:
+ **-release properties update
+ **-added progress monitor to Metadata viewer
+ **-added commented code for fragment operations with traffic light
+ **-added extra example line for cmdline tool
+ **-license files for 1.0 release
+ **-updated .classpath files for all samples
+ **-renamed eventing sample name.
+ **-small release note mention in README
+ **
  **Revision 1.5  2007/06/18 17:57:28  nbeers
  **Fix for Issue #119 (EnumerationUtility.buildMessage() generates incorrect msg).
  **
@@ -28,7 +39,7 @@
  **
  ** 
  *
- * $Id: WisemanCmdLine.java,v 1.6 2007-06-22 06:13:56 simeonpinder Exp $
+ * $Id: WisemanCmdLine.java,v 1.7 2007-11-30 14:32:39 denis_rachal Exp $
  */
 package com.sun.ws.management.tools;
 
@@ -235,7 +246,7 @@ public class WisemanCmdLine {
 		
     	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
     	//settings.setFilter(filter);
-    	settings.setMaxTime(6000);
+    	settings.setTimeout(6000);
     	settings.setTo(destination);
     	settings.setResourceUri(resourceUri);
     	settings.setMaxElements(maxElements);

@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.11  2007/06/18 17:57:28  nbeers
+ **Fix for Issue #119 (EnumerationUtility.buildMessage() generates incorrect msg).
+ **
  **Revision 1.10  2007/06/04 06:25:12  denis_rachal
  **The following fixes have been made:
  **
@@ -36,7 +39,7 @@
  **
  ** 
  *
- * $Id: WsManBaseTestSupport.java,v 1.11 2007-06-18 17:57:28 nbeers Exp $
+ * $Id: WsManBaseTestSupport.java,v 1.12 2007-11-30 14:32:39 denis_rachal Exp $
  */
 package util;
  
@@ -237,7 +240,7 @@ public class WsManBaseTestSupport extends TestCase {
 
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
 	    	settings.setFilter(filter);
-	    	settings.setMaxTime(6000);
+	    	settings.setTimeout(6000);
 	    	settings.setTo(destination);
 	    	settings.setResourceUri(resourceUri);
 	    	final Enumeration enu = EnumerationUtility.buildMessage(null, settings);
@@ -275,7 +278,7 @@ public class WsManBaseTestSupport extends TestCase {
 	    {
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
 	    	settings.setEnumerationMessageActionType(action);
-	    	settings.setMaxTime(60000);
+	    	settings.setTimeout(60000);
 	    	settings.setMaxElements(100);
 	    	settings.setEnumerationContext(ctx);
 	    	settings.setTo(destination);
@@ -301,7 +304,7 @@ public class WsManBaseTestSupport extends TestCase {
 	    {
 	    	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
 	    	settings.setEnumerationMessageActionType(Enumeration.RELEASE_ACTION_URI);
-	    	settings.setMaxTime(60000);
+	    	settings.setTimeout(60000);
 	    	settings.setEnumerationContext(ctx);
 	    	settings.setTo(destination);
 	    	settings.setResourceUri(resourceUri);

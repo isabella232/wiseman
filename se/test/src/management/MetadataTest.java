@@ -19,6 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.10  2007/06/14 07:28:07  denis_rachal
+ **Issue number:  110
+ **Obtained from:
+ **Submitted by:  ywu
+ **Reviewed by:
+ **
+ **Updated wsman.war test warfile and sample traffic.war file along with tools to expose a WSDL file. Additionally added default index.html file for sample warfile.
+ **
  **Revision 1.9  2007/06/08 15:38:39  denis_rachal
  **The following enhanceent were made to the testing infrastructure:
  **
@@ -30,7 +38,7 @@
  **Add HP copyright header
  **
  **
- * $Id: MetadataTest.java,v 1.10 2007-06-14 07:28:07 denis_rachal Exp $
+ * $Id: MetadataTest.java,v 1.11 2007-11-30 14:32:36 denis_rachal Exp $
  */
 
 package management;
@@ -39,7 +47,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -98,41 +105,42 @@ import com.sun.ws.management.xml.XmlBinding;
  */
 public class MetadataTest extends TestBase {
 
-    public MetadataTest(final String testName) {
-        super(testName);
-    }
+	public MetadataTest(final String testName) {
+		super(testName);
+	}
 
-    public static junit.framework.Test suite() {
-        final junit.framework.TestSuite suite = new junit.framework.TestSuite(MetadataTest.class);
-        return suite;
-    }
+	public static junit.framework.Test suite() {
+		final junit.framework.TestSuite suite = new junit.framework.TestSuite(
+				MetadataTest.class);
+		return suite;
+	}
 
 	public static final String destUrl = ManagementMessageValues.WSMAN_DESTINATION;
 	public static final String resourceUri = "wsman:auth/user";
-	public static final String selector1 ="firstname=Get";
-	public static final String selector2 ="lastname=Guy";
-	public static final String metaDataCategory ="PERSON_RESOURCES";
-	public static final String metaDataDescription ="This resource exposes people information " +
- 			"stored in an LDAP repository.";
-	public static final String metaDataMiscInfo ="Miscellaneous Information";
-	public static final String metaDataUID ="UID_http://some.company.xyz/ldap/repository/2006/uid_00000000007";
-	public static final String custQlocPart="UserParam";
-	public static final String custQnsuri="http://sample.custom.com/custom/referenceParameter";
-	public static final String custQprefix="other";
-	public static final String custQvalue="param-value-1";
-	public static final String custQlocPart1="UserProp";
-	public static final String custQnsuri1="http://sample.custom.com/custom/referenceProperty";
-	public static final String custQprefix1="cust";
-	public static final String custQvalue1="prop-value-1";
+	public static final String selector1 = "firstname=Get";
+	public static final String selector2 = "lastname=Guy";
+	public static final String metaDataCategory = "PERSON_RESOURCES";
+	public static final String metaDataDescription = "This resource exposes people information "
+			+ "stored in an LDAP repository.";
+	public static final String metaDataMiscInfo = "Miscellaneous Information";
+	public static final String metaDataUID = "UID_http://some.company.xyz/ldap/repository/2006/uid_00000000007";
+	public static final String custQlocPart = "UserParam";
+	public static final String custQnsuri = "http://sample.custom.com/custom/referenceParameter";
+	public static final String custQprefix = "other";
+	public static final String custQvalue = "param-value-1";
+	public static final String custQlocPart1 = "UserProp";
+	public static final String custQnsuri1 = "http://sample.custom.com/custom/referenceProperty";
+	public static final String custQprefix1 = "cust";
+	public static final String custQvalue1 = "prop-value-1";
 	//embedded default addressing model instance
-	public static final String embeddedAnnotTo="http://embedded.anot.TO";
-	public static final String embeddedAnnotResourceURI="wsman:embe/resUri";
-	public static final String embeddedAnnotResourceMetUID="UID_http://some.company.xyz/ci/respository/2098764";
+	public static final String embeddedAnnotTo = "http://embedded.anot.TO";
+	public static final String embeddedAnnotResourceURI = "wsman:embe/resUri";
+	public static final String embeddedAnnotResourceMetUID = "UID_http://some.company.xyz/ci/respository/2098764";
 	//Enumeration testing constants
-	public static final String enuAddress="http://www.test.enu/address";
-	public static final String enuResUri="wsman:test/uri";
-	public static final String enuAccessRecipe="When accessing this enumeration use Get with last names.";
-	public static final String enuFilUsage="Filter is only operational for firstname, lastname, hiredate.";
+	public static final String enuAddress = "http://www.test.enu/address";
+	public static final String enuResUri = "wsman:test/uri";
+	public static final String enuAccessRecipe = "When accessing this enumeration use Get with last names.";
+	public static final String enuFilUsage = "Filter is only operational for firstname, lastname, hiredate.";
 	public static final String enuMetaDataUID = "UID_http://diff.sampleEnum.com/enumeration/employee/985739485";
 
 	//Details for the schemas used
@@ -140,23 +148,21 @@ public class MetadataTest extends TestBase {
 	public static final String schem2 = "tl=http://schemas.wiseman.dev.java.net/traffic/1/light.xsd";
 
 	//Details for the operation annotation fields added.
-	public static final String op1Name="Create";
-	public static final String op1inpt="tl:TrafficLightTypeMessage=http://schemas.xmlsoap.org/ws/2004/09/transfer/Create";
-	public static final String op1outpt="wxf:ResourceCreated=http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse";
+	public static final String op1Name = "Create";
+	public static final String op1inpt = "tl:TrafficLightTypeMessage=http://schemas.xmlsoap.org/ws/2004/09/transfer/Create";
+	public static final String op1outpt = "wxf:ResourceCreated=http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse";
 
 	public static long timeoutInMilliseconds = 9400000;
 
 	XmlBinding binding = null;
-    private int defAnnotCnt =6;
+	private int defAnnotCnt = 6;
 
-	private static net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory
-	metadataContent_fact = new
-		net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory();
+	private static net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory metadataContent_fact = new net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory();
 
-    /* Initialize the unit test variables for each test run.
-     * (non-Javadoc)
-     * @see management.TestBase#setUp()
-     */
+	/* Initialize the unit test variables for each test run.
+	 * (non-Javadoc)
+	 * @see management.TestBase#setUp()
+	 */
 	protected void setUp() throws Exception {
 		super.setUp();
 		Management man = null;
@@ -168,492 +174,539 @@ public class MetadataTest extends TestBase {
 		binding = man.getXmlBinding();
 	}
 
-    /**Tests/exercises metadata functionality
-     *
-     * @throws Exception
-     */
-    public void testMetaDataGet() throws Exception {
+	/**Tests/exercises metadata functionality
+	 *
+	 * @throws Exception
+	 */
+	public void testMetaDataGet() throws Exception {
 
-    	//############ REQUEST THE METADATA REPOSITORY DATA ######################
-        //Request identify info to get MetaData root information
-        final Identify identify = new Identify();
-        identify.setIdentify();
+		//############ REQUEST THE METADATA REPOSITORY DATA ######################
+		//Request identify info to get MetaData root information
+		final Identify identify = new Identify();
+		identify.setXmlBinding(binding);
+		identify.setIdentify();
 
-        //Send identify request
-        final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
-        response.prettyPrint(logfile);
-        if (response.getBody().hasFault()) {
-            fail(response.getBody().getFault().getFaultString());
-        }
+		//Send identify request
+		final Addressing response = HttpClient.sendRequest(identify
+				.getMessage(), DESTINATION);
+		response.prettyPrint(logfile);
+		if (response.getBody().hasFault()) {
+			fail(response.getBody().getFault().getFaultString());
+		}
 
-        //Parse the identify response
-        final Identify id = new Identify(response);
-        final SOAPElement idr = id.getIdentifyResponse();
-        assertNotNull(idr);
-        SOAPElement el =IdentifyUtility.locateElement(id,
-        		AnnotationProcessor.META_DATA_RESOURCE_URI);
-         assertNotNull("MetaDatResourceURI is null.",el);
-         //retrieve the MetaData ResourceURI
-         String resUri=el.getTextContent();
-          assertNotNull("Retrieved resourceURI is null.",resUri);
-        el =IdentifyUtility.locateElement(id,
-        		AnnotationProcessor.META_DATA_TO);
-        assertNotNull("MetaDataTo is null",el);
-        //retrieve the MetaData To/Destination
-        String metTo=el.getTextContent();
-        assertNotNull("Retrieved destination is null.",metTo);
+		//Parse the identify response
+		final Identify id = new Identify(response);
+		final SOAPElement idr = id.getIdentifyResponse();
+		assertNotNull(idr);
+		SOAPElement el = IdentifyUtility.locateElement(id,
+				AnnotationProcessor.META_DATA_RESOURCE_URI);
+		assertNotNull("MetaDatResourceURI is null.", el);
+		//retrieve the MetaData ResourceURI
+		String resUri = el.getTextContent();
+		assertNotNull("Retrieved resourceURI is null.", resUri);
+		el = IdentifyUtility
+				.locateElement(id, AnnotationProcessor.META_DATA_TO);
+		assertNotNull("MetaDataTo is null", el);
+		//retrieve the MetaData To/Destination
+		String metTo = el.getTextContent();
+		assertNotNull("Retrieved destination is null.", metTo);
 
-        //############ REQUEST THE LIST OF METADATA AVAILABLE ######################
-	   //Build the GET request to be submitted for the metadata
-        Management m = null;
-        m =TransferUtility.createMessage(metTo, resUri,
-        		Transfer.GET_ACTION_URI, null, null, 30000, null);
+		//############ REQUEST THE LIST OF METADATA AVAILABLE ######################
+		//Build the GET request to be submitted for the metadata
+		Management m = null;
+		m = TransferUtility.createMessage(metTo, resUri,
+				Transfer.GET_ACTION_URI, null, null, 30000, null);
+		m.setXmlBinding(binding);
 
-         //############ PROCESS THE METADATA RESPONSE ######################
-         //Parse the getResponse for the MetaData
-         final Addressing getResponse = HttpClient.sendRequest(m);
-       Management mResp = new Management(getResponse);
-        assertNull("A fault was detected.",mResp.getFault());
+		//############ PROCESS THE METADATA RESPONSE ######################
+		//Parse the getResponse for the MetaData
+		final Addressing getResponse = HttpClient.sendRequest(m);
+		Management mResp = new Management(getResponse);
+		assertNull("A fault was detected.", mResp.getFault());
 
-   		//Retrieve the MetaData response to build JAXB type
-   		SOAPBody body = mResp.getBody();
+		//Retrieve the MetaData response to build JAXB type
+		SOAPBody body = mResp.getBody();
 
-   		//Normal processing to create/retrieve the Metadata object
-   		Node metaDataNode = body.getFirstChild();
+		//Normal processing to create/retrieve the Metadata object
+		Node metaDataNode = body.getFirstChild();
 		try {
 			//unmarshall the Metadata node content
 			Object bound = binding.unmarshal(metaDataNode);
 
-			Metadata ob = (Metadata)bound;
+			Metadata ob = (Metadata) bound;
 
 			//Parse the MetadataSections that exist
 			List<MetadataSection> metaDataSections = ob.getMetadataSection();
-			 assertEquals("The correct number of metadata sections were not found.",
-					 defAnnotCnt, metaDataSections.size());
+			assertEquals(
+					"The correct number of metadata sections were not found.",
+					defAnnotCnt, metaDataSections.size());
 
-        //############ PROCESS A METADATASECTION ######################
+			//############ PROCESS A METADATASECTION ######################
 			//Examine Metadatasection attributes
 			MetadataSection section = metaDataSections.get(0);
-			assertEquals("Dialect does not match.",
-					AnnotationProcessor.NS_URI,
+			assertEquals("Dialect does not match.", AnnotationProcessor.NS_URI,
 					section.getDialect());
 			assertEquals("Identifier does not match.",
-					AnnotationProcessor.NS_URI,
-					section.getIdentifier());
+					AnnotationProcessor.NS_URI, section.getIdentifier());
 
-	    //########### TRANSLATE METADATA TO FAMILIAR MANAGEMENT NODES #####
-	        //Extract the MetaData node returned as Management instances
-	        Management[] metaDataList =
-	        	MetadataUtility.extractEmbeddedMetaDataElements(mResp);
-	        assertEquals("Correct number of Management instances not returned.",
-	        		defAnnotCnt, metaDataList.length);
+			//########### TRANSLATE METADATA TO FAMILIAR MANAGEMENT NODES #####
+			//Extract the MetaData node returned as Management instances
+			Management[] metaDataList = MetadataUtility
+					.extractEmbeddedMetaDataElements(mResp);
+			assertEquals(
+					"Correct number of Management instances not returned.",
+					defAnnotCnt, metaDataList.length);
 
-	        //locate the Management instances to evaluate.
-	        Management defAddModInst = null;
-	        Management embeddedDefModInst = null;
-	        Management enumModInst = null;
-	        for (int i = 0; i < metaDataList.length; i++) {
-	        	Management inst = metaDataList[i];
-	        	SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(),
-	        			AnnotationProcessor.RESOURCE_META_DATA_UID);
-	        	assertNotNull("Unable to locate SoapElement for "+
-	        			AnnotationProcessor.RESOURCE_META_DATA_UID,uid);
-	        	if(uid.getTextContent().equals(MetadataTest.metaDataUID)){
-	        		defAddModInst = inst;
-	        	}
-	        	if(uid.getTextContent().equals(MetadataTest.embeddedAnnotResourceMetUID)){
-	        		embeddedDefModInst = inst;
-	        	}
-	        	if(uid.getTextContent().equals(MetadataTest.enuMetaDataUID)){
-	        		enumModInst = inst;
-	        	}
+			//locate the Management instances to evaluate.
+			Management defAddModInst = null;
+			Management embeddedDefModInst = null;
+			Management enumModInst = null;
+			for (int i = 0; i < metaDataList.length; i++) {
+				Management inst = metaDataList[i];
+				SOAPElement uid = ManagementUtility.locateHeader(inst
+						.getHeaders(),
+						AnnotationProcessor.RESOURCE_META_DATA_UID);
+				assertNotNull("Unable to locate SoapElement for "
+						+ AnnotationProcessor.RESOURCE_META_DATA_UID, uid);
+				if (uid.getTextContent().equals(MetadataTest.metaDataUID)) {
+					defAddModInst = inst;
+				}
+				if (uid.getTextContent().equals(
+						MetadataTest.embeddedAnnotResourceMetUID)) {
+					embeddedDefModInst = inst;
+				}
+				if (uid.getTextContent().equals(MetadataTest.enuMetaDataUID)) {
+					enumModInst = inst;
+				}
 			}
 			Management instance = defAddModInst;
 
-			assertNotNull("Management instance not successfully retrieved.",instance);
+			assertNotNull("Management instance not successfully retrieved.",
+					instance);
 
 			//Now parse the Dialect specif component.
 			//############ VERIFY THE METADATA RESPONSE ######################
 			//Verify expected contents.
-		    assertEquals("The values did not match.",destUrl, instance.getTo());
-			assertEquals("The values did not match.",resourceUri, instance.getResourceURI());
+			assertEquals("The values did not match.", destUrl, instance.getTo());
+			assertEquals("The values did not match.", resourceUri, instance
+					.getResourceURI());
 			//Test MetaDataCategory
-			SOAPElement locatedElement = ManagementUtility.locateHeader(instance.getHeaders(),
+			SOAPElement locatedElement = ManagementUtility.locateHeader(
+					instance.getHeaders(),
 					AnnotationProcessor.META_DATA_CATEGORY);
-			assertNotNull("Unable to locate MetaDataCategory element.",locatedElement);
+			assertNotNull("Unable to locate MetaDataCategory element.",
+					locatedElement);
 			assertEquals("Values did not match.",
-					MetadataTest.metaDataCategory, locatedElement.getTextContent());
+					MetadataTest.metaDataCategory, locatedElement
+							.getTextContent());
 			//Test MetaDataDescription
-			locatedElement = ManagementUtility.locateHeader(instance.getHeaders(),
-					AnnotationProcessor.META_DATA_DESCRIPTION);
-			assertNotNull("Unable to locate MetaDataDescription element.",locatedElement);
+			locatedElement = ManagementUtility.locateHeader(instance
+					.getHeaders(), AnnotationProcessor.META_DATA_DESCRIPTION);
+			assertNotNull("Unable to locate MetaDataDescription element.",
+					locatedElement);
 			assertEquals("Values did not match.",
-					MetadataTest.metaDataDescription, locatedElement.getTextContent());
+					MetadataTest.metaDataDescription, locatedElement
+							.getTextContent());
 			//Test MetaDataMiscInfo
-			locatedElement = ManagementUtility.locateHeader(instance.getHeaders(),
-					AnnotationProcessor.RESOURCE_MISC_INFO);
-			assertNotNull("Unable to locate MetaDataMisc Info element.",locatedElement);
+			locatedElement = ManagementUtility.locateHeader(instance
+					.getHeaders(), AnnotationProcessor.RESOURCE_MISC_INFO);
+			assertNotNull("Unable to locate MetaDataMisc Info element.",
+					locatedElement);
 			assertEquals("Values did not match.",
-					MetadataTest.metaDataMiscInfo, locatedElement.getTextContent());
+					MetadataTest.metaDataMiscInfo, locatedElement
+							.getTextContent());
 			//Test MetaDataUID
-			locatedElement = ManagementUtility.locateHeader(instance.getHeaders(),
-					AnnotationProcessor.RESOURCE_META_DATA_UID);
-			assertNotNull("Unable to locate MetaDataUID Info element.",locatedElement);
-			assertEquals("Values did not match.",
-					MetadataTest.metaDataUID, locatedElement.getTextContent());
+			locatedElement = ManagementUtility.locateHeader(instance
+					.getHeaders(), AnnotationProcessor.RESOURCE_META_DATA_UID);
+			assertNotNull("Unable to locate MetaDataUID Info element.",
+					locatedElement);
+			assertEquals("Values did not match.", MetadataTest.metaDataUID,
+					locatedElement.getTextContent());
 			//verify SelectorSet from annotation is retrieved correctly...
-			Map<String,String> selectorsRetrieved = null;
-			selectorsRetrieved =
-				ManagementUtility.extractSelectorsAsMap(selectorsRetrieved,
-					(List)new ArrayList<SelectorType>(instance.getSelectors()));
-			StringTokenizer selTok = new StringTokenizer(selector1,"=");
+			Map<String, String> selectorsRetrieved = null;
+			selectorsRetrieved = ManagementUtility.extractSelectorsAsMap(
+					selectorsRetrieved, (List) new ArrayList<SelectorType>(
+							instance.getSelectors()));
+			StringTokenizer selTok = new StringTokenizer(selector1, "=");
 			String key = null;
-				key = selTok.nextToken();
-			assertTrue("First selector key was not found.",
-					selectorsRetrieved.containsKey(key));
+			key = selTok.nextToken();
+			assertTrue("First selector key was not found.", selectorsRetrieved
+					.containsKey(key));
 			String value = selTok.nextToken();
-			assertEquals("First selector value was not found.",
-					value,
+			assertEquals("First selector value was not found.", value,
 					selectorsRetrieved.get(key));
 			//Test second selector entered.
-			selTok = new StringTokenizer(selector2,"=");
-				key = selTok.nextToken();
- 				assertTrue("Second selector key was not found.",
- 						selectorsRetrieved.containsKey(key));
+			selTok = new StringTokenizer(selector2, "=");
+			key = selTok.nextToken();
+			assertTrue("Second selector key was not found.", selectorsRetrieved
+					.containsKey(key));
 			value = selTok.nextToken();
-			assertEquals("Second selector value was not found.",
-					value,
+			assertEquals("Second selector value was not found.", value,
 					selectorsRetrieved.get(key));
 			//Test Custom ReferenceParameter Types
-			QName custQName = new QName(custQnsuri,custQlocPart,custQprefix);
-			locatedElement = ManagementUtility.locateHeader(instance.getHeaders(),
-					custQName);
-			assertNotNull("Unable to locate CustomRefParam element.",locatedElement);
-			assertEquals("Values did not match.",
-					custQvalue, locatedElement.getTextContent());
+			QName custQName = new QName(custQnsuri, custQlocPart, custQprefix);
+			locatedElement = ManagementUtility.locateHeader(instance
+					.getHeaders(), custQName);
+			assertNotNull("Unable to locate CustomRefParam element.",
+					locatedElement);
+			assertEquals("Values did not match.", custQvalue, locatedElement
+					.getTextContent());
 			//Test Custom ReferenceProperty Types
-			QName custQName1 = new QName(custQnsuri1,custQlocPart1,custQprefix1);
-			locatedElement = ManagementUtility.locateHeader(instance.getHeaders(),
-					custQName1);
-			assertNotNull("Unable to locate CustomRefParam element.",locatedElement);
-			assertEquals("Values did not match.",
-					custQvalue1, locatedElement.getTextContent());
+			QName custQName1 = new QName(custQnsuri1, custQlocPart1,
+					custQprefix1);
+			locatedElement = ManagementUtility.locateHeader(instance
+					.getHeaders(), custQName1);
+			assertNotNull("Unable to locate CustomRefParam element.",
+					locatedElement);
+			assertEquals("Values did not match.", custQvalue1, locatedElement
+					.getTextContent());
 
 			//test that embedded annotations are also retrieved for handler with sets of addressing details.
 			Management embedded = null;
 			//Ensure that analysis is done on right element
 			embedded = embeddedDefModInst;
-			assertEquals("To values do not match",MetadataTest.embeddedAnnotTo,
-					embedded.getTo());
-			assertEquals("To values do not match",MetadataTest.embeddedAnnotResourceURI,
-					embedded.getResourceURI());
+			assertEquals("To values do not match",
+					MetadataTest.embeddedAnnotTo, embedded.getTo());
+			assertEquals("To values do not match",
+					MetadataTest.embeddedAnnotResourceURI, embedded
+							.getResourceURI());
 			//TEST the Message Type definitions
-	    	//Test that a body is returned in the metadata Management insts
-	    	assertNotNull("No Metadata body found.",embedded.getBody());
-	    	assertNotNull("No Metadata payload found.",embedded.getBody().getFirstChild());
-	    	//Convert response body to familiar JAXB type
-	    	Node payload = embedded.getBody().getFirstChild();
+			//Test that a body is returned in the metadata Management insts
+			assertNotNull("No Metadata body found.", embedded.getBody());
+			assertNotNull("No Metadata payload found.", embedded.getBody()
+					.getFirstChild());
+			//Convert response body to familiar JAXB type
+			Node payload = embedded.getBody().getFirstChild();
 
-		     MessageDefinitions md = metadataContent_fact.createMessageDefinitions();
-		     Object unmarshalled = binding.unmarshal(payload);
-		     if(unmarshalled instanceof MessageDefinitions){
-		    	 md = (MessageDefinitions) unmarshalled;
-		     }
+			MessageDefinitions md = metadataContent_fact
+					.createMessageDefinitions();
+			Object unmarshalled = binding.unmarshal(payload);
+			if (unmarshalled instanceof MessageDefinitions) {
+				md = (MessageDefinitions) unmarshalled;
+			}
 
-	    	 assertNotNull("MessageTypeDefinition node not found.",md);
-	    	 assertEquals("Operations count not correct.", 1,
-	    			 md.getOperations().
-	    			 getOperation().size());
-	    	 assertEquals("Schemas count not correct.",2,
-	    			 md.getSchemas().getSchema().size());
+			assertNotNull("MessageTypeDefinition node not found.", md);
+			assertEquals("Operations count not correct.", 1, md.getOperations()
+					.getOperation().size());
+			assertEquals("Schemas count not correct.", 2, md.getSchemas()
+					.getSchema().size());
 
- 			} catch (JAXBException e) {
- 				System.out.println("Exception:"+e.getMessage());
- 				fail("Unexpected error occurred:"+e.getMessage());
- 				throw new InvalidRepresentationFault(
- 						InvalidRepresentationFault.Detail.INVALID_VALUES);
- 			}
-    }
-
-    public void testMetaDataEnumeration(){
-      try{
-
-        Management[] metaDataList =
-			MetadataUtility.getExposedMetadata(DESTINATION,-1);
-
-        assertEquals("Array count incorrect.",defAnnotCnt, metaDataList.length);
-        Management enumModInst = null;
-        for (int i = 0; i < metaDataList.length; i++) {
-        	Management inst = metaDataList[i];
-        	SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(),
-        			AnnotationProcessor.RESOURCE_META_DATA_UID);
-        	assertNotNull("SOAPElement was not located.",uid);
-        	assertNotNull("SOAPElement contained no text element.",uid.getTextContent());
-        	if(uid.getTextContent().equals(MetadataTest.enuMetaDataUID)){
-        		enumModInst = inst;
-        	}
+		} catch (JAXBException e) {
+			System.out.println("Exception:" + e.getMessage());
+			fail("Unexpected error occurred:" + e.getMessage());
+			throw new InvalidRepresentationFault(
+					InvalidRepresentationFault.Detail.INVALID_VALUES);
 		}
-        assertNotNull("The enumMetadata instance was not found.",enumModInst);
+	}
 
-        //Test the additional elements added for enumerations.
-        SOAPElement locatedElement = ManagementUtility.locateHeader(enumModInst.getHeaders(),
-        		AnnotationProcessor.ENUMERATION_ACCESS_RECIPE);
-        assertNotNull("Unable to locate EnumerationAcccessRecipe Info element.",locatedElement);
-        assertEquals("Values did not match.",
-        		MetadataTest.enuAccessRecipe, locatedElement.getTextContent());
-        locatedElement = ManagementUtility.locateHeader(enumModInst.getHeaders(),
-				AnnotationProcessor.ENUMERATION_FILTER_USAGE);
-		assertNotNull("Unable to locate EnumerationFilterUsage Info element.",locatedElement);
-		assertEquals("Values did not match.",
-				MetadataTest.enuFilUsage, locatedElement.getTextContent());
+	public void testMetaDataEnumeration() {
+		try {
 
-		//############ TEST OPTIMIZED ENUMERATION CALL TO METADATA HANDLER #########
-		  //Attempt to locate a specific enumeration instance via filtered enumeration
-		//BUILD the filter and message
-		String filter = "env:Envelope/env:Header/wsmeta:ResourceMetaDataUID/text()='"+
-			MetadataTest.enuMetaDataUID+"'";
-		EnumerationMessageValues enuValues = EnumerationMessageValues.newInstance();
-		 enuValues.setRequestForOptimizedEnumeration(true);
-		 enuValues.setFilter(filter);
+			Management[] metaDataList = MetadataUtility.getExposedMetadata(
+					DESTINATION, -1);
+
+			assertEquals("Array count incorrect.", defAnnotCnt,
+					metaDataList.length);
+			Management enumModInst = null;
+			for (int i = 0; i < metaDataList.length; i++) {
+				Management inst = metaDataList[i];
+				SOAPElement uid = ManagementUtility.locateHeader(inst
+						.getHeaders(),
+						AnnotationProcessor.RESOURCE_META_DATA_UID);
+				assertNotNull("SOAPElement was not located.", uid);
+				assertNotNull("SOAPElement contained no text element.", uid
+						.getTextContent());
+				if (uid.getTextContent().equals(MetadataTest.enuMetaDataUID)) {
+					enumModInst = inst;
+				}
+			}
+			assertNotNull("The enumMetadata instance was not found.",
+					enumModInst);
+
+			//Test the additional elements added for enumerations.
+			SOAPElement locatedElement = ManagementUtility.locateHeader(
+					enumModInst.getHeaders(),
+					AnnotationProcessor.ENUMERATION_ACCESS_RECIPE);
+			assertNotNull(
+					"Unable to locate EnumerationAcccessRecipe Info element.",
+					locatedElement);
+			assertEquals("Values did not match.", MetadataTest.enuAccessRecipe,
+					locatedElement.getTextContent());
+			locatedElement = ManagementUtility
+					.locateHeader(enumModInst.getHeaders(),
+							AnnotationProcessor.ENUMERATION_FILTER_USAGE);
+			assertNotNull(
+					"Unable to locate EnumerationFilterUsage Info element.",
+					locatedElement);
+			assertEquals("Values did not match.", MetadataTest.enuFilUsage,
+					locatedElement.getTextContent());
+
+			//############ TEST OPTIMIZED ENUMERATION CALL TO METADATA HANDLER #########
+			//Attempt to locate a specific enumeration instance via filtered enumeration
+			//BUILD the filter and message
+			String filter = "env:Envelope/env:Header/wsmeta:ResourceMetaDataUID/text()='"
+					+ MetadataTest.enuMetaDataUID + "'";
+			EnumerationMessageValues enuValues = EnumerationMessageValues
+					.newInstance();
+			enuValues.setRequestForOptimizedEnumeration(true);
+			enuValues.setFilter(filter);
+			enuValues.setXmlBinding(binding);
+			Enumeration enMesg = EnumerationUtility.buildMessage(null,
+					enuValues);
+			Management filteredMetaDataReq = ManagementUtility.buildMessage(
+					enMesg, null);
+			filteredMetaDataReq.setTo(DESTINATION);
+			filteredMetaDataReq.setResourceURI("wsman:metadata");
+			//Send the Enumeration request
+			final Addressing response = HttpClient
+					.sendRequest(filteredMetaDataReq);
+			if (response.getBody().hasFault()) {
+				fail(response.getBody().getFault().getFaultString());
+			}
+			//Parse response for recognizable Management instances
+			//Translate the OptimizedEnumeration results to List<EnumerationItem>
+			Management mResp = new Management(response);
+
+			//EnumerationResourceState state = EnumerationUtility.extractResourceState(mResp);
+			List<EnumerationItem> state = EnumerationUtility
+					.extractEnumeratedValues(mResp);
+			assertEquals("EventSources count not correct.", 1, state.size());
+
+			//Locate the Management instances
+			List<Management> metadataSrces = AnnotationProcessor
+					.extractMetaDataFromEnumerationMessage(state);
+
+			assertEquals("Incorrect number of MetaData instances returned.", 1,
+					metadataSrces.size());
+			Management inst = metadataSrces.get(0);
+			SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(),
+					AnnotationProcessor.RESOURCE_META_DATA_UID);
+			assertNotNull("SOAPElement was not located.", uid);
+			assertNotNull("SOAPElement contained no text element.", uid
+					.getTextContent());
+			assertEquals(uid.getTextContent(), MetadataTest.enuMetaDataUID);
+
+		} catch (Exception e) {
+			fail("An error occured:" + e.getMessage());
+		}
+	}
+
+	public void testExposedMetaData() throws SOAPException, IOException,
+			JAXBException, DatatypeConfigurationException {
+		Management[] metaDataList = MetadataUtility.getExposedMetadata(
+				DESTINATION, -1);
+		assertNotNull(metaDataList);
+		assertTrue("No metadata exposed.", (metaDataList.length > 0));
+	}
+
+	public void testUseOfMetaDataInfo() throws SOAPException, JAXBException,
+			DatatypeConfigurationException, IOException {
+		//Parse the metadata respository to extract ADDRESS details for transfer instance
+		String filter = "env:Envelope/env:Header/wsmeta:ResourceMetaDataUID/text()='"
+				+ eventcreator_Handler.UID + "'";
+		EnumerationMessageValues enuValues = EnumerationMessageValues
+				.newInstance();
+		enuValues.setRequestForOptimizedEnumeration(true);
+		enuValues.setFilter(filter);
+		enuValues.setXmlBinding(binding);
 		Enumeration enMesg = EnumerationUtility.buildMessage(null, enuValues);
-		Management filteredMetaDataReq = ManagementUtility.buildMessage(enMesg,null);
-		  filteredMetaDataReq.setTo(DESTINATION);
-		  filteredMetaDataReq.setResourceURI("wsman:metadata");
+		Management filteredMetaDataReq = ManagementUtility.buildMessage(enMesg,
+				null);
+		filteredMetaDataReq.setTo(DESTINATION);
+		filteredMetaDataReq.setResourceURI("wsman:metadata");
 		//Send the Enumeration request
-         final Addressing response = HttpClient.sendRequest(filteredMetaDataReq);
-         if (response.getBody().hasFault()) {
-            fail(response.getBody().getFault().getFaultString());
-         }
-        //Parse response for recognizable Management instances
-         //Translate the OptimizedEnumeration results to List<EnumerationItem>
-         Management mResp = new Management(response);
+		final Addressing response = HttpClient.sendRequest(filteredMetaDataReq);
+		if (response.getBody().hasFault()) {
+			fail(response.getBody().getFault().getFaultString());
+		}
+		//Parse response for recognizable Management instances
+		//Translate the OptimizedEnumeration results to List<EnumerationItem>
+		Management mResp = new Management(response);
 
-	   	//EnumerationResourceState state = EnumerationUtility.extractResourceState(mResp);
-	   	  List<EnumerationItem> state = EnumerationUtility.extractEnumeratedValues(mResp);
-	   	  assertEquals("EventSources count not correct.",1, state.size());
+		//EnumerationResourceState state = EnumerationUtility.extractResourceState(mResp);
+		List<EnumerationItem> state = EnumerationUtility
+				.extractEnumeratedValues(mResp);
+		assertEquals("EventSources count not correct.", 1, state.size());
 
-	   	//Locate the Management instances
-   	    List<Management> metadataSrces = AnnotationProcessor.
-   	  		extractMetaDataFromEnumerationMessage(state);
+		//Locate the Management instances
+		List<Management> metadataSrces = AnnotationProcessor
+				.extractMetaDataFromEnumerationMessage(state);
 
-   	    assertEquals("Incorrect number of MetaData instances returned.",1,
-   	    		metadataSrces.size());
-    	  Management inst = metadataSrces.get(0);
-    	  SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(),
-    			AnnotationProcessor.RESOURCE_META_DATA_UID);
-    	  assertNotNull("SOAPElement was not located.",uid);
-    	  assertNotNull("SOAPElement contained no text element.",uid.getTextContent());
-    	  assertEquals(uid.getTextContent(), MetadataTest.enuMetaDataUID);
-
-      }catch(Exception e){
-    	  fail("An error occured:"+e.getMessage());
-      }
-    }
-
-    public void testExposedMetaData() throws SOAPException, IOException,
-    	JAXBException, DatatypeConfigurationException{
-  	  Management[] metaDataList =
-		  MetadataUtility.getExposedMetadata(DESTINATION,-1);
-  	  assertNotNull(metaDataList);
-  	  assertTrue("No metadata exposed.",(metaDataList.length>0));
-    }
-
-    public void testUseOfMetaDataInfo() throws SOAPException, JAXBException,
-    	DatatypeConfigurationException, IOException{
-       	//Parse the metadata respository to extract ADDRESS details for transfer instance
-		String filter = "env:Envelope/env:Header/wsmeta:ResourceMetaDataUID/text()='"+
-		  eventcreator_Handler.UID+"'";
-		EnumerationMessageValues enuValues = EnumerationMessageValues.newInstance();
-		 enuValues.setRequestForOptimizedEnumeration(true);
-		 enuValues.setFilter(filter);
-		Enumeration enMesg = EnumerationUtility.buildMessage(null, enuValues);
-		Management filteredMetaDataReq = ManagementUtility.buildMessage(enMesg,null);
-		  filteredMetaDataReq.setTo(DESTINATION);
-		  filteredMetaDataReq.setResourceURI("wsman:metadata");
-		//Send the Enumeration request
-	     final Addressing response = HttpClient.sendRequest(filteredMetaDataReq);
-	     if (response.getBody().hasFault()) {
-	        fail(response.getBody().getFault().getFaultString());
-	     }
-	    //Parse response for recognizable Management instances
-	     //Translate the OptimizedEnumeration results to List<EnumerationItem>
-	     Management mResp = new Management(response);
-
-	   	//EnumerationResourceState state = EnumerationUtility.extractResourceState(mResp);
-	   	  List<EnumerationItem> state = EnumerationUtility.extractEnumeratedValues(mResp);
-	   	  assertEquals("EventSources count not correct.",1, state.size());
-
-	   	//Locate the Management instances
-	    List<Management> metadataSrces = AnnotationProcessor.
-	  		extractMetaDataFromEnumerationMessage(state);
-
-		    assertEquals("Incorrect number of MetaData instances returned.",1,
-		    		metadataSrces.size());
-		  Management inst = metadataSrces.get(0);
-		  SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(),
+		assertEquals("Incorrect number of MetaData instances returned.", 1,
+				metadataSrces.size());
+		Management inst = metadataSrces.get(0);
+		SOAPElement uid = ManagementUtility.locateHeader(inst.getHeaders(),
 				AnnotationProcessor.RESOURCE_META_DATA_UID);
-		  assertNotNull("SOAPElement was not located.",uid);
-		  assertNotNull("SOAPElement contained no text element.",
-				  uid.getTextContent());
-		  assertEquals(uid.getTextContent(), eventcreator_Handler.UID);
+		assertNotNull("SOAPElement was not located.", uid);
+		assertNotNull("SOAPElement contained no text element.", uid
+				.getTextContent());
+		assertEquals(uid.getTextContent(), eventcreator_Handler.UID);
 
-    	//Use that data to connect to that instance
-		  //Following should be an unsupported action
+		//Use that data to connect to that instance
+		//Following should be an unsupported action
 		inst.setAction(Enumeration.RENEW_ACTION_URI);
 		ManagementMessageValues emtpy = null;
 		Management man = ManagementUtility.buildMessage(inst, emtpy);
-	     final Addressing metInfResp = HttpClient.sendRequest(man);
-	     if (metInfResp.getBody().hasFault()) {
-	    	SOAPFault fault = metInfResp.getBody().getFault();
-//	    	System.out.println("fault:"+fault.getFaultCode());
-//	    	System.out.println("fault:"+fault.getFaultNode());
-//	    	System.out.println("fault:"+fault.getFaultActor());
-//	    	System.out.println("fault:"+fault.getFaultString());
-//	    	System.out.println("fault:"+fault.getFaultCodeAsName().getLocalName());
-//	    	System.out.println("fault:"+fault.getFaultCodeAsQName());
-	    	Iterator reasons = fault.getFaultReasonTexts();
-	    	for (Iterator iter = reasons; iter.hasNext();) {
-	    		String element = (String) iter.next();
-//	    		System.out.println("Reason:"+element);
-	    	}
-	    	Iterator subCodes = fault.getFaultSubcodes();
-	    	for (Iterator iter = subCodes; iter.hasNext();) {
-				QName element = (QName) iter.next();
-//			System.out.println("codes:"+element);
+		final Addressing metInfResp = HttpClient.sendRequest(man);
+		if (metInfResp.getBody().hasFault()) {
+			SOAPFault fault = metInfResp.getBody().getFault();
+			//	    	System.out.println("fault:"+fault.getFaultCode());
+			//	    	System.out.println("fault:"+fault.getFaultNode());
+			//	    	System.out.println("fault:"+fault.getFaultActor());
+			//	    	System.out.println("fault:"+fault.getFaultString());
+			//	    	System.out.println("fault:"+fault.getFaultCodeAsName().getLocalName());
+			//	    	System.out.println("fault:"+fault.getFaultCodeAsQName());
+			Iterator reasons = fault.getFaultReasonTexts();
+			for (Iterator iter = reasons; iter.hasNext();) {
+				String element = (String) iter.next();
+				//	    		System.out.println("Reason:"+element);
 			}
-	     }else{
-	        fail("This action should not be supported");
-	     }
-    }
+			Iterator subCodes = fault.getFaultSubcodes();
+			for (Iterator iter = subCodes; iter.hasNext();) {
+				QName element = (QName) iter.next();
+				//			System.out.println("codes:"+element);
+			}
+		} else {
+			fail("This action should not be supported");
+		}
+	}
 
-    public void testMessageTypeDetails() throws SOAPException,
-    	JAXBException, DatatypeConfigurationException,
-    	IOException{
-    	//retrieve the exposed metadata where Schema and
-    	//  operations are already defined.
-    	Management metaDataInstance = null;
-//    	metaDataInstance = AnnotationProcessor.findAnnotatedResourceByUID(
-//    			MetadataTest.embeddedAnnotResourceMetUID,
-//    			DESTINATION);
-    	QName[] headers = null;
-    	metaDataInstance = AnnotationProcessor.findAnnotatedResourceByUID(
-    			 MetadataTest.embeddedAnnotResourceMetUID,
-    			 DESTINATION,false,headers);
-//TODO: RETURN AND DEBUG THIS, ODD BUG!!! Access to Vector.instance randomly fails. ???
-    	 assertNotNull("Unable to locate correct instance.",metaDataInstance);
-//System.out.println("@@@ MetadataReturned:"+metaDataInstance);
-    	//Test that a body is returned in the metadata Management insts
-    	assertNotNull("No Metadata body found.",metaDataInstance.getBody());
-    	assertNotNull("No Metadata payload found.",metaDataInstance.getBody().getFirstChild());
-    	Node payload = metaDataInstance.getBody().getFirstChild();
+	public void testMessageTypeDetails() throws SOAPException, JAXBException,
+			DatatypeConfigurationException, IOException {
+		//retrieve the exposed metadata where Schema and
+		//  operations are already defined.
+		Management metaDataInstance = null;
+		//    	metaDataInstance = AnnotationProcessor.findAnnotatedResourceByUID(
+		//    			MetadataTest.embeddedAnnotResourceMetUID,
+		//    			DESTINATION);
+		QName[] headers = null;
+		metaDataInstance = AnnotationProcessor.findAnnotatedResourceByUID(
+				MetadataTest.embeddedAnnotResourceMetUID, DESTINATION, false,
+				headers);
+		//TODO: RETURN AND DEBUG THIS, ODD BUG!!! Access to Vector.instance randomly fails. ???
+		assertNotNull("Unable to locate correct instance.", metaDataInstance);
+		//System.out.println("@@@ MetadataReturned:"+metaDataInstance);
+		//Test that a body is returned in the metadata Management insts
+		assertNotNull("No Metadata body found.", metaDataInstance.getBody());
+		assertNotNull("No Metadata payload found.", metaDataInstance.getBody()
+				.getFirstChild());
+		Node payload = metaDataInstance.getBody().getFirstChild();
 
-     	//Make sure that schemas are returned correctly
+		//Make sure that schemas are returned correctly
 
-     	//Make sure that the Operations are returned correctly
-
-    }
-
-    public void testSchemaExposure() throws IOException, SOAPException, JAXBException{
-    	//send an http request for a wsdl.
-    	//parse the response to see that it was responded to
-    	String urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "schemas/light.xsd";
-    	String xsdParseFor="<xs:schema targetNamespace=\"http://schemas.wiseman.dev.java.net/traffic/1/light.xsd\"";
-
-		// Make the check using the path method in the URL
-    	boolean located = false;
-		located = checkDocument(urlToXsd, xsdParseFor);
-    	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
-
-    	// Make the check using a query string in the URL
-    	urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "?xsd=light.xsd";
-		located = checkDocument(urlToXsd, xsdParseFor);
-    	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
-
-    	// Make the check using a default query string in the URL (user.xsd)
-    	urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "?xsd";
-    	xsdParseFor="<xs:schema targetNamespace=\"http://examples.hp.com/ws/wsman/user\"";
-		located = checkDocument(urlToXsd, xsdParseFor);
-    	assertTrue("The expected String in the XSD could not be found:" + urlToXsd, located);
-    }
-
-    public void testWsdlExposure() throws IOException, SOAPException,
-			JAXBException {
-		// send an http request for a wsdl.
-		// parse the response to see that it was responded to
-		String urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "wsdls/light.wsdl";
-		String wsdlParseFor = "<service name=\"lightService\">";
-
-        // Make the check using the path method in the URL
-		boolean located = false;
-		located = checkDocument(urlToWsdl, wsdlParseFor);
-		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
-
-        // Make the check using a query string in the URL
-		urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "?wsdl=light.wsdl";
-		located = checkDocument(urlToWsdl, wsdlParseFor);
-		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
-
-        // Make the check using a default query string in the URL
-		urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "?wsdl";
-		wsdlParseFor = "<service name=\"userService\">";
-		located = checkDocument(urlToWsdl, wsdlParseFor);
-		assertTrue("The expected String in the WSDL could not be found:" + urlToWsdl, located);
+		//Make sure that the Operations are returned correctly
 
 	}
 
-    /* Tests whether the metadataLocator mechanism works
-     * and can filter unwanted headers and remove
-     * descriptive metadata body elements.
-     */
-    public void testMetaDataLocatorMechanism() throws SOAPException,
-    JAXBException, DatatypeConfigurationException, IOException{
+	public void testSchemaExposure() throws IOException, SOAPException,
+			JAXBException {
+		//send an http request for a wsdl.
+		//parse the response to see that it was responded to
+		String urlToXsd = ManagementMessageValues.WSMAN_DESTINATION
+				+ "schemas/light.xsd";
+		String xsdParseFor = "<xs:schema targetNamespace=\"http://schemas.wiseman.dev.java.net/traffic/1/light.xsd\"";
 
-    	//request a specific metadata instance
-    	QName[] headersToPrune = null;
-    	Management userMet = AnnotationProcessor.findAnnotatedResourceByUID(
-    			embeddedAnnotResourceMetUID, ManagementMessageValues.WSMAN_DESTINATION,
-    			false,headersToPrune);
-    	assertNotNull("The metadata element was not found.",userMet);
+		// Make the check using the path method in the URL
+		boolean located = false;
+		located = checkDocument(urlToXsd, xsdParseFor);
+		assertTrue("The expected String in the XSD could not be found:"
+				+ urlToXsd, located);
 
-    	//locate it's identifier to verify that it was successfully located.
-    	SOAPElement headerElement =
-    		ManagementUtility.locateHeader(userMet.getHeaders(),
-    			AnnotationProcessor.RESOURCE_META_DATA_UID);
-    	assertNotNull("MetResUid not located.",headerElement);
-    	assertEquals("Values did not match.",embeddedAnnotResourceMetUID,
-    			headerElement.getTextContent());
+		// Make the check using a query string in the URL
+		urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "?xsd=light.xsd";
+		located = checkDocument(urlToXsd, xsdParseFor);
+		assertTrue("The expected String in the XSD could not be found:"
+				+ urlToXsd, located);
 
-    	//now verify that this metadataElement being exercised has body content
-    	assertNotNull("Body of metadata exists",userMet.getBody());
-    	assertNotNull("Body is empty.",userMet.getBody().getFirstChild());
+		// Make the check using a default query string in the URL (user.xsd)
+		urlToXsd = ManagementMessageValues.WSMAN_DESTINATION + "?xsd";
+		xsdParseFor = "<xs:schema targetNamespace=\"http://examples.hp.com/ws/wsman/user\"";
+		located = checkDocument(urlToXsd, xsdParseFor);
+		assertTrue("The expected String in the XSD could not be found:"
+				+ urlToXsd, located);
+	}
 
-    	//Store away the header count for later comparison
-    	int fullHeaderCount = userMet.getHeaders().length;
+	public void testWsdlExposure() throws IOException, SOAPException,
+			JAXBException {
+		// send an http request for a wsdl.
+		// parse the response to see that it was responded to
+		String urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION
+				+ "wsdls/light.wsdl";
+		String wsdlParseFor = "<service name=\"lightService\">";
 
-    	//Now request the same metadata instance, but exclude a few headers
-    	// and exclude the metadata body content
-    	  //identify headers to trim out
-		  QName[] trim = {
-				  AnnotationProcessor.META_DATA_CATEGORY,
-				  AnnotationProcessor.META_DATA_DESCRIPTION,
-				  AnnotationProcessor.RESOURCE_MISC_INFO};
-    	Management filteredMetaData = AnnotationProcessor.findAnnotatedResourceByUID(
-    			embeddedAnnotResourceMetUID,
-    			ManagementMessageValues.WSMAN_DESTINATION,
-    			true,trim);
-    	assertNotNull("The metadata element was not found.",filteredMetaData);
-    	//Now verify that count is correct
-    	assertEquals("Incorrect amount returned.",
-    			filteredMetaData.getHeaders().length,
-    			(fullHeaderCount - trim.length));
-    	//Now verify that body is not longer present
-    	assertNotNull("Body of metadata exists",filteredMetaData.getBody());
-    	assertNull("Body is not empty",filteredMetaData.getBody().getFirstChild());
+		// Make the check using the path method in the URL
+		boolean located = false;
+		located = checkDocument(urlToWsdl, wsdlParseFor);
+		assertTrue("The expected String in the WSDL could not be found:"
+				+ urlToWsdl, located);
 
-    }
+		// Make the check using a query string in the URL
+		urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION
+				+ "?wsdl=light.wsdl";
+		located = checkDocument(urlToWsdl, wsdlParseFor);
+		assertTrue("The expected String in the WSDL could not be found:"
+				+ urlToWsdl, located);
 
-    private boolean checkDocument(final String url,
-    		                      final String parseString) throws IOException {
+		// Make the check using a default query string in the URL
+		urlToWsdl = ManagementMessageValues.WSMAN_DESTINATION + "?wsdl";
+		wsdlParseFor = "<service name=\"userService\">";
+		located = checkDocument(urlToWsdl, wsdlParseFor);
+		assertTrue("The expected String in the WSDL could not be found:"
+				+ urlToWsdl, located);
+
+	}
+
+	/* Tests whether the metadataLocator mechanism works
+	 * and can filter unwanted headers and remove
+	 * descriptive metadata body elements.
+	 */
+	public void testMetaDataLocatorMechanism() throws SOAPException,
+			JAXBException, DatatypeConfigurationException, IOException {
+
+		//request a specific metadata instance
+		QName[] headersToPrune = null;
+		Management userMet = AnnotationProcessor.findAnnotatedResourceByUID(
+				embeddedAnnotResourceMetUID,
+				ManagementMessageValues.WSMAN_DESTINATION, false,
+				headersToPrune);
+		assertNotNull("The metadata element was not found.", userMet);
+
+		//locate it's identifier to verify that it was successfully located.
+		SOAPElement headerElement = ManagementUtility.locateHeader(userMet
+				.getHeaders(), AnnotationProcessor.RESOURCE_META_DATA_UID);
+		assertNotNull("MetResUid not located.", headerElement);
+		assertEquals("Values did not match.", embeddedAnnotResourceMetUID,
+				headerElement.getTextContent());
+
+		//now verify that this metadataElement being exercised has body content
+		assertNotNull("Body of metadata exists", userMet.getBody());
+		assertNotNull("Body is empty.", userMet.getBody().getFirstChild());
+
+		//Store away the header count for later comparison
+		int fullHeaderCount = userMet.getHeaders().length;
+
+		//Now request the same metadata instance, but exclude a few headers
+		// and exclude the metadata body content
+		//identify headers to trim out
+		QName[] trim = { AnnotationProcessor.META_DATA_CATEGORY,
+				AnnotationProcessor.META_DATA_DESCRIPTION,
+				AnnotationProcessor.RESOURCE_MISC_INFO };
+		Management filteredMetaData = AnnotationProcessor
+				.findAnnotatedResourceByUID(embeddedAnnotResourceMetUID,
+						ManagementMessageValues.WSMAN_DESTINATION, true, trim);
+		assertNotNull("The metadata element was not found.", filteredMetaData);
+		//Now verify that count is correct
+		assertEquals("Incorrect amount returned.", filteredMetaData
+				.getHeaders().length, (fullHeaderCount - trim.length));
+		//Now verify that body is not longer present
+		assertNotNull("Body of metadata exists", filteredMetaData.getBody());
+		assertNull("Body is not empty", filteredMetaData.getBody()
+				.getFirstChild());
+
+	}
+
+	private boolean checkDocument(final String url, final String parseString)
+			throws IOException {
 		final URL dest = new URL(url);
 
 		assertNotNull("Unable to instantiate URL", dest);
@@ -677,40 +730,40 @@ public class MetadataTest extends TestBase {
 		BufferedReader br = null;
 		if (response == HttpServletResponse.SC_OK) {
 			InputStream input = http.getInputStream();
-			br = new BufferedReader(new InputStreamReader(http
-					.getInputStream()));
+			br = new BufferedReader(
+					new InputStreamReader(http.getInputStream()));
 			// output.write(get.getBytes());
 		} else {
-        	fail("Http request failed.");
-        }
+			fail("Http request failed.");
+		}
 		assertNotNull("Unable to open reader.", br);
 
-    	boolean located = false;
-    	String line = null;
-    	while((line = br.readLine())!=null){
-    		if(line.indexOf(parseString)>-1){
-    			located = true;
-    		}
-    	}
+		boolean located = false;
+		String line = null;
+		while ((line = br.readLine()) != null) {
+			if (line.indexOf(parseString) > -1) {
+				located = true;
+			}
+		}
 
 		return located;
 	}
 
-	 public static String xmlToString(Node node) {
-			try {
-				Source source = new DOMSource(node);
-				StringWriter stringWriter = new StringWriter();
-				Result result = new StreamResult(stringWriter);
-				TransformerFactory factory = TransformerFactory.newInstance();
-				Transformer transformer = factory.newTransformer();
-				transformer.transform(source, result);
-				return stringWriter.getBuffer().toString();
-			} catch (TransformerConfigurationException e) {
-				e.printStackTrace();
-			} catch (TransformerException e) {
-				e.printStackTrace();
-			}
-			return null;
+	public static String xmlToString(Node node) {
+		try {
+			Source source = new DOMSource(node);
+			StringWriter stringWriter = new StringWriter();
+			Result result = new StreamResult(stringWriter);
+			TransformerFactory factory = TransformerFactory.newInstance();
+			Transformer transformer = factory.newTransformer();
+			transformer.transform(source, result);
+			return stringWriter.getBuffer().toString();
+		} catch (TransformerConfigurationException e) {
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }

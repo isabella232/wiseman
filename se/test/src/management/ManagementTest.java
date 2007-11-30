@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.22  2007/05/30 20:30:24  nbeers
+ **Add HP copyright header
  **
- * $Id: ManagementTest.java,v 1.22 2007-05-30 20:30:24 nbeers Exp $
+ **
+ * $Id: ManagementTest.java,v 1.23 2007-11-30 14:32:37 denis_rachal Exp $
  */
 
 package management;
@@ -39,6 +42,8 @@ import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.xml.XMLSchema;
+import com.sun.ws.management.xml.XmlBinding;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
@@ -47,6 +52,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
@@ -70,9 +76,15 @@ public class ManagementTest extends TestBase {
     private static final int TIMEOUT = 30000;
 
     private final Set<SelectorType> selectors = new HashSet<SelectorType>();
+	final XmlBinding binding;
 
-    public ManagementTest(final String testName) {
+    public ManagementTest(final String testName) throws JAXBException {
         super(testName);
+        
+		// Set the system property to always create bindings with our package
+		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
+		"");
+        binding = new XmlBinding(null, "");
     }
 
     protected void setUp() throws java.lang.Exception {
@@ -95,6 +107,7 @@ public class ManagementTest extends TestBase {
 
     public void testSet() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setAction(Transfer.PUT_ACTION_URI);
         mgmt.setAction(Transfer.CREATE_ACTION_URI);
@@ -112,6 +125,7 @@ public class ManagementTest extends TestBase {
 
     public void testMissingResourceURI() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         mgmt.setTo(DESTINATION);
@@ -139,6 +153,7 @@ public class ManagementTest extends TestBase {
     public void testGetVisual() throws Exception {
 
         final Transfer xf = new Transfer();
+        xf.setXmlBinding(binding);
         xf.setAction(Transfer.GET_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         final String uuid = UUID_SCHEME + UUID.randomUUID().toString();
@@ -180,6 +195,7 @@ public class ManagementTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         mgmt.writeTo(bos);
         final Management m2 = new Management(new ByteArrayInputStream(bos.toByteArray()));
+        m2.setXmlBinding(binding);
 
         assertEquals(RESOURCE, m2.getResourceURI());
         assertEquals(timeout, m2.getTimeout());
@@ -207,6 +223,7 @@ public class ManagementTest extends TestBase {
     public void testActionNotSupported() throws Exception {
 
         final Transfer xf = new Transfer();
+        xf.setXmlBinding(binding);
         final String UNSUPPORTED_ACTION = "some/random/action";
         xf.setAction(UNSUPPORTED_ACTION);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -234,6 +251,7 @@ public class ManagementTest extends TestBase {
     public void testGetResponseEncoding() throws Exception {
 
         final Transfer xf = new Transfer();
+        xf.setXmlBinding(binding);
         xf.setAction(Transfer.GET_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         xf.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
@@ -271,6 +289,7 @@ public class ManagementTest extends TestBase {
     public void testValidate() throws Exception {
 
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI(RESOURCE);
@@ -298,6 +317,7 @@ public class ManagementTest extends TestBase {
         }
 
         final Management mgmt2 = new Management();
+        mgmt2.setXmlBinding(binding);
         mgmt2.setTo(DESTINATION);
         mgmt2.setResourceURI(RESOURCE);
         mgmt2.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -305,12 +325,14 @@ public class ManagementTest extends TestBase {
         doValidation(mgmt2, Addressing.NS_PREFIX + ":Action");
 
         final Management mgmt3 = new Management();
+        mgmt3.setXmlBinding(binding);
         mgmt3.setAction(Transfer.GET_ACTION_URI);
         mgmt3.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         mgmt3.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
         doValidation(mgmt3, Addressing.NS_PREFIX + ":To");
 
         final Management mgmt4 = new Management();
+        mgmt4.setXmlBinding(binding);
         mgmt4.setAction(Transfer.GET_ACTION_URI);
         mgmt4.setTo(DESTINATION);
         mgmt4.setResourceURI(RESOURCE);
@@ -318,6 +340,7 @@ public class ManagementTest extends TestBase {
         doValidation(mgmt4, Addressing.NS_PREFIX + ":ReplyTo");
 
         final Management mgmt5 = new Management();
+        mgmt5.setXmlBinding(binding);
         mgmt5.setAction(Transfer.GET_ACTION_URI);
         mgmt5.setTo(DESTINATION);
         mgmt5.setResourceURI(RESOURCE);
@@ -344,6 +367,7 @@ public class ManagementTest extends TestBase {
 
     public void testAccessDenied() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/access_denied");
@@ -364,6 +388,7 @@ public class ManagementTest extends TestBase {
 
     public void testNonHandler() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/non_handler");
@@ -384,6 +409,7 @@ public class ManagementTest extends TestBase {
 
     public void testTimeout() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/timeout");
@@ -400,18 +426,19 @@ public class ManagementTest extends TestBase {
         if (!response.getBody().hasFault()) {
             fail("fault not returned");
         }
-        long diff = end.getTimeInMillis()-start.getTimeInMillis();
-        assertTrue((diff >= 2000));
-        assertTrue("Timeout was " + diff + " milliseconds, expected 2000 milliseconds.",(diff<= 4000)); // Should be reasonable
-
         final Fault fault = new Addressing(response).getFault();
         assertEquals(SOAP.RECEIVER, fault.getCode().getValue());
         assertEquals(TimedOutFault.TIMED_OUT, fault.getCode().getSubcode().getValue());
         assertEquals(TimedOutFault.TIMED_OUT_REASON, fault.getReason().getText().get(0).getValue());
+        
+        long diff = end.getTimeInMillis()-start.getTimeInMillis();
+        assertTrue("Timeout was " + diff + " milliseconds, expected 2000 milliseconds.",(diff >= 2000));
+        assertTrue("Timeout was " + diff + " milliseconds, expected 2000 milliseconds.",(diff<= 4000)); // Should be reasonable
     }
 
     public void testMaxEnvelopeSizeTooSmall() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         // the particular handler used does not matter in this case -
@@ -447,6 +474,7 @@ public class ManagementTest extends TestBase {
 
     public void testMaxEnvelopeSizeTooBig() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/huge_envelope_creator");
@@ -480,6 +508,7 @@ public class ManagementTest extends TestBase {
 
     public void testBaseHandler() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/base");
@@ -502,6 +531,7 @@ public class ManagementTest extends TestBase {
 
     public void testConcreteHandler() throws Exception {
         final Management mgmt = new Management();
+        mgmt.setXmlBinding(binding);
         mgmt.setAction(Transfer.GET_ACTION_URI);
         mgmt.setTo(DESTINATION);
         mgmt.setResourceURI("wsman:test/concrete");

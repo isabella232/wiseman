@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: AddressingTest.java,v 1.4 2007-08-10 15:11:06 nbeers Exp $
+ * $Id: AddressingTest.java,v 1.5 2007-11-30 14:32:36 denis_rachal Exp $
  */
 
 package management;
 
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.transfer.Transfer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
 import java.util.UUID;
+
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedQName;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ServiceNameType;
+
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.transfer.Transfer;
 
 /**
  * Unit test for WS-Addressing

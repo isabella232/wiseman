@@ -19,6 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/11/07 11:15:36  denis_rachal
+ **Issue number:  142 & 146
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **142: EventingSupport.retrieveContext(UUID) throws RuntimeException
+ **
+ **Fixed WSEventingSupport to not throw RuntimeException. Instead it throws a new InvalidSubscriptionException. EventingSupport methods still throw RuntimeException to maintain backward compatibility.
+ **
+ **146: Enhance to allow specifying default expiration per enumeration
+ **
+ **Also enhanced WSEventingSupport to allow setting the default expiration per subscription. Default if not set by developer or client is now 24 hours for subscriptions.
+ **
+ **Additionally added javadoc to both EventingSupport and WSEventingSupport.
+ **
  **Revision 1.2  2007/11/02 14:20:52  denis_rachal
  **Issue number:  144 & 146
  **Obtained from:
@@ -42,13 +58,12 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.3 2007-11-07 11:15:36 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.4 2007-11-30 14:32:38 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +73,6 @@ import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.soap.SOAPBody;
@@ -87,7 +101,7 @@ import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.enumeration.FilteringNotSupportedFault;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
 import com.sun.ws.management.enumeration.InvalidExpirationTimeFault;
-import com.sun.ws.management.enumeration.TimedOutFault;
+import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.server.message.WSEnumerationRequest;
@@ -104,13 +118,41 @@ import com.sun.ws.management.soap.SOAP;
  */
 public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
     
+    public static final String EXPIRES_DEFAULT = "EnumerationExpiresDefault";
+    
     private static final int DEFAULT_ITEM_COUNT = 1;
     private static final int DEFAULT_EXPIRATION_MILLIS = 600000; // 10 minutes
-    private static final long DEFAULT_MAX_TIMEOUT_MILLIS = 300000;
-    private static Duration defaultExpiration = null;
+    private static final Duration defaultExpiration;
+    private static final Duration defaultMaxTime;
     
     static {
-        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
+        final Map<String, String> propertySet = new HashMap<String, String>();
+        WSManAgentSupport.getProperties(WSManAgentSupport.WISEMAN_PROPERTY_FILE_NAME,
+        		propertySet);
+        
+        // Determine MaxTime default based on OperationTimeout default
+        String property = System.getProperty(WSManAgentSupport.OPERATION_TIMEOUT);
+        if ((property == null) || (property.length() == 0))
+        	property = propertySet.get(WSManAgentSupport.OPERATION_TIMEOUT_DEFAULT);
+        if ((property == null) || (property.length() == 0))
+            defaultMaxTime = datatypeFactory.newDuration(WSManAgentSupport.DEFAULT_TIMEOUT);
+        else {
+        	long defTimeout = Long.parseLong(property);
+        	if (defTimeout < 0)
+        		defTimeout = Long.MAX_VALUE;
+            defaultMaxTime = datatypeFactory.newDuration(defTimeout);
+        }
+        
+        // Determine Expiration default from properties file
+        property = propertySet.get(EXPIRES_DEFAULT); 
+        if ((property == null) || (property.length() == 0))
+        	defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
+        else {
+        	long defExpires = Long.parseLong(property);
+        	if (defExpires < 0)
+        		defExpires = Long.MAX_VALUE;
+        	defaultExpiration = datatypeFactory.newDuration(defExpires);
+        }
     }
     
     private WSEnumerationSupport() {
@@ -301,32 +343,44 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             context = initContext(handlerContext, ctx);
             
             if (optimize) {
-                Duration maxTime = request.getMaxTime();
                 
-                final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
-                final boolean more = doPull(handlerContext,
+                final List<EnumerationItem> passed = ctx.getItems();
+                doPull(handlerContext,
                         request,
                         response,
                         context,
                         ctx,
-                        maxTime,
                         passed,
                         maxElements);
                 
+        		// Commit the request.
+        		try {
+        			request.commit();
+        		} catch (IllegalStateException ex) {
+        			// Too late. Request timed out.
+        			throw new TimedOutFault();
+        		}
+                // place an item count estimate if one was requested
+                insertTotalItemCountEstimate(request, response, iterator);
                 response.setEnumerateResponse(context.toString(),
                         ctx.getExpiration(),
                         passed,
                         enumerationMode,
-                        more);
+                        ctx.getIterator().hasNext());
+                passed.clear();
             } else {
+        		// Commit the request.
+        		try {
+        			request.commit();
+        		} catch (IllegalStateException ex) {
+        			// Too late. Request timed out.
+        			throw new TimedOutFault();
+        		}
                 // place an item count estimate if one was requested
                 insertTotalItemCountEstimate(request, response, iterator);
                 response.setEnumerateResponse(context.toString(), ctx
                         .getExpiration());
             }
-        } catch (TimedOutFault e) {
-            // Do not delete the context for timeouts
-            throw e;
         } catch (FaultException e) {
             if ((ctx != null) && (ctx.isDeleted() == false)) {
                 removeContext(handlerContext, ctx);
@@ -341,28 +395,28 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
     }
     
     /**
-     * Handle a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
-     * request.
-     *
-     * @param request
-     *            The incoming SOAP message that contains the
-     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
-     *            request.
-     *
-     * @param response
-     *            The empty SOAP message that will contain the
-     *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
-     *
-     * @throws InvalidEnumerationContextFault
-     *             if the supplied context is missing, is not understood or is
-     *             not found because it has expired or the server has been
-     *             restarted.
-     *
-     * @throws TimedOutFault
-     *             if the data source fails to provide the items to be returned
-     *             within the specified
-     *             {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}.
-     */
+	 * Handle a {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+	 * request.
+	 * 
+	 * @param request
+	 *            The incoming SOAP message that contains the
+	 *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull Pull}
+	 *            request.
+	 * 
+	 * @param response
+	 *            The empty SOAP message that will contain the
+	 *            {@link org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse PullResponse}.
+	 * 
+	 * @throws InvalidEnumerationContextFault
+	 *             if the supplied context is missing, is not understood or is
+	 *             not found because it has expired or the server has been
+	 *             restarted.
+	 * 
+	 * @throws TimedOutFault
+	 *             if the data source fails to provide the items to be returned
+	 *             within the specified
+	 *             {@link org.xmlsoap.schemas.ws._2004._09.enumeration.Pull#getMaxTime timeout}.
+	 */
     public static void pull(final HandlerContext handlerContext,
             final WSEnumerationRequest request,
             final WSEnumerationResponse response)
@@ -408,21 +462,40 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             maxElements = maxElementsBig.intValue();
         }
         
-        Duration maxTime = request.getMaxTime();
-        if (maxTime == null) {
-            maxTime = pull.getMaxTime();
-        }
-        final List<EnumerationItem> passed = new ArrayList<EnumerationItem>();
-        final boolean more = doPull(handlerContext, request, response, context,
-                ctx, maxTime, passed, maxElements);
-        
-        if (more) {
-            response.setPullResponse(passed, context.toString(), true,
-                    ctx.getEnumerationMode());
-        } else {
-            response.setPullResponse(passed, null, false,
-                    ctx.getEnumerationMode());
-        }
+        final List<EnumerationItem> passed = ctx.getItems();
+        synchronized (passed) {
+        	if (passed.size() < maxElements)
+			    doPull(handlerContext, request, response, context, ctx,
+					   passed, maxElements);
+
+			// Commit the request.
+			try {
+				request.commit();
+			} catch (IllegalStateException ex) {
+				// Too late. Request timed out.
+				throw new TimedOutFault();
+			}
+			// place an item count estimate if one was requested
+			insertTotalItemCountEstimate(request, response, ctx.getIterator());
+
+			final int count = ((passed.size() > maxElements) ? maxElements : passed.size());
+			final List<EnumerationItem> committed = passed.subList(0, count);
+			final boolean more = (count < passed.size())
+					|| (ctx.getIterator().hasNext());
+			if (more) {
+				response.setPullResponse(committed, context.toString(), true,
+						ctx.getEnumerationMode());
+			} else {
+				response.setPullResponse(committed, null, false, ctx
+						.getEnumerationMode());
+			}
+			committed.clear();
+			if (more == false) {
+				// remove the context -
+				// a subsequent release will fault with an invalid context
+				removeContext(handlerContext, context);
+			}
+		}
     }
     
     static EnumerationContext createContext(HandlerContext handlerContext,
@@ -446,22 +519,24 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         return ctx;
     }
     
-    private static boolean doPull(final HandlerContext handlerContext,
+    private static void doPull(final HandlerContext handlerContext,
             final WSEnumerationRequest request,
             final WSEnumerationResponse response,
             final UUID context,
             final EnumerationContext ctx,
-            final Duration maxTimeout,
             final List<EnumerationItem> passed,
             final int maxElements)
             throws SOAPException, JAXBException, FaultException {
         
         final EnumerationIterator iterator = ctx.getIterator();
         final GregorianCalendar start = new GregorianCalendar();
+        final Duration maxTimeout = request.getMaxTime();
         
-        long timeout = DEFAULT_MAX_TIMEOUT_MILLIS;
+        long timeout;
         if (maxTimeout != null) {
             timeout = maxTimeout.getTimeInMillis(start);
+        } else {
+        	timeout = defaultMaxTime.getTimeInMillis(start);
         }
         final long end = start.getTimeInMillis() + timeout;
         
@@ -519,6 +594,10 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                         throw new InvalidEnumerationContextFault();
                     }
                     
+                    // Check for cancellation
+                    if (request.isCanceled()) {
+                    	throw new TimedOutFault();
+                    }
                     // Check for a timeout
                     if (new GregorianCalendar().getTimeInMillis() >= end) {
                         if (passed.size() == 0) {
@@ -535,25 +614,25 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                         throw new InvalidEnumerationContextFault();
                     }
                     if ((ee == null) && (passed.size() == 0)) {
-                        // wait for some data to arrive
-                        long timeLeft = end
-                                - new GregorianCalendar().getTimeInMillis();
-                        while ((timeLeft > 0) && (ee == null)) {
-                            try {
-                                iterator.wait(timeLeft);
-                                if (ctx.isDeleted()) {
-                                    // Context was deleted while we were waiting
-                                    throw new InvalidEnumerationContextFault();
-                                }
-                                ee = iterator.next();
-                                timeLeft = end
-                                        - new GregorianCalendar()
-                                        .getTimeInMillis();
-                            } catch (InterruptedException e) {
-                                break;
-                            }
-                        }
-                    }
+						// wait for some data to arrive
+						long timeLeft = end - new GregorianCalendar().getTimeInMillis();
+						while ((timeLeft > 0) && (request.isCanceled() == false) && (ee == null)) {
+							try {
+								iterator.wait(timeLeft);
+								if (ctx.isDeleted()) {
+									// Context was deleted while we were waiting
+									throw new InvalidEnumerationContextFault();
+								}
+								timeLeft = end - new GregorianCalendar().getTimeInMillis();
+								if ((timeLeft <=0) || (request.isCanceled()))
+									break;
+								ee = iterator.next();
+							} catch (InterruptedException e) {
+								timeLeft = end - new GregorianCalendar().getTimeInMillis();
+								continue;
+							}
+						}
+					}
                     if (ee == null) {
                         if (passed.size() == 0) {
                             throw new TimedOutFault();
@@ -668,7 +747,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                     Management mgt;
                     try {
                         mgt = new Management(request.toSOAPMessage());
-                    }catch (Exception ex) {
+                    } catch (Exception ex) {
                         throw new SOAPException(ex.toString());
                     }
                     // XXX REVISIT,
@@ -681,17 +760,6 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                         ((WSEnumerationPullIterator) iterator).endPull(response);
                 }
             }
-            
-            // place an item count estimate if one was requested
-            insertTotalItemCountEstimate(request, response, ctx.getIterator());
-            
-            if (iterator.hasNext() == false) {
-                // remove the context -
-                // a subsequent release will fault with an invalid context
-                removeContext(handlerContext, context);
-                return false;
-            }
-            return iterator.hasNext();
         }
     }
     
@@ -765,7 +833,6 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
     public static Filter createFilter(final WSEnumerationRequest request)
     throws CannotProcessFilterFault, FilteringRequestedUnavailableFault {
         try {
-            final Enumerate enumerate = request.getEnumerate();
             final org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType enuFilter = request.getEnumerationFilter();
             final DialectableMixedDataType enxFilter = request
                     .getWsmanEnumerationFilter();

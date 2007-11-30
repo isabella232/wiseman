@@ -19,27 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.15  2007/09/18 20:08:55  nbeers
+ **Add support for SOAP with attachments.  Issue #136.
+ **
  **Revision 1.14  2007/05/30 20:31:05  nbeers
  **Add HP copyright header
  **
  **
- * $Id: Message.java,v 1.15 2007-09-18 20:08:55 nbeers Exp $
+ * $Id: Message.java,v 1.16 2007-11-30 14:32:37 denis_rachal Exp $
  */
 
 package com.sun.ws.management;
 
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.transfer.Transfer;
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.server.WSManAgent;
-import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transport.ContentType;
-import com.sun.ws.management.xml.XMLSchema;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -64,9 +56,23 @@ import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.server.WSManAgent;
+import com.sun.ws.management.server.message.WSMessageStatus;
+import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.transport.ContentType;
+import com.sun.ws.management.xml.XMLSchema;
 
 public abstract class Message {
 
@@ -85,6 +91,8 @@ public abstract class Message {
     private SOAPEnvelope env = null;
     private SOAPHeader hdr = null;
     private SOAPBody body = null;
+    
+    private WSMessageStatus status = new WSMessageStatus();
     
     private ArrayList<AttachmentPart> attachments = null;
 
@@ -138,6 +146,7 @@ public abstract class Message {
         assert msgFactory != null : UNINITIALIZED;
         contentType = message.contentType;
         msg = message.msg;
+        status = message.getMessageStatus();
         init();
     }
 
@@ -293,4 +302,12 @@ public abstract class Message {
 		}
 		return part;
 	}
+	
+    public void setMessageStatus(final WSMessageStatus status) {
+        this.status = status;
+    }
+    
+    public WSMessageStatus getMessageStatus() {
+    	return this.status;
+    }
 }

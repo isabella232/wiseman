@@ -19,11 +19,17 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.13  2007/05/30 20:31:04  nbeers
+ **Add HP copyright header
  **
- * $Id: EnumerationContext.java,v 1.13 2007-05-30 20:31:04 nbeers Exp $
+ **
+ * $Id: EnumerationContext.java,v 1.14 2007-11-30 14:32:38 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -34,6 +40,7 @@ final class EnumerationContext extends BaseContext {
 
     private final EnumerationIterator iterator;
     private final EnumerationModeType mode;
+    private final List<EnumerationItem> passed;
 
     EnumerationContext(final XMLGregorianCalendar expiration,
             final Filter filter,
@@ -43,6 +50,7 @@ final class EnumerationContext extends BaseContext {
         super(expiration, filter, listener);
         this.iterator = iterator;
         this.mode = mode;
+        this.passed = new ArrayList<EnumerationItem>();
     }
 
     /**
@@ -58,17 +66,16 @@ final class EnumerationContext extends BaseContext {
      *
      * @return the iterator associated with this enumeration
      */
-    EnumerationIterator getIterator() {
+    public EnumerationIterator getIterator() {
         return this.iterator;
+    }
+    
+    public List<EnumerationItem> getItems() {
+    	return this.passed;
     }
 
     public void setDeleted() {
     	super.setDeleted();
-    /*	synchronized (this.iterator) {
-    	   this.iterator.release();
-    	   this.iterator.notifyAll();
-    	}
-     */
     }
 
     protected void finalize () throws Throwable {

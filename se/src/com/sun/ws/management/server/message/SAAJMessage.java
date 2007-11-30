@@ -1,6 +1,12 @@
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.
+ * 
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
  */
 
 package com.sun.ws.management.server.message;
@@ -62,6 +68,7 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.Renew;
  */
 public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
     private Management mgt;
+    
     public SAAJMessage(Management mgt) {
         this.mgt = mgt;
     }
@@ -81,7 +88,7 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
     }
     public List<Header> getSOAPHeaders() throws Exception {
         SOAPElement[] elements = mgt.getChildren(mgt.getHeader());
-        List<Header> list = new ArrayList();
+        List<Header> list = new ArrayList<Header>();
         for (SOAPElement se : elements) {
             try {
                 list.add(Headers.create((SOAPHeaderElement)se));
@@ -187,13 +194,10 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
     }
     
     public Duration getMaxTime() throws JAXBException, SOAPException {
-        EnumerationExtensions en = new EnumerationExtensions(mgt);
-        if(mgt.getAction().equals(Enumeration.ENUMERATE_ACTION_URI))
+        if(mgt.getAction().equals(Enumeration.PULL_ACTION_URI))
             return getTimeout();
-        
-        Pull pull = en.getPull();
-        
-        return pull.getMaxTime();
+        else
+            return null;
     }
     
     public AttributableEmpty getRequestTotalItemsCountEstimate() throws JAXBException, SOAPException {
@@ -244,7 +248,6 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
     }
     
     public void setFragmentCreateResponse(DialectableMixedDataType header, EndpointReference epr) throws Exception {
-        TransferExtensions tr = new TransferExtensions(mgt);
         setCreateResponse(epr);
         JAXBElement<DialectableMixedDataType> jaxb =
                 Management.FACTORY.createFragmentTransfer(header);
@@ -342,7 +345,7 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
     
     public void addExtraHeaders(List<Object> list, JAXBContext ctx) throws Exception {
         SOAPHeader headers = mgt.getHeader();
-        JAXBContext current = ctx == null ? mgt.getXmlBinding().getJAXBContext() : ctx;
+        // JAXBContext current = ctx == null ? mgt.getXmlBinding().getJAXBContext() : ctx;
         for(Object obj : list) {
             if(obj instanceof Element)
                 headers.appendChild((Element) obj);
@@ -352,7 +355,27 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
     }
     
     public void setPayload(Object jaxb, JAXBContext ctx) throws Exception {
-        JAXBContext current = ctx == null ? mgt.getXmlBinding().getJAXBContext() : ctx;
+        // JAXBContext current = ctx == null ? mgt.getXmlBinding().getJAXBContext() : ctx;
         ctx.createMarshaller().marshal(jaxb, mgt.getBody());
     }
+    /*
+    public void setMessageStatus(final WSMessageStatus status ) {
+        this.mgt.setMessageStatus(status);
+    }*/
+    
+	public void cancel() throws IllegalStateException {
+        this.mgt.getMessageStatus().cancel();
+	}
+
+	public void commit() throws IllegalStateException {
+		this.mgt.getMessageStatus().commit();		
+	}
+
+	public boolean isCanceled() {
+		return this.mgt.getMessageStatus().isCanceled();
+	}
+
+	public boolean isCommitted() {
+		return this.mgt.getMessageStatus().isCommitted();
+	}
 }

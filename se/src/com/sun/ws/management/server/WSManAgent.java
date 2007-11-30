@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.21  2007/11/09 12:33:34  denis_rachal
+ **Performance enhancements that better reuse the XmlBinding.
+ **
  **Revision 1.20  2007/10/31 11:59:24  jfdenise
  **Faulty maxEnvelopSize computation linked to recent putback
  **
@@ -36,7 +39,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgent.java,v 1.21 2007-11-09 12:33:34 denis_rachal Exp $
+ * $Id: WSManAgent.java,v 1.22 2007-11-30 14:32:38 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -67,7 +70,6 @@ import com.sun.ws.management.server.message.SAAJMessage;
 import com.sun.ws.management.server.message.WSManagementRequest;
 import com.sun.ws.management.server.message.WSManagementResponse;
 import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
 
 /**

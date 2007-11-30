@@ -20,9 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.14  2007/05/30 20:30:23  nbeers
+ **Add HP copyright header
+ **
  ** 
  *
- * $Id: TransferExtensionsTest.java,v 1.14 2007-05-30 20:30:23 nbeers Exp $
+ * $Id: TransferExtensionsTest.java,v 1.15 2007-11-30 14:32:36 denis_rachal Exp $
  */
 
 
@@ -38,6 +41,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPHeaderElement;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
@@ -61,6 +65,7 @@ import foo.test.Foo;
 
 public class TransferExtensionsTest extends TestBase {
 
+	final XmlBinding binding;
     private static final String JAXB_PACKAGE_FOO_TEST = "foo.test";
     
     private static final String CUSTOM_JAXB_PREFIX = "jb";
@@ -71,8 +76,11 @@ public class TransferExtensionsTest extends TestBase {
         NAMESPACES.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
     }
 
-    public TransferExtensionsTest(String testName) {
+    public TransferExtensionsTest(String testName) throws JAXBException {
         super(testName);
+		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
+				JAXB_PACKAGE_FOO_TEST);
+        binding = new XmlBinding(null, JAXB_PACKAGE_FOO_TEST);
     }
     
     public static junit.framework.Test suite() {
@@ -91,6 +99,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentGetVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.GET_ACTION_URI);
         
@@ -123,6 +132,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentGetResponseVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.GET_RESPONSE_URI);
         
@@ -150,6 +160,7 @@ public class TransferExtensionsTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         transfer.writeTo(bos);
         final TransferExtensions trans = new TransferExtensions(new ByteArrayInputStream(bos.toByteArray()));
+        trans.setXmlBinding(binding);
         
         //try to get the fragmenttransfer header
         final SOAPHeaderElement fragmentTransferHeader2 = trans.getFragmentHeader();
@@ -164,6 +175,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testNonFragmentGet() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.GET_ACTION_URI);
         transfer.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -206,6 +218,7 @@ public class TransferExtensionsTest extends TestBase {
     	settings.setFragmentDialect(XPath.NS_URI);
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/fragment");
+        settings.setXmlBinding(binding);
     	
     	Transfer xf = TransferUtility.buildMessage(null, settings);
 
@@ -238,6 +251,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentDeleteVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.DELETE_RESPONSE_URI);
         
@@ -267,6 +281,7 @@ public class TransferExtensionsTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         transfer.writeTo(bos);
         final TransferExtensions trans = new TransferExtensions(new ByteArrayInputStream(bos.toByteArray()));
+        trans.setXmlBinding(binding);
         
         //try to get the fragmenttransfer header
         final SOAPHeaderElement fragmentTransferHeader2 = trans.getFragmentHeader();
@@ -284,6 +299,7 @@ public class TransferExtensionsTest extends TestBase {
         
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
             // skip this test if JAXB is not initialized with the foo.test package
             return;
@@ -344,6 +360,7 @@ public class TransferExtensionsTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/fragment");
     	settings.setTransferMessageActionType(Transfer.DELETE_ACTION_URI);
+    	settings.setXmlBinding(binding);
     	
     	Transfer xf = TransferUtility.buildMessage(null, settings);
     	
@@ -370,6 +387,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentPutResponseVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.PUT_RESPONSE_URI);
         
@@ -422,6 +440,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentPut() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
             // skip this test if JAXB is not initialized with the foo.test package
             return;
@@ -482,6 +501,7 @@ public class TransferExtensionsTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/fragment");
     	settings.setTransferMessageActionType(Transfer.PUT_ACTION_URI);
+        settings.setXmlBinding(binding);
     	
     	Transfer xf = TransferUtility.buildMessage(null, settings);
     	
@@ -508,6 +528,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentCreateResponseVisual() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         transfer.addNamespaceDeclarations(NAMESPACES);
         transfer.setAction(Transfer.CREATE_RESPONSE_URI);
         transfer.setTo(DESTINATION);
@@ -560,6 +581,7 @@ public class TransferExtensionsTest extends TestBase {
     public void testFragmentCreate() throws Exception {
         //setup Transfer object for request
         final TransferExtensions transfer = new TransferExtensions();
+        transfer.setXmlBinding(binding);
         if (!checkIfBindingIsAvailable(transfer.getXmlBinding())) {
             // skip this test if JAXB is not initialized with the foo.test package
             return;
@@ -620,6 +642,7 @@ public class TransferExtensionsTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/fragment");
     	settings.setTransferMessageActionType(Transfer.CREATE_ACTION_URI);
+        settings.setXmlBinding(binding);
     	
     	Transfer xf = TransferUtility.buildMessage(null, settings);
     	

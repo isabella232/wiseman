@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.12  2007/05/30 20:30:23  nbeers
+ **Add HP copyright header
  **
- * $Id: EventingExtensionsTest.java,v 1.12 2007-05-30 20:30:23 nbeers Exp $
+ **
+ * $Id: EventingExtensionsTest.java,v 1.13 2007-11-30 14:32:36 denis_rachal Exp $
  */
 
 package management;
@@ -37,12 +40,15 @@ import com.sun.ws.management.eventing.EventingUtility;
 import com.sun.ws.management.server.NamespaceMap;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
+import com.sun.ws.management.xml.XmlBinding;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
@@ -64,9 +70,12 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
  * Unit test for WS-Eventing extensions in WS-Management
  */
 public class EventingExtensionsTest extends TestBase {
+	
+	final XmlBinding binding;
 
-    public EventingExtensionsTest(final String testName) {
+    public EventingExtensionsTest(final String testName) throws JAXBException {
         super(testName);
+        binding = new XmlBinding(null, "");
     }
 
     public static junit.framework.Test suite() {
@@ -76,6 +85,7 @@ public class EventingExtensionsTest extends TestBase {
 
     public void testSubscribeVisual() throws Exception {
         final EventingExtensions evtx = new EventingExtensions();
+    	evtx.setXmlBinding(binding);
         evtx.setAction(Eventing.SUBSCRIBE_ACTION_URI);
 
         final ConnectionRetryType retry = new ConnectionRetryType();
@@ -153,6 +163,8 @@ public class EventingExtensionsTest extends TestBase {
     	settings.setFilter(filter);
     	settings.setFilterDialect(XPath.NS_URI);
     	settings.setResourceUri("wsman:test/pull_source");
+    	settings.setXmlBinding(binding);
+    	
         if ((filter != null) && (filterNsMap != null))
         	settings.setNamespaceMap(filterNsMap.getMap());
 
@@ -191,6 +203,7 @@ public class EventingExtensionsTest extends TestBase {
             enumSettings.setEnumerationContext(context);
             enumSettings.setMaxElements(2);
             enumSettings.setResourceUri("wsman:test/pull_source");
+        	enumSettings.setXmlBinding(binding);
 
         	Enumeration enu = EnumerationUtility.buildMessage(null, enumSettings);
 

@@ -20,6 +20,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/11/05 12:58:08  denis_rachal
+ **Issue number:  145
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **Enhanced client interface to allow setting Expiration for an Enumeration. Added unit test to test the new functionality.
+ **
  **Revision 1.4  2007/07/12 12:33:07  denis_rachal
  **Allo configuring destination URL for testing.
  **
@@ -52,7 +60,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.5 2007-11-05 12:58:08 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.6 2007-11-30 14:32:37 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -1122,9 +1130,9 @@ public class ResourceTest extends WsManBaseTestSupport {
 		assertTrue("Context id is empty.", (enumContext.getContext().trim()
 				.length() > 0));
 
-		// The cleanup interval is 60 seconds, so we'll need to wait at least 60 seconds
+		// Sleep the 1 second.
 		try {
-			Thread.sleep(60000);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			// Should not have been interrupted.
 			fail("Unexpected interrupt during sleep().");

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferTest.java,v 1.5 2006-06-01 18:47:49 akhilarora Exp $
+ * $Id: TransferTest.java,v 1.6 2007-11-30 14:32:36 denis_rachal Exp $
  */
 
 package management;
@@ -21,8 +21,13 @@ package management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.xml.XmlBinding;
+
 import java.util.List;
 import java.util.UUID;
+
+import javax.xml.bind.JAXBException;
+
 import org.w3._2003._05.soap_envelope.Body;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -32,8 +37,13 @@ import org.w3c.dom.Element;
  */
 public class TransferTest extends TestBase {
     
-    public TransferTest(final String testName) {
+	final XmlBinding binding;
+	
+    public TransferTest(final String testName) throws JAXBException {
         super(testName);
+		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
+				"");
+        binding = new XmlBinding(null, "");
     }
     
     public static junit.framework.Test suite() {
@@ -44,6 +54,7 @@ public class TransferTest extends TestBase {
     public void testGetVisual() throws Exception {
         
         final Transfer xf = new Transfer();
+        xf.setXmlBinding(binding);
         xf.setTo(DESTINATION);
         xf.setAction(Transfer.GET_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -55,6 +66,7 @@ public class TransferTest extends TestBase {
     public void testPutVisual() throws Exception {
         
         final Transfer xf = new Transfer();
+        xf.setXmlBinding(binding);
         xf.setTo(DESTINATION);
         xf.setAction(Transfer.PUT_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -78,6 +90,7 @@ public class TransferTest extends TestBase {
     public void testCreateVisual() throws Exception {
         
         final Transfer xf = new Transfer();
+        xf.setXmlBinding(binding);
         xf.setTo(DESTINATION);
         xf.setAction(Transfer.CREATE_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
@@ -89,6 +102,7 @@ public class TransferTest extends TestBase {
     public void testDeleteVisual() throws Exception {
         
         final Transfer xf = new Transfer();
+        xf.setXmlBinding(binding);
         xf.setTo(DESTINATION);
         xf.setAction(Transfer.DELETE_ACTION_URI);
         xf.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);

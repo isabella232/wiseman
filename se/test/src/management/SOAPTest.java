@@ -13,10 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAPTest.java,v 1.4 2006-05-01 23:32:25 akhilarora Exp $
+ * $Id: SOAPTest.java,v 1.5 2007-11-30 14:32:36 denis_rachal Exp $
  */
 
 package management;
+
+import java.util.UUID;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.soap.SOAPElement;
+
+import org.w3._2003._05.soap_envelope.Fault;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
@@ -24,20 +33,18 @@ import com.sun.ws.management.soap.NotUnderstoodFault;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
-import java.util.UUID;
-import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
-import org.w3._2003._05.soap_envelope.Fault;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
+import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * Unit test for SOAP
  */
 public class SOAPTest extends TestBase {
+	
+	final XmlBinding binding;
     
-    public SOAPTest(final String testName) {
+    public SOAPTest(final String testName) throws JAXBException {
         super(testName);
+        binding = new XmlBinding(null, "");
     }
     
     public static junit.framework.Test suite() {
@@ -48,6 +55,7 @@ public class SOAPTest extends TestBase {
     public void testNotUnderstood() throws Exception {
         
         final Addressing addr = new Addressing();
+        addr.setXmlBinding(binding);
         addr.setAction(Transfer.GET_ACTION_URI);
         addr.setTo(DESTINATION);
         addr.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);

@@ -289,7 +289,9 @@ public class MessageUtil {
             enu.setEndTo(endTo);
         }
         if (expires != null) {
-            enu.setExpires(expires.trim());
+        	final String exp = expires.trim();
+        	if (exp.length() > 0)
+                enu.setExpires(exp);
         }
         if (filter != null) {
             enu.setFilter(filter);

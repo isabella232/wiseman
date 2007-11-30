@@ -19,6 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.20  2007/09/18 13:06:57  denis_rachal
+ **Issue number:  129, 130 & 132
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **129  ENHANC  P2  All  denis_rachal  NEW   Need support for ReNew Operation in Eventing
+ **130  DEFECT  P3  x86  jfdenise  NEW   Should return a boolean variable result not a constant true
+ **132  ENHANC  P3  All  denis_rachal  NEW   Make ServletRequest attributes available as properties in Ha
+ **
+ **Added enhancements and fixed issue # 130.
+ **
  **Revision 1.19  2007/06/04 06:25:08  denis_rachal
  **The following fixes have been made:
  **
@@ -34,7 +46,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingTest.java,v 1.20 2007-09-18 13:06:57 denis_rachal Exp $
+ * $Id: EventingTest.java,v 1.21 2007-11-30 14:32:37 denis_rachal Exp $
  */
 
 package management;
@@ -48,12 +60,15 @@ import com.sun.ws.management.eventing.FilteringRequestedUnavailableFault;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
+import com.sun.ws.management.xml.XmlBinding;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.Element;
@@ -69,9 +84,12 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.SubscriptionEnd;
  * Unit test for WS-Eventing
  */
 public class EventingTest extends TestBase {
+	
+	final XmlBinding binding;
 
-    public EventingTest(final String testName) {
+    public EventingTest(final String testName) throws JAXBException {
         super(testName);
+        binding = new XmlBinding(null, "");
     }
 
     public static junit.framework.Test suite() {
@@ -94,6 +112,7 @@ public class EventingTest extends TestBase {
     	settings.setEventingMessageActionType(Eventing.SUBSCRIBE_ACTION_URI);
     	settings.setFilter("my/filter/expression");
     	settings.setFilterDialect("http://mydomain/my.filter.dialect");
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -122,6 +141,7 @@ public class EventingTest extends TestBase {
     	settings.setNotifyTo(mgr);
     	settings.setExpires(expires);
     	settings.setEventingMessageActionType(Eventing.SUBSCRIBE_RESPONSE_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -129,6 +149,7 @@ public class EventingTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
         final Eventing evt2 = new Eventing(new ByteArrayInputStream(bos.toByteArray()));
+        evt2.setXmlBinding(binding);
 
         evt2.prettyPrint(logfile);
         final SubscribeResponse sr2 = evt2.getSubscribeResponse();
@@ -144,6 +165,7 @@ public class EventingTest extends TestBase {
         EventingMessageValues settings = new EventingMessageValues();
     	settings.setExpires(expires);
     	settings.setEventingMessageActionType(Eventing.RENEW_ACTION_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -151,6 +173,7 @@ public class EventingTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
         final Eventing evt2 = new Eventing(new ByteArrayInputStream(bos.toByteArray()));
+        evt2.setXmlBinding(binding);
 
         final Renew r2 = evt2.getRenew();
         assertEquals(expires, r2.getExpires());
@@ -162,6 +185,7 @@ public class EventingTest extends TestBase {
         EventingMessageValues settings = new EventingMessageValues();
     	settings.setExpires(expires);
     	settings.setEventingMessageActionType(Eventing.RENEW_RESPONSE_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -169,6 +193,7 @@ public class EventingTest extends TestBase {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         evt.writeTo(bos);
         final Eventing evt2 = new Eventing(new ByteArrayInputStream(bos.toByteArray()));
+        evt2.setXmlBinding(binding);
 
         final RenewResponse r2 = evt2.getRenewResponse();
         assertEquals(expires, r2.getExpires());
@@ -177,6 +202,7 @@ public class EventingTest extends TestBase {
     public void testGetStatusVisual() throws Exception {
         EventingMessageValues settings = new EventingMessageValues();
     	settings.setEventingMessageActionType(Eventing.GET_STATUS_ACTION_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -189,6 +215,7 @@ public class EventingTest extends TestBase {
         EventingMessageValues settings = new EventingMessageValues();
     	settings.setExpires(expires);
     	settings.setEventingMessageActionType(Eventing.GET_STATUS_RESPONSE_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -204,6 +231,7 @@ public class EventingTest extends TestBase {
     public void testUnsubscribeVisual() throws Exception {
         EventingMessageValues settings = new EventingMessageValues();
     	settings.setEventingMessageActionType(Eventing.UNSUBSCRIBE_ACTION_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
         evt.prettyPrint(logfile);
@@ -221,6 +249,7 @@ public class EventingTest extends TestBase {
     	settings.setStatus(Eventing.SOURCE_SHUTTING_DOWN_STATUS);
     	settings.setReason(reason);
     	settings.setEventingMessageActionType(Eventing.SUBSCRIPTION_END_ACTION_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -249,6 +278,7 @@ public class EventingTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/eventing");
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -283,6 +313,7 @@ public class EventingTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/eventing");
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -333,6 +364,7 @@ public class EventingTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/eventing");
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
 
@@ -407,6 +439,7 @@ public class EventingTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/eventing");
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
     	evt.prettyPrint(logfile);
@@ -455,6 +488,7 @@ public class EventingTest extends TestBase {
     	settings.setTo(DESTINATION);
     	settings.setResourceUri("wsman:test/eventing");
     	settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+    	settings.setXmlBinding(binding);
 
     	Eventing evt = EventingUtility.buildMessage(null, settings);
     	evt.prettyPrint(logfile);
@@ -494,6 +528,8 @@ public class EventingTest extends TestBase {
         settings.setTo(DESTINATION);
         settings.setResourceUri("wsman:test/eventing");
         settings.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+        settings.setXmlBinding(binding);
+        
     	Eventing evt = EventingUtility.buildMessage(null, settings);
     	evt.prettyPrint(logfile);
 

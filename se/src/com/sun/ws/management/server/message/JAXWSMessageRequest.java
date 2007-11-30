@@ -1,50 +1,32 @@
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.
+ * 
+ ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
  */
 
 package com.sun.ws.management.server.message;
 
-import com.sun.ws.management.Management;
-import com.sun.ws.management.MessageUtil;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.addressing.DestinationUnreachableFault;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.eventing.EventingExtensions;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.ws.management.xml.XmlBinding;
-import com.sun.xml.ws.api.message.Message;
-import com.sun.xml.ws.api.message.Header;
-import com.sun.xml.ws.api.message.HeaderList;
-import com.sun.xml.ws.api.addressing.AddressingVersion;
-import com.sun.xml.ws.api.SOAPVersion;
-
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.UnmarshalException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.DatatypeFactory;
-
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
@@ -63,6 +45,22 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.MessageUtil;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.transfer.TransferExtensions;
+import com.sun.ws.management.xml.XmlBinding;
+import com.sun.xml.ws.api.SOAPVersion;
+import com.sun.xml.ws.api.addressing.AddressingVersion;
+import com.sun.xml.ws.api.message.Header;
+import com.sun.xml.ws.api.message.HeaderList;
+import com.sun.xml.ws.api.message.Message;
 /**
  *
  * @author jfdenise
@@ -72,8 +70,8 @@ public class JAXWSMessageRequest implements WSManagementRequest {
     private Message message;
     private Message copied;
     private HeaderList headers;
-    private boolean headersRead;
-    private List<Object> stdHeaders;
+    // private boolean headersRead;
+    // private List<Object> stdHeaders;
     private XmlBinding binding;
     private static DatatypeFactory datatypeFactory;
     private boolean maxEnvelopeSizeRead;
@@ -120,12 +118,14 @@ public class JAXWSMessageRequest implements WSManagementRequest {
     private DialectableMixedDataType enWsmanFilter;
     private boolean enFilterRead;
     private FilterType enFilter;
-    private boolean nsContextRead;
-    private NamespaceContext nsContext;
+    // private boolean nsContextRead;
+    // private NamespaceContext nsContext;
     private boolean payloadRead;
     private Object payload;
     private boolean soapMessageRead;
     private SOAPMessage soapMessage;
+    private WSMessageStatus status;
+    
     static {
         try {
             datatypeFactory = DatatypeFactory.newInstance();
@@ -140,6 +140,7 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         this.copied = message.copy();
         this.headers = message.getHeaders();
         this.binding = binding;
+        this.status = new WSMessageStatus();
     }
     
     private Unmarshaller newUnmarshaller() throws JAXBException {
@@ -157,8 +158,19 @@ public class JAXWSMessageRequest implements WSManagementRequest {
             if(h != null) {
                 Object value = h.readAsJAXB(newUnmarshaller());
                 timeout = value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
+            } else {
+            	Duration result = null;
+            	
+            	// Check if this is a wsen:Pull & wsen:MaxTime is set.
+                if(getAction().equals(Enumeration.PULL_ACTION_URI)) {
+                    final Pull pull = getPull();
+                    if (pull != null)
+                        result = pull.getMaxTime();
+                }
+                timeout = result;
             }
         }
+        
         return timeout;
     }
     
@@ -378,12 +390,10 @@ public class JAXWSMessageRequest implements WSManagementRequest {
     }
     
     public Duration getMaxTime() throws JAXBException, SOAPException {
-        if(getAction().equals(Enumeration.ENUMERATE_ACTION_URI))
+        if(getAction().equals(Enumeration.PULL_ACTION_URI))
             return getTimeout();
-        
-        Pull pull = getPull();
-        
-        return pull.getMaxTime();
+        else
+            return null;
     }
     
     public SOAPMessage toSOAPMessage() throws Exception {
@@ -404,7 +414,6 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         if(!payloadRead) {
             payloadRead = true;
             Unmarshaller current = u == null ? binding.createUnmarshaller() : u;
-            Object obj = null;
             try {
                 payload = extractPayload(current);
             }catch(Exception ex) {
@@ -544,4 +553,24 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         }
         return enFilter;
     }
+
+    public void setMessageStatus(final WSMessageStatus status ) {
+        this.status = status;
+    }
+    
+	public void cancel() throws IllegalStateException {
+        this.status.cancel();
+	}
+
+	public void commit() throws IllegalStateException {
+		this.status.commit();		
+	}
+
+	public boolean isCanceled() {
+		return this.status.isCanceled();
+	}
+
+	public boolean isCommitted() {
+		return this.status.isCommitted();
+	}
 }
