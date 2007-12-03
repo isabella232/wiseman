@@ -19,6 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.11  2007/11/30 14:32:36  denis_rachal
+ **Issue number:  140
+ **Obtained from:
+ **Submitted by:  jfdenise
+ **Reviewed by:
+ **
+ **WSManAgentSupport and WSEnumerationSupport changed to coordinate their separate threads when handling wsman:OperationTimeout and wsen:MaxTime timeouts. If a timeout now occurs during an enumeration operation the WSEnumerationSupport is notified by the WSManAgentSupport thread. WSEnumerationSupport saves any items collected from the EnumerationIterator in the context so they may be fetched by the client on the next pull. Items are no longer lost on timeouts.
+ **
+ **Tests were added to correctly test this functionality and older tests were updated to properly test timeout functionality.
+ **
+ **Additionally some tests were updated to make better use of the XmlBinding object and improve performance on testing.
+ **
  **Revision 1.10  2007/06/14 07:28:07  denis_rachal
  **Issue number:  110
  **Obtained from:
@@ -38,7 +50,7 @@
  **Add HP copyright header
  **
  **
- * $Id: MetadataTest.java,v 1.11 2007-11-30 14:32:36 denis_rachal Exp $
+ * $Id: MetadataTest.java,v 1.12 2007-12-03 09:15:09 denis_rachal Exp $
  */
 
 package management;
@@ -81,6 +93,8 @@ import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._09.mex.Metadata;
 import org.xmlsoap.schemas.ws._2004._09.mex.MetadataSection;
 
+import util.TestBase;
+
 import com.sun.ws.management.Management;
 import com.sun.ws.management.ManagementMessageValues;
 import com.sun.ws.management.ManagementUtility;
@@ -98,7 +112,6 @@ import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transfer.TransferUtility;
 import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * Unit test for the MetaData operations
@@ -153,8 +166,6 @@ public class MetadataTest extends TestBase {
 	public static final String op1outpt = "wxf:ResourceCreated=http://schemas.xmlsoap.org/ws/2004/09/transfer/CreateResponse";
 
 	public static long timeoutInMilliseconds = 9400000;
-
-	XmlBinding binding = null;
 	private int defAnnotCnt = 6;
 
 	private static net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory metadataContent_fact = new net.java.dev.wiseman.schemas.metadata.messagetypes.ObjectFactory();
@@ -165,13 +176,6 @@ public class MetadataTest extends TestBase {
 	 */
 	protected void setUp() throws Exception {
 		super.setUp();
-		Management man = null;
-		try {
-			man = new Management();
-		} catch (SOAPException e) {
-			fail("Can't init wiseman");
-		}
-		binding = man.getXmlBinding();
 	}
 
 	/**Tests/exercises metadata functionality

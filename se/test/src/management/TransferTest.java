@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TransferTest.java,v 1.6 2007-11-30 14:32:36 denis_rachal Exp $
+ * $Id: TransferTest.java,v 1.7 2007-12-03 09:15:09 denis_rachal Exp $
  */
 
 package management;
-
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.xml.XmlBinding;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,18 +27,22 @@ import org.w3._2003._05.soap_envelope.Body;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import util.TestBase;
+
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.Transfer;
+
 /**
  * Unit test for WS-Transfer
  */
 public class TransferTest extends TestBase {
     
-	final XmlBinding binding;
+    public static final String NS_URI = "http://schemas.company.com/model";
+    public static final String NS_PREFIX = "model";
 	
     public TransferTest(final String testName) throws JAXBException {
         super(testName);
-		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
-				"");
-        binding = new XmlBinding(null, "");
     }
     
     public static junit.framework.Test suite() {

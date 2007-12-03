@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.11 2007-06-08 15:38:39 denis_rachal Exp $
+ * $Id: TestBase.java,v 1.1 2007-12-03 09:15:10 denis_rachal Exp $
  */
 
-package management;
+package util;
 
 import java.io.FileOutputStream;
 import java.util.logging.FileHandler;
@@ -24,10 +24,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import javax.xml.bind.JAXBException;
+
 import junit.framework.TestCase;
 
 import com.sun.ws.management.Message;
 import com.sun.ws.management.transport.HttpClient;
+import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * Base class for Unit tests
@@ -35,15 +38,40 @@ import com.sun.ws.management.transport.HttpClient;
 public abstract class TestBase extends TestCase {
     
     public static final String UUID_SCHEME = "uuid:";
-    public static final String DESTINATION =
-            System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
+    public static final String JAXB_PACKAGE_FOO_TEST = "foo.test";
+    public static final String JAXB_PACKAGE_USER_TEST = "com.hp.examples.ws.wsman.user";
+	public static final Logger LOG = Logger.getLogger("com.sun.ws.management");
+	
+    public static String DESTINATION =
+        System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
+	public static XmlBinding binding;
+
+    public FileOutputStream logfile = null;
     
-    protected static final String NS_URI = "http://schemas.company.com/model";
-    protected static final String NS_PREFIX = "model";
-    
-    protected FileOutputStream logfile = null;
-	protected static Logger LOG = Logger.getLogger("com.sun.ws.management");
 	private FileHandler LOG_HANDLER = null;
+	
+	static {
+		// Setup defaults
+        final String basicAuth = System.getProperty("wsman.basicauthentication");
+        if ((basicAuth == null) || (basicAuth.length() == 0)) {
+        	System.setProperty("wsman.basicauthentication", "true");
+        }
+        final String validate = System.getProperty("com.sun.ws.management.xml.validate");
+        if ((validate == null) || (validate.length() ==0)) {
+        	System.setProperty("com.sun.ws.management.xml.validate", "true");
+        }
+		final String packagesKey = XmlBinding.class.getPackage().getName() + ".custom.packagenames";
+		final String packages = System.getProperty(packagesKey);
+		if ((packages == null) || (packages.length() == 0)) {
+			System.setProperty(packagesKey,
+					JAXB_PACKAGE_FOO_TEST + "," + JAXB_PACKAGE_USER_TEST);
+		}
+		try {
+			binding = new XmlBinding(null, JAXB_PACKAGE_FOO_TEST + ":" + JAXB_PACKAGE_USER_TEST);
+		} catch (JAXBException e) {
+			fail("Cannot initialize XmlBinding");
+		}
+	}
     
     public TestBase(final String testName) {
         super(testName);
@@ -64,7 +92,7 @@ public abstract class TestBase extends TestCase {
 			LOG.addHandler(LOG_HANDLER);
 		}
         final String basicAuth = System.getProperty("wsman.basicauthentication");
-        if ("true".equalsIgnoreCase(basicAuth)) {
+        if (basicAuth.equals("true")) {
             HttpClient.setAuthenticator(new transport.BasicAuthenticator());
         }
     }

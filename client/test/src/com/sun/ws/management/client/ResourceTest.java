@@ -20,6 +20,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/11/30 14:32:37  denis_rachal
+ **Issue number:  140
+ **Obtained from:
+ **Submitted by:  jfdenise
+ **Reviewed by:
+ **
+ **WSManAgentSupport and WSEnumerationSupport changed to coordinate their separate threads when handling wsman:OperationTimeout and wsen:MaxTime timeouts. If a timeout now occurs during an enumeration operation the WSEnumerationSupport is notified by the WSManAgentSupport thread. WSEnumerationSupport saves any items collected from the EnumerationIterator in the context so they may be fetched by the client on the next pull. Items are no longer lost on timeouts.
+ **
+ **Tests were added to correctly test this functionality and older tests were updated to properly test timeout functionality.
+ **
+ **Additionally some tests were updated to make better use of the XmlBinding object and improve performance on testing.
+ **
  **Revision 1.5  2007/11/05 12:58:08  denis_rachal
  **Issue number:  145
  **Obtained from:
@@ -60,7 +72,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.6 2007-11-30 14:32:37 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.7 2007-12-03 09:15:10 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -108,7 +120,7 @@ import org.xml.sax.SAXException;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 
-import util.WsManBaseTestSupport;
+import util.WsManTestBaseSupport;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
@@ -138,37 +150,31 @@ import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * This class tests basic WS Transfer behavior and also demonstrates the
- * capabilies of the client library.
+ * capabilities of the client library.
  * 
  * @author wire
  * 
  */
-public class ResourceTest extends WsManBaseTestSupport {
+public class ResourceTest extends WsManTestBaseSupport {
+
 
 	private static ObjectFactory userFactory = new ObjectFactory();
-	public static String destUrl = System.getProperty("wsman.dest", "http://localhost:8080/wsman/");;
 	public static String resourceUri = "wsman:auth/user";
 	public static long timeoutInMilliseconds = 9400000;
 
 	private static final String USER_NS = "http://examples.hp.com/ws/wsman/user";
 
-	private XmlBinding binding = null;
-	
+	public ResourceTest(String testName) {
+		super(testName);
+	}	
 	protected void setUp() throws Exception {
 		super.setUp();
-	    
-		try {
-			binding = new XmlBinding(null, "com.hp.examples.ws.wsman.user");
-			ResourceFactory.setBinding(binding);
-		} catch (JAXBException e) {
-			fail(e.getMessage());
-		}
 		userFactory = new ObjectFactory();
 	}
 	
 	public void testIdentity() throws XPathExpressionException,
 			NoMatchFoundException, SOAPException, IOException, JAXBException {
-		ServerIdentity serverInfo = ResourceFactory.getIdentity(destUrl);
+		ServerIdentity serverInfo = ResourceFactory.getIdentity(DESTINATION);
 		assertNotNull(serverInfo);
 		assertNotNull(serverInfo.getProductVendor());
 		assertNotNull(serverInfo.getProductVersion());
@@ -193,11 +199,11 @@ public class ResourceTest extends WsManBaseTestSupport {
 		// ResourceFactory.getIdentity(destUrl,1000,new Entry<String,
 		// String>("",""));
 		//		
-		// String respose="HTTP/1.0 400 Bad Request";
+		// String response="HTTP/1.0 400 Bad Request";
 	}
 
 	/**
-	 * Tests to see if an identity request will timout
+	 * Tests to see if an identity request will timeout
 	 * 
 	 * @throws XPathExpressionException
 	 * @throws NoMatchFoundException
@@ -264,7 +270,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 		binding.marshal(userElement, content);
 
-		Resource resource = ResourceFactory.create(ResourceTest.destUrl,
+		Resource resource = ResourceFactory.create(ResourceTest.DESTINATION,
 				ResourceTest.resourceUri, ResourceTest.timeoutInMilliseconds,
 				content, ResourceFactory.LATEST);
 
@@ -330,7 +336,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 		binding.marshal(userElement, content);
 
-		Resource resource = ResourceFactory.create(ResourceTest.destUrl,
+		Resource resource = ResourceFactory.create(ResourceTest.DESTINATION,
 				ResourceTest.resourceUri, ResourceTest.timeoutInMilliseconds,
 				content, ResourceFactory.LATEST);
 
@@ -444,7 +450,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 		binding.marshal(userElement, stateDocument);
 
-		Resource newResource = ResourceFactory.create(ResourceTest.destUrl,
+		Resource newResource = ResourceFactory.create(ResourceTest.DESTINATION,
 				ResourceTest.resourceUri, ResourceTest.timeoutInMilliseconds,
 				stateDocument, ResourceFactory.LATEST, null);
 
@@ -466,7 +472,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 			DatatypeConfigurationException, FaultException {
 
 		// Now create an instance and test it's contents
-		String dest = ResourceTest.destUrl;
+		String dest = ResourceTest.DESTINATION;
 		String resource = ResourceTest.resourceUri;
 
 		UserType user = userFactory.createUserType();
@@ -491,7 +497,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		opt.setValue("abcd");
 		options.add(opt);
 
-		Resource newResource = ResourceFactory.create(ResourceTest.destUrl,
+		Resource newResource = ResourceFactory.create(ResourceTest.DESTINATION,
 				ResourceTest.resourceUri, ResourceTest.timeoutInMilliseconds,
 				stateDocument, ResourceFactory.LATEST, options);
 
@@ -525,7 +531,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 			IOException, DatatypeConfigurationException, FaultException {
 
 		// Now create an instance and test it's contents
-		String dest = ResourceTest.destUrl;
+		String dest = ResourceTest.DESTINATION;
 		String resource = ResourceTest.resourceUri;
 
 		String lastName = "Finkle-Fragment"
@@ -543,7 +549,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 		binding.marshal(userElement, stateDocument);
 
-		Resource newResource = ResourceFactory.create(ResourceTest.destUrl,
+		Resource newResource = ResourceFactory.create(ResourceTest.DESTINATION,
 				ResourceTest.resourceUri, ResourceTest.timeoutInMilliseconds,
 				stateDocument, ResourceFactory.LATEST);
 
@@ -636,7 +642,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		userElement = userFactory.createUser(user);
 
 		final Resource newFragResource = ResourceFactory.createFragment(
-				ResourceTest.destUrl, ResourceTest.resourceUri, newResource
+				ResourceTest.DESTINATION, ResourceTest.resourceUri, newResource
 						.getSelectorSet(), ResourceTest.timeoutInMilliseconds,
 				stateDocument, ResourceFactory.LATEST, fragmentRequest,
 				XPath.NS_URI);
@@ -670,7 +676,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 	 */
 	public void testDelete() throws JAXBException, SOAPException, IOException,
 			FaultException, DatatypeConfigurationException {
-		String dest = ResourceTest.destUrl;
+		String dest = ResourceTest.DESTINATION;
 		String resource = ResourceTest.resourceUri;
 		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 		Document content = null;
@@ -718,7 +724,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 
 	public void testFragmentDelete() throws JAXBException, SOAPException,
 			IOException, FaultException, DatatypeConfigurationException {
-		String dest = ResourceTest.destUrl;
+		String dest = ResourceTest.DESTINATION;
 		String resource = ResourceTest.resourceUri;
 		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 
@@ -771,7 +777,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 	public void testPut() throws SOAPException, JAXBException, IOException,
 			FaultException, DatatypeConfigurationException {
 		// Now create an instance and test it's contents
-		String dest = ResourceTest.destUrl;
+		String dest = ResourceTest.DESTINATION;
 		String resource = ResourceTest.resourceUri;
 		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 		Document content = null;
@@ -835,7 +841,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 	public void testFragmentPut2() throws SOAPException, JAXBException,
 			IOException, FaultException, DatatypeConfigurationException {
 		// Now create an instance and test it's contents
-		String dest = ResourceTest.destUrl;
+		String dest = ResourceTest.DESTINATION;
 		String resource = ResourceTest.resourceUri;
 		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 		Document content = null;
@@ -911,7 +917,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 	public void testFragmentPut() throws SOAPException, JAXBException,
 			IOException, FaultException, DatatypeConfigurationException {
 		// Now create an instance and test it's contents
-		String dest = ResourceTest.destUrl;
+		String dest = ResourceTest.DESTINATION;
 		String resource = ResourceTest.resourceUri;
 		long timeoutInMilliseconds = ResourceTest.timeoutInMilliseconds;
 		Document content = null;
@@ -983,7 +989,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		// test that Find works to retrieve the Enumeration instance.
 		HashMap<String, String> selectors = null;
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, ResourceTest.resourceUri,
+				ResourceTest.DESTINATION, ResourceTest.resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
 		assertTrue("Expected EnumerableResource object.",
@@ -999,7 +1005,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1083,7 +1089,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		assertNotNull("No pull results obtained.", retrievedValues);
 
 		// Now do a find again to make sure that correct context is retrieved.
-		Resource[] enumResources = ResourceFactory.find(ResourceTest.destUrl,
+		Resource[] enumResources = ResourceFactory.find(ResourceTest.DESTINATION,
 				resourceUri, ResourceTest.timeoutInMilliseconds, selectors);
 		// Only resource retrieved should be the enumerable resource
 		Resource retEnumRes = enumResources[0];
@@ -1114,7 +1120,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1156,7 +1162,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1251,7 +1257,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1344,7 +1350,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1416,7 +1422,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1492,7 +1498,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1564,7 +1570,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		SelectorSetType selectors = null;
 		// test that Find works to retrieve the Enumeration instance.
 		Resource[] enumerableResources = ResourceFactory.find(
-				ResourceTest.destUrl, resourceUri,
+				ResourceTest.DESTINATION, resourceUri,
 				ResourceTest.timeoutInMilliseconds, selectors);
 
 		assertEquals("Expected one resource.", 1, enumerableResources.length);
@@ -1829,7 +1835,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		// eventsubman
 		// Get the metadata and the Management details for the eventsource
 		Management eventSource = AnnotationProcessor
-				.findAnnotatedResourceByUID(eventcreator_Handler.UID, destUrl);
+				.findAnnotatedResourceByUID(eventcreator_Handler.UID, DESTINATION);
 		assertNotNull("Unable to locate the eventSource resource.", eventSource);
 		// ####
 		Management init = MetadataUtility
@@ -1925,7 +1931,7 @@ public class ResourceTest extends WsManBaseTestSupport {
 		// eventsubman
 		// Get the metadata and the Management details for the eventsource
 		Management eventSource = AnnotationProcessor
-				.findAnnotatedResourceByUID(eventcreator_Handler.UID, destUrl);
+				.findAnnotatedResourceByUID(eventcreator_Handler.UID, DESTINATION);
 		assertNotNull("Unable to locate the eventSource resource.", eventSource);
 		// System.out.println("@@@ EvtSource beforManBuldMsg:"+eventSource);
 		// eventSource = ManagementUtility.buildMessage(eventSource, null,

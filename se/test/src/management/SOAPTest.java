@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: SOAPTest.java,v 1.5 2007-11-30 14:32:36 denis_rachal Exp $
+ * $Id: SOAPTest.java,v 1.6 2007-12-03 09:15:08 denis_rachal Exp $
  */
 
 package management;
@@ -27,24 +27,22 @@ import org.w3._2003._05.soap_envelope.Fault;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
+import util.TestBase;
+
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.soap.NotUnderstoodFault;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.Transfer;
 import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * Unit test for SOAP
  */
 public class SOAPTest extends TestBase {
-	
-	final XmlBinding binding;
     
     public SOAPTest(final String testName) throws JAXBException {
         super(testName);
-        binding = new XmlBinding(null, "");
     }
     
     public static junit.framework.Test suite() {

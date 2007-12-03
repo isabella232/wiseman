@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: AddressingTest.java,v 1.5 2007-11-30 14:32:36 denis_rachal Exp $
+ * $Id: AddressingTest.java,v 1.6 2007-12-03 09:15:09 denis_rachal Exp $
  */
 
 package management;
@@ -34,6 +34,8 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ServiceNameType;
 
+import util.TestBase;
+
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.transfer.Transfer;
 
@@ -41,6 +43,9 @@ import com.sun.ws.management.transfer.Transfer;
  * Unit test for WS-Addressing
  */
 public class AddressingTest extends TestBase {
+	
+    public static final String NS_URI = "http://schemas.company.com/model";
+    public static final String NS_PREFIX = "model";
     
     public AddressingTest(final String testName) {
         super(testName);

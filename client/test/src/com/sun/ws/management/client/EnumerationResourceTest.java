@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2007/07/12 12:33:07  denis_rachal
+ **Allo configuring destination URL for testing.
+ **
  **Revision 1.2  2007/06/08 15:38:38  denis_rachal
  **The following enhanceent were made to the testing infrastructure:
  **
@@ -43,32 +46,30 @@
  **
  ** 
  *
- * $Id: EnumerationResourceTest.java,v 1.3 2007-07-12 12:33:07 denis_rachal Exp $
+ * $Id: EnumerationResourceTest.java,v 1.4 2007-12-03 09:15:10 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.logging.FileHandler;
-import java.util.logging.SimpleFormatter;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
-import util.WsManBaseTestSupport;
+import util.WsManTestBaseSupport;
 
-import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.sun.ws.management.client.exceptions.FaultException;
-import com.sun.ws.management.xml.XmlBinding;
 
-public class EnumerationResourceTest extends WsManBaseTestSupport  {
+public class EnumerationResourceTest extends WsManTestBaseSupport  {
 
-	private static String destUrl = System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
 	private static final String resourceUri = "wsman:auth/user";
 	private static final String USER_CUSTOM_DIALECT = "http://examples.hp.com/ws/wsman/user/filter/custom";
 	private static final long timeout=10000;
-	
+
+	public EnumerationResourceTest(String testName) {
+		super(testName);
+	}	
 	protected void setUp() throws Exception {
 		super.setUp();
 	}
@@ -86,7 +87,9 @@ public class EnumerationResourceTest extends WsManBaseTestSupport  {
 	public void testEnumerate() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException {
 		
 		// Obtain an reference to a resource that represents an enum of users
-		Resource[] enumerationResources = ResourceFactory.find(destUrl,resourceUri,timeout,(Map<String,String>)null);
+		Resource[] enumerationResources = ResourceFactory.find(DESTINATION,
+				                                               resourceUri,
+				                                               timeout,(Map<String,String>)null);
 		assertNotNull(enumerationResources);
 		assertTrue(enumerationResources.length>0);
 		assertNotNull(enumerationResources[0]);
@@ -105,7 +108,9 @@ public class EnumerationResourceTest extends WsManBaseTestSupport  {
 	
 	public void testCustomDialect() throws SOAPException, JAXBException, IOException, FaultException, DatatypeConfigurationException{
 		// Obtain an reference to a resource that represents an enum of users
-		Resource[] enumerationResources = ResourceFactory.find(destUrl,resourceUri,timeout,(Map<String,String>)null);
+		Resource[] enumerationResources = ResourceFactory.find(DESTINATION,
+				                                               resourceUri,
+				                                               timeout,(Map<String,String>)null);
 		assertNotNull(enumerationResources);
 		assertTrue(enumerationResources.length>0);
 		assertNotNull(enumerationResources[0]);
@@ -114,7 +119,6 @@ public class EnumerationResourceTest extends WsManBaseTestSupport  {
 		assertNotNull(ticket);
 		enumerationResource.pull(ticket, 30000, 4, -1);
 		enumerationResource.release(ticket);
-
 	}
 
 }

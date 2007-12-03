@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: BasicAuthenticator.java,v 1.1 2005-06-29 19:18:29 akhilarora Exp $
+ * $Id: BasicAuthenticator.java,v 1.2 2007-12-03 09:15:10 denis_rachal Exp $
  */
 
 package transport;
@@ -24,8 +24,8 @@ import java.net.PasswordAuthentication;
 public final class BasicAuthenticator extends Authenticator {
     
     protected PasswordAuthentication getPasswordAuthentication() {
-        final String user = System.getProperty("wsman.user", "");
-        final String password = System.getProperty("wsman.password", "");
+        final String user = System.getProperty("wsman.user", "wsman");
+        final String password = System.getProperty("wsman.password", "secret");
         return new PasswordAuthentication(user, password.toCharArray());
     }
 }

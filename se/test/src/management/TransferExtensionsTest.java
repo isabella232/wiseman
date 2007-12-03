@@ -20,12 +20,24 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.15  2007/11/30 14:32:36  denis_rachal
+ **Issue number:  140
+ **Obtained from:
+ **Submitted by:  jfdenise
+ **Reviewed by:
+ **
+ **WSManAgentSupport and WSEnumerationSupport changed to coordinate their separate threads when handling wsman:OperationTimeout and wsen:MaxTime timeouts. If a timeout now occurs during an enumeration operation the WSEnumerationSupport is notified by the WSManAgentSupport thread. WSEnumerationSupport saves any items collected from the EnumerationIterator in the context so they may be fetched by the client on the next pull. Items are no longer lost on timeouts.
+ **
+ **Tests were added to correctly test this functionality and older tests were updated to properly test timeout functionality.
+ **
+ **Additionally some tests were updated to make better use of the XmlBinding object and improve performance on testing.
+ **
  **Revision 1.14  2007/05/30 20:30:23  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: TransferExtensionsTest.java,v 1.15 2007-11-30 14:32:36 denis_rachal Exp $
+ * $Id: TransferExtensionsTest.java,v 1.16 2007-12-03 09:15:09 denis_rachal Exp $
  */
 
 
@@ -41,7 +53,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPHeaderElement;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
@@ -50,6 +61,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+
+import util.TestBase;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
@@ -64,9 +77,6 @@ import com.sun.ws.management.xml.XmlBinding;
 import foo.test.Foo;
 
 public class TransferExtensionsTest extends TestBase {
-
-	final XmlBinding binding;
-    private static final String JAXB_PACKAGE_FOO_TEST = "foo.test";
     
     private static final String CUSTOM_JAXB_PREFIX = "jb";
     private static final String CUSTOM_JAXB_NS = "http://test.foo";
@@ -76,11 +86,8 @@ public class TransferExtensionsTest extends TestBase {
         NAMESPACES.put(CUSTOM_JAXB_PREFIX, CUSTOM_JAXB_NS);
     }
 
-    public TransferExtensionsTest(String testName) throws JAXBException {
+    public TransferExtensionsTest(String testName) {
         super(testName);
-		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
-				JAXB_PACKAGE_FOO_TEST);
-        binding = new XmlBinding(null, JAXB_PACKAGE_FOO_TEST);
     }
     
     public static junit.framework.Test suite() {
@@ -324,7 +331,7 @@ public class TransferExtensionsTest extends TestBase {
         mixedDataType.getContent().add(bar);
         
         //marshall XmlFragment into request body
-        new XmlBinding(null, JAXB_PACKAGE_FOO_TEST).marshal(xmlFragment, transfer.getBody());
+        binding.marshal(xmlFragment, transfer.getBody());
         
         //send request to server
         final Management mgmt = new Management(transfer);
@@ -465,7 +472,7 @@ public class TransferExtensionsTest extends TestBase {
         mixedDataType.getContent().add(bar);
         
         //marshall XmlFragment into request body
-        new XmlBinding(null, JAXB_PACKAGE_FOO_TEST).marshal(xmlFragment, transfer.getBody());
+        binding.marshal(xmlFragment, transfer.getBody());
         
         //send request to server
         final Management mgmt = new Management(transfer);
@@ -606,7 +613,7 @@ public class TransferExtensionsTest extends TestBase {
         mixedDataType.getContent().add(foo);
         
         //marshall content into XmlFragment
-        new XmlBinding(null, JAXB_PACKAGE_FOO_TEST).marshal(xmlFragment, transfer.getBody());
+        binding.marshal(xmlFragment, transfer.getBody());
         
         //send request
         final Management mgmt = new Management(transfer);

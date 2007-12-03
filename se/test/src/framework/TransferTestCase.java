@@ -20,12 +20,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/10/11 15:37:02  nbeers
+ **Fix test again
+ **
  **Revision 1.3  2007/05/30 20:30:30  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: TransferTestCase.java,v 1.5 2007-10-11 15:37:02 nbeers Exp $
+ * $Id: TransferTestCase.java,v 1.6 2007-12-03 09:15:11 denis_rachal Exp $
  */
 package framework;
 
@@ -45,33 +48,19 @@ import org.w3c.dom.Document;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 
-import util.WsManBaseTestSupport;
+import util.WsManTestBaseSupport;
 
 import com.hp.examples.ws.wsman.user.ObjectFactory;
 import com.hp.examples.ws.wsman.user.UserType;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.xml.XmlBinding;
 
-public class TransferTestCase extends WsManBaseTestSupport {
+public class TransferTestCase extends WsManTestBaseSupport {
 	private static final String RESOURCE_URI = "wsman:auth/user";
-	private static final String DESTINATION = "http://localhost:8080/wsman/";
 	ObjectFactory userFactory=new ObjectFactory();
-	private XmlBinding binding;
-	public TransferTestCase() {
-		super();
-//		try {
-//			Message.initialize();
-//			//new Management();
-//		} catch (SOAPException e) {
-//			fail("Can't init wiseman");
-//		} 
-		try {
-			binding = new XmlBinding(null,"com.hp.examples.ws.wsman.user");
-		} catch (JAXBException e) {
-			fail(e.getMessage());
-		}
 
+	public TransferTestCase(final String testName) {
+		super(testName);
 	}
 
 	/**

@@ -20,12 +20,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/06/22 06:13:54  simeonpinder
+ **numerous changes made for final build:
+ **-release properties update
+ **-added progress monitor to Metadata viewer
+ **-added commented code for fragment operations with traffic light
+ **-added extra example line for cmdline tool
+ **-license files for 1.0 release
+ **-updated .classpath files for all samples
+ **-renamed eventing sample name.
+ **-small release note mention in README
+ **
  **Revision 1.4  2007/05/30 20:30:32  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: TrafficLightTestCase.java,v 1.5 2007-06-22 06:13:54 simeonpinder Exp $
+ * $Id: TrafficLightTestCase.java,v 1.6 2007-12-03 09:15:12 denis_rachal Exp $
  */
 package net.java.dev.wiseman.traffic.light.test;
 
@@ -42,24 +53,12 @@ import net.java.dev.wiseman.schemas.traffic._1.light.TrafficLightType;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Document;
-import org.w3c.dom.DocumentFragment;
-import org.w3c.dom.Element;
 
-import util.WsManBaseTestSupport;
+import util.WsManTestBaseSupport;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.ManagementMessageValues;
-import com.sun.ws.management.ManagementUtility;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
-import com.sun.ws.management.server.BaseSupport;
-import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.ws.management.transport.HttpClient;
-import com.sun.ws.management.xml.XPath;
-import com.sun.ws.management.xml.XmlBinding;
 
-public class TrafficLightTestCase extends WsManBaseTestSupport {
+public class TrafficLightTestCase extends WsManTestBaseSupport {
 
 	private static final String TRANSFER_NS = "http://schemas.xmlsoap.org/ws/2004/09/transfer";
 
@@ -72,33 +71,15 @@ public class TrafficLightTestCase extends WsManBaseTestSupport {
 	}
 
 	private static final String RESOURCE_URI = "urn:resources.wiseman.dev.java.net/traffic/1/light";
-
-	private static final String DESTINATION = "http://localhost:8080/traffic/";
-//	private static final String DESTINATION = "http://192.168.0.6:8080/traffic/";
-
 	private static final String WSMAN_NS = "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd";
-
 	private static final String WSADD_NS = "http://schemas.xmlsoap.org/ws/2004/08/addressing";
 
 	private net.java.dev.wiseman.schemas.traffic._1.light.ObjectFactory lightFactory = new net.java.dev.wiseman.schemas.traffic._1.light.ObjectFactory();
 
 	public static final org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory managementFactory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
 
-	private XmlBinding binding;
-
-	public TrafficLightTestCase() {
-		super();
-		try {
-			binding = new XmlBinding(null, "net.java.dev.wiseman.schemas.traffic._1.light");
-		} catch (JAXBException e) {
-			fail(e.getMessage());
-		}
-
-		// Enable basic authenticaton for tests
-		System.getProperties().put("wsman.user", "wsman");
-		System.getProperties().put("wsman.password", "secret");
-		HttpClient.setAuthenticator(new transport.BasicAuthenticator());
-
+	public TrafficLightTestCase(String testName) {
+		super(testName);
 	}
 
 	/**
@@ -181,7 +162,7 @@ public class TrafficLightTestCase extends WsManBaseTestSupport {
 		JAXBElement<TrafficLightType> lightElement = lightFactory
 				.createTrafficlight(light);
 		binding.marshal(lightElement, doc);
-		Management ret = sendCreateRequest(DESTINATION, RESOURCE_URI, doc);
+		sendCreateRequest(DESTINATION, RESOURCE_URI, doc);
 
 		// Now request the state of TestLight2
 		SelectorType nameSelectorType = managementFactory.createSelectorType();

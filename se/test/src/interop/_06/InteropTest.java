@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.25  2007/05/30 20:30:31  nbeers
+ **Add HP copyright header
  **
- * $Id: InteropTest.java,v 1.25 2007-05-30 20:30:31 nbeers Exp $
+ **
+ * $Id: InteropTest.java,v 1.26 2007-12-03 09:15:11 denis_rachal Exp $
  */
 
 package interop._06;
@@ -39,7 +42,6 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPHeaderElement;
 
-import management.TestBase;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
@@ -58,6 +60,8 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
+
+import util.TestBase;
 
 import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.InvalidSelectorsFault;

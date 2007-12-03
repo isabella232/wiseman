@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: IdentifyTest.java,v 1.2 2006-07-10 01:41:11 akhilarora Exp $
+ * $Id: IdentifyTest.java,v 1.3 2007-12-03 09:15:09 denis_rachal Exp $
  */
 
 package management;
@@ -22,6 +22,8 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.transport.HttpClient;
 import javax.xml.soap.SOAPElement;
+
+import util.TestBase;
 
 /**
  * Unit test for the Identify operation
@@ -44,6 +46,7 @@ public class IdentifyTest extends TestBase {
 
         identify.prettyPrint(logfile);
         logfile.write("\n\n".getBytes());
+        identify.setXmlBinding(binding);
         final Addressing response = HttpClient.sendRequest(identify.getMessage(), DESTINATION);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {

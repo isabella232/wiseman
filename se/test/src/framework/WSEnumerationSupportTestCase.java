@@ -29,7 +29,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.soap.SOAPException;
 
-import util.WsManBaseTestSupport;
+import util.WsManTestBaseSupport;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
@@ -42,9 +42,8 @@ import com.sun.ws.management.server.HandlerContextImpl;
 import com.sun.ws.management.server.WSEnumerationSupport;
 import com.sun.ws.management.server.message.SAAJMessage;
 
-public class WSEnumerationSupportTestCase extends WsManBaseTestSupport {
+public class WSEnumerationSupportTestCase extends WsManTestBaseSupport {
 	
-	private static final String TO = "http://localhost:8080/wsman";
 	private static final String RESOURCE_URI = "http://wiseman.dev.java.net/resource";
 	private static final String ENCODING = "UTF-8";
 	private static final String CONTENTTYPE = "text/xml";
@@ -84,21 +83,22 @@ public class WSEnumerationSupportTestCase extends WsManBaseTestSupport {
 		}
 	}
 	
-	public WSEnumerationSupportTestCase() {
+	public WSEnumerationSupportTestCase(final String testName) {
+		super(testName);
 		
 	}
 	
 	public void testEnumerateCancel() throws SOAPException, JAXBException, DatatypeConfigurationException {
     	EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
     	settings.setFilter(null);
-    	settings.setTo(TO);
+    	settings.setTo(DESTINATION);
     	settings.setResourceUri(RESOURCE_URI);
     	final Management enu = new Management(EnumerationUtility.buildMessage(null, settings));
     	final SAAJMessage request = new SAAJMessage(enu);
     	final SAAJMessage response = new SAAJMessage(new Management());
     	
 		final HandlerContext context = new HandlerContextImpl(null, CONTENTTYPE,
-				                                              ENCODING, TO, null);
+				                                              ENCODING, DESTINATION, null);
 		request.cancel();
 		try {
 		    WSEnumerationSupport.enumerate(context, request, response,

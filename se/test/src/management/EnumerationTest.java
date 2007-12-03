@@ -19,6 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.29  2007/11/30 14:32:37  denis_rachal
+ **Issue number:  140
+ **Obtained from:
+ **Submitted by:  jfdenise
+ **Reviewed by:
+ **
+ **WSManAgentSupport and WSEnumerationSupport changed to coordinate their separate threads when handling wsman:OperationTimeout and wsen:MaxTime timeouts. If a timeout now occurs during an enumeration operation the WSEnumerationSupport is notified by the WSManAgentSupport thread. WSEnumerationSupport saves any items collected from the EnumerationIterator in the context so they may be fetched by the client on the next pull. Items are no longer lost on timeouts.
+ **
+ **Tests were added to correctly test this functionality and older tests were updated to properly test timeout functionality.
+ **
+ **Additionally some tests were updated to make better use of the XmlBinding object and improve performance on testing.
+ **
  **Revision 1.28  2007/06/19 19:50:39  nbeers
  **Set the DefaultTimeout header in addition to the maxElement header for enumeration pulls
  **
@@ -26,7 +38,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationTest.java,v 1.29 2007-11-30 14:32:37 denis_rachal Exp $
+ * $Id: EnumerationTest.java,v 1.30 2007-12-03 09:15:09 denis_rachal Exp $
  */
 
 package management;
@@ -56,6 +68,8 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
+import util.TestBase;
+
 import com.sun.ws.management.Management;
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.addressing.Addressing;
@@ -70,22 +84,17 @@ import com.sun.ws.management.server.handler.wsman.test.enumeration.filter.custom
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
-import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * Unit test for WS-Enumeration
  */
 public class EnumerationTest extends TestBase {
-
-	final XmlBinding binding;
+    
+    public static final String NS_URI = "http://schemas.company.com/model";
+    public static final String NS_PREFIX = "model";
 
     public EnumerationTest(final String testName) throws JAXBException {
         super(testName);
-
-		// Set the system property to always create bindings with our packages
-		System.setProperty(XmlBinding.class.getPackage().getName() + ".custom.packagenames",
-				"");
-		binding = new XmlBinding(null);
     }
 
     public static junit.framework.Test suite() {
@@ -353,7 +362,6 @@ public class EnumerationTest extends TestBase {
 
             mp.prettyPrint(logfile);
             final Addressing praddr = HttpClient.sendRequest(mp);
-            praddr.setXmlBinding(binding);
             praddr.prettyPrint(logfile);
             if (praddr.getBody().hasFault()) {
                 praddr.prettyPrint(System.err);
@@ -368,8 +376,6 @@ public class EnumerationTest extends TestBase {
             }
             for (Object obj : pr.getItems().getAny()) {
                 final Element el = (Element) obj;
-                // commented to reduce clutter: uncomment to see the output
-                // System.out.println(el.getNodeName() + " = " + el.getTextContent());
             }
             if (pr.getEndOfSequence() != null) {
                 done = true;
