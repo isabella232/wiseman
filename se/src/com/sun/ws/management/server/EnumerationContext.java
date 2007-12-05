@@ -19,11 +19,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.14  2007/11/30 14:32:38  denis_rachal
+ **Issue number:  140
+ **Obtained from:
+ **Submitted by:  jfdenise
+ **Reviewed by:
+ **
+ **WSManAgentSupport and WSEnumerationSupport changed to coordinate their separate threads when handling wsman:OperationTimeout and wsen:MaxTime timeouts. If a timeout now occurs during an enumeration operation the WSEnumerationSupport is notified by the WSManAgentSupport thread. WSEnumerationSupport saves any items collected from the EnumerationIterator in the context so they may be fetched by the client on the next pull. Items are no longer lost on timeouts.
+ **
+ **Tests were added to correctly test this functionality and older tests were updated to properly test timeout functionality.
+ **
+ **Additionally some tests were updated to make better use of the XmlBinding object and improve performance on testing.
+ **
  **Revision 1.13  2007/05/30 20:31:04  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EnumerationContext.java,v 1.14 2007-11-30 14:32:38 denis_rachal Exp $
+ * $Id: EnumerationContext.java,v 1.15 2007-12-05 13:24:45 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -76,9 +88,18 @@ final class EnumerationContext extends BaseContext {
 
     public void setDeleted() {
     	super.setDeleted();
+    	/*
+        synchronized (this.iterator) {
+    	    this.passed.clear();
+			this.iterator.release();
+			this.iterator.notifyAll();
+		} */
     }
 
     protected void finalize () throws Throwable {
+        if (this.passed != null) {
+        	this.passed.clear();
+        }
         if (this.iterator != null) {
         	this.iterator.release();
         }
