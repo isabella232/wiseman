@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.5  2007/12/05 12:31:51  denis_rachal
+ **Memory leak on Optimized enumerations when all elements are selected on enumerate, context wass not deleted.
+ **
  **Revision 1.4  2007/11/30 14:32:38  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -70,7 +73,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.5 2007-12-05 12:31:51 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.6 2007-12-05 12:40:37 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -380,7 +383,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                         enumerationMode,
                         ctx.getIterator().hasNext());
                 passed.clear();
-                if (ctx.getIterator().hasNext()) {
+                if (ctx.getIterator().hasNext() == false) {
     				// remove the context as there is no more data
     				removeContext(handlerContext, context);
                 }
