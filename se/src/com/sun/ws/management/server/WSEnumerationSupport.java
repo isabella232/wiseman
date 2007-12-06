@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/12/05 12:40:37  denis_rachal
+ **Incorrect logic used in check for more data on iterator.
+ **
  **Revision 1.5  2007/12/05 12:31:51  denis_rachal
  **Memory leak on Optimized enumerations when all elements are selected on enumerate, context wass not deleted.
  **
@@ -73,7 +76,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.6 2007-12-05 12:40:37 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.7 2007-12-06 06:43:36 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -400,6 +403,12 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                 response.setEnumerateResponse(context.toString(), ctx
                         .getExpiration());
             }
+        }  catch (InvalidEnumerationContextFault e) {
+        	// User did not specify a context, so it must have expired.
+            if ((ctx != null) && (ctx.isDeleted() == false)) {
+                removeContext(handlerContext, ctx);
+            }
+            throw new TimedOutFault();
         } catch (FaultException e) {
             if ((ctx != null) && (ctx.isDeleted() == false)) {
                 removeContext(handlerContext, ctx);
@@ -483,6 +492,10 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         
         final List<EnumerationItem> passed = ctx.getItems();
         synchronized (passed) {
+            if (ctx.isDeleted()) {
+                // Context was deleted while we were waiting. Abort the request.
+                throw new InvalidEnumerationContextFault();
+            }
         	if (passed.size() < maxElements)
 			    doPull(handlerContext, request, response, context, ctx,
 					   passed, maxElements);
@@ -821,8 +834,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             throw new InvalidEnumerationContextFault();
         }
         
-        // Set single thread use of this context
-        // synchronized (ctx) {
+        // Check if context is already deleted.
         if (ctx.isDeleted()) {
             throw new InvalidEnumerationContextFault();
         }
@@ -836,7 +848,6 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         if (rctx == null) {
             throw new InvalidEnumerationContextFault();
         }
-        // }
     } 
     
     /**

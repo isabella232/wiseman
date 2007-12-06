@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.15  2007/12/05 13:24:45  denis_rachal
+ **Added finalize code to release cached enumeration items.
+ **
  **Revision 1.14  2007/11/30 14:32:38  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -35,7 +38,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationContext.java,v 1.15 2007-12-05 13:24:45 denis_rachal Exp $
+ * $Id: EnumerationContext.java,v 1.16 2007-12-06 06:43:36 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -88,12 +91,11 @@ final class EnumerationContext extends BaseContext {
 
     public void setDeleted() {
     	super.setDeleted();
-    	/*
-        synchronized (this.iterator) {
-    	    this.passed.clear();
-			this.iterator.release();
-			this.iterator.notifyAll();
-		} */
+    	if (this.iterator != null) {
+			synchronized (this.iterator) {
+				this.iterator.notifyAll();
+			}
+		}
     }
 
     protected void finalize () throws Throwable {
