@@ -19,6 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/12/06 06:43:36  denis_rachal
+ **Issue number:  149
+ **Obtained from:
+ **Submitted by:  stanullo
+ **Reviewed by:
+ **
+ **No immediate response after context expiration. Code added to wake up thread waiting for items. Unit test added to test that this now works and neither the Release or the Pull threads are blocked for any length of time.
+ **
  **Revision 1.6  2007/12/05 12:40:37  denis_rachal
  **Incorrect logic used in check for more data on iterator.
  **
@@ -76,7 +84,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.7 2007-12-06 06:43:36 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.8 2007-12-17 15:05:21 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -596,7 +604,8 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         Boolean fragmentCheck = null;
         
         // Synchronize on the iterator
-        synchronized (iterator) {
+        // Pull now synchronizes on 'passed', so this is not necessary.
+        // synchronized (iterator) {
             try {
                 // XXX REVISIT,
                 // Need to use reflection to remove dependency on EventingExtensions and
@@ -648,7 +657,14 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
 						long timeLeft = end - new GregorianCalendar().getTimeInMillis();
 						while ((timeLeft > 0) && (request.isCanceled() == false) && (ee == null)) {
 							try {
-								iterator.wait(timeLeft);
+								if (ctx.isDeleted()) {
+									// Context was deleted while we were waiting
+									throw new InvalidEnumerationContextFault();
+								}
+								// Synchronize the iterator so we can wait on it
+								synchronized (iterator) {
+								    iterator.wait(timeLeft);
+								}
 								if (ctx.isDeleted()) {
 									// Context was deleted while we were waiting
 									throw new InvalidEnumerationContextFault();
@@ -661,6 +677,10 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
 								timeLeft = end - new GregorianCalendar().getTimeInMillis();
 								continue;
 							}
+						}
+						if (ctx.isDeleted()) {
+							// Context was deleted while we were waiting
+							throw new InvalidEnumerationContextFault();
 						}
 					}
                     if (ee == null) {
@@ -790,7 +810,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                         ((WSEnumerationPullIterator) iterator).endPull(response);
                 }
             }
-        }
+         // }
     }
     
     /**
