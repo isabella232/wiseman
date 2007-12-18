@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.22  2007/10/30 09:52:56  denis_rachal
+ **Fix for NullPointerExection caused during error handling.
+ **
  **Revision 1.21  2007/09/18 20:08:55  nbeers
  **Add support for SOAP with attachments.  Issue #136.
  **
@@ -37,7 +40,7 @@
  **Add HP copyright header
  **
  **
- * $Id: HttpClient.java,v 1.22 2007-10-30 09:52:56 denis_rachal Exp $
+ * $Id: HttpClient.java,v 1.23 2007-12-18 14:56:14 jfdenise Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -138,6 +141,27 @@ public final class HttpClient {
         }
     }
 
+    public static Addressing sendRequest(final Addressing addressing, final String destination)
+    throws IOException, SOAPException, JAXBException {
+    	if (LOG.isLoggable(Level.FINE))
+			LOG.fine("<request>\n" + addressing + "</request>\n");
+    	
+    	final HttpURLConnection http = initRequest(destination,addressing.getContentType());
+
+        transfer(http, addressing);
+        
+        final Addressing response = readResponse(http);
+		if (LOG.isLoggable(Level.FINE)) {
+			if (response.getBody().hasFault())
+				LOG.fine("<fault>\n" + response + "</fault>\n");
+			else
+				LOG.fine("<response>\n" + response + "</response>\n");
+		}     
+		response.setXmlBinding(addressing.getXmlBinding());    
+		return response;
+    }
+ 
+    
     public static Addressing sendRequest(final SOAPMessage msg, final String destination)
     throws IOException, SOAPException, JAXBException {
 

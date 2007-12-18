@@ -19,6 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/11/07 11:15:36  denis_rachal
+ **Issue number:  142 & 146
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **142: EventingSupport.retrieveContext(UUID) throws RuntimeException
+ **
+ **Fixed WSEventingSupport to not throw RuntimeException. Instead it throws a new InvalidSubscriptionException. EventingSupport methods still throw RuntimeException to maintain backward compatibility.
+ **
+ **146: Enhance to allow specifying default expiration per enumeration
+ **
+ **Also enhanced WSEventingSupport to allow setting the default expiration per subscription. Default if not set by developer or client is now 24 hours for subscriptions.
+ **
+ **Additionally added javadoc to both EventingSupport and WSEventingSupport.
+ **
  **Revision 1.1  2007/10/31 12:25:38  jfdenise
  **Split between new support and previous one.
  **
@@ -49,7 +65,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingBaseSupport.java,v 1.2 2007-11-07 11:15:36 denis_rachal Exp $
+ * $Id: WSEventingBaseSupport.java,v 1.3 2007-12-18 14:56:12 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -61,10 +77,12 @@ import java.util.UUID;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -73,6 +91,7 @@ import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ObjectFactory;
 
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
@@ -80,7 +99,6 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
-import com.sun.ws.management.eventing.InvalidSubscriptionException;
 import com.sun.ws.management.server.message.WSEventingRequest;
 import com.sun.ws.management.soap.SOAP;
 
@@ -92,11 +110,14 @@ public class WSEventingBaseSupport extends BaseSupport {
     
     public static final int DEFAULT_QUEUE_SIZE = 1024;
     public static final int DEFAULT_EXPIRATION_MILLIS = 60000;
+    public static final String ACKREQUESTED = "AckRequested";
     
     // TODO: add more delivery modes as they are implemented
     private static final String[] SUPPORTED_DELIVERY_MODES = {
         Eventing.PUSH_DELIVERY_MODE,
-        EventingExtensions.PULL_DELIVERY_MODE
+        EventingExtensions.PULL_DELIVERY_MODE,
+        EventingExtensions.PUSH_WITH_ACK_DELIVERY_MODE,
+        EventingExtensions.EVENTS_DELIVERY_MODE
     };
     
     protected WSEventingBaseSupport() {}
@@ -139,13 +160,13 @@ public class WSEventingBaseSupport extends BaseSupport {
         return nsMap;
     }
     
-    protected static BaseContext retrieveContext(UUID id) 
-                     throws InvalidSubscriptionException {
+    protected static BaseContext retrieveContext(UUID id) {
         assert datatypeFactory != null : UNINITIALIZED;
         
+        boolean result = false;
         BaseContext bctx = contextMap.get(id);
         if ((bctx == null) || (bctx.isDeleted())) {
-            throw new InvalidSubscriptionException("Context not found: subscription does not exist");
+            throw new RuntimeException("Context not found: subscription expired?");
         }
         
         // Check if context is expired
@@ -153,17 +174,17 @@ public class WSEventingBaseSupport extends BaseSupport {
         final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
         if (bctx.isExpired(nowXml)) {
             removeContext(null, bctx);
-            throw new InvalidSubscriptionException("Subscription expired");
+            throw new RuntimeException("Subscription expired");
         }
         return bctx;
     }
     
     protected static Addressing createPushEventMessage(BaseContext bctx,
             Object content)
-            throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
+            throws SOAPException, JAXBException, IOException {
         // Push mode, send the data
         if (!(bctx instanceof EventingContext)) {
-            throw new InvalidSubscriptionException("Context not found");
+            throw new RuntimeException("Context not found");
         }
         final EventingContext ctx = (EventingContext) bctx;
         
@@ -261,9 +282,30 @@ public class WSEventingBaseSupport extends BaseSupport {
      * the WS-Man request for the provided content.
      */
     public static Addressing createPushEventMessage(UUID id, Object content)
-    throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
+    throws SOAPException, JAXBException, IOException {
         
         BaseContext bctx = retrieveContext(id);
         return createPushEventMessage(bctx, content);
     }
+    
+    public static Addressing createEventMessagePushWithAck(final EventingContextWithAck  ctx, final Object content)
+    throws SOAPException, JAXBException, IOException {
+        Addressing msg = createPushEventMessage(ctx, content);
+        if(msg == null) return null; 
+        ObjectFactory FACTORY = new ObjectFactory();
+        
+        final JAXBElement<EndpointReferenceType> element = FACTORY.createReplyTo(ctx.getEventReplyTo());
+        msg.getXmlBinding().marshal(element, msg.getHeader());
+        
+        org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory factory = new org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory();
+        final AttributableDuration durationType = factory.createAttributableDuration();
+        durationType.setValue(ctx.getOperationTimeout());
+        final JAXBElement<AttributableDuration> durationElement = factory.createOperationTimeout(durationType);
+        msg.getXmlBinding().marshal(durationElement, msg.getHeader());
+        
+        final QName ACK_Requested = new QName(Management.NS_URI,ACKREQUESTED,Management.NS_PREFIX);
+        msg.getHeader().addChildElement(ACK_Requested);
+        
+        return msg;
+}
 }

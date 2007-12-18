@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.6  2007/05/30 20:31:04  nbeers
+ **Add HP copyright header
  **
- * $Id: EventingContext.java,v 1.6 2007-05-30 20:31:04 nbeers Exp $
+ **
+ * $Id: EventingContext.java,v 1.7 2007-12-18 14:56:11 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -29,7 +32,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.xpath.XPathExpressionException;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-final class EventingContext extends BaseContext {
+class EventingContext extends BaseContext {
 
     private final EndpointReferenceType notifyTo;
 
