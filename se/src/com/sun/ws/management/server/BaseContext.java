@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.15  2007/11/16 17:03:01  jfdenise
+ **Added some checks and handle stop then start of the Timer.
+ **
  **Revision 1.14  2007/11/16 15:12:13  jfdenise
  **Fix for bug 147 and 148
  **
@@ -38,7 +41,7 @@
  **Add HP copyright header
  **
  **
- * $Id: BaseContext.java,v 1.15 2007-11-16 17:03:01 jfdenise Exp $
+ * $Id: BaseContext.java,v 1.16 2007-12-18 11:55:46 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -78,10 +81,11 @@ public class BaseContext {
 		}
 	}
     
-    private XMLGregorianCalendar expiration;
     private final Filter filter;
-    private boolean deleted;
     private final ContextListener listener;
+    
+    private XMLGregorianCalendar expiration;
+    private boolean deleted;
     
     public BaseContext(final XMLGregorianCalendar expiry,
             final Filter filter,
@@ -105,12 +109,12 @@ public class BaseContext {
     	return this.filter;
     }
     
-    public Date getExpirationDate() {
+    public synchronized Date getExpirationDate() {
         if(expiration == null) return null;
         return expiration.toGregorianCalendar().getTime();
     }
     
-    public boolean isExpired(final XMLGregorianCalendar now) {
+    public synchronized boolean isExpired(final XMLGregorianCalendar now) {
         if (expiration == null) {
             // no expiration defined, never expires
             return false;
@@ -118,15 +122,15 @@ public class BaseContext {
         return now.compare(expiration) > 0;
     }
     
-    public void renew(final XMLGregorianCalendar expires) {
+    public synchronized void renew(final XMLGregorianCalendar expires) {
     	this.expiration = expires;
     }
     
-    public boolean isDeleted() {
+    public synchronized boolean isDeleted() {
     	return deleted;
     }
     
-    public void setDeleted() {
+    public synchronized void setDeleted() {
     	this.deleted = true;
     }
     

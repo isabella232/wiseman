@@ -19,6 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.16  2007/12/06 06:43:36  denis_rachal
+ **Issue number:  149
+ **Obtained from:
+ **Submitted by:  stanullo
+ **Reviewed by:
+ **
+ **No immediate response after context expiration. Code added to wake up thread waiting for items. Unit test added to test that this now works and neither the Release or the Pull threads are blocked for any length of time.
+ **
  **Revision 1.15  2007/12/05 13:24:45  denis_rachal
  **Added finalize code to release cached enumeration items.
  **
@@ -38,7 +46,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationContext.java,v 1.16 2007-12-06 06:43:36 denis_rachal Exp $
+ * $Id: EnumerationContext.java,v 1.17 2007-12-18 11:55:45 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -89,7 +97,9 @@ final class EnumerationContext extends BaseContext {
     	return this.passed;
     }
 
-    public void setDeleted() {
+    public synchronized void setDeleted() {
+    	if (isDeleted())
+    		return;
     	super.setDeleted();
     	if (this.iterator != null) {
 			synchronized (this.iterator) {

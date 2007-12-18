@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/12/17 15:05:21  denis_rachal
+ **Change synchronization of iterator in doPull() to avoid lock wait when releasing subscription during a pull that is blocked.
+ **
  **Revision 1.7  2007/12/06 06:43:36  denis_rachal
  **Issue number:  149
  **Obtained from:
@@ -84,7 +87,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.8 2007-12-17 15:05:21 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.9 2007-12-18 11:55:45 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -476,16 +479,6 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         final UUID context = extractContext(contextType);
         final EnumerationContext ctx = (EnumerationContext) getContext(context);
         if (ctx == null) {
-            throw new InvalidEnumerationContextFault();
-        }
-        
-        if (ctx.isDeleted()) {
-            throw new InvalidEnumerationContextFault();
-        }
-        final GregorianCalendar now = new GregorianCalendar();
-        final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
-        if (ctx.isExpired(nowXml)) {
-            removeContext(handlerContext, context);
             throw new InvalidEnumerationContextFault();
         }
         
