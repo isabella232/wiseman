@@ -23,7 +23,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingContext.java,v 1.7 2007-12-18 14:56:11 jfdenise Exp $
+ * $Id: EventingContext.java,v 1.8 2007-12-20 20:47:52 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -32,7 +32,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.xpath.XPathExpressionException;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-class EventingContext extends BaseContext {
+final class EventingContext extends BaseContext {
 
     private final EndpointReferenceType notifyTo;
 

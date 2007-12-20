@@ -40,7 +40,7 @@
  **Add HP copyright header
  **
  **
- * $Id: HttpClient.java,v 1.23 2007-12-18 14:56:14 jfdenise Exp $
+ * $Id: HttpClient.java,v 1.24 2007-12-20 20:47:53 jfdenise Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -141,27 +141,6 @@ public final class HttpClient {
         }
     }
 
-    public static Addressing sendRequest(final Addressing addressing, final String destination)
-    throws IOException, SOAPException, JAXBException {
-    	if (LOG.isLoggable(Level.FINE))
-			LOG.fine("<request>\n" + addressing + "</request>\n");
-    	
-    	final HttpURLConnection http = initRequest(destination,addressing.getContentType());
-
-        transfer(http, addressing);
-        
-        final Addressing response = readResponse(http);
-		if (LOG.isLoggable(Level.FINE)) {
-			if (response.getBody().hasFault())
-				LOG.fine("<fault>\n" + response + "</fault>\n");
-			else
-				LOG.fine("<response>\n" + response + "</response>\n");
-		}     
-		response.setXmlBinding(addressing.getXmlBinding());    
-		return response;
-    }
- 
-    
     public static Addressing sendRequest(final SOAPMessage msg, final String destination)
     throws IOException, SOAPException, JAXBException {
 
