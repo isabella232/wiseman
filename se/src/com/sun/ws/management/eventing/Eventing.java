@@ -19,11 +19,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.14  2007/10/30 09:27:29  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.13  2007/05/30 20:31:05  nbeers
  **Add HP copyright header
  **
  **
- * $Id: Eventing.java,v 1.14 2007-10-30 09:27:29 jfdenise Exp $
+ * $Id: Eventing.java,v 1.15 2008-01-17 15:19:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -140,17 +144,23 @@ public class Eventing extends Addressing {
     public void setRenew(final String expires) throws SOAPException, JAXBException {
         removeChildren(getBody(), RENEW);
         final Renew renew = FACTORY.createRenew();
-        renew.setExpires(expires.trim());
+        if (expires != null)
+            renew.setExpires(expires.trim());
         getXmlBinding().marshal(renew, getBody());
     }
 
-    public void setRenewResponse(final String expires) throws SOAPException, JAXBException {
+    public void setRenewResponse(final String expires, final Object... extensions) throws SOAPException, JAXBException {
         removeChildren(getBody(), RENEW_RESPONSE);
         final RenewResponse response = FACTORY.createRenewResponse();
         response.setExpires(expires);
+        if (extensions != null) {
+            for (final Object ext : extensions) {
+                response.getAny().add(ext);
+            }
+        }
         getXmlBinding().marshal(response, getBody());
     }
-
+    
     public void setGetStatus() throws SOAPException, JAXBException {
         removeChildren(getBody(), GET_STATUS);
         final GetStatus status = FACTORY.createGetStatus();
@@ -225,7 +235,10 @@ public class Eventing extends Addressing {
     public String getIdentifier() throws JAXBException, SOAPException {
         final JAXBElement<String> value =
         	  (JAXBElement<String>) unbind(getHeader(), IDENTIFIER);
-        return value.getValue();
+        if (value == null)
+        	return null;
+        else
+            return value.getValue();
     }
 
     // retrieve the current subscription EPR
@@ -270,5 +283,4 @@ public class Eventing extends Addressing {
 			setSubscriptionManagerEpr(mgr);
     	}
     }
-
 }

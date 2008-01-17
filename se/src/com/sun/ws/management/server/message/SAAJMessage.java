@@ -1,8 +1,8 @@
 /*
- * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.
  * 
- ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ ** Copyright (C) 2006-2008 Hewlett-Packard Development Company, L.P.
  **
  ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
@@ -220,24 +220,27 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
         i.setIdentifyResponse(vendor, productVersion, protocolVersion, more);
     }
     
-    public void setIdentifier(String id) throws JAXBException, SOAPException {
-        Eventing evt = new Eventing(mgt);
-        evt.setIdentifier(id);
-    }
-    
-    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires, final Object context) throws SOAPException, JAXBException {
+    public void setSubscribePullResponse(final EndpointReferenceType mgr, final String expires, final Object context) throws SOAPException, JAXBException {
         EventingExtensions evt = new EventingExtensions(mgt);
         evt.setSubscribeResponse(mgr, expires,context);
     }
     
-    public void setSubscribeResponseExt(final EndpointReferenceType mgr, final String expires, final Object... extensions) throws SOAPException, JAXBException {
+    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires) throws SOAPException, JAXBException {
+    	setSubscribeResponse(mgr, expires, (Object[])null);
+    }
+    
+    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires, final Object... extensions) throws SOAPException, JAXBException {
         Eventing evt = new Eventing(mgt);
         evt.setSubscribeResponse(mgr, expires, extensions);
     }
     
-    public void setSubscriptionManagerEpr(EndpointReferenceType mgr) throws JAXBException, SOAPException {
+    public void setRenewResponse(final String expires) throws SOAPException, JAXBException {
+        setRenewResponse(expires, (Object[])null);
+    }
+    
+    public void setRenewResponse(final String expires, final Object... extensions) throws SOAPException, JAXBException {
         Eventing evt = new Eventing(mgt);
-        evt.setSubscriptionManagerEpr(mgr);
+        evt.setRenewResponse(expires, extensions);
     }
     
     public void setCreateResponse(EndpointReference epr) throws Exception {

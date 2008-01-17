@@ -19,6 +19,14 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.55  2007/11/02 14:20:52  denis_rachal
+ **Issue number:  144 & 146
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **144: Default expiration timeout for enumerate is never set
+ **146: Enhance to allow specifying default expiration per IteratorF
+ **
  **Revision 1.54  2007/10/31 12:25:17  jfdenise
  **Split between new support and previous one.
  **
@@ -34,7 +42,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationSupport.java,v 1.55 2007-11-02 14:20:52 denis_rachal Exp $
+ * $Id: EnumerationSupport.java,v 1.56 2008-01-17 15:19:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -186,35 +194,7 @@ public final class EnumerationSupport extends WSEnumerationBaseSupport {
         
         final Enumerate enumerate = request.getEnumerate();
         if (enumerate == null) {
-            String expires = null;
-            Filter filter = null;
-            // see if this is a pull event mode subscribe request
-            final EventingExtensions evtxRequest = new EventingExtensions(request);
-            final Subscribe subscribe = evtxRequest.getSubscribe();
-            if (subscribe == null) {
-                throw new InvalidMessageFault();
-            }
-            if (iterator.isFiltered() == false) {
-                // We will do the filtering
-                filter = EventingSupport.createFilter(evtxRequest);
-            }
-            expires = subscribe.getExpires();
-            
-            if (subscribe.getEndTo() != null) {
-                throw new UnsupportedFeatureFault(
-                        UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
-            }
-            
-            EnumerationContext ctx = WSEnumerationSupport.createContext(handlerContext, expires, filter,
-                    null, iterator, listener, null, null);
-            
-            UUID context = initContext(handlerContext, ctx);
-            // this is a pull event mode subscribe request
-            final EventingExtensions evtxResponse = new EventingExtensions(response);
-            evtxResponse.setSubscribeResponse(EventingSupport
-                        .createSubscriptionManagerEpr(evtxRequest,
-                        evtxResponse, context), ctx.getExpiration(),
-                        context.toString());
+        	throw new InvalidMessageFault();
         } else
             WSEnumerationSupport.enumerate(handlerContext, req, resp, iterator, listener);
     }

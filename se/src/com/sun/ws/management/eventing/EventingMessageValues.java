@@ -20,12 +20,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/06/19 12:29:33  simeonpinder
+ **changes:
+ **-set 1.0 release implementation version
+ **-enable metadata ResourceURIs from extracted EPR
+ **-useful eventing constants and fix for notifyTo in utility.
+ **-cleaned up EventSourceInterface,SubscriptionManagerInterface definitions
+ **-added MetadataResourceAccessor draft
+ **-improved mechanism to strip unwanted headers from metadata decorated Management mesgs
+ **-added unregister mechanism to facilitate remote SubscriptionManager implementations
+ **
  **Revision 1.3  2007/05/30 20:31:05  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: EventingMessageValues.java,v 1.4 2007-06-19 12:29:33 simeonpinder Exp $
+ * $Id: EventingMessageValues.java,v 1.5 2008-01-17 15:19:09 denis_rachal Exp $
  */
 package com.sun.ws.management.eventing;
 
@@ -153,6 +163,7 @@ public class EventingMessageValues extends ManagementMessageValues {
 	private String status = DEFAULT_STATUS;
 	private String reason = DEFAULT_REASON;
 	private String replyTo = DEFAULT_REPLY_TO;
+	private String identifier = null;
 	private String[] customXmlBindingPackageList =DEFAULT_CUSTOM_XML_BINDINGS;
 	private ReferenceParametersType referenceParameterType = null;
 	//TODO: change this name as it's not intuitive.
@@ -181,6 +192,14 @@ public class EventingMessageValues extends ManagementMessageValues {
 
 	public void setFilterDialect(String filterDialect) {
 		this.filterDialect = filterDialect;
+	}
+	
+	public void setIdentifier(final String identifier) {
+		this.identifier = identifier;
+	}
+	
+	public String getIdentifier() {
+		return this.identifier;
 	}
 
 	public void setUidScheme(String uidScheme) {

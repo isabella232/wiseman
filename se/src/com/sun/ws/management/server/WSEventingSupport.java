@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.
+ * Copyright 2005-2008 Sun Microsystems, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ ** Copyright (C) 2006-2008 Hewlett-Packard Development Company, L.P.
  **
  ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.2  2007/11/07 11:15:35  denis_rachal
+ **Issue number:  142 & 146
+ **Obtained from:
+ **Submitted by:
+ **Reviewed by:
+ **
+ **142: EventingSupport.retrieveContext(UUID) throws RuntimeException
+ **
+ **Fixed WSEventingSupport to not throw RuntimeException. Instead it throws a new InvalidSubscriptionException. EventingSupport methods still throw RuntimeException to maintain backward compatibility.
+ **
+ **146: Enhance to allow specifying default expiration per enumeration
+ **
+ **Also enhanced WSEventingSupport to allow setting the default expiration per subscription. Default if not set by developer or client is now 24 hours for subscriptions.
+ **
+ **Additionally added javadoc to both EventingSupport and WSEventingSupport.
+ **
  **Revision 1.1  2007/10/31 12:25:38  jfdenise
  **Split between new support and previous one.
  **
@@ -49,7 +65,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.2 2007-11-07 11:15:35 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.3 2008-01-17 15:19:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -82,6 +98,7 @@ import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Renew;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
@@ -89,6 +106,7 @@ import com.sun.ws.management.Message;
 import com.sun.ws.management.UnsupportedFeatureFault;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.CannotProcessFilterFault;
+import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.DeliveryModeRequestedUnavailableFault;
 import com.sun.ws.management.eventing.EventSourceUnableToProcessFault;
 import com.sun.ws.management.eventing.Eventing;
@@ -107,13 +125,23 @@ import com.sun.ws.management.transport.HttpClient;
  * subscriptions using the WS-Eventing protocol.
  */
 public final class WSEventingSupport extends WSEventingBaseSupport {
-	
-    private static final int DEFAULT_EXPIRATION_MILLIS = 1000 * 60 * 60 * 24; // 1 day
-    private static Duration defaultExpiration = null;
     
-    static {
-        defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
-    }
+    /**
+     * Default subscription expiration if none is specified by the client.
+     * This value may be overridden by the handler when calling
+     * {@link #subscribe(HandlerContext, WSEventingRequest, WSEventingResponse, boolean, int, ContextListener, Object, Duration, Duration)}
+     *  or {@link #renew(HandlerContext, WSEventingRequest, WSEventingResponse, Duration, Duration)}.
+     */
+    public static final Duration defaultExpiration = datatypeFactory.newDuration(true, 0, 0, 1, 0, 0, 0);
+    
+    /**
+     * Infinite subscription expiration value.
+     * This value represents an infinite expiration for a subscription.
+     * Any subscription expiration greater than or equal to this value is
+     * considered infinite (does not expire). This value is 1 year.
+     *
+     */
+    public static final Duration infiniteExpiration = datatypeFactory.newDuration(true, 1, 0, 0, 0, 0, 0);
     
     private WSEventingSupport() {}
     
@@ -301,6 +329,10 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
      *  Initiate an
      * {@link org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe Subscribe}
      * operation.
+     * If a client does not specify an expiration the default expiration will
+     * be used. To disable expiration completely when a client does not specify
+     * an expiration, set both the <tt>defExpiration</tt>
+     * and <tt>maxExpiration</tt> to {@link #infiniteExpiration} or greater.
      * 
      * @param handlerContext
      *        The handler context for this request
@@ -338,6 +370,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
      *        The maximum value a client is allowed to set the Expiration to.
      *        If the requested Expiration exceeds this value, it will be set
      *        to this value. If null infinity is the maximum.
+     *        {@link #infiniteExpiration}
      *                     
      * @return UUID that identifies the subscription created
      * 
@@ -378,11 +411,12 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         if (deliveryMode.equals(EventingExtensions.PULL_DELIVERY_MODE)) {
             // this is a pull event mode subscribe request so setup an enumeration
             
+        	final int sizeOfQueue = (queueSize <= 0) ? (DEFAULT_QUEUE_SIZE) : queueSize;
             EnumerationIterator iterator = newIterator(factory, handlerContext,
                     request,
                     response,
                     isFiltered,
-                    queueSize);
+                    sizeOfQueue);
 
             if (iterator.isFiltered() == false) {
                 // We will do the filtering
@@ -399,28 +433,31 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                 throw new UnsupportedFeatureFault(
                         UnsupportedFeatureFault.Detail.ADDRESSING_MODE);
             }
-            
+        	
         	// Use the WSEventingSupport default if none is supplied.
-            Duration subscribeDefault = defaultExpiration;
-        	if (null != defExpiration)
-        		subscribeDefault = defExpiration;
-        	final XMLGregorianCalendar expiration = initExpiration(subscribe.getExpires(),
-        	                                                       subscribeDefault,
-        			                                               maxExpiration); 
-            // create and register an EnumerationContext
-            final EnumerationContext ctx = new EnumerationContext(expiration,
-                                                                  filter,
-                                                                  null,
-                                                                  iterator,
-                                                                  listener);
+            final Duration subscriptionDefault = 
+            	(null == defExpiration) ? defaultExpiration : defExpiration;
+            
+        	final String expires = computeExpiration(subscribe.getExpires(),
+                                                     subscriptionDefault,
+                                                     maxExpiration);
+        	
+        	final XMLGregorianCalendar expiration = (expires == null) ? null : initExpiration(expires);
+        	
+            // create and register an EventingContextPull
+            final EventingContextPull ctx = new EventingContextPull(expiration,
+                                                                    filter,
+                                                                    null,
+                                                                    iterator,
+                                                                    listener);
             
             // Set single thread use of this context
             synchronized (ctx) {
                 final UUID context = initContext(handlerContext, ctx);
-                response.setSubscribeResponse(WSEventingSupport
-                        .createSubscriptionManagerEpr(request, response,
-                        context), ctx.getExpiration(), context
-                        .toString());
+                final EndpointReferenceType mgrEPR = 
+                	createSubscriptionManagerEpr(request, response, context);
+                response.setSubscribeResponse(mgrEPR, 
+                		expires, createEnumerationContextElement(context));
                 return context;
             }
             
@@ -467,23 +504,34 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             }
             
         	// Use the WSEventingSupport default if none is supplied.
-            Duration subscribeDefault = defaultExpiration;
-        	if (null != defExpiration)
-        		subscribeDefault = defExpiration;
-        	final XMLGregorianCalendar expiration = initExpiration(subscribe.getExpires(),
-        	                                                       subscribeDefault,
-        			                                               maxExpiration); 
+            final Duration subscriptionDefault = 
+            	(null == defExpiration) ? defaultExpiration : defExpiration;
+            
+        	final String expires = computeExpiration(subscribe.getExpires(),
+                                                     subscriptionDefault,
+                                                     maxExpiration);
+        	
+        	final XMLGregorianCalendar expiration = (expires == null) ? null : initExpiration(expires);
+        	
             final EventingContext ctx = new EventingContext(expiration,
             		                                        filter,
             		                                        notifyTo,
             		                                        listener);
             
             final UUID context = initContext(handlerContext, ctx);
-            response.setSubscribeResponseExt(createSubscriptionManagerEpr(request,
-                    response, context), ctx.getExpiration());
+            response.setSubscribeResponse(createSubscriptionManagerEpr(request,
+                    response, context), expires);
             return context;
         }
      }
+    
+    private static JAXBElement<EnumerationContextType> createEnumerationContextElement(final Object context) {
+        final EnumerationContextType contextType = Enumeration.FACTORY.createEnumerationContextType();
+        contextType.getContent().add(context.toString());
+
+        return new JAXBElement<EnumerationContextType>(Enumeration.ENUMERATION_CONTEXT,
+                		EnumerationContextType.class, null, contextType);
+    }
      
     /**
      * Create a subscription Manager EPR for the given subscription request.
@@ -546,6 +594,47 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             final WSEventingRequest request,
             final WSEventingResponse response)
             throws SOAPException, JAXBException, InvalidMessageFault {
+    	renew(handlerContext, request, response, null, null);
+    }
+    
+    /**
+     * Renews an existing subscription. The subscription must still be
+     * active and not already canceled.
+     * 
+     * If a client does not specify an expiration the default expiration will
+     * be used. To disable expiration completely when a client does not specify
+     * an expiration, set both the <tt>defExpiration</tt>
+     * and <tt>maxExpiration</tt> to {@link #infiniteExpiration} or greater.
+     * 
+     * @param handlerContext
+     *        The handler context for this request
+     * @param request
+     *      The incoming SOAP message that contains the
+     *      {@link org.xmlsoap.schemas.ws._2004._08.eventing.Renew Renew}
+     *      request.
+     * @param response
+     *        The empty SOAP message that will contain the
+     *        {@link org.xmlsoap.schemas.ws._2004._08.eventing.RenewResponse RenewResponse}.
+     * @param defExpiration 
+     *        The default expiration for this subscription
+     *        if none is specified by the request.
+     *        If null the system default of 24 hours is used.           
+     * @param maxExpiration
+     *        The maximum value a client is allowed to set the Expiration to.
+     *        If the requested Expiration exceeds this value, it will be set
+     *        to this value. If null infinity is the maximum.
+     *        {@link #infiniteExpiration}
+     *        
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws InvalidMessageFault if the subscription does not exist
+     */
+    public static void renew(final HandlerContext handlerContext,
+            final WSEventingRequest request,
+            final WSEventingResponse response,
+            final Duration defExpiration,
+            final Duration maxExpiration)
+            throws SOAPException, JAXBException, InvalidMessageFault {
         
         final Renew renew = request.getRenew();
         if (renew == null) {
@@ -553,14 +642,15 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         }
         
         final String identifier = request.getIdentifier();
-        if (identifier == null) {
-            throw new InvalidMessageFault("Missing Identifier header element");
-            
-        }
-        
-        final Object found = renewContext(initExpiration(renew.getExpires()),
-                UUID.fromString(identifier));
-        if (found == null) {
+		if (identifier == null) {
+			throw new InvalidMessageFault("Missing Identifier header element");
+		}
+
+        final UUID uuid = UUID.fromString(identifier);
+        final BaseContext context = getContext(uuid);
+        if ((context == null) || 
+        		(!(context instanceof EventingContext) &&
+        				!(context instanceof EventingContextPull))) {
             /*
              * TODO: Convert to InvalidContextFault when available in
              * updated WS-Management specification
@@ -569,10 +659,30 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                     identifier + " not found");
         }
         
-        response.setIdentifier(identifier);
+    	// Use the WSEventingSupport default if none is supplied.
+        final Duration subscriptionDefault = 
+        	(null == defExpiration) ? defaultExpiration : defExpiration;
+        
+    	final String expires = computeExpiration(renew.getExpires(),
+                                                 subscriptionDefault,
+                                                 maxExpiration);
+    	
+    	final XMLGregorianCalendar expiration = (expires == null) ? null : initExpiration(expires);
+    	
+        final Object found = renewContext(expiration, uuid);
+        if (found == null) {
+            /*
+             * TODO: Convert to InvalidContextFault when available in
+             * updated WS-Management specification
+             */
+            throw new InvalidMessageFault("Subscription with Identifier: " +
+                    identifier + " not found");
+        }
+    	
+        response.setRenewResponse(expires);
     }
-    
-    /**
+
+	/**
      * Unsubscribe an existing subscription. This method cancels
      * an existing subscription.
      * 
@@ -606,8 +716,6 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         }
         
         unsubscribe(identifier, handlerContext);
-        
-        response.setIdentifier(identifier);
     }
     
     /**
@@ -739,9 +847,9 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         
         boolean result = false;
         
-        if (bctx instanceof EnumerationContext) {
+        if (bctx instanceof EventingContextPull) {
             // Pull, add data to iterator
-            final EnumerationContext ctx = (EnumerationContext) bctx;
+            final EventingContextPull ctx = (EventingContextPull) bctx;
             final EventingIterator iterator = (EventingIterator) ctx.getIterator();
             synchronized (iterator) {
                 if (iterator != null) {

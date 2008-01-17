@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.9  2007/12/18 11:55:45  denis_rachal
+ **Changes to ensure access to member variables in context are synchronized properly for multi-thread access.
+ **
  **Revision 1.8  2007/12/17 15:05:21  denis_rachal
  **Change synchronization of iterator in doPull() to avoid lock wait when releasing subscription during a pull that is blocked.
  **
@@ -87,7 +90,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.9 2007-12-18 11:55:45 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.10 2008-01-17 15:19:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -365,9 +368,16 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             optimize = request.getOptimize();
             maxElements = request.getMaxElements();
             
-            ctx = createContext(handlerContext, expires, filter,
-                                enumerationMode, iterator, listener,
-                                defExpiration, maxExpiration);
+        	// Use the WSEnumerationSupport default if none is supplied.
+            final Duration enumerationDefault = 
+            	(null == defExpiration) ? defaultExpiration : defExpiration;
+            
+        	final String computeExpires = computeExpiration(expires,
+                                                            enumerationDefault,
+                                                            maxExpiration);
+            
+            ctx = createContext(handlerContext, computeExpires, filter,
+                                enumerationMode, iterator, listener);
             
             context = initContext(handlerContext, ctx);
             
@@ -375,12 +385,12 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                 
                 final List<EnumerationItem> passed = ctx.getItems();
                 doPull(handlerContext,
-                        request,
-                        response,
-                        context,
-                        ctx,
-                        passed,
-                        maxElements);
+                       request,
+                       response,
+                       context,
+                       ctx,
+                       passed,
+                       maxElements);
                 
         		// Commit the request.
         		try {
@@ -392,7 +402,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                 // place an item count estimate if one was requested
                 insertTotalItemCountEstimate(request, response, iterator);
                 response.setEnumerateResponse(context.toString(),
-                        ctx.getExpiration(),
+                		computeExpires,
                         passed,
                         enumerationMode,
                         ctx.getIterator().hasNext());
@@ -532,16 +542,11 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
     static EnumerationContext createContext(HandlerContext handlerContext,
             String expires, Filter filter,
             EnumerationModeType enumerationMode, EnumerationIterator iterator,
-            ContextListener listener,
-            Duration defExpiration,
-            Duration maxExpiration) {
+            ContextListener listener) {
     	
-    	// Use the WSEnumerationSupport default if none is supplied.
-    	if (null == defExpiration)
-    		defExpiration = defaultExpiration;
-    	final XMLGregorianCalendar expiration = initExpiration(expires,
-    			                                               defExpiration,
-    			                                               maxExpiration);    	        	
+    	final XMLGregorianCalendar expiration = 
+    		(expires == null) ? null : initExpiration(expires);
+   	        	
         EnumerationContext ctx = new EnumerationContext(expiration,
         		                                        filter,
         		                                        enumerationMode,
@@ -852,8 +857,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             throw new InvalidEnumerationContextFault();
         }
         // Make sure this is not an Eventing Pull
-        EnumerationIterator iterator = ((EnumerationContext) ctx).getIterator();
-        if (iterator instanceof EventingIterator) {
+        if (ctx instanceof EventingContextPull) {
             // Release is not supported for Eventing Pull
             throw new ActionNotSupportedFault();
         }

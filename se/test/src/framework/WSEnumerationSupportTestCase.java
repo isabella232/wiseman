@@ -49,11 +49,16 @@ import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.enumeration.InvalidEnumerationContextFault;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingMessageValues;
+import com.sun.ws.management.eventing.EventingUtility;
+import com.sun.ws.management.eventing.InvalidMessageFault;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.HandlerContextImpl;
 import com.sun.ws.management.server.WSEnumerationSupport;
+import com.sun.ws.management.server.WSEventingSupport;
 import com.sun.ws.management.server.message.SAAJMessage;
 import com.sun.ws.management.soap.FaultException;
 
@@ -201,6 +206,55 @@ public class WSEnumerationSupportTestCase extends WsManTestBaseSupport {
 			fail("Expected TimedOutFault exception.");
 		    
 		} catch (TimedOutFault e) {
+			// Success
+		} catch (Exception e) {
+			fail("Unexpected exception: " + e.getMessage());
+		}
+	}
+	
+	public void testIssue151() throws SOAPException, JAXBException, DatatypeConfigurationException {
+		// NOTE: This test checks if an Enumeration Renew can be done via Eventing Renew.
+    	final EnumerationMessageValues settings = EnumerationMessageValues.newInstance();
+    	settings.setFilter(null);
+    	settings.setTo(DESTINATION);
+    	settings.setResourceUri(RESOURCE_URI);
+    	final Management enu = new Management(EnumerationUtility.buildMessage(null, settings));
+    	final SAAJMessage request = new SAAJMessage(enu);
+    	final SAAJMessage response = new SAAJMessage(new Management());
+    	
+		final HandlerContext context = new HandlerContextImpl(null, CONTENTTYPE,
+				                                              ENCODING, DESTINATION, null);
+		try {
+			EnumerationContextType enumCtx = null;
+		    WSEnumerationSupport.enumerate(context, request, response,
+		    		                       new TestEventingIterator(), null);
+		    Object payload = response.getPayload(null);
+		    if (payload instanceof EnumerateResponse) {
+		    	enumCtx = ((EnumerateResponse)payload).getEnumerationContext();
+		    	if (null == enumCtx) {
+		    		fail("Enumerate did not return an enumeration context.");
+		    	}
+		    } else {
+		    	fail("Enumerate response object payload incorrect.");
+		    }
+		    final EventingMessageValues eventSettings = EventingMessageValues.newInstance();
+		    eventSettings.setFilter(null);
+		    eventSettings.setTo(DESTINATION);
+		    eventSettings.setResourceUri(RESOURCE_URI);
+		    eventSettings.setEventingMessageActionType(Eventing.RENEW_ACTION_URI);
+		    eventSettings.setIdentifier((String)enumCtx.getContent().get(0));
+		    
+		    final Management evt = new Management(EventingUtility.buildMessage(null, eventSettings));
+		    final SAAJMessage renewReq = new SAAJMessage(evt);
+		    final SAAJMessage renewRes = new SAAJMessage(new Management());
+			WSEventingSupport.renew(context, renewReq, renewRes);
+			fail("Expected InvalidMessageFault exception.");
+		    
+		} catch(InvalidMessageFault e) {
+			final String msg = e.getDetails()[0].getTextContent();
+			if ((msg == null) || (msg.startsWith("Subscription with Identifier:") == false)) {
+				fail("Unexpected exception: " + msg);
+			}
 			// Success
 		} catch (Exception e) {
 			fail("Unexpected exception: " + e.getMessage());

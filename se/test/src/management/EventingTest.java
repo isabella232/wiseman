@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.22  2007/12/03 09:15:09  denis_rachal
+ **General cleanup of Unit tests to make them easier to run and faster.
+ **
  **Revision 1.21  2007/11/30 14:32:37  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -58,7 +61,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingTest.java,v 1.22 2007-12-03 09:15:09 denis_rachal Exp $
+ * $Id: EventingTest.java,v 1.23 2008-01-17 15:19:10 denis_rachal Exp $
  */
 
 package management;
@@ -355,11 +358,8 @@ public class EventingTest extends TestBase {
         if (addr2.getBody().hasFault()) {
             fail(addr2.getBody().getFault().getFaultString());
         }
-
-        final Eventing response2 = new Eventing(addr2);
-        final String identifier2 = response2.getIdentifier();
-        assertNotNull(identifier2);
-        assertEquals(identifier, identifier2);
+        
+        // TODO: Check RelatesTo in response matches MessageID in request
     }
     public void testRenew() throws Exception {
 
@@ -409,9 +409,11 @@ public class EventingTest extends TestBase {
         }
         
         final Eventing response2 = new Eventing(addr2);
-        final String identifier2 = response2.getIdentifier();
-        assertNotNull(identifier2);
-        assertEquals(identifier, identifier2);
+        final RenewResponse renewResponse = response2.getRenewResponse();
+        
+        if (renewResponse == null) {
+        	fail("RenewResponse missing from response.");
+        }
         
         // Sleep for the initial timeout value
         Thread.sleep(5000);
@@ -428,11 +430,7 @@ public class EventingTest extends TestBase {
         if (addr3.getBody().hasFault()) {
             fail(addr3.getBody().getFault().getFaultString());
         }
-
-        final Eventing response3 = new Eventing(addr2);
-        final String identifier3 = response3.getIdentifier();
-        assertNotNull(identifier3);
-        assertEquals(identifier, identifier3);
+        // TODO: Check RelatesTo in response matches MessageID in request
     }
 
     public void testBogusFilter() throws Exception {

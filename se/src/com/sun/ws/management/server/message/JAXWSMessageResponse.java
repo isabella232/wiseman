@@ -1,43 +1,30 @@
 /*
- * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.
+ * 
+ *  ** Copyright (C) 2006-2008 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Denis Rachal (denis.rachal@hp.com)
+ **
  */
 
 package com.sun.ws.management.server.message;
 
-import com.sun.ws.management.Management;
-import com.sun.ws.management.MessageUtil;
-import com.sun.ws.management.addressing.Addressing;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.soap.SOAP;
-import com.sun.ws.management.transfer.Transfer;
-import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.ws.management.xml.XML;
-import com.sun.xml.ws.api.SOAPVersion;
-import com.sun.xml.ws.api.addressing.WSEndpointReference;
-import com.sun.xml.ws.api.message.HeaderList;
-import com.sun.xml.ws.api.message.Headers;
-import com.sun.xml.ws.developer.MemberSubmissionEndpointReference;
-import com.sun.xml.ws.message.StringHeader;
-import com.sun.xml.ws.message.jaxb.JAXBHeader;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.util.JAXBResult;
-import javax.xml.namespace.QName;
+
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.ws.EndpointReference;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
@@ -46,7 +33,6 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.IdentifyResponseType;
 import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.ObjectFactory;
-
 import org.w3._2003._05.soap_envelope.Detail;
 import org.w3._2003._05.soap_envelope.Fault;
 import org.w3._2003._05.soap_envelope.Faultcode;
@@ -57,16 +43,35 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
-import com.sun.xml.ws.api.message.Message;
-import com.sun.xml.ws.api.message.Messages;
-import com.sun.xml.bind.api.JAXBRIContext;
-import javax.xml.bind.JAXBContext;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.RenewResponse;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.MessageUtil;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.xml.XML;
+import com.sun.xml.bind.api.JAXBRIContext;
+import com.sun.xml.ws.api.SOAPVersion;
+import com.sun.xml.ws.api.addressing.WSEndpointReference;
+import com.sun.xml.ws.api.message.HeaderList;
+import com.sun.xml.ws.api.message.Headers;
+import com.sun.xml.ws.api.message.Message;
+import com.sun.xml.ws.api.message.Messages;
+import com.sun.xml.ws.developer.MemberSubmissionEndpointReference;
+import com.sun.xml.ws.message.StringHeader;
+import com.sun.xml.ws.message.jaxb.JAXBHeader;
 /**
  *
  * @author jfdenise
@@ -374,7 +379,7 @@ public class JAXWSMessageResponse implements WSManagementResponse {
         payload = response;
     }
     
-    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires,
+    public void setSubscribePullResponse(final EndpointReferenceType mgr, final String expires,
             final Object context)
             throws SOAPException, JAXBException {
         
@@ -383,10 +388,15 @@ public class JAXWSMessageResponse implements WSManagementResponse {
         // TODO: this should have been generated by JAXB as - createEnumerationContextType(contextType);
         final JAXBElement<EnumerationContextType> contextTypeElement = 
                 new JAXBElement<EnumerationContextType>(Enumeration.ENUMERATION_CONTEXT, EnumerationContextType.class, null, contextType);
-        setSubscribeResponseExt(mgr, expires, contextTypeElement);
+        setSubscribeResponse(mgr, expires, contextTypeElement);
+    }
+    
+    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires)
+            throws SOAPException, JAXBException {
+    	setSubscribeResponse(mgr, expires, (Object[])null);
     }
 
-    public void setSubscribeResponseExt(final EndpointReferenceType mgr, final String expires,
+    public void setSubscribeResponse(final EndpointReferenceType mgr, final String expires,
             final Object... extensions)
             throws SOAPException, JAXBException {
         final SubscribeResponse response = Eventing.FACTORY.createSubscribeResponse();
@@ -400,12 +410,20 @@ public class JAXWSMessageResponse implements WSManagementResponse {
         payload = response;
     }
     
-    public void setSubscriptionManagerEpr(EndpointReferenceType mgr) throws JAXBException, SOAPException {
-        SubscribeResponse response = (SubscribeResponse) payload;
-        if (response == null)
-            this.setSubscribeResponseExt(mgr, null);
-        else
-            response.setSubscriptionManager(mgr);
+    public void setRenewResponse(final String expires) throws SOAPException, JAXBException {
+    	setRenewResponse(expires, (Object[])null);
+    }
+    
+    public void setRenewResponse(final String expires,
+    		final Object... extensions) throws SOAPException, JAXBException {
+        final RenewResponse response = Eventing.FACTORY.createRenewResponse();
+        response.setExpires(expires);
+        if (extensions != null) {
+            for (final Object ext : extensions) {
+                response.getAny().add(ext);
+            }
+        }
+        payload = response;
     }
     
     public void addNamespaceDeclarations(Map<String, String> declarations) {

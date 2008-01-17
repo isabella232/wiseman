@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.22  2007/11/16 17:03:00  jfdenise
+ **Added some checks and handle stop then start of the Timer.
+ **
  **Revision 1.21  2007/11/16 15:12:13  jfdenise
  **Fix for bug 147 and 148
  **
@@ -54,7 +57,7 @@
  **Add HP copyright header
  **
  **
- * $Id: BaseSupport.java,v 1.22 2007-11-16 17:03:00 jfdenise Exp $
+ * $Id: BaseSupport.java,v 1.23 2008-01-17 15:19:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -92,9 +95,9 @@ import com.sun.ws.management.soap.FaultException;
 import com.sun.ws.management.xml.XPathFilterFactory;
 
 public class BaseSupport {
-    static class EnumerationTask extends TimerTask {
+    static class ExpirationTask extends TimerTask {
         private UUID context;
-        EnumerationTask(UUID context) {
+        ExpirationTask(UUID context) {
             this.context = context;
         }
         
@@ -118,9 +121,9 @@ public class BaseSupport {
     }
     protected static final String UUID_SCHEME = "urn:uuid:";
     protected static final String UNINITIALIZED = "uninitialized";
-    private static final int DEFAULT_EXPIRATION_MILLIS = 600000; // 10 minutes
     protected static DatatypeFactory datatypeFactory = null;
     private static Duration defaultExpiration = null;
+    private static Duration infiniteExpiration = null;
 
     public static final Map<UUID, BaseContext> contextMap = new ConcurrentHashMap<UUID, BaseContext>();
 
@@ -139,7 +142,8 @@ public class BaseSupport {
                 xpathFilter);
         try {
             datatypeFactory = DatatypeFactory.newInstance();
-            defaultExpiration = datatypeFactory.newDuration(DEFAULT_EXPIRATION_MILLIS);
+            defaultExpiration = datatypeFactory.newDuration(true, 0, 0, 0, 0, 10, 0); // 10 minutes
+            infiniteExpiration = datatypeFactory.newDuration(true, 1, 0, 0, 0, 0, 0); // 1 year
         } catch(Exception ex) {
             throw new RuntimeException("Fail to initialize BaseSupport " + ex);
         }
@@ -288,7 +292,7 @@ public class BaseSupport {
 	} */
 
     protected static XMLGregorianCalendar initExpiration(final String expires)
-    throws InvalidExpirationTimeFault {
+    	throws InvalidExpirationTimeFault {
 
         assert datatypeFactory != null : UNINITIALIZED;
 
@@ -297,58 +301,95 @@ public class BaseSupport {
             return datatypeFactory.newXMLGregorianCalendar(Integer.MAX_VALUE,
                     12, 31, 23, 59, 59, 999, DatatypeConstants.MAX_TIMEZONE_OFFSET);
         }
+ 
+        final Object expiresObj = unmarshalExpires(expires);
+        final XMLGregorianCalendar now = 
+        	datatypeFactory.newXMLGregorianCalendar(new GregorianCalendar());
 
-        final GregorianCalendar now = new GregorianCalendar();
-        final XMLGregorianCalendar nowXml = datatypeFactory.newXMLGregorianCalendar(now);
-
-        XMLGregorianCalendar expiration = null;
+        final XMLGregorianCalendar expiration;
+        if (expiresObj instanceof Duration) {
+            expiration = (XMLGregorianCalendar)now.clone();
+            expiration.add((Duration)expiresObj);
+        } else {
+        	expiration = (XMLGregorianCalendar)expiresObj;
+        }
+		// Check if it is in the past
+        if (now.compare(expiration) > 0)
+            throw new InvalidExpirationTimeFault();
+        return expiration;
+    }
+    
+    protected static Object unmarshalExpires(String expires)
+    	throws InvalidExpirationTimeFault {
         try {
             // first try if it's a Duration
             final Duration duration = datatypeFactory.newDuration(expires);
-            expiration = datatypeFactory.newXMLGregorianCalendar(now);
-            expiration.add(duration);
-        } catch (IllegalArgumentException ndex) {
+            return duration;
+        } catch (IllegalArgumentException e) {
             try {
                 // now see if it is a calendar time
-                expiration = datatypeFactory.newXMLGregorianCalendar(expires);
+            	final XMLGregorianCalendar calendar =
+            		datatypeFactory.newXMLGregorianCalendar(expires);
+            	return calendar;
             } catch (IllegalArgumentException ncex) {
                 throw new InvalidExpirationTimeFault();
             }
         }
-        if (nowXml.compare(expiration) > 0) {
-            // expiration cannot be in the past
-            throw new InvalidExpirationTimeFault();
-        }
-        return expiration;
     }
     
-    protected static XMLGregorianCalendar initExpiration(final String expires,
-    		                                             final Duration defExpiration,
-    		                                             final Duration maxExpiration)
-    throws InvalidExpirationTimeFault {
+    protected static String computeExpiration(final String expires,
+			                                  Duration defExpiration,
+			                                  Duration maxExpiration) 
+    	throws InvalidExpirationTimeFault {
+    	// Check default & maximum
+    	if (defExpiration == null)
+    		defExpiration = defaultExpiration;
+    	if (maxExpiration == null)
+    		maxExpiration = infiniteExpiration;
     	
-        final GregorianCalendar now = new GregorianCalendar();
-    	XMLGregorianCalendar expiration = null;    	
-    	if ((expires != null) && (expires.length() >= 0))
-    		expiration = initExpiration(expires);
-        if (expiration == null) {
-            expiration = datatypeFactory.newXMLGregorianCalendar(now);
-            // Check if the application supplied a default value.
-            if (defExpiration != null)
-            	expiration.add(defExpiration);
-            else
-            	expiration.add(defaultExpiration);
-        }
-        if (maxExpiration != null) {
-        	// A maximum Expiration was specified.
-        	final XMLGregorianCalendar max = datatypeFactory.newXMLGregorianCalendar(now);
+    	// Check if nothing is to be returned to the client
+    	if ((expires == null) 
+    			&& (!(defExpiration.compare(infiniteExpiration) == DatatypeConstants.LESSER))
+    			&& (!(maxExpiration.compare(infiniteExpiration) == DatatypeConstants.LESSER)))
+    		return null;
+    	
+    	if ((expires == null) || (expires.length() == 0)) {
+    		// Compute the default expiration for the caller
+    		final GregorianCalendar now = new GregorianCalendar();
+    		final XMLGregorianCalendar expiration = datatypeFactory.newXMLGregorianCalendar(now);
+            expiration.add(defExpiration);
+            return expiration.toString();
+    	}
+    	
+    	// Caller specified a value. Find out its type.
+    	final Object callerExpiration = unmarshalExpires(expires);
+    	if (callerExpiration instanceof XMLGregorianCalendar) {
+            // Compute the expiration for the caller
+    		final XMLGregorianCalendar expiration = (XMLGregorianCalendar) callerExpiration;
+    		final XMLGregorianCalendar now = datatypeFactory.newXMLGregorianCalendar(new GregorianCalendar());
+    		
+    		// Check if it is in the past
+            if (now.compare(expiration) > 0)
+                throw new InvalidExpirationTimeFault();
+
+            // Check if it exceeds the maximum allowed
+        	final XMLGregorianCalendar max = (XMLGregorianCalendar)now.clone();
         	max.add(maxExpiration);
-        	if (expiration.compare(max) == DatatypeConstants.GREATER) {
-        		expiration = max;
-        	}	
-        }
-    	return expiration;
-    }
+        	if (expiration.compare(max) == DatatypeConstants.GREATER)
+        		return max.toString();
+        	else
+        		return expiration.toString();
+    	} else {
+			// Caller specified a Duration
+			final Duration request = (Duration) callerExpiration;
+			
+			// Check if it exceeds the maximum allowed
+			if (request.compare(maxExpiration) == DatatypeConstants.GREATER)
+				return maxExpiration.toString();
+			else
+				return request.toString();
+		}
+	}
     
     private static synchronized Timer getTimer() {
         if(cleanupTimer == null)
@@ -358,12 +399,13 @@ public class BaseSupport {
     
     private static void schedule(final UUID uuid, final HandlerContext requestContext,
             final BaseContext context) {
-        EnumerationTask task = new EnumerationTask(uuid);
         try {
             Date date = context.getExpirationDate();
-            if(date != null)
+            if(date != null) {
+                final ExpirationTask task = new ExpirationTask(uuid);
                 getTimer().schedule(task, date);
-        }catch(Exception ex) {
+            }
+        } catch(Exception ex) {
            // ex.printStackTrace();
             context.getListener().contextUnbound(requestContext, uuid);
             contextMap.remove(uuid);

@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.17  2007/12/18 11:55:45  denis_rachal
+ **Changes to ensure access to member variables in context are synchronized properly for multi-thread access.
+ **
  **Revision 1.16  2007/12/06 06:43:36  denis_rachal
  **Issue number:  149
  **Obtained from:
@@ -46,7 +49,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationContext.java,v 1.17 2007-12-18 11:55:45 denis_rachal Exp $
+ * $Id: EnumerationContext.java,v 1.18 2008-01-17 15:19:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -58,7 +61,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 
-final class EnumerationContext extends BaseContext {
+class EnumerationContext extends BaseContext {
 
 
     private final EnumerationIterator iterator;

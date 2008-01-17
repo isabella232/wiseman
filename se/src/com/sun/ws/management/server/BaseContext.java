@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.16  2007/12/18 11:55:46  denis_rachal
+ **Changes to ensure access to member variables in context are synchronized properly for multi-thread access.
+ **
  **Revision 1.15  2007/11/16 17:03:01  jfdenise
  **Added some checks and handle stop then start of the Timer.
  **
@@ -41,7 +44,7 @@
  **Add HP copyright header
  **
  **
- * $Id: BaseContext.java,v 1.16 2007-12-18 11:55:46 denis_rachal Exp $
+ * $Id: BaseContext.java,v 1.17 2008-01-17 15:19:09 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -98,6 +101,7 @@ public class BaseContext {
     }
     
     public String getExpiration() {
+    	if(expiration == null) return null;
         return expiration.toXMLFormat();
     }
     
