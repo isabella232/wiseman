@@ -36,4 +36,6 @@ public interface WSEventingResponse extends SOAPResponse{
             throws SOAPException, JAXBException;
     public void setRenewResponse(final String expires, final Object... extensions)
             throws SOAPException, JAXBException;
+    public void setSubscriptionManagerEpr(EndpointReferenceType mgr)
+    		throws JAXBException, SOAPException;
 }

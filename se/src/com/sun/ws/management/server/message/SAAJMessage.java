@@ -243,6 +243,11 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
         evt.setRenewResponse(expires, extensions);
     }
     
+    public void setSubscriptionManagerEpr(EndpointReferenceType mgr) throws JAXBException, SOAPException {
+        Eventing evt = new Eventing(mgt);
+        evt.setSubscriptionManagerEpr(mgr);
+    }
+    
     public void setCreateResponse(EndpointReference epr) throws Exception {
         TransferExtensions tr = new TransferExtensions(mgt);
         EndpointReferenceType eprType = MessageUtil.toEPRType(mgt.getXmlBinding().getJAXBContext(),

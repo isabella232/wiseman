@@ -426,6 +426,14 @@ public class JAXWSMessageResponse implements WSManagementResponse {
         payload = response;
     }
     
+    public void setSubscriptionManagerEpr(EndpointReferenceType mgr) throws JAXBException, SOAPException {
+        SubscribeResponse response = (SubscribeResponse) payload;
+        if (response == null)
+            this.setSubscribeResponse(mgr, null);
+        else
+            response.setSubscriptionManager(mgr);
+    }
+    
     public void addNamespaceDeclarations(Map<String, String> declarations) {
         // XXX REVISIT TODO
     }
