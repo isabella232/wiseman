@@ -18,21 +18,28 @@
  ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
+ ***
+ *** Fudan University
+ *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
+ ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.8  2007/12/20 20:47:52  jfdenise
+ **Removal of ACK contribution. The contribution has been commited in the trunk instead of the branch.
+ **
  **Revision 1.6  2007/05/30 20:31:04  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EventingContext.java,v 1.8 2007-12-20 20:47:52 jfdenise Exp $
+ * $Id: EventingContext.java,v 1.8.2.1 2008-01-18 07:08:43 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
 import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.xpath.XPathExpressionException;
+
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-final class EventingContext extends BaseContext {
+class EventingContext extends BaseContext {
 
     private final EndpointReferenceType notifyTo;
 

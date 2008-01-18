@@ -18,7 +18,14 @@
  ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
+ ***
+ *** Fudan University
+ *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
+ ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/12/20 20:47:52  jfdenise
+ **Removal of ACK contribution. The contribution has been commited in the trunk instead of the branch.
+ **
  **Revision 1.2  2007/11/07 11:15:36  denis_rachal
  **Issue number:  142 & 146
  **Obtained from:
@@ -65,7 +72,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingBaseSupport.java,v 1.4 2007-12-20 20:47:52 jfdenise Exp $
+ * $Id: WSEventingBaseSupport.java,v 1.4.2.1 2008-01-18 07:08:43 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -110,9 +117,11 @@ public class WSEventingBaseSupport extends BaseSupport {
     public static final int DEFAULT_EXPIRATION_MILLIS = 60000;
     
     // TODO: add more delivery modes as they are implemented
-    private static final String[] SUPPORTED_DELIVERY_MODES = {
+    public static final String[] SUPPORTED_DELIVERY_MODES = {
         Eventing.PUSH_DELIVERY_MODE,
-        EventingExtensions.PULL_DELIVERY_MODE
+        EventingExtensions.PULL_DELIVERY_MODE,
+        EventingExtensions.PUSH_WITH_ACK_DELIVERY_MODE,
+        EventingExtensions.EVENTS_DELIVERY_MODE
     };
     
     protected WSEventingBaseSupport() {}
@@ -282,4 +291,36 @@ public class WSEventingBaseSupport extends BaseSupport {
         BaseContext bctx = retrieveContext(id);
         return createPushEventMessage(bctx, content);
     }
+    
+	/**
+	 * Create the WS-Man event message for the provided content.
+	 * 
+	 * @param ctx
+	 * @param content
+	 * @return
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws InvalidSubscriptionException
+	 */
+	public static Addressing createEventMessagePushWithAck(
+			final EventingContextWithAck ctx, final Object content)
+			throws SOAPException, JAXBException, IOException,
+			InvalidSubscriptionException {
+		final Addressing msg = createPushEventMessage(ctx, content);
+		
+		// Check if it has been filtered out
+		if (msg == null)
+			return null;
+		
+		final Management mgmt = new Management(msg);
+		mgmt.setReplyTo(ctx.getEventReplyTo());
+		mgmt.setTimeout(ctx.getOperationTimeout());
+		
+		// Set the AckRequested header
+		final EventingExtensions evt = new EventingExtensions(mgmt);
+		evt.setAckRequested();
+
+		return evt;
+	}  
 }

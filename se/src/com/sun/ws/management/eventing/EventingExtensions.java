@@ -19,8 +19,11 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/05/30 20:31:05  nbeers
+ **Add HP copyright header
  **
- * $Id: EventingExtensions.java,v 1.7 2007-05-30 20:31:05 nbeers Exp $
+ **
+ * $Id: EventingExtensions.java,v 1.7.6.1 2008-01-18 07:08:43 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -42,6 +45,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableAny;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -164,6 +168,12 @@ public class EventingExtensions extends Eventing {
         super.setSubscribeResponse(mgr, expires, contextTypeElement);
     }
 
+    public void setAckRequested() throws JAXBException, SOAPException {
+    	removeChildren(getHeader(), ACK_REQUESTED);
+		final JAXBElement<AttributableEmpty> ackHeader = 
+			FACTORY.createAckRequested(new AttributableEmpty());
+		getXmlBinding().marshal(ackHeader, getHeader());
+    }
 
 	public DialectableMixedDataType getWsmanFilter() throws JAXBException, SOAPException {
 		Subscribe subscribe = getSubscribe();
@@ -175,6 +185,11 @@ public class EventingExtensions extends Eventing {
 				                                  DialectableMixedDataType.class,
 				                                  FILTER);
 	}
+	
+    public boolean isAckRequested() throws JAXBException, SOAPException {
+        final Object value = unbind(getHeader(), ACK_REQUESTED);
+        return value == null ? false : true;
+    }
 
     private static Object extract(final List<Object> anyList, final Class classType, final QName eltName) {
         for (final Object any : anyList) {

@@ -18,7 +18,27 @@
  ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
+ ***
+ *** Fudan University
+ *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
+ ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2008/01/17 15:19:09  denis_rachal
+ **Issue number:  151, 152, 153, 154, & 155
+ **Obtained from:
+ **Submitted by:  cahei (151), jfdenise (152-155)
+ **Reviewed by:
+ **
+ **The following issues have been resolved with this commit:
+ **
+ **Issue 151: Eventing-Renew request returns without error for an enumeration context from Enumerate
+ **Issue 152: Eventing subscription infinite expiration is not well supported
+ **Issue 153: RenewResponse is not set when sending back the response
+ **Issue 154: Subscribe response expires is not of the same type as the request
+ **Issue 155: Expiration scheduling fails after renewal with no expires
+ **
+ **Unit tests have been appropriately updated to test for these issues.
+ **
  **Revision 1.2  2007/11/07 11:15:35  denis_rachal
  **Issue number:  142 & 146
  **Obtained from:
@@ -65,7 +85,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.3 2008-01-17 15:19:09 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.3.2.1 2008-01-18 07:08:42 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -73,6 +93,7 @@ package com.sun.ws.management.server;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.GregorianCalendar;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.xml.bind.JAXBElement;
@@ -461,10 +482,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                 return context;
             }
             
-        } else {
-            // one of the push modes
-            // XXX REVISIT ONLY DONE WITH OLD WAY
-            // NEED TO FIX THE NAMESPACE MAP
+        }  else { // including Push, PushWithAck, and Batched Delivery Mode 
             if (isFiltered == false) {
                 // We will do the filtering
                 try {
@@ -504,6 +522,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             }
             
         	// Use the WSEventingSupport default if none is supplied.
+            
             final Duration subscriptionDefault = 
             	(null == defExpiration) ? defaultExpiration : defExpiration;
             
@@ -512,11 +531,51 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                                                      maxExpiration);
         	
         	final XMLGregorianCalendar expiration = (expires == null) ? null : initExpiration(expires);
-        	
-            final EventingContext ctx = new EventingContext(expiration,
-            		                                        filter,
-            		                                        notifyTo,
-            		                                        listener);
+
+            final EventingContext ctx;
+            if (deliveryMode.equals(Eventing.PUSH_DELIVERY_MODE)) {
+            	// Push Mode
+            	
+            	ctx = new EventingContext(expiration,
+                                          filter,
+                                          notifyTo,
+                                          listener);
+            } else if (deliveryMode.equals(EventingExtensions.PUSH_WITH_ACK_DELIVERY_MODE)) {
+            	// PushWithAck Mode
+            	
+            	// Here we use the default eventReplyTo and operationTimeout.
+            	// Customers will set explicitly eventReplyTo and 
+            	// operationTimeout using the setSendXXX(UUID,xxx)
+            	// after this subscribe(...) was called. 
+            	ctx = new EventingContextWithAck (expiration,
+            			                          filter,
+            			                          notifyTo,
+            			                          listener);
+            	
+            } else if (deliveryMode.equals(EventingExtensions.EVENTS_DELIVERY_MODE)) {
+            	// Batched Delivery Mode
+            
+            	// TODO: get the MaxElements and MaxTime from the variable delivery 
+            	//      then use them as the parameters of the constructor.  
+                // int maxElements;
+                // Duration maxTime;
+            	
+            	// Here we use the default eventReplyTo,default operationTimeout,
+            	// default maxElements,default maxTime. After the Batched
+            	// Delivery Mode is supported, the maxElements and the maxTime
+            	// should be set in the EventingContextBatched constructor.
+            	// But the eventReplyTo and operationTimeout are set explicitly using
+            	// the setSendXXX(UUID,xxx) after this subscribe(...) was called.
+            	// because the eventReplyTo and operationTimeout are not in the
+            	// Subscribe Action request.
+                ctx = new EventingContextBatched(expiration,
+                		                         filter,
+                		                         notifyTo,
+                		                         listener);  
+            } else {
+            	// Not one of the supported delivery modes
+            	throw new DeliveryModeRequestedUnavailableFault(SUPPORTED_DELIVERY_MODES);
+            }
             
             final UUID context = initContext(handlerContext, ctx);
             response.setSubscribeResponse(createSubscriptionManagerEpr(request,
@@ -840,51 +899,91 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
      */
     public static boolean sendEvent(final UUID id,
     		                        final Object content)
-    throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
-    
-        // TODO: avoid blocking the sender - use a thread pool to send notifications
-        final BaseContext bctx = retrieveContext(id);
-        
-        boolean result = false;
-        
-        if (bctx instanceof EventingContextPull) {
-            // Pull, add data to iterator
-            final EventingContextPull ctx = (EventingContextPull) bctx;
-            final EventingIterator iterator = (EventingIterator) ctx.getIterator();
-            synchronized (iterator) {
-                if (iterator != null) {
-                    result = iterator.add(new EnumerationItem(content, null));
-                    iterator.notifyAll();
-                }
-            }
-        } else {
-             final Addressing msg = createPushEventMessage(bctx, content);
-            // Push mode, send the data
-            if(msg == null)
-                result = false;
-            else {
-                HttpClient.sendResponse(msg);
-                result = true;
-            }
-        }
-        return result;
-    }
-    
-    /**
-     * Send an event for a specified subscription context.
-     * 
-     * @param id UUID identifying the subscription this event is for
-     * @param msg message to use when sending the event
-     * 
-     * @return true is the event was successfully sent, otherwise false
-     * 
-     * @throws SOAPException
-     * @throws JAXBException
-     * @throws IOException
-     * @throws XPathExpressionException
-     * @throws InvalidSubscriptionException
-     * @throws Exception
-     */
+    throws SOAPException, JAXBException, IOException,
+			InvalidSubscriptionException {
+
+		// TODO: avoid blocking the sender - use a thread pool to send notifications
+    	// TODO: implement retries for push
+		final BaseContext bctx = retrieveContext(id);
+
+		boolean result = false;
+
+		if (bctx instanceof EventingContextPull) {
+			// Pull, add data to iterator
+			final EventingContextPull ctx = (EventingContextPull) bctx;
+			final EventingIterator iterator = 
+				(EventingIterator) ctx.getIterator();
+			synchronized (iterator) {
+				if (iterator != null) {
+					result = iterator.add(new EnumerationItem(content, null));
+					iterator.notifyAll();
+				}
+			}
+		} else if (bctx instanceof EventingContext) {
+			// Standard Push mode, send the data
+			final Addressing msg = createPushEventMessage(bctx, content);
+			
+			if (msg != null) {
+				HttpClient.sendResponse(msg);
+				result = true;
+			}
+		} else if (bctx instanceof EventingContextBatched) {
+			// Batched delivery mode
+			final EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
+
+			// TODO: Here we
+			// Put the content into the related event-queue which was
+			// initialized when the EventingContextBatched instance is created.
+			// that is, the event-queue will be one private member of the
+			// EventingContextBatched instance.
+			// In the event-queue, one thread will pack multiple contents into
+			// one soap message and send the soap to the
+			// ctxbatched.getEventReplyTo().
+			// Because this is one asynchronized operation, we can not get the
+			// result in time,
+			// when the content is put into the event-queue successfully, the
+			// result is set to true, else is set to false.
+
+		} else if (bctx instanceof EventingContextWithAck) {
+			// Push with acknowledge delivery mode
+			final EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
+
+			final Addressing eventMessage =
+				createEventMessagePushWithAck(ctxwithack, content);
+
+			if (eventMessage != null) {
+				final Addressing response = HttpClient.sendRequest(
+						eventMessage, (Map.Entry<String, String>[])null);
+
+				result = parseEventResponse(response);
+
+				if (!result)
+					WSEventingSupport.unsubscribe(id.toString());
+			}
+		} else {
+			// Not an Eventing subscription. Throw an exception.
+			throw new InvalidSubscriptionException();
+		}
+		return result;
+	}
+
+	/**
+	 * Send an event for a specified subscription context.
+	 * 
+	 * @param id
+	 *            UUID identifying the subscription this event is for
+	 * @param msg
+	 *            message to use when sending the event
+	 * 
+	 * @return true is the event was successfully sent, otherwise false
+	 * 
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 * @throws XPathExpressionException
+	 * @throws InvalidSubscriptionException
+	 * @throws Exception
+	 */
     public static boolean sendEvent(final UUID id,
     		                        final Addressing msg)
             throws SOAPException, JAXBException, IOException, 
@@ -959,4 +1058,95 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             }
         }
     }
+    
+    /**
+	 * Parse the event response from Event Sink.
+	 * If the eventResponse message is one ACK message , then true;
+	 * else return false 
+	 * 
+	 * @param eventResponse
+	 * @return
+	 * @throws SOAPException
+	 * @throws JAXBException
+	 * @throws IOException
+	 */
+	private static boolean parseEventResponse(final Addressing eventResponse)
+			throws SOAPException, JAXBException, IOException {
+		if (eventResponse.getAction().equals(Management.ACK_URI))
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Set EventReplyTo in class of EventingContextWithAck.
+	 * This includes EventingContextBatched.
+	 * 
+	 * @param id UUID identifying the subscription this event is for
+	 * @param eventReplyTo
+	 */
+	public static void setSendReplyTo(final UUID id,
+			final EndpointReferenceType eventReplyTo)
+			throws InvalidSubscriptionException {
+		final BaseContext bctx = retrieveContext(id);
+		if (bctx instanceof EventingContextWithAck) {
+			EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
+			ctxwithack.setEventReplyTo(eventReplyTo);
+		} else
+			throw new IllegalArgumentException(
+					"Subscription does not have an option named EventReplyTo");
+	}
+
+	/**
+	 * Set OperationTimeout in class of EventingContextWithAck.
+	 * This includes EventingContextBatched.
+	 * 
+	 * @param id UUID identifying the subscription this event is for
+	 * @param operationTimeout
+	 */
+	public static void setSendOperationTimeout(final UUID id,
+			final Duration operationTimeout)
+			throws InvalidSubscriptionException {
+		final BaseContext bctx = retrieveContext(id);
+		if (bctx instanceof EventingContext) {
+			EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
+			ctxwithack.setOperationTimeout(operationTimeout);
+		} else
+			throw new IllegalArgumentException(
+					"Subscription does not have an option named OperationTimeout");
+	}
+
+	/**
+	 * Set MaxElements in class of EventingContextBatched.
+	 * 
+	 * @param id UUID identifying the subscription this event is for
+	 * @param maxElements
+	 */
+	public static void setSendMaxElements(final UUID id, final int maxElements)
+			throws InvalidSubscriptionException {
+		final BaseContext bctx = retrieveContext(id);
+		if (bctx instanceof EventingContextBatched) {
+			EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
+			ctxbatched.setMaxElements(maxElements);
+		} else
+			throw new IllegalArgumentException(
+					"Subscription does not have an option named MaxElements");
+	}
+
+	/**
+	 * Set MaxTime in class of EventingContextBatched.
+	 * 
+	 * @param id UUID identifying the subscription this event is for
+	 * @param maxTime
+	 */
+	public static void setSendMaxTime(final UUID id, final Duration maxTime)
+			throws InvalidSubscriptionException {
+		final BaseContext bctx = retrieveContext(id);
+		if (bctx instanceof EventingContextBatched) {
+			EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
+			ctxbatched.setMaxTime(maxTime);
+		} else
+			throw new IllegalArgumentException(
+					"Subscription does not have an option named MaxTime");
+	}
 }
