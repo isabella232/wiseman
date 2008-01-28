@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.14  2007/12/03 09:15:09  denis_rachal
+ **General cleanup of Unit tests to make them easier to run and faster.
+ **
  **Revision 1.13  2007/11/30 14:32:36  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -35,21 +38,25 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingExtensionsTest.java,v 1.14 2007-12-03 09:15:09 denis_rachal Exp $
+ * $Id: EventingExtensionsTest.java,v 1.14.6.1 2008-01-28 08:00:45 denis_rachal Exp $
  */
 
 package management;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.HashMap;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.soap.SOAPException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableAny;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
@@ -59,6 +66,8 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.PolicyType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.DeliveryType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.SubscribeResponse;
@@ -66,6 +75,9 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import util.TestBase;
 
+import com.sun.ws.management.Management;
+import com.sun.ws.management.ManagementMessageValues;
+import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
@@ -74,7 +86,9 @@ import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.EventingMessageValues;
 import com.sun.ws.management.eventing.EventingUtility;
+import com.sun.ws.management.server.EnumerationSupport;
 import com.sun.ws.management.server.NamespaceMap;
+import com.sun.ws.management.server.handler.wsman.test.events.source_Handler;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
 
@@ -165,46 +179,15 @@ public class EventingExtensionsTest extends TestBase {
 
     private void pullModeTest(final String filter, final NamespaceMap filterNsMap) throws Exception {
 
-        EventingMessageValues settings = new EventingMessageValues();
-    	settings.setDeliveryMode(EventingExtensions.PULL_DELIVERY_MODE);
-    	settings.setTo(DESTINATION);
-    	settings.setEventingMessageActionType(Eventing.SUBSCRIBE_ACTION_URI);
-    	settings.setFilter(filter);
-    	settings.setFilterDialect(XPath.NS_URI);
-    	settings.setResourceUri("wsman:test/pull_source");
-    	settings.setXmlBinding(binding);
     	
-        if ((filter != null) && (filterNsMap != null))
-        	settings.setNamespaceMap(filterNsMap.getMap());
-
-    	Eventing evt = EventingUtility.buildMessage(null, settings);
-
-        evt.prettyPrint(logfile);
-        Addressing response = HttpClient.sendRequest(evt);
-        response.prettyPrint(logfile);
-        if (response.getBody().hasFault()) {
-            fail(response.getBody().getFault().getFaultString());
-        }
-
-        String context = null;
-        final EventingExtensions evtx2 = new EventingExtensions(response);
-        final SubscribeResponse subr = evtx2.getSubscribeResponse();
-        for (final Object obj : subr.getAny()) {
-            if (obj instanceof Element) {
-                final Element contextElement = (Element) obj;
-                if (Enumeration.ENUMERATION_CONTEXT.getLocalPart().equals(contextElement.getLocalName()) &&
-                        Enumeration.ENUMERATION_CONTEXT.getNamespaceURI().equals(contextElement.getNamespaceURI())) {
-                    context = contextElement.getTextContent();
-                    break;
-                }
-            }
-        }
+    	final SubscribeResponse subr = subscribe(DESTINATION, "wsman:test/pull_source",
+        		EventingExtensions.PULL_DELIVERY_MODE, null, filter, filterNsMap);
+        String context = getPullEnumContext(subr);
         assertNotNull(context);
 
         boolean done = false;
         int count = 0;
         do {
-
             EnumerationMessageValues enumSettings = new EnumerationMessageValues();
             enumSettings.setTo(DESTINATION);
             enumSettings.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
@@ -246,4 +229,138 @@ public class EventingExtensionsTest extends TestBase {
         } while (!done);
         assertTrue(count >= 5);
     }
+    
+    public void testPushMode() throws Exception {
+
+		// First setup a Pull subscription at "wsman:test/events/sink"
+		// This will allow us to pull our push events back from the sink
+		// and then check them.
+		final SubscribeResponse pullSubs = subscribe(DESTINATION2,
+				"wsman:test/events/sink",
+				EventingExtensions.PULL_DELIVERY_MODE, null, null, null);
+		final EndpointReferenceType pullMgr = pullSubs.getSubscriptionManager();
+		assertNotNull(pullMgr);
+		String pullContext = getPullEnumContext(pullSubs);
+		assertNotNull(pullContext);
+
+		// Now create a subscription at the source with NotifyTo=sink.
+		final EndpointReferenceType sinkEpr = EnumerationSupport
+				.createEndpointReference(DESTINATION2,
+						"wsman:test/events/sink", null);
+		final SubscribeResponse pushSubs = subscribe(DESTINATION2,
+				"wsman:test/events/source",
+				EventingExtensions.PUSH_DELIVERY_MODE, sinkEpr, null, null);
+		final EndpointReferenceType pushMgr = pushSubs.getSubscriptionManager();
+		assertNotNull(pushMgr);
+
+		// Now get the source to send some events to the subscribers.
+		for (int i = 0; i < 5; i++) {
+			final ManagementMessageValues settings = new ManagementMessageValues();
+			settings.setTo(DESTINATION2);
+			settings.setTimeout(20000);
+			settings.setResourceUri("wsman:test/events/source");
+			settings.setXmlBinding(binding);
+			final Management msg = ManagementUtility.buildMessage(null,
+					settings);
+			msg.setAction(source_Handler.CREATE_EVENT);
+
+			msg.prettyPrint(logfile);
+			final Addressing response = HttpClient.sendRequest(msg);
+			response.prettyPrint(logfile);
+			if (response.getBody().hasFault()) {
+				fail(response.getBody().getFault().getFaultString());
+			}
+		}
+
+		// Now check if the events arrived at our sink OK
+
+		EnumerationMessageValues enumSettings = new EnumerationMessageValues();
+		enumSettings.setTo(DESTINATION2);
+		enumSettings
+				.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
+		enumSettings.setTimeout(10000);
+		enumSettings.setEnumerationContext(pullContext);
+		enumSettings.setMaxElements(10);
+		enumSettings.setResourceUri("wsman:test/events/sink");
+		enumSettings.setXmlBinding(binding);
+
+		Enumeration enu = EnumerationUtility.buildMessage(null, enumSettings);
+
+		enu.prettyPrint(logfile);
+		Addressing response2 = HttpClient.sendRequest(enu);
+		response2.prettyPrint(logfile);
+		if (response2.getBody().hasFault()) {
+			fail(response2.getBody().getFault().getFaultString());
+		}
+
+		final Enumeration pullResponse = new Enumeration(response2);
+		final PullResponse pr = pullResponse.getPullResponse();
+		// update context for the next pull (if any)
+		if (pr.getEnumerationContext() != null) {
+			pullContext = 
+				(String) pr.getEnumerationContext().getContent().get(0);
+		}
+		int count = 0;
+		for (Object obj : pr.getItems().getAny()) {
+			final Element el = (Element) obj;
+			count++;
+			// System.out.println("Event: " + el.getTextContent());
+		}
+		// We should never get EOS from our event source
+		assertTrue(pr.getEndOfSequence() == null);
+		// This should go on forever
+		assertEquals(5, count);
+	}
+
+	private SubscribeResponse subscribe(final String destination,
+										final String resourceURI,
+			                            final String mode,
+			                            final EndpointReferenceType notifyTo,
+								        final String filter,
+								        final NamespaceMap filterNsMap) throws SOAPException,
+			JAXBException, DatatypeConfigurationException,
+			ParserConfigurationException, SAXException, IOException {
+		EventingMessageValues settings = new EventingMessageValues();
+    	settings.setDeliveryMode(mode);
+    	settings.setTo(destination);
+    	settings.setNotifyTo(notifyTo);
+    	settings.setEventingMessageActionType(Eventing.SUBSCRIBE_ACTION_URI);
+    	settings.setFilter(filter);
+    	settings.setFilterDialect(XPath.NS_URI);
+    	settings.setResourceUri(resourceURI);
+    	settings.setXmlBinding(binding);
+    	
+        if ((filter != null) && (filterNsMap != null))
+        	settings.setNamespaceMap(filterNsMap.getMap());
+
+    	Eventing evt = EventingUtility.buildMessage(null, settings);
+
+        evt.prettyPrint(logfile);
+        Addressing response = HttpClient.sendRequest(evt);
+        response.prettyPrint(logfile);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+
+        final EventingExtensions evtx2 = new EventingExtensions(response);
+        final SubscribeResponse subr = evtx2.getSubscribeResponse();
+        final EndpointReferenceType mgr = subr.getSubscriptionManager();
+        assertNotNull(mgr);
+		return subr;
+	}
+
+	private String getPullEnumContext(final SubscribeResponse subr) {
+		String context = null;
+        for (final Object obj : subr.getAny()) {
+            if (obj instanceof Element) {
+                final Element element = (Element) obj;
+                if (Enumeration.ENUMERATION_CONTEXT.getLocalPart().equals(element.getLocalName()) &&
+                        Enumeration.ENUMERATION_CONTEXT.getNamespaceURI().equals(element.getNamespaceURI())) {
+                    context = element.getTextContent();
+                    break;
+                }
+            }
+        }
+		return context;
+	}
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.1 2007-12-03 09:15:10 denis_rachal Exp $
+ * $Id: TestBase.java,v 1.1.6.1 2008-01-28 08:00:46 denis_rachal Exp $
  */
 
 package util;
@@ -44,6 +44,8 @@ public abstract class TestBase extends TestCase {
 	
     public static String DESTINATION =
         System.getProperty("wsman.dest", "http://localhost:8080/wsman/");
+    public static String DESTINATION2 =
+        System.getProperty("wsman.dest.v2", "http://localhost:8080/wsman/v2/");
 	public static XmlBinding binding;
 
     public FileOutputStream logfile = null;

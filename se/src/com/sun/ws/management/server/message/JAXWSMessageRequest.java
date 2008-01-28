@@ -26,6 +26,7 @@ import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
+import javax.xml.stream.XMLStreamException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
@@ -80,6 +81,8 @@ public class JAXWSMessageRequest implements WSManagementRequest {
     private Duration timeout;
     private boolean isIdentifyRead;
     private boolean isIdentify;
+    private boolean isAckRequestedRead;
+    private boolean isAckRequested;
     private boolean resourceURIRead;
     private URI resourceURI;
     private boolean addressURIRead;
@@ -206,6 +209,18 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         return resourceURI;
     }
     
+    public boolean isAckRequested() {
+    	if(!isAckRequestedRead) {
+    		isAckRequestedRead = true;
+    		Header h = headers.get(EventingExtensions.ACK_REQUESTED, true);
+    		if(h == null)
+    			isAckRequested = false;
+    		else
+    			isAckRequested = true;
+    	}
+    	return isAckRequested;
+    }
+    
     public URI getAddressURI() throws JAXBException, SOAPException {
         if(!addressURIRead) {
             addressURIRead = true;
@@ -240,12 +255,25 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         return locale;
     }
     
+    public Object getSOAPHeader(final QName name) throws 
+			SOAPException {
+		final Header h = headers.get(name, true);
+		if (h != null)
+			try {
+				return h.readAsJAXB(newUnmarshaller());
+			} catch (JAXBException e) {
+                // TODO: return the header?
+				return h;
+			}
+		else
+			return null;
+	}
+    
     /**
-     *
-     * Direct access to header data structure.
-     * Used to provide an access to unknown headers.
-     * Workaround more than design.
-     */
+	 * 
+	 * Direct access to header data structure. Used to provide an access to
+	 * unknown headers. Workaround more than design.
+	 */
     public List<Header> getSOAPHeaders() {
         return headers;
     }
@@ -410,7 +438,7 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         return MessageUtil.getNamespaceContext(this);
     }
     
-    public Object getPayload(Unmarshaller u) throws Exception {
+    public Object getPayload(final Unmarshaller u) throws JAXBException, XMLStreamException {
         if(!payloadRead) {
             payloadRead = true;
             Unmarshaller current = u == null ? binding.createUnmarshaller() : u;

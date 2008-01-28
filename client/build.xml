@@ -179,6 +179,7 @@
           <formatter usefile="false" type="brief"/>
           <formatter type="xml"/>
           <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+          <jvmarg value="-Dwsman.dest.v2=http://localhost:8080/wsman/v2/" />
           <jvmarg value="-Dwsman.user=wsman" />
           <jvmarg value="-Dwsman.password=secret" />
           <jvmarg value="-Dwsman.basicauthentication=true" />
@@ -211,6 +212,7 @@
           <formatter usefile="false" type="brief"/>
           <formatter type="xml"/>
           <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+          <jvmarg value="-Dwsman.dest.v2=http://localhost:8080/wsman/v2/" />
           <jvmarg value="-Dwsman.user=wsman" />
           <jvmarg value="-Dwsman.password=secret" />
           <jvmarg value="-Dwsman.basicauthentication=true" />
@@ -243,6 +245,7 @@
           <formatter usefile="false" type="brief"/>
           <formatter type="xml"/>
           <jvmarg value="-Dwsman.dest=http://localhost:8080/wsman/" />
+          <jvmarg value="-Dwsman.dest.v2=http://localhost:8080/wsman/v2/" />
           <jvmarg value="-Dwsman.user=wsman" />
           <jvmarg value="-Dwsman.password=secret" />
           <jvmarg value="-Dwsman.basicauthentication=true" />

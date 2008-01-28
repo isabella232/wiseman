@@ -22,8 +22,15 @@ package com.sun.ws.management.server.message;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
+import javax.xml.stream.XMLStreamException;
+
+import com.sun.xml.ws.api.message.Header;
 
 /**
  *
@@ -32,6 +39,10 @@ import javax.xml.soap.SOAPException;
 public interface WSAddressingRequest extends SOAPRequest {
      public URI getAddressURI() throws SOAPException, JAXBException, URISyntaxException;
      public URI getActionURI() throws SOAPException, JAXBException, URISyntaxException;
+     public Object getSOAPHeader(final QName name) throws SOAPException;
+     public List<Header> getSOAPHeaders() throws SOAPException;
+     public Object getPayload(final Unmarshaller u)
+     	throws SOAPException, XMLStreamException, JAXBException;
      
      /**
       * Check to see if this request has been canceled.

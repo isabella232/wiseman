@@ -68,7 +68,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.10.6.1 2008-01-28 08:00:47 denis_rachal Exp $
+ * $Id: WSManServlet2.java,v 1.1.2.1 2008-01-28 08:00:47 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -108,6 +108,7 @@ import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.xml.sax.SAXException;
 
 import com.sun.ws.management.Management;
@@ -115,7 +116,10 @@ import com.sun.ws.management.Message;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.HandlerContextImpl;
-import com.sun.ws.management.server.WSManAgent;
+import com.sun.ws.management.server.WSManAgentSupport;
+import com.sun.ws.management.server.message.SAAJMessage;
+import com.sun.ws.management.server.message.WSManagementRequest;
+import com.sun.ws.management.server.message.WSManagementResponse;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.ContentType;
 
@@ -123,18 +127,19 @@ import com.sun.ws.management.transport.ContentType;
  * Rewritten WSManServlet that delegates to a WSManAgent instance.
  *
  */
-public abstract class WSManServlet extends HttpServlet {
+public abstract class WSManServlet2 extends HttpServlet {
 
-    private static final Logger LOG = Logger.getLogger(WSManServlet.class.getName());
+    private static final Logger LOG = Logger.getLogger(WSManServlet2.class.getName());
     private static Properties wisemanProperties = null;
     private static final String WISEMAN_PROPERTY_FILE_NAME = "/wiseman.properties";
     private static final String SERVICE_WSDL = "service.wsdl";
     private static final String SERVICE_XSD = "service.xsd";
     private static final String SERVICE_URL = "$$SERVICE_URL";
+    private static final long MIN_ENVELOPE_SIZE = 8192;
 
     // This class implements all the WS-Man logic decoupled from transport
 
-    WSManAgent agent;
+    WSManAgentSupport agent;
 
     public void init() throws ServletException {
 		SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -193,7 +198,7 @@ public abstract class WSManServlet extends HttpServlet {
 		return xsdFilenames;
 	}
 
-	protected abstract WSManAgent createWSManAgent(Source[] schemas) throws SAXException;
+	protected abstract WSManAgentSupport createWSManAgent(Source[] schemas) throws SAXException;
 
     public void doGet(final HttpServletRequest req,
 			          final HttpServletResponse resp)
@@ -464,7 +469,7 @@ public abstract class WSManServlet extends HttpServlet {
 			if (LOG.isLoggable(Level.FINE))
 				LOG.log(Level.FINE, "Getting properties ["
 						+ WISEMAN_PROPERTY_FILE_NAME + "]");
-			final InputStream ism = WSManServlet.class
+			final InputStream ism = WSManServlet2.class
 					.getResourceAsStream(WISEMAN_PROPERTY_FILE_NAME);
 			if (ism != null) {
 				wisemanProperties = new Properties();
@@ -538,7 +543,7 @@ public abstract class WSManServlet extends HttpServlet {
 
     private void handle(final InputStream is, final ContentType contentType,
             final OutputStream os, final HttpServletRequest req, final HttpServletResponse resp)
-            throws SOAPException, JAXBException, IOException {
+            throws SOAPException, JAXBException, IOException, Exception {
 
         final Management request = new Management(is);
         request.setXmlBinding(agent.getXmlBinding());
@@ -562,9 +567,27 @@ public abstract class WSManServlet extends HttpServlet {
         final HandlerContext context = new HandlerContextImpl(user, contentype,
                                                               charEncoding, url, props);
 
-        final Message response = agent.handleRequest(request, context);
-
-        sendResponse(response, os, resp, agent.getValidEnvelopeSize(request));
+        // final Message response = agent.handleRequest(request, context);
+        final SAAJMessage saajReq = new SAAJMessage(request);
+        final SAAJMessage saajRes = new SAAJMessage(new Management());
+        
+        WSManagementResponse response = agent.handleRequest(saajReq, saajRes, context);
+        Management saajResponse = new Management(response.toSOAPMessage());
+        saajResponse.setXmlBinding(agent.getXmlBinding());
+        saajResponse.setContentType(request.getContentType());
+        
+        sendResponse(saajResponse, os, resp, getValidEnvelopeSize(saajReq));
+    }
+    
+    private static long getValidEnvelopeSize(WSManagementRequest request) throws JAXBException, SOAPException {
+        long maxEnvelopeSize = Long.MAX_VALUE;
+        final MaxEnvelopeSizeType maxSize = request.getMaxEnvelopeSize();
+        if (maxSize != null) {
+            maxEnvelopeSize = maxSize.getValue().longValue();
+        }
+        if (maxEnvelopeSize < MIN_ENVELOPE_SIZE)
+        	maxEnvelopeSize = MIN_ENVELOPE_SIZE;
+        return maxEnvelopeSize;
     }
     
     private Management processForMissingTrailingSlash(Management request) {
@@ -618,6 +641,7 @@ public abstract class WSManServlet extends HttpServlet {
             }
         }
 
+        // TODO: Check the envelope size if necessary.
         // final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // response.writeTo(baos);
         // final byte[] content = baos.toByteArray();

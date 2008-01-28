@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.24  2007/12/20 20:47:53  jfdenise
+ **Removal of ACK contribution. The contribution has been commited in the trunk instead of the branch.
+ **
  **Revision 1.22  2007/10/30 09:52:56  denis_rachal
  **Fix for NullPointerExection caused during error handling.
  **
@@ -40,7 +43,7 @@
  **Add HP copyright header
  **
  **
- * $Id: HttpClient.java,v 1.24 2007-12-20 20:47:53 jfdenise Exp $
+ * $Id: HttpClient.java,v 1.24.2.1 2008-01-28 08:00:44 denis_rachal Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -72,7 +75,9 @@ import javax.xml.soap.SOAPMessage;
 import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 
+
 public final class HttpClient {
+	
 
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
 //    private static boolean useApacheCommonsHttpClient = true;
@@ -389,9 +394,44 @@ public final class HttpClient {
         transfer(http, bits);
         return http.getResponseCode();
     }
-
+    
+    public static int sendResponse(final Addressing msg,
+    		final byte[] username,
+			final byte[] password) throws IOException, SOAPException,
+			JAXBException {
+		// log(msg);
+		LOG.fine("sendResponse() with credentials");
+		if (LOG.isLoggable(Level.FINE))
+			LOG.fine("<response>\n" + msg + "</response>\n");
+		final HttpURLConnection http = initConnection(msg.getTo(), msg
+				.getContentType());
+		final ByteArrayOutputStream credentials = new ByteArrayOutputStream();
+		final Base64OutputStream b64 = new Base64OutputStream(credentials);
+		b64.write(username);
+		b64.write(":".getBytes("UTF8"));
+		b64.write(password);
+		b64.close();
+		http.setRequestProperty("Authorization", "Basic " + credentials.toString("UTF8"));
+		transfer(http, msg);
+		int rc = http.getResponseCode();
+		final Addressing response = readResponse(http);
+		if (response != null) {
+			if (LOG.isLoggable(Level.FINE)) {
+				if (response.getBody() != null) {
+					if (response.getBody().hasFault())
+						LOG.fine("<fault>\n" + response + "</fault>\n");
+					else
+						LOG.fine("<response>\n" + response + "</response>\n");
+				}
+			}
+		}
+		return rc;
+	}
+    
     public static int sendResponse(final Addressing msg) throws IOException, SOAPException, JAXBException {
 //        log(msg);
+		if (LOG.isLoggable(Level.FINE))
+			LOG.fine("<response>\n" + msg + "</response>\n");
         final HttpURLConnection http = initConnection(msg.getTo(), msg.getContentType());
         transfer(http, msg);
         return http.getResponseCode();

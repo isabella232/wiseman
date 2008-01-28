@@ -23,6 +23,13 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.3.2.1  2008/01/18 07:08:42  denis_rachal
+ **Issue number:  150
+ **Obtained from:
+ **Submitted by:  Chuan Xiao
+ **Reviewed by:
+ **Eventing with Ack added to branch. (not in main).
+ **
  **Revision 1.3  2008/01/17 15:19:09  denis_rachal
  **Issue number:  151, 152, 153, 154, & 155
  **Obtained from:
@@ -85,7 +92,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.3.2.1 2008-01-18 07:08:42 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.3.2.2 2008-01-28 08:00:44 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -95,6 +102,7 @@ import java.net.URISyntaxException;
 import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -146,6 +154,8 @@ import com.sun.ws.management.transport.HttpClient;
  * subscriptions using the WS-Eventing protocol.
  */
 public final class WSEventingSupport extends WSEventingBaseSupport {
+	
+	private static final Logger LOG = Logger.getLogger(WSEventingSupport.class.getName());
     
     /**
      * Default subscription expiration if none is specified by the client.
@@ -879,6 +889,29 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
     }
     
     /**
+     * Sets the username/password credentials for the subscription.
+     * This is a workaround until this class supports security profiles
+     * in the subscription.
+     * 
+     * @param uuid UUID identifying the subscription.
+     * @param username username
+     * @param password password
+     */
+    public static void setCredentials(final UUID uuid, final byte[] username, final byte[] password) {
+        final BaseContext context = getContext(uuid);
+        if ((context == null) || 
+        		(!(context instanceof EventingContext))) {
+            /*
+             * TODO: Convert to InvalidContextFault when available in
+             * updated WS-Management specification
+             */
+            throw new InvalidMessageFault("Subscription with Identifier: " +
+                    uuid.toString() + " not found");
+        }
+        ((EventingContext)context).setCredentials(username, password);
+    }
+    
+    /**
      * Send an event for a specified subscription id. If the subscription
      * is of type pull the event will be added to the pull iterator.
      * If the subscription is of type push the event will be sent
@@ -921,11 +954,17 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 			}
 		} else if (bctx instanceof EventingContext) {
 			// Standard Push mode, send the data
+			final EventingContext ctx = (EventingContext)bctx;
 			final Addressing msg = createPushEventMessage(bctx, content);
 			
 			if (msg != null) {
-				HttpClient.sendResponse(msg);
-				result = true;
+				int rc = 0;
+				if ((ctx.getUsername() != null) && (ctx.getPassword() != null))
+					rc = HttpClient.sendResponse(msg, ctx.getUsername(), ctx.getPassword());
+				else
+					rc = HttpClient.sendResponse(msg);
+				LOG.fine("Event sent. RC=" + rc);
+				result = ((rc >= 200) && (rc < 300));
 			}
 		} else if (bctx instanceof EventingContextBatched) {
 			// Batched delivery mode

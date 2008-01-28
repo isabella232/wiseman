@@ -20,26 +20,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/10/30 09:29:10  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.2  2007/05/31 19:47:46  nbeers
  **Add HP copyright header
  **
  **
- * $Id: ReflectiveRequestDispatcher2.java,v 1.1 2007-10-30 09:29:10 jfdenise Exp $
+ * $Id: ReflectiveRequestDispatcher2.java,v 1.1.6.1 2008-01-28 08:00:43 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.reflective;
-
-import com.sun.ws.management.AccessDeniedFault;
-import com.sun.ws.management.InternalErrorFault;
-import com.sun.ws.management.Management;
-import com.sun.ws.management.addressing.DestinationUnreachableFault;
-import com.sun.ws.management.server.Handler;
-import com.sun.ws.management.server.HandlerContext;
-import com.sun.ws.management.server.RequestDispatcher;
-import com.sun.ws.management.server.WSManAgent;
-import com.sun.ws.management.server.WSManRequestDispatcher;
-import com.sun.ws.management.server.message.WSManagementRequest;
-import com.sun.ws.management.server.message.WSManagementResponse;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -48,18 +40,32 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
+
+import com.sun.ws.management.AccessDeniedFault;
+import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.Management;
+import com.sun.ws.management.addressing.DestinationUnreachableFault;
+import com.sun.ws.management.server.Handler;
+import com.sun.ws.management.server.HandlerContext;
+import com.sun.ws.management.server.RequestDispatcher;
+import com.sun.ws.management.server.WSHandler;
+import com.sun.ws.management.server.WSManAgent;
+import com.sun.ws.management.server.WSManRequestDispatcher;
+import com.sun.ws.management.server.message.WSManagementRequest;
+import com.sun.ws.management.server.message.WSManagementResponse;
 
 public final class ReflectiveRequestDispatcher2 extends WSManRequestDispatcher {
     
     private static final Logger LOG = Logger
             .getLogger(ReflectiveRequestDispatcher2.class.getName());
     
-    private static final Class<Handler> HANDLER_INTERFACE = Handler.class;
+    private static final Class<WSHandler> HANDLER_INTERFACE = WSHandler.class;
     
     private static final Class[] HANDLER_PARAMS = { String.class, String.class,
-    HandlerContext.class, Management.class, Management.class };
+    HandlerContext.class, WSManagementRequest.class, WSManagementResponse.class };
     
     private static final String HANDLER_PREFIX = RequestDispatcher.class
             .getPackage().getName()

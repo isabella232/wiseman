@@ -23,6 +23,13 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.8.2.1  2008/01/18 07:08:43  denis_rachal
+ **Issue number:  150
+ **Obtained from:
+ **Submitted by:  Chuan Xiao
+ **Reviewed by:
+ **Eventing with Ack added to branch. (not in main).
+ **
  **Revision 1.8  2007/12/20 20:47:52  jfdenise
  **Removal of ACK contribution. The contribution has been commited in the trunk instead of the branch.
  **
@@ -30,7 +37,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingContext.java,v 1.8.2.1 2008-01-18 07:08:43 denis_rachal Exp $
+ * $Id: EventingContext.java,v 1.8.2.2 2008-01-28 08:00:44 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -42,6 +49,9 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 class EventingContext extends BaseContext {
 
     private final EndpointReferenceType notifyTo;
+    private byte[] username = null;
+    private byte[] password = null;
+    private String certificateThumbprint = null;
 
     EventingContext(final XMLGregorianCalendar expiration,
             final Filter filter,
@@ -53,5 +63,26 @@ class EventingContext extends BaseContext {
 
     EndpointReferenceType getNotifyTo() {
         return notifyTo;
+    }
+    
+    void setCredentials(final byte[] username, final byte[] password) {
+    	this.username = username.clone();
+    	this.password = password.clone();
+    }
+    
+    byte[] getUsername() {
+    	return this.username;
+    }
+    
+    byte[] getPassword() {
+    	return this.password;
+    }
+    
+    void setCredentials(final String certificateThumbprint) {
+    	this.certificateThumbprint = certificateThumbprint;
+    }
+    
+    String getCertificateThumbprint() {
+    	return this.certificateThumbprint;
     }
 }

@@ -19,11 +19,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/10/30 09:29:10  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.3  2007/05/30 20:30:32  nbeers
  **Add HP copyright header
  **
  **
- * $Id: WSManReflectiveAgent2.java,v 1.1 2007-10-30 09:29:10 jfdenise Exp $
+ * $Id: WSManReflectiveAgent2.java,v 1.1.6.1 2008-01-28 08:00:43 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.reflective;
@@ -74,28 +78,6 @@ public class WSManReflectiveAgent2 extends WSManAgentSupport {
             WSManagementResponse response, HandlerContext context) throws Exception {
          return new ReflectiveRequestDispatcher2(request, response, context);
     }
-    
-    private Management processForMissingTrailingSlash(Management request) {
-    	String address = null;
-    	try {
-			if((request!=null)&&
-				((address = request.getTo())!=null)&&
-				(address.trim().length()>0)){
-				//does not have the trailing slash
-			   if(address.lastIndexOf("/")!= address.length()-1){
-				 request.setTo(address+"/");
-			   }
-			}
-		}
-    	/* Silently fail as this is only a nicety for the developers/clients if they forget to
-    	 * add the trailing slash to ensure servlet engine processing.  Not sure what the right
-    	 * WsManagement response should be here as it's really just a Wiseman-using servlet problem.
-    	 */
-    	catch (JAXBException e) {
-		} catch (SOAPException e) {
-		}
-		return request;
-	}
 
 	public static Map<QName, String> getMetadataConfiguration(Map<String, String> propertySet) {
         if(propertySet == null) {
@@ -155,5 +137,6 @@ public class WSManReflectiveAgent2 extends WSManAgentSupport {
     protected Map<QName, String> getAdditionalIdentifyElements() {
        return getMetadataConfiguration(metadataProperties);
     }
+
 }
 

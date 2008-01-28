@@ -33,4 +33,7 @@ public interface WSEventingRequest extends WSAddressingRequest {
     public Unsubscribe getUnsubscribe() throws JAXBException, SOAPException;
     public DialectableMixedDataType getWsmanEventingFilter() throws JAXBException, SOAPException;
     public FilterType getEventingFilter() throws JAXBException, SOAPException;
+    
+    /* Sink methods */
+    public boolean isAckRequested();
 }

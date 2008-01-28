@@ -23,6 +23,13 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.4.2.1  2008/01/18 07:08:43  denis_rachal
+ **Issue number:  150
+ **Obtained from:
+ **Submitted by:  Chuan Xiao
+ **Reviewed by:
+ **Eventing with Ack added to branch. (not in main).
+ **
  **Revision 1.4  2007/12/20 20:47:52  jfdenise
  **Removal of ACK contribution. The contribution has been commited in the trunk instead of the branch.
  **
@@ -72,7 +79,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingBaseSupport.java,v 1.4.2.1 2008-01-18 07:08:43 denis_rachal Exp $
+ * $Id: WSEventingBaseSupport.java,v 1.4.2.2 2008-01-28 08:00:44 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -194,6 +201,7 @@ public class WSEventingBaseSupport extends BaseSupport {
         
         final Addressing msg = new Addressing();
         msg.setAction(Management.EVENT_URI);
+        msg.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
         
         if (ctx.getFilter() == null) {
             if (content instanceof Node)

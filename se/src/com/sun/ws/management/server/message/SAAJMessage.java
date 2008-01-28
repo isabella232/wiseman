@@ -11,18 +11,6 @@
 
 package com.sun.ws.management.server.message;
 
-import com.sun.ws.management.Management;
-import com.sun.ws.management.MessageUtil;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.enumeration.Enumeration;
-import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.eventing.EventingExtensions;
-import com.sun.ws.management.identify.Identify;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.soap.FaultException;
-import com.sun.ws.management.transfer.TransferExtensions;
-import com.sun.xml.ws.api.message.Header;
-import com.sun.xml.ws.api.message.Headers;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -43,6 +32,7 @@ import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.ws.EndpointReference;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
@@ -53,14 +43,26 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.Renew;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Unsubscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
-
 import org.xmlsoap.schemas.ws._2004._09.enumeration.FilterType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
-import org.xmlsoap.schemas.ws._2004._08.eventing.Renew;
+
+import com.sun.ws.management.Management;
+import com.sun.ws.management.MessageUtil;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.enumeration.EnumerationExtensions;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.eventing.EventingExtensions;
+import com.sun.ws.management.identify.Identify;
+import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.transfer.TransferExtensions;
+import com.sun.xml.ws.api.message.Header;
+import com.sun.xml.ws.api.message.Headers;
 
 /**
  *
@@ -73,20 +75,52 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
         this.mgt = mgt;
     }
     
-    public Object getPayload(Unmarshaller u) throws Exception {
+    public Object getPayload(final Unmarshaller u) throws SOAPException, JAXBException {
         SOAPElement[] child = mgt.getChildren(mgt.getBody());
         if(child == null)
             return null;
         Unmarshaller current = u == null ? mgt.getXmlBinding().createUnmarshaller() : u;
         Object obj = child[0];
         try {
-            obj =current.unmarshal(child[0]);
-        }catch(JAXBException ex) {
+            obj = current.unmarshal(child[0]);
+        } catch(JAXBException ex) {
             // OK will return DOM
         }
         return obj;
     }
-    public List<Header> getSOAPHeaders() throws Exception {
+    
+    public boolean isAckRequested() {
+		try {
+			final EventingExtensions ext = new EventingExtensions(mgt);
+			return ext.isAckRequested();
+		} catch (SOAPException e1) {
+			return false;
+		} catch (JAXBException e1) {
+			return false;
+		}
+    }
+    
+    public Object getSOAPHeader(final QName name) throws SOAPException {
+        final SOAPElement[] elements = this.mgt.getChildren(mgt.getHeader());
+        if (elements.length == 0) {
+            return null;
+        }
+        if (elements[0] == null) {
+            return null;
+        }
+        Object obj;
+		try {
+			obj = this.mgt.getXmlBinding().unmarshal(elements[0]);
+		} catch (JAXBException e) {
+			return elements[0];
+		}
+        if (obj instanceof JAXBElement)
+        	return ((JAXBElement<Object>) obj).getValue();
+        else
+        	return obj;
+    }
+    
+    public List<Header> getSOAPHeaders() throws SOAPException {
         SOAPElement[] elements = mgt.getChildren(mgt.getHeader());
         List<Header> list = new ArrayList<Header>();
         for (SOAPElement se : elements) {
