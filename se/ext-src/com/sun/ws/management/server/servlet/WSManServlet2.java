@@ -19,6 +19,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1.2.1  2008/01/28 08:00:47  denis_rachal
+ **The commit adds several prototype changes to the fudan_contribution. They are described below:
+ **
+ **1. A new Handler interface has been added to support the newer message types WSManagementRequest & WSManagementResponse. It is called WSHandler. Additionally a new servlet WSManReflectiveServlet2 has been added to allow calling this new handler.
+ **
+ **2. A new base handler has been added to support creation of WS Eventing Sink handlers: WSEventingSinkHandler.
+ **
+ **3. WS Eventing "Source" and "Sink" test handlers have been added to the unit tests, sink_Handler & source_Handler. Both are based upon the new WSHandler interface.
+ **
+ **4. The EventingExtensionsTest has been updated to test "push" events. Push events are sent from a source to a sink. The sink will forward them on to and subscribers (sink subscribers). The unit test subscribes for pull events at the "sink" and then gets the "source" to send events to the "sink". The test then pulls the events from the "sink" and checks them. Does not always run, so the test needs some work. Sometimes some of the events are lost. between the source and the sink.
+ **
+ **5. A prototype for handling basic authentication with the sink has been added. Events from the source can now be sent to a sink using Basic authentication (credentials are specified per subscription). This needs some additional work, but basically now works.
+ **
+ **6. Additional methods added to the WSManagementRequest, WSManagementResponse, WSEventingRequest & WSEventingResponse, etc... interfaces to allow access to more parts of the messages.
+ **
+ **Additional work is neede in all of the above changes, but they are OK for a prototype in the fudan_contributaion branch.
+ **
  **Revision 1.10  2007/11/09 12:33:33  denis_rachal
  **Performance enhancements that better reuse the XmlBinding.
  **
@@ -68,7 +85,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet2.java,v 1.1.2.1 2008-01-28 08:00:47 denis_rachal Exp $
+ * $Id: WSManServlet2.java,v 1.1.2.2 2008-01-29 15:53:42 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -83,6 +100,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,6 +111,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -110,9 +129,12 @@ import javax.xml.validation.SchemaFactory;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.xml.sax.SAXException;
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
+import com.sun.ws.management.EncodingLimitFault;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.Message;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.HandlerContextImpl;
@@ -122,6 +144,7 @@ import com.sun.ws.management.server.message.WSManagementRequest;
 import com.sun.ws.management.server.message.WSManagementResponse;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transport.ContentType;
+import com.sun.ws.management.transport.HttpClient;
 
 /**
  * Rewritten WSManServlet that delegates to a WSManAgent instance.
@@ -135,6 +158,7 @@ public abstract class WSManServlet2 extends HttpServlet {
     private static final String SERVICE_WSDL = "service.wsdl";
     private static final String SERVICE_XSD = "service.xsd";
     private static final String SERVICE_URL = "$$SERVICE_URL";
+    private static final String UUID_SCHEME = "uuid:";
     private static final long MIN_ENVELOPE_SIZE = 8192;
 
     // This class implements all the WS-Man logic decoupled from transport
@@ -571,12 +595,29 @@ public abstract class WSManServlet2 extends HttpServlet {
         final SAAJMessage saajReq = new SAAJMessage(request);
         final SAAJMessage saajRes = new SAAJMessage(new Management());
         
-        WSManagementResponse response = agent.handleRequest(saajReq, saajRes, context);
-        Management saajResponse = new Management(response.toSOAPMessage());
-        saajResponse.setXmlBinding(agent.getXmlBinding());
-        saajResponse.setContentType(request.getContentType());
+        final WSManagementResponse response = agent.handleRequest(saajReq, saajRes, context);
         
-        sendResponse(saajResponse, os, resp, getValidEnvelopeSize(saajReq));
+        final Management mgmtResponse;
+        if (response != null) {
+        	final Addressing addrResponse = new Addressing(response.toSOAPMessage());
+        	final Identify identify = new Identify(addrResponse);
+        	if (identify.getIdentify() != null) {
+        		// This is an identify response
+        		resp.setStatus(HttpServletResponse.SC_OK);
+        		identify.writeTo(os);
+        		return;
+        	} else {
+        	    mgmtResponse = new Management(addrResponse);
+                mgmtResponse.setXmlBinding(agent.getXmlBinding());
+                mgmtResponse.setContentType(request.getContentType());
+            
+                fillReturnAddress(request, mgmtResponse);
+        	}
+        } else {
+        	mgmtResponse = null;
+        }
+        
+        sendResponse(request, mgmtResponse, os, resp, getValidEnvelopeSize(saajReq));
     }
     
     private static long getValidEnvelopeSize(WSManagementRequest request) throws JAXBException, SOAPException {
@@ -585,9 +626,44 @@ public abstract class WSManServlet2 extends HttpServlet {
         if (maxSize != null) {
             maxEnvelopeSize = maxSize.getValue().longValue();
         }
-        if (maxEnvelopeSize < MIN_ENVELOPE_SIZE)
-        	maxEnvelopeSize = MIN_ENVELOPE_SIZE;
         return maxEnvelopeSize;
+    }
+    
+    private static void fillReturnAddress(Addressing request,
+            Addressing response)
+            throws JAXBException, SOAPException {
+        response.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+        
+        // messageId can be missing in a malformed request
+        final String msgId = request.getMessageId();
+        if (msgId != null) {
+            response.addRelatesTo(msgId);
+        }
+        
+        if (response.getBody().hasFault()) {
+            final EndpointReferenceType faultTo = request.getFaultTo();
+            if (faultTo != null) {
+                response.setTo(faultTo.getAddress().getValue());
+                response.addHeaders(faultTo.getReferenceParameters());
+                return;
+            }
+        }
+        
+        final EndpointReferenceType replyTo = request.getReplyTo();
+        if (replyTo != null) {
+            response.setTo(replyTo.getAddress().getValue());
+            response.addHeaders(replyTo.getReferenceParameters());
+            return;
+        }
+        
+        final EndpointReferenceType from = request.getFrom();
+        if (from != null) {
+            response.setTo(from.getAddress().getValue());
+            response.addHeaders(from.getReferenceParameters());
+            return;
+        }
+        
+        response.setTo(Addressing.ANONYMOUS_ENDPOINT_URI);
     }
     
     private Management processForMissingTrailingSlash(Management request) {
@@ -612,46 +688,87 @@ public abstract class WSManServlet2 extends HttpServlet {
 		return request;
 	}
 
-    private static void sendResponse(final Message response, final OutputStream os,
-            final HttpServletResponse resp,  final long maxEnvelopeSize)
-            throws SOAPException, JAXBException, IOException {
-
-        if(response instanceof Identify) {
-            response.writeTo(os);
+    private static void sendResponse(final Management request,
+    		final Management response, final OutputStream os,
+            final HttpServletResponse resp, final long maxEnvelopeSize)
+    	throws SOAPException, JAXBException,
+            IOException {
+        
+        // Check if reply is to another endpoint
+        final String dest = request.getReplyTo().getAddress().getValue();
+        if (!Addressing.ANONYMOUS_ENDPOINT_URI.equals(dest)) {
+            LOG.fine("Non anonymous reply to send to : " + dest);
+            final int httpStatus = sendAsyncReply(request, response);
+            if (httpStatus != HttpURLConnection.HTTP_OK) {
+                // TODO: Do we send a fault to the requester?
+            }
+            resp.setStatus(httpStatus);
             return;
         }
-
-        Management mgtResp = (Management) response;
-
-        sendResponse(mgtResp, os, resp, maxEnvelopeSize, false);
-    }
-
-    private static void sendResponse(final Management response, final OutputStream os,
-            final HttpServletResponse resp, final long maxEnvelopeSize,
-            boolean responseTooBig) throws SOAPException, JAXBException,
-            IOException {
-
+        
+        LOG.fine("Anonymous reply to send.");
         resp.setStatus(HttpServletResponse.SC_OK);
-        if (response.getBody().hasFault()) {
-            // sender faults need to set error code to BAD_REQUEST for client errors
-            if (SOAP.SENDER.equals(response.getBody().getFault().getFaultCodeAsQName())) {
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            } else {
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            }
-        }
+        
+        // No reply is sent if response equals null.
+        if (response != null) {
+			if (response.getBody().hasFault()) {
+				// sender faults need to set error code to BAD_REQUEST for client errors
+				if (SOAP.SENDER.equals(response.getBody().getFault()
+						.getFaultCodeAsQName())) {
+					resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				} else {
+					resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				}
+			}
 
-        // TODO: Check the envelope size if necessary.
-        // final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // response.writeTo(baos);
-        // final byte[] content = baos.toByteArray();
+			if (maxEnvelopeSize < MIN_ENVELOPE_SIZE) {
+				final String err = "MaxEnvelopeSize of '" + maxEnvelopeSize
+						+ "' is set too small to encode faults "
+						+ "(needs to be at least " + MIN_ENVELOPE_SIZE + ")";
+				LOG.fine(err);
+				final EncodingLimitFault fault = new EncodingLimitFault(err,
+						EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE);
+				response.setFault(fault);
+			} else {
+				if (maxEnvelopeSize >= Integer.MAX_VALUE) {
+					// Don't check MaxEnvelopeSize if not specified or set to maximum.
+					// NOTE: The official maximum is actually Long.MAX_VALUE,
+					//        but the ByteArrayOutputStream we use has a maximum
+					//        size of Integer.MAX_VALUE. We therefore cannot actually
+					//        check if the size exceeds Integer.MAX_VALUE.
+					LOG.fine("MaxEnvelopeSize not specified or set to maxiumum value.");
+				} else {
+					final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					response.writeTo(baos);
+					int length = baos.size();
 
-        // response being null means that no reply is to be sent back.
-        // The reply has been handled asynchronously
-        if(response != null) {
-            resp.setContentType(response.getMessage().getMimeHeaders().getHeader("Content-Type")[0]);
-            // os.write(content);
-            response.writeTo(os);
-        }
+					if (length > maxEnvelopeSize) {
+						final String err = "MaxEnvelopeSize of '"
+								+ maxEnvelopeSize
+								+ "' is smaller than the size of the response message: "
+								+ Integer.toString(length);
+						LOG.fine(err);
+						final EncodingLimitFault fault = new EncodingLimitFault(
+								err,
+								EncodingLimitFault.Detail.MAX_ENVELOPE_SIZE_EXCEEDED);
+						response.setFault(fault);
+					} else {
+						// Message size is OK.
+						LOG.fine("Response actual size is smaller than specified MaxEnvelopeSize.");
+					}
+				}
+			}
+
+			resp.setContentType(response.getMessage().getMimeHeaders()
+					.getHeader("Content-Type")[0]);
+			response.writeTo(os);
+		}
+    }
+    
+    private static int sendAsyncReply(final Management request,
+    		final Management response)
+    throws IOException, SOAPException, JAXBException {
+    	// TODO: Extract any credentials from request message
+        return HttpClient.sendResponse(response);
     }
 }
