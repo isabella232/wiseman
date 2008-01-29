@@ -23,6 +23,23 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.3.2.2  2008/01/28 08:00:44  denis_rachal
+ **The commit adds several prototype changes to the fudan_contribution. They are described below:
+ **
+ **1. A new Handler interface has been added to support the newer message types WSManagementRequest & WSManagementResponse. It is called WSHandler. Additionally a new servlet WSManReflectiveServlet2 has been added to allow calling this new handler.
+ **
+ **2. A new base handler has been added to support creation of WS Eventing Sink handlers: WSEventingSinkHandler.
+ **
+ **3. WS Eventing "Source" and "Sink" test handlers have been added to the unit tests, sink_Handler & source_Handler. Both are based upon the new WSHandler interface.
+ **
+ **4. The EventingExtensionsTest has been updated to test "push" events. Push events are sent from a source to a sink. The sink will forward them on to and subscribers (sink subscribers). The unit test subscribes for pull events at the "sink" and then gets the "source" to send events to the "sink". The test then pulls the events from the "sink" and checks them. Does not always run, so the test needs some work. Sometimes some of the events are lost. between the source and the sink.
+ **
+ **5. A prototype for handling basic authentication with the sink has been added. Events from the source can now be sent to a sink using Basic authentication (credentials are specified per subscription). This needs some additional work, but basically now works.
+ **
+ **6. Additional methods added to the WSManagementRequest, WSManagementResponse, WSEventingRequest & WSEventingResponse, etc... interfaces to allow access to more parts of the messages.
+ **
+ **Additional work is neede in all of the above changes, but they are OK for a prototype in the fudan_contributaion branch.
+ **
  **Revision 1.3.2.1  2008/01/18 07:08:42  denis_rachal
  **Issue number:  150
  **Obtained from:
@@ -92,7 +109,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.3.2.2 2008-01-28 08:00:44 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.3.2.3 2008-01-29 07:52:07 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -952,20 +969,6 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 					iterator.notifyAll();
 				}
 			}
-		} else if (bctx instanceof EventingContext) {
-			// Standard Push mode, send the data
-			final EventingContext ctx = (EventingContext)bctx;
-			final Addressing msg = createPushEventMessage(bctx, content);
-			
-			if (msg != null) {
-				int rc = 0;
-				if ((ctx.getUsername() != null) && (ctx.getPassword() != null))
-					rc = HttpClient.sendResponse(msg, ctx.getUsername(), ctx.getPassword());
-				else
-					rc = HttpClient.sendResponse(msg);
-				LOG.fine("Event sent. RC=" + rc);
-				result = ((rc >= 200) && (rc < 300));
-			}
 		} else if (bctx instanceof EventingContextBatched) {
 			// Batched delivery mode
 			final EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
@@ -998,6 +1001,20 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 
 				if (!result)
 					WSEventingSupport.unsubscribe(id.toString());
+			}
+		} else if (bctx instanceof EventingContext) {
+			// Standard Push mode, send the data
+			final EventingContext ctx = (EventingContext)bctx;
+			final Addressing msg = createPushEventMessage(bctx, content);
+			
+			if (msg != null) {
+				int rc = 0;
+				if ((ctx.getUsername() != null) && (ctx.getPassword() != null))
+					rc = HttpClient.sendResponse(msg, ctx.getUsername(), ctx.getPassword());
+				else
+					rc = HttpClient.sendResponse(msg);
+				LOG.fine("Event sent. RC=" + rc);
+				result = ((rc >= 200) && (rc < 300));
 			}
 		} else {
 			// Not an Eventing subscription. Throw an exception.
