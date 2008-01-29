@@ -34,7 +34,7 @@ public class WSEventingSinkHandler implements WSHandler {
 	public boolean handleDroppedEvents(final String resource,
 			                        final HandlerContext context,
 			                        final WSManagementRequest request,
-			                        final WSManagementResponse response) {
+			                        final WSManagementResponse response) throws Exception {
 		// TODO: Override this method
 		return true;
 	}
@@ -42,7 +42,7 @@ public class WSEventingSinkHandler implements WSHandler {
 	public boolean handleEvents(final String resource,
 			                    final HandlerContext context,
 			                    final WSManagementRequest request,
-			                    final WSManagementResponse response) {
+			                    final WSManagementResponse response) throws Exception {
 		// TODO: Override this method
 		LOG.fine("Event notification received.");
 		return true;

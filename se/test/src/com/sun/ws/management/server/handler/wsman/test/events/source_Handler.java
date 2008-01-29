@@ -1,17 +1,15 @@
 package com.sun.ws.management.server.handler.wsman.test.events;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.soap.SOAPException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,7 +17,6 @@ import org.w3c.dom.Element;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
-import com.sun.ws.management.eventing.InvalidSubscriptionException;
 import com.sun.ws.management.server.ContextListener;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.WSEnumerationSupport;
@@ -33,18 +30,29 @@ public class source_Handler implements WSHandler {
     private static final Logger LOG = Logger.getLogger(source_Handler.class.getName());
 	private static final String NS_URI = "https://wiseman.dev.java.net/test/events/source";
 	private static final String NS_PREFIX = "evtt";
+	private static DatatypeFactory datatypeFactory = null;
+	
+    static {
+        try {
+            datatypeFactory = DatatypeFactory.newInstance();
+        } catch(Exception ex) {
+            throw new RuntimeException("Fail to initialize source_Handler " + ex);
+        }
+    }
 	
 	public static final String RESOURCE_URI = "wsman:test/events/source";
 	public static final String CREATE_EVENT = "wsman:test/events/source/createEvent";
 	
 	static final class SubscriptionHandler implements ContextListener {
 		
-		private List<UUID> subscribers = new ArrayList<UUID>();
+		private final List<UUID> subscribers = new ArrayList<UUID>();
 
-		public synchronized void contextBound(HandlerContext requestContext,
+		public void contextBound(HandlerContext requestContext,
 				UUID context) {
 			LOG.info("Context bound: " + context.toString());
-			subscribers.add(context);
+			synchronized (subscribers) {
+				subscribers.add(context);
+			}
 			try {
 				byte[] username = "wsman".getBytes("UTF8");
 				byte[] password = "secret".getBytes("UTF8");
@@ -55,39 +63,34 @@ public class source_Handler implements WSHandler {
 			}
 		}
 
-		public synchronized void contextUnbound(HandlerContext requestContext, UUID context) {
+		public void contextUnbound(HandlerContext requestContext, UUID context) {
 			LOG.info("Context unbound: " + context.toString());
-			subscribers.remove(context);	
+			synchronized (subscribers) {
+				subscribers.remove(context);
+			}
 		}
 		
-		synchronized void forwardEvent(final WSManagementRequest request) {
+		void forwardEvent(final WSManagementRequest request) {
 			
 			// Forward the message as an event on to any subscribers.
-			LOG.info("Forwarding event to subscribers: " + subscribers.size());
-			final Iterator<UUID> iter = subscribers.iterator();
-			while (iter.hasNext()) {
-				final UUID uuid = iter.next();
+			final UUID[] list;
+			synchronized (subscribers) {
+				list = new UUID[subscribers.size()];
+				subscribers.toArray(list);
+			}
+			LOG.info("Forwarding event to source subscribers: " + list.length);
+			for (int i = 0; i < list.length; i++) {
+				final UUID uuid = list[i];
 				try {
-					// TODO: Set this to the time.
-					final Element event = createEvent("test event");
+		    		final GregorianCalendar now = new GregorianCalendar();
+		    		final XMLGregorianCalendar expiration = datatypeFactory.newXMLGregorianCalendar(now);
+					final Element event = createEvent(expiration.toString());
 					LOG.info("Calling sendEvent() for UUID: " + uuid.toString());
-					boolean success = WSEventingSupport.sendEvent(uuid, event);
-					if (success == false) {
-						LOG.log(Level.WARNING, "Subscriber not accepting events.");
-						subscribers.remove(uuid);
-					}
-				} catch (SOAPException e) {
+					WSEventingSupport.sendEvent(uuid, event);
+				} catch (Exception e) {
 					LOG.log(Level.SEVERE, "Unexpected exception: ", e);
-					subscribers.remove(uuid);
-				} catch (JAXBException e) {
-					LOG.log(Level.SEVERE, "Unexpected exception: ", e);
-					subscribers.remove(uuid);
-				} catch (IOException e) {
-					LOG.log(Level.SEVERE, "Unexpected exception: ", e);
-					subscribers.remove(uuid);
-				} catch (InvalidSubscriptionException e) {
-					LOG.log(Level.SEVERE, "Unexpected exception: ", e);
-					subscribers.remove(uuid);
+                    // Ignore the error. 
+					// WSEventingSupport will remove the subscriber automatically.
 				}
 			}
 		}
@@ -107,7 +110,7 @@ public class source_Handler implements WSHandler {
 			final String resource,
 			final HandlerContext context,
 			final WSManagementRequest request,
-			final WSManagementResponse response) {
+			final WSManagementResponse response) throws Exception {
 
 		try {
 			LOG.info("Action: " + action);
@@ -131,15 +134,10 @@ public class source_Handler implements WSHandler {
 				// Send an event to the subscribers
 				subscriptionHandler.forwardEvent(request);
 			}
-			// TODO: Fix exception handling
-		} catch (JAXBException e) {
-			LOG.log(Level.SEVERE, "Unexpected exception: ", e);
-		} catch (SOAPException e) {
-			LOG.log(Level.SEVERE, "Unexpected exception: ", e);
-		} catch (URISyntaxException e) {
-			LOG.log(Level.SEVERE, "Unexpected exception: ", e);
 		} catch (Exception e) {
 			LOG.log(Level.SEVERE, "Unexpected exception: ", e);
+			// SOAP Fault message will be automatically built by the Wiseman framework.
+			throw e;
 		}
 	}
 }
