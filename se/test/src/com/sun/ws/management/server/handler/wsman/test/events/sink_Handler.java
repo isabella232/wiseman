@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.sun.ws.management.Management;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.framework.eventing.WSEventingSinkHandler;
@@ -63,7 +64,7 @@ public class sink_Handler extends WSEventingSinkHandler {
 	
 	final SubscriptionHandler subscriptionHandler = new SubscriptionHandler();
 
-	public boolean handleEvents(final String resource,
+	public void handleEvents(final String resource,
 			final HandlerContext context,
 			final WSManagementRequest request,
 			final WSManagementResponse response) throws Exception {
@@ -92,12 +93,17 @@ public class sink_Handler extends WSEventingSinkHandler {
 				// Treat everything else as an event. Forward it on to any subscribers.
 				subscriptionHandler.forwardEvent(request);
 				LOG.info("Event forwarded.");
+		        if (request.isAckRequested() == false) {
+		        	// TODO: Don't send the SOAP response.
+		        } else {
+		        	response.setAction(Management.ACK_URI);
+		        	// MessageID, RelatesTo & To are set by the Wiseman servlet or JAX-WS
+		        }
 			}
 		} catch (Exception e) {
 			LOG.log(Level.SEVERE, "Unexpected exception: ", e);
 			// SOAP Fault message will be automatically built by the Wiseman framework.
 			throw e;
 		}
-		return true;
 	}
 }

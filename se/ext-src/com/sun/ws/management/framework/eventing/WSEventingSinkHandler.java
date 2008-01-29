@@ -26,25 +26,27 @@ public class WSEventingSinkHandler implements WSHandler {
         	handleEvents(resource, context, request, response);
         }
         
-        if (request.isAckRequested() == false) {
-        	// TODO: Don't send the SOAP response.
-        }
     }
 
-	public boolean handleDroppedEvents(final String resource,
+	public void handleDroppedEvents(final String resource,
 			                        final HandlerContext context,
 			                        final WSManagementRequest request,
 			                        final WSManagementResponse response) throws Exception {
 		// TODO: Override this method
-		return true;
+		LOG.fine("Dropped events notification received.");
 	}
 	
-	public boolean handleEvents(final String resource,
+	public void handleEvents(final String resource,
 			                    final HandlerContext context,
 			                    final WSManagementRequest request,
 			                    final WSManagementResponse response) throws Exception {
 		// TODO: Override this method
 		LOG.fine("Event notification received.");
-		return true;
+        if (request.isAckRequested() == false) {
+        	// TODO: Don't send the SOAP response.
+        } else {
+        	response.setAction(Management.ACK_URI);
+        	// MessageID, RelatesTo & To are set by the Wiseman servlet or JAX-WS
+        }
 	}
 }
