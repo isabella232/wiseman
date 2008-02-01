@@ -30,6 +30,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.IdentifyResponseType;
 import org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity.ObjectFactory;
@@ -424,6 +425,12 @@ public class JAXWSMessageResponse implements WSManagementResponse {
             }
         }
         payload = response;
+    }
+    
+    public void setBatchedEvents(final EventsType events)
+    		throws SOAPException, JAXBException {
+    	final JAXBElement<EventsType> jaxbEvents = Management.FACTORY.createEvents(events);
+    	payload = jaxbEvents;
     }
     
     public void addNamespaceDeclarations(Map<String, String> declarations) {

@@ -83,8 +83,8 @@ public class source_Handler implements WSHandler {
 				final UUID uuid = list[i];
 				try {
 		    		final GregorianCalendar now = new GregorianCalendar();
-		    		final XMLGregorianCalendar expiration = datatypeFactory.newXMLGregorianCalendar(now);
-					final Element event = createEvent(expiration.toString());
+		    		final XMLGregorianCalendar timestamp = datatypeFactory.newXMLGregorianCalendar(now);
+					final Document event = createEvent(timestamp.toString());
 					LOG.info("Calling sendEvent() for UUID: " + uuid.toString());
 					WSEventingSupport.sendEvent(uuid, event);
 				} catch (Exception e) {
@@ -95,16 +95,17 @@ public class source_Handler implements WSHandler {
 			}
 		}
 		
-		private Element createEvent(final String value) {
+		private Document createEvent(final String value) {
 			Document doc = Management.newDocument();
 			Element item = doc.createElementNS(NS_URI, NS_PREFIX + ":event");
 			item.setTextContent(value);
 			doc.appendChild(item);
-			return item;
+			return doc;
 		}
 	}
 	
-	final SubscriptionHandler subscriptionHandler = new SubscriptionHandler();
+	// Needs to be static or we may lose our subscriptions
+	static final SubscriptionHandler subscriptionHandler = new SubscriptionHandler();
 
 	public void handle(final String action,
 			final String resource,

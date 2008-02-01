@@ -7,6 +7,7 @@
  ** Authors: Denis Rachal (denis.rachal@hp.com)
  **
  */
+
 /*
  * WSEventingResponse.java
  *
@@ -20,6 +21,7 @@ package com.sun.ws.management.server.message;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
+
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 /**

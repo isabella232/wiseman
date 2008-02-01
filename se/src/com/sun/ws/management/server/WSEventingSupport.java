@@ -23,6 +23,9 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.3.2.3  2008/01/29 07:52:07  denis_rachal
+ **Correct order in sendEvent() of check for context intance type.
+ **
  **Revision 1.3.2.2  2008/01/28 08:00:44  denis_rachal
  **The commit adds several prototype changes to the fudan_contribution. They are described below:
  **
@@ -109,7 +112,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.3.2.3 2008-01-29 07:52:07 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.3.2.4 2008-02-01 21:01:34 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -117,6 +120,7 @@ package com.sun.ws.management.server;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -133,6 +137,8 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -932,7 +938,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
      * Send an event for a specified subscription id. If the subscription
      * is of type pull the event will be added to the pull iterator.
      * If the subscription is of type push the event will be sent
-     * immidiately to the subscriber.
+     * immediately to the subscriber.
      * NOTE: For push this method currently blocks until the event
      *       has been successfully delivered to the client.
      * 
@@ -940,7 +946,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
      * @param content the event to send to the subscriber
      * 
      * @return true if the event was successfully queued or delivered,
-     *         otherwise false
+     *         or the event was filtered out, otherwise false
      * 
      * @throws SOAPException
      * @throws JAXBException
@@ -949,6 +955,35 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
      */
     public static boolean sendEvent(final UUID id,
     		                        final Object content)
+    	throws SOAPException, JAXBException, IOException,
+    		            			InvalidSubscriptionException {
+    	return sendEvent(id, content, true);
+    }
+    
+    /**
+     * Send an event for a specified subscription id. If the subscription
+     * is of type pull the event will be added to the pull iterator.
+     * If the subscription is of type push the event will be sent
+     * immediately to the subscriber.
+     * NOTE: For push this method currently blocks until the event
+     *       has been successfully delivered to the client.
+     * 
+     * @param id UUID identifying the subscription this event is for
+     * @param event the event to send to the subscriber
+     * @param filter boolean indicating if this method should apply any
+     *        filtering before sending the event.
+     * 
+     * @return true if the event was successfully queued or delivered,
+     *         or the event was filtered out, otherwise false
+     * 
+     * @throws SOAPException
+     * @throws JAXBException
+     * @throws IOException
+     * @throws InvalidSubscriptionException 
+     */
+    public static boolean sendEvent(final UUID id,
+    		                        final Object event,
+    		                        final boolean filter)
     throws SOAPException, JAXBException, IOException,
 			InvalidSubscriptionException {
 
@@ -956,6 +991,16 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
     	// TODO: implement retries for push
 		final BaseContext bctx = retrieveContext(id);
 
+		Object filtered;
+    	if (filter) {
+    		// TODO: Pass a reusable binding in to this method.
+    		filtered = filterEvent(bctx, event, null);
+    	} else
+    		filtered = event;
+    	
+    	if (filtered == null)
+    		return true;
+		
 		boolean result = false;
 
 		if (bctx instanceof EventingContextPull) {
@@ -965,33 +1010,56 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 				(EventingIterator) ctx.getIterator();
 			synchronized (iterator) {
 				if (iterator != null) {
-					result = iterator.add(new EnumerationItem(content, null));
+					if (filtered instanceof Document)
+					    result = 
+					    	iterator.add(new EnumerationItem(((Document)filtered).getDocumentElement(),
+					    			null));
+					else
+						result = iterator.add(new EnumerationItem(filtered, null));
 					iterator.notifyAll();
 				}
 			}
 		} else if (bctx instanceof EventingContextBatched) {
 			// Batched delivery mode
 			final EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
+			final EventsType events = ctxbatched.getEvents();
+			
+			synchronized (events) {
+				final List<EventType> eventList = events.getEvent();
+				final EventType eventType = Management.FACTORY.createEventType();
+				if (filtered instanceof Document)
+				    eventType.getAny().add(((Document)filtered).getDocumentElement());
+				else
+					eventType.getAny().add(filtered);
+				eventList.add(eventType);
 
-			// TODO: Here we
-			// Put the content into the related event-queue which was
-			// initialized when the EventingContextBatched instance is created.
-			// that is, the event-queue will be one private member of the
-			// EventingContextBatched instance.
-			// In the event-queue, one thread will pack multiple contents into
-			// one soap message and send the soap to the
-			// ctxbatched.getEventReplyTo().
-			// Because this is one asynchronized operation, we can not get the
-			// result in time,
-			// when the content is put into the event-queue successfully, the
-			// result is set to true, else is set to false.
+				// TODO: Must set a timer to handle MaxTime case
 
+				// Check if the maximum number of elements has been reached.
+				if (ctxbatched.getMaxElements() >= eventList.size()) {
+					// Time to send the batch of events
+					final Addressing msg = createEventMessageBatched(ctxbatched, events);
+
+					if (msg != null) {
+						int rc = 0;
+						if ((ctxbatched.getUsername() != null)
+								&& (ctxbatched.getPassword() != null))
+							rc = HttpClient.sendResponse(msg, ctxbatched
+									.getUsername(), ctxbatched.getPassword());
+						else
+							rc = HttpClient.sendResponse(msg);
+						LOG.fine(eventList.size() + " batched events sent. HTTP Status=" + rc);
+						eventList.clear();
+						result = ((rc >= 200) && (rc < 300));
+					}
+				}
+			}
 		} else if (bctx instanceof EventingContextWithAck) {
 			// Push with acknowledge delivery mode
 			final EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
 
 			final Addressing eventMessage =
-				createEventMessagePushWithAck(ctxwithack, content);
+				createEventMessagePushWithAck(ctxwithack, filtered);
 
 			if (eventMessage != null) {
 				final Addressing response = HttpClient.sendRequest(
@@ -1005,7 +1073,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 		} else if (bctx instanceof EventingContext) {
 			// Standard Push mode, send the data
 			final EventingContext ctx = (EventingContext)bctx;
-			final Addressing msg = createPushEventMessage(bctx, content);
+			final Addressing msg = createEventPushMessage(ctx, filtered);
 			
 			if (msg != null) {
 				int rc = 0;
@@ -1013,7 +1081,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 					rc = HttpClient.sendResponse(msg, ctx.getUsername(), ctx.getPassword());
 				else
 					rc = HttpClient.sendResponse(msg);
-				LOG.fine("Event sent. RC=" + rc);
+				LOG.fine("Event sent. HTTP Status=" + rc);
 				result = ((rc >= 200) && (rc < 300));
 			}
 		} else {
@@ -1081,8 +1149,14 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             msg.addHeaders(refprops);
         }
         msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        HttpClient.sendResponse(msg);
-        return true;
+
+		int rc = 0;
+		if ((ctx.getUsername() != null) && (ctx.getPassword() != null))
+			rc = HttpClient.sendResponse(msg, ctx.getUsername(), ctx.getPassword());
+		else
+			rc = HttpClient.sendResponse(msg);
+		LOG.fine("Event sent. HTTP Status=" + rc);
+		return ((rc >= 200) && (rc < 300));
     }
     
     private synchronized static EnumerationIterator newIterator(

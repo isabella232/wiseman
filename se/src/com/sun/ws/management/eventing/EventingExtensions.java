@@ -19,11 +19,18 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7.6.1  2008/01/18 07:08:43  denis_rachal
+ **Issue number:  150
+ **Obtained from:
+ **Submitted by:  Chuan Xiao
+ **Reviewed by:
+ **Eventing with Ack added to branch. (not in main).
+ **
  **Revision 1.7  2007/05/30 20:31:05  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EventingExtensions.java,v 1.7.6.1 2008-01-18 07:08:43 denis_rachal Exp $
+ * $Id: EventingExtensions.java,v 1.7.6.2 2008-02-01 21:01:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.eventing;
@@ -47,10 +54,12 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
+import org.xmlsoap.schemas.ws._2004._08.eventing.RenewResponse;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Subscribe;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
@@ -167,6 +176,13 @@ public class EventingExtensions extends Eventing {
                 new JAXBElement<EnumerationContextType>(Enumeration.ENUMERATION_CONTEXT, EnumerationContextType.class, null, contextType);
         super.setSubscribeResponse(mgr, expires, contextTypeElement);
     }
+    
+    public void setBatchedEvents(final EventsType events)
+    		throws SOAPException, JAXBException {
+    	removeChildren(getBody(), EVENTS);
+    	final JAXBElement<EventsType> jaxbEvents = Management.FACTORY.createEvents(events);
+    	getXmlBinding().marshal(jaxbEvents, getBody());
+    }
 
     public void setAckRequested() throws JAXBException, SOAPException {
     	removeChildren(getHeader(), ACK_REQUESTED);
@@ -184,6 +200,21 @@ public class EventingExtensions extends Eventing {
 		return (DialectableMixedDataType) extract(subscribe.getAny(),
 				                                  DialectableMixedDataType.class,
 				                                  FILTER);
+	}
+	
+	public EventsType getBatchedEvents() throws JAXBException, SOAPException {
+        final Object value = unbind(getBody(), EVENTS);
+        if (value == null)
+        	return null;
+
+        if  (value instanceof EventsType)
+            return (EventsType) value;
+        if (value instanceof JAXBElement) {
+        	final Object events = ((JAXBElement)value).getValue();
+        	if (events instanceof EventsType)
+        		return (EventsType)value;
+        }
+        return null;
 	}
 	
     public boolean isAckRequested() throws JAXBException, SOAPException {

@@ -36,6 +36,7 @@ import javax.xml.ws.EndpointReference;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
@@ -395,6 +396,17 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
         // JAXBContext current = ctx == null ? mgt.getXmlBinding().getJAXBContext() : ctx;
         ctx.createMarshaller().marshal(jaxb, mgt.getBody());
     }
+    
+    public void setBatchedEvents(EventsType events) throws SOAPException, JAXBException {
+        final EventingExtensions evtx = new EventingExtensions(mgt);
+        evtx.setBatchedEvents(events);     
+    }
+    
+    public EventsType getBatchedEvents() throws JAXBException, SOAPException {
+    	final EventingExtensions evtx = new EventingExtensions(mgt);
+    	return evtx.getBatchedEvents();
+    }
+    
     /*
     public void setMessageStatus(final WSMessageStatus status ) {
         this.mgt.setMessageStatus(status);

@@ -33,6 +33,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionSet;
@@ -127,6 +128,8 @@ public class JAXWSMessageRequest implements WSManagementRequest {
     private Object payload;
     private boolean soapMessageRead;
     private SOAPMessage soapMessage;
+    private boolean batchedEventsRead;
+    private EventsType batchedEvents;
     private WSMessageStatus status;
     
     static {
@@ -473,6 +476,14 @@ public class JAXWSMessageRequest implements WSManagementRequest {
             pull = (Pull) extractPayload();
         }
         return pull;
+    }
+    
+    public EventsType getBatchedEvents() throws JAXBException, SOAPException {
+        if(!batchedEventsRead) {
+        	batchedEventsRead = true;
+            batchedEvents = (EventsType) extractPayload();
+        }
+        return batchedEvents;
     }
     
     private Object extractPayload(Unmarshaller u) throws JAXBException {

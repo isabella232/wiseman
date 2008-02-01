@@ -23,6 +23,23 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.4.2.2  2008/01/28 08:00:44  denis_rachal
+ **The commit adds several prototype changes to the fudan_contribution. They are described below:
+ **
+ **1. A new Handler interface has been added to support the newer message types WSManagementRequest & WSManagementResponse. It is called WSHandler. Additionally a new servlet WSManReflectiveServlet2 has been added to allow calling this new handler.
+ **
+ **2. A new base handler has been added to support creation of WS Eventing Sink handlers: WSEventingSinkHandler.
+ **
+ **3. WS Eventing "Source" and "Sink" test handlers have been added to the unit tests, sink_Handler & source_Handler. Both are based upon the new WSHandler interface.
+ **
+ **4. The EventingExtensionsTest has been updated to test "push" events. Push events are sent from a source to a sink. The sink will forward them on to and subscribers (sink subscribers). The unit test subscribes for pull events at the "sink" and then gets the "source" to send events to the "sink". The test then pulls the events from the "sink" and checks them. Does not always run, so the test needs some work. Sometimes some of the events are lost. between the source and the sink.
+ **
+ **5. A prototype for handling basic authentication with the sink has been added. Events from the source can now be sent to a sink using Basic authentication (credentials are specified per subscription). This needs some additional work, but basically now works.
+ **
+ **6. Additional methods added to the WSManagementRequest, WSManagementResponse, WSEventingRequest & WSEventingResponse, etc... interfaces to allow access to more parts of the messages.
+ **
+ **Additional work is neede in all of the above changes, but they are OK for a prototype in the fudan_contributaion branch.
+ **
  **Revision 1.4.2.1  2008/01/18 07:08:43  denis_rachal
  **Issue number:  150
  **Obtained from:
@@ -79,7 +96,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingBaseSupport.java,v 1.4.2.2 2008-01-28 08:00:44 denis_rachal Exp $
+ * $Id: WSEventingBaseSupport.java,v 1.4.2.3 2008-02-01 21:01:34 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -95,10 +112,13 @@ import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
+
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
@@ -113,6 +133,7 @@ import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.eventing.InvalidSubscriptionException;
 import com.sun.ws.management.server.message.WSEventingRequest;
 import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.xml.XmlBinding;
 
 /**
  * A helper class that encapsulates some of the arcane logic to manage
@@ -123,7 +144,6 @@ public class WSEventingBaseSupport extends BaseSupport {
     public static final int DEFAULT_QUEUE_SIZE = 1024;
     public static final int DEFAULT_EXPIRATION_MILLIS = 60000;
     
-    // TODO: add more delivery modes as they are implemented
     public static final String[] SUPPORTED_DELIVERY_MODES = {
         Eventing.PUSH_DELIVERY_MODE,
         EventingExtensions.PULL_DELIVERY_MODE,
@@ -190,115 +210,186 @@ public class WSEventingBaseSupport extends BaseSupport {
         return bctx;
     }
     
-    protected static Addressing createPushEventMessage(BaseContext bctx,
-            Object content)
-            throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
-        // Push mode, send the data
-        if (!(bctx instanceof EventingContext)) {
-            throw new InvalidSubscriptionException("Context not found");
-        }
-        final EventingContext ctx = (EventingContext) bctx;
+    /**
+     * Filters the event object. If object passes the filter is will be
+     * returned as a Document, Element, or JAXBElement<MixedDataType>,
+     * otherwise null is returned.
+     * 
+     * @param ctx
+     * @param content
+     * @param binding
+     * @return null if filter does not pass,
+     * 		   otherwise a Document, Element, or JAXBElement<MixedDataType>
+     * @throws SOAPException 
+     */
+    public static Object filterEvent(final BaseContext ctx,
+    		                         final Object content,
+    		                         XmlBinding binding) throws SOAPException {
+    	
+    	if (ctx.getFilter() == null)
+			return content;
+    	
+        final Element item;
         
-        final Addressing msg = new Addressing();
-        msg.setAction(Management.EVENT_URI);
-        msg.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
-        
-        if (ctx.getFilter() == null) {
-            if (content instanceof Node)
-                msg.getBody().appendChild(msg.getBody().getOwnerDocument().importNode((Node)content, true));
-            else {
-                msg.getXmlBinding().marshal(content, msg.getBody());
+        // Convert the content to an Element
+        if (content instanceof Element) {
+            item = (Element) content;
+        } else if (content instanceof Document) {
+            item = ((Document) content).getDocumentElement();
+            // append the Element to the owner document
+            // if it has not been done
+            // this is critical for XPath filtering to work
+            final Document owner = item.getOwnerDocument();
+            if (owner.getDocumentElement() == null) {
+                owner.appendChild(item);
             }
         } else {
-            final Element item;
-            
-            // Convert the content to an Element
-            if (content instanceof Element) {
-                item = (Element) content;
-            } else if (content instanceof Document) {
-                item = ((Document) content).getDocumentElement();
-                // append the Element to the owner document
-                // if it has not been done
-                // this is critical for XPath filtering to work
-                final Document owner = item.getOwnerDocument();
-                if (owner.getDocumentElement() == null) {
-                    owner.appendChild(item);
-                }
-            } else {
-                Document doc = Management.newDocument();
-                try {
-                    // TODO: Use a better binding...
-                    msg.getXmlBinding().marshal(content, doc);
-                } catch (Exception e) {
-                    removeContext(null, ctx);
-                    final String explanation = "XML Binding marshall failed for object of type: "
-                            + content.getClass().getName();
-                    throw new InternalErrorFault(SOAP
-                            .createFaultDetail(explanation, null,
-                            e, null));
-                }
-                item = doc.getDocumentElement();
-            }
-            final NodeList filteredContent;
+            final Document doc = Management.newDocument();
             try {
-                filteredContent = ctx.evaluate(item);
-            } catch (XPathException xpx) {
+            	if (binding == null) {
+            		// TODO: Reuse the binding from somewhere? This is very expensive!
+            		binding = new XmlBinding(null);
+            	}
+                binding.marshal(content, doc);
+            } catch (Exception e) {
                 removeContext(null, ctx);
-                throw new CannotProcessFilterFault(
-                        "Error evaluating XPath: "
-                        + xpx.getMessage());
-            } catch (Exception ex) {
-                removeContext(null, ctx);
-                throw new CannotProcessFilterFault(
-                        "Error evaluating Filter: "
-                        + ex.getMessage());
+                final String explanation = "XML Binding marshall failed for object of type: "
+                        + content.getClass().getName();
+                throw new InternalErrorFault(SOAP
+                        .createFaultDetail(explanation, null,
+                        e, null));
             }
-            if ((filteredContent != null) && (filteredContent.getLength() > 0)) {
-                // Then send this instance
-                if (filteredContent.item(0).equals(item)) {
-                    // Whole node was selected
-                    final Document doc = msg.newDocument();
-                    doc.appendChild(item);
-                    msg.getBody().addDocument(doc);
-                } else {
-                    // Fragment(s) selected
-                    final JAXBElement<MixedDataType> fragment = createXmlFragment(filteredContent);
-                    msg.getXmlBinding().marshal(fragment, msg.getBody());
-                }
-                final String nsURI = item.getNamespaceURI();
-                final String nsPrefix = item.getPrefix();
-                if (nsPrefix != null && nsURI != null) {
-                    msg.getBody().addNamespaceDeclaration(nsPrefix, nsURI);
-                }
+            item = doc.getDocumentElement();
+        }
+        final NodeList filteredContent;
+        try {
+            filteredContent = ctx.evaluate(item);
+        } catch (XPathException xpx) {
+            removeContext(null, ctx);
+            throw new CannotProcessFilterFault(
+                    "Error evaluating XPath: "
+                    + xpx.getMessage());
+        } catch (Exception ex) {
+            removeContext(null, ctx);
+            throw new CannotProcessFilterFault(
+                    "Error evaluating Filter: "
+                    + ex.getMessage());
+        }
+        if ((filteredContent != null) && (filteredContent.getLength() > 0)) {
+            // Then send this instance
+            if (filteredContent.item(0).equals(item)) {
+                // Whole node was selected
+                return item;
             } else {
-                return null;
+                // Fragment(s) selected
+                final JAXBElement<MixedDataType> fragment = createXmlFragment(filteredContent);
+                return fragment;
             }
+        } else {
+            return null;
         }
-        final EndpointReferenceType notifyTo = ctx.getNotifyTo();
-        msg.setTo(notifyTo.getAddress().getValue());
-        final ReferenceParametersType refparams = notifyTo.getReferenceParameters();
-        if (refparams != null) {
-            msg.addHeaders(refparams);
-        }
-        final ReferencePropertiesType refprops = notifyTo.getReferenceProperties();
-        if (refprops != null) {
-            msg.addHeaders(refprops);
-        }
-        msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-        
-        return msg;
     }
-        
+     
+    public static Addressing createEventPushMessage(final EventingContext ctx,
+			final Object content) throws SOAPException, JAXBException,
+			IOException, InvalidSubscriptionException {
+		// Push mode, send the data
+		final Addressing msg = new Addressing();
+		msg.setAction(Management.EVENT_URI);
+		msg.setReplyTo(Addressing.ANONYMOUS_ENDPOINT_URI);
+
+		if (content == null)
+			return null;
+
+		if (content instanceof Document) {
+			msg.getBody().addDocument((Document) content);
+		} else {
+			msg.getXmlBinding().marshal(content, msg.getBody());
+		}
+		final EndpointReferenceType notifyTo = ctx.getNotifyTo();
+		msg.setTo(notifyTo.getAddress().getValue());
+		final ReferenceParametersType refparams = notifyTo
+				.getReferenceParameters();
+		if (refparams != null) {
+			msg.addHeaders(refparams);
+		}
+		final ReferencePropertiesType refprops = notifyTo
+				.getReferenceProperties();
+		if (refprops != null) {
+			msg.addHeaders(refprops);
+		}
+		msg.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+
+		return msg;
+	}
+    
     /**
      * Retrieve the Context associated to passed ID, then create
      * the WS-Man request for the provided content.
      */
-    public static Addressing createPushEventMessage(UUID id, Object content)
+    public static Addressing createEventPushMessage(UUID id, Object content)
     throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
         
-        BaseContext bctx = retrieveContext(id);
-        return createPushEventMessage(bctx, content);
+        final BaseContext bctx = retrieveContext(id);
+        if (bctx instanceof EventingContext)
+            return createEventPushMessage((EventingContext)bctx, content);
+        else
+        	throw new InvalidSubscriptionException("ID is not a for a push eveting subscription.");
     }
+    
+    public static Addressing createEventMessageBatched(
+			final EventingContextBatched ctx,
+			final EventsType events)
+    	throws SOAPException, JAXBException {
+
+		final Management mgmt = new Management();
+		mgmt.setAction(Management.EVENTS_URI);
+		mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+		mgmt.setReplyTo(ctx.getEventReplyTo());
+		mgmt.setTimeout(ctx.getOperationTimeout());
+
+		final EndpointReferenceType notifyTo = ctx.getNotifyTo();
+		mgmt.setTo(notifyTo.getAddress().getValue());
+		final ReferenceParametersType refparams = notifyTo
+				.getReferenceParameters();
+		if (refparams != null) {
+			mgmt.addHeaders(refparams);
+		}
+		final ReferencePropertiesType refprops = notifyTo
+				.getReferenceProperties();
+		if (refprops != null) {
+			mgmt.addHeaders(refprops);
+		}
+
+		final EventingExtensions evtx = new EventingExtensions(mgmt);
+		
+		evtx.setAckRequested();
+		evtx.setBatchedEvents(events);
+
+		return evtx;
+	}
+
+	public static Addressing createEventMessageBatched(final UUID id,
+													   final EventsType events) 
+		throws InvalidSubscriptionException, SOAPException, JAXBException {
+
+		Addressing wseReq = null;
+
+		final BaseContext bctx = retrieveContext(id);
+		if (bctx instanceof EventingContextBatched) {
+			final EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
+			try {
+				wseReq = createEventMessageBatched(ctxbatched, events);
+			} catch (SOAPException e) {
+				removeContext(null, ctxbatched);
+				throw e;
+			} catch (JAXBException e) {
+				removeContext(null, ctxbatched);
+				throw e;
+			}
+		}
+		return wseReq;
+	}
     
 	/**
 	 * Create the WS-Man event message for the provided content.
@@ -315,7 +406,7 @@ public class WSEventingBaseSupport extends BaseSupport {
 			final EventingContextWithAck ctx, final Object content)
 			throws SOAPException, JAXBException, IOException,
 			InvalidSubscriptionException {
-		final Addressing msg = createPushEventMessage(ctx, content);
+		final Addressing msg = createEventPushMessage(ctx, content);
 		
 		// Check if it has been filtered out
 		if (msg == null)

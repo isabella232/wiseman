@@ -62,7 +62,8 @@ public class sink_Handler extends WSEventingSinkHandler {
 		}
 	}
 	
-	final SubscriptionHandler subscriptionHandler = new SubscriptionHandler();
+	// Needs to be static or we may lose our subscriptions
+	static final SubscriptionHandler subscriptionHandler = new SubscriptionHandler();
 
 	public void handleEvents(final String resource,
 			final HandlerContext context,

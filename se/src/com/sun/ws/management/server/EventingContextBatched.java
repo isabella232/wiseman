@@ -25,7 +25,11 @@
 package com.sun.ws.management.server;
 
 import javax.xml.datatype.XMLGregorianCalendar;
+
+import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+
+import com.sun.ws.management.Management;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
@@ -36,6 +40,7 @@ public class EventingContextBatched extends EventingContextWithAck {
 
 	private int maxElements;	 //reference the WS-Management Spec Line 3399
 	private Duration maxTime;  //reference the WS-Management Spec Line 3414
+	private final EventsType events;
 
 	private static final int DEFAULT_MAXELEMENTS = 1; // The default value is not mentioned in WS-Management Spec .
 	private static final long DEFAULT_MAXTIME_MINUTES = 5; // The default value is not mentioned in WS-Management Spec .
@@ -51,7 +56,8 @@ public class EventingContextBatched extends EventingContextWithAck {
             final Duration maxTime) {
         super(expiration, filter, notifyTo, listener , eventReplyTo, operationTimeout);
         this.maxElements = maxElements;
-        this.maxTime = maxTime; 
+        this.maxTime = maxTime;
+        this.events = Management.FACTORY.createEventsType();
     }
 
 	EventingContextBatched(final XMLGregorianCalendar expiration,
@@ -63,7 +69,8 @@ public class EventingContextBatched extends EventingContextWithAck {
             throws DatatypeConfigurationException{
         super(expiration, filter, notifyTo, listener);
         this.maxElements = maxElements;
-        this.maxTime = maxTime; 
+        this.maxTime = maxTime;
+        this.events = Management.FACTORY.createEventsType();
     }
 	
 	EventingContextBatched(final XMLGregorianCalendar expiration,
@@ -74,6 +81,7 @@ public class EventingContextBatched extends EventingContextWithAck {
 		super(expiration, filter, notifyTo, listener);
         this.maxElements = DEFAULT_MAXELEMENTS;
        	this.maxTime = DatatypeFactory.newInstance().newDuration(DEFAULT_MAXTIME_MINUTES * 60000);
+       	this.events = Management.FACTORY.createEventsType();
 	}
 	
 	int getMaxElements(){
@@ -89,6 +97,16 @@ public class EventingContextBatched extends EventingContextWithAck {
 
 	void setMaxTime(Duration maxTime){
 		this.maxTime = maxTime;
+	}
+	
+	EventsType getEvents() {
+		return this.events;
+	}
+	
+	void clearEvents() {
+		synchronized (this.events) {
+			this.events.getEvent().clear();
+		}
 	}
 }
 

@@ -1,4 +1,14 @@
 /*
+ * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.
+ * 
+ ** Copyright (C) 2006-2008 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Denis Rachal (denis.rachal@hp.com)
+ **
+ */
+
+/*
  * WSEventingRequest.java
  *
  * Created on October 16, 2007, 11:36 AM
@@ -11,6 +21,7 @@ package com.sun.ws.management.server.message;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.soap.SOAPException;
+
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.FilterType;
 import org.xmlsoap.schemas.ws._2004._08.eventing.Renew;

@@ -19,6 +19,23 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.14.6.1  2008/01/28 08:00:45  denis_rachal
+ **The commit adds several prototype changes to the fudan_contribution. They are described below:
+ **
+ **1. A new Handler interface has been added to support the newer message types WSManagementRequest & WSManagementResponse. It is called WSHandler. Additionally a new servlet WSManReflectiveServlet2 has been added to allow calling this new handler.
+ **
+ **2. A new base handler has been added to support creation of WS Eventing Sink handlers: WSEventingSinkHandler.
+ **
+ **3. WS Eventing "Source" and "Sink" test handlers have been added to the unit tests, sink_Handler & source_Handler. Both are based upon the new WSHandler interface.
+ **
+ **4. The EventingExtensionsTest has been updated to test "push" events. Push events are sent from a source to a sink. The sink will forward them on to and subscribers (sink subscribers). The unit test subscribes for pull events at the "sink" and then gets the "source" to send events to the "sink". The test then pulls the events from the "sink" and checks them. Does not always run, so the test needs some work. Sometimes some of the events are lost. between the source and the sink.
+ **
+ **5. A prototype for handling basic authentication with the sink has been added. Events from the source can now be sent to a sink using Basic authentication (credentials are specified per subscription). This needs some additional work, but basically now works.
+ **
+ **6. Additional methods added to the WSManagementRequest, WSManagementResponse, WSEventingRequest & WSEventingResponse, etc... interfaces to allow access to more parts of the messages.
+ **
+ **Additional work is neede in all of the above changes, but they are OK for a prototype in the fudan_contributaion branch.
+ **
  **Revision 1.14  2007/12/03 09:15:09  denis_rachal
  **General cleanup of Unit tests to make them easier to run and faster.
  **
@@ -38,7 +55,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EventingExtensionsTest.java,v 1.14.6.1 2008-01-28 08:00:45 denis_rachal Exp $
+ * $Id: EventingExtensionsTest.java,v 1.14.6.2 2008-02-01 21:01:36 denis_rachal Exp $
  */
 
 package management;
@@ -179,9 +196,9 @@ public class EventingExtensionsTest extends TestBase {
 
     private void pullModeTest(final String filter, final NamespaceMap filterNsMap) throws Exception {
 
-    	
+    	final Duration expires = DatatypeFactory.newInstance().newDuration(20000);
     	final SubscribeResponse subr = subscribe(DESTINATION, "wsman:test/pull_source",
-        		EventingExtensions.PULL_DELIVERY_MODE, null, filter, filterNsMap);
+        		EventingExtensions.PULL_DELIVERY_MODE, null, expires, filter, filterNsMap);
         String context = getPullEnumContext(subr);
         assertNotNull(context);
 
@@ -235,9 +252,10 @@ public class EventingExtensionsTest extends TestBase {
 		// First setup a Pull subscription at "wsman:test/events/sink"
 		// This will allow us to pull our push events back from the sink
 		// and then check them.
+    	final Duration expires = DatatypeFactory.newInstance().newDuration(30000);
 		final SubscribeResponse pullSubs = subscribe(DESTINATION2,
 				"wsman:test/events/sink",
-				EventingExtensions.PULL_DELIVERY_MODE, null, null, null);
+				EventingExtensions.PULL_DELIVERY_MODE, null, expires, null, null);
 		final EndpointReferenceType pullMgr = pullSubs.getSubscriptionManager();
 		assertNotNull(pullMgr);
 		String pullContext = getPullEnumContext(pullSubs);
@@ -249,7 +267,7 @@ public class EventingExtensionsTest extends TestBase {
 						"wsman:test/events/sink", null);
 		final SubscribeResponse pushSubs = subscribe(DESTINATION2,
 				"wsman:test/events/source",
-				EventingExtensions.PUSH_DELIVERY_MODE, sinkEpr, null, null);
+				EventingExtensions.PUSH_DELIVERY_MODE, sinkEpr, expires, null, null);
 		final EndpointReferenceType pushMgr = pushSubs.getSubscriptionManager();
 		assertNotNull(pushMgr);
 
@@ -257,7 +275,7 @@ public class EventingExtensionsTest extends TestBase {
 		for (int i = 0; i < 5; i++) {
 			final ManagementMessageValues settings = new ManagementMessageValues();
 			settings.setTo(DESTINATION2);
-			settings.setTimeout(20000);
+			settings.setTimeout(10000);
 			settings.setResourceUri("wsman:test/events/source");
 			settings.setXmlBinding(binding);
 			final Management msg = ManagementUtility.buildMessage(null,
@@ -280,7 +298,7 @@ public class EventingExtensionsTest extends TestBase {
 				.setEnumerationMessageActionType(Enumeration.PULL_ACTION_URI);
 		enumSettings.setTimeout(10000);
 		enumSettings.setEnumerationContext(pullContext);
-		enumSettings.setMaxElements(10);
+		enumSettings.setMaxElements(100);
 		enumSettings.setResourceUri("wsman:test/events/sink");
 		enumSettings.setXmlBinding(binding);
 
@@ -316,6 +334,7 @@ public class EventingExtensionsTest extends TestBase {
 										final String resourceURI,
 			                            final String mode,
 			                            final EndpointReferenceType notifyTo,
+			                            final Duration expires,
 								        final String filter,
 								        final NamespaceMap filterNsMap) throws SOAPException,
 			JAXBException, DatatypeConfigurationException,
@@ -328,6 +347,8 @@ public class EventingExtensionsTest extends TestBase {
     	settings.setFilter(filter);
     	settings.setFilterDialect(XPath.NS_URI);
     	settings.setResourceUri(resourceURI);
+    	if (expires != null)
+    		settings.setExpires(expires.toString());
     	settings.setXmlBinding(binding);
     	
         if ((filter != null) && (filterNsMap != null))
