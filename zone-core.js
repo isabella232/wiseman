@@ -1,40 +1,38 @@
 var zones = [
     {
-        title: "GlassFish Community",
-        href:  "https://glassfish.dev.java.net/",
-      	zones: [
-          	{
-          		title: "Migration to GF",
-          		href:  "https://migrate2glassfish.dev.java.net/"
-          	}
-      	]
+        title: "Metro",
+        href:  "https://metro.dev.java.net/",
     },
     {
-        title: "GlassFish v3",
-        href:  "http://wiki.glassfish.java.net/Wiki.jsp?page=PlanForGlassFishV3"
+        title: "JAX-WS",
+        href:  "https://jax-ws.dev.java.net/"
     },
     {
-        title: "Samples",
-        href:  "https://glassfish-samples.dev.java.net/"
+        title: "WSIT",
+        href:  "https://wsit.dev.java.net/"
     },
     {
-        title: "Grizzly",
-        href:  "https://grizzly.dev.java.net/"
+        title: "JAXB",
+        href:  "https://jaxb.dev.java.net/"
     },
     {
-        title: "OpenMQ",
-        href:  "https://mq.dev.java.net/"
+        title: "JAX-WS Commons",
+        href:  "https://jax-ws-commons.dev.java.net/"
     },
     {
-        title: "SailFin",
-        href:  "https://sailfin.dev.java.net/"
+        title: "Libraries",
+        href:  "https://metro.dev.java.net/libraries/"
     },
     {
-        title: "Shoal",
-        href:  "https://shoal.dev.java.net/"
+        title: "Policy",
+        href:  "https://policy.dev.java.net/"
     },
     {
-        title: "HK2",
-        href:  "https://hk2.dev.java.net/"
+        title: "Test Harness",
+        href:  "https://ws-test-harness.dev.java.net/"
+    },
+    {
+        title: "Wiseman",
+        href:  "https://wiseman.dev.java.net/"
     }
 ];
