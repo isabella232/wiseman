@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+
+  <meta name="keywords" content="sun microsystems, sun, java, solaris, sparc, unix, ws-management, ws-management catalog, ws-addressing, ws-transfer, ws-enumeration, ws-eventing, open-source, open source, web services, web services management, systems management, management using web services, cim, ws-cim, cim mapping, schema, xsd, wsdl, apache license">
+
+  <meta name="description" content="A Java implementation of WS-Management">
+
+  <style type="text/css">
+body { font-family: sans-serif }
+table { width: 100% }
+td { vertical-align: top }
+tr.green-head { background-color: #ddffee } tr.green-row { background-color: #eeffee }
+tr.blue-head { background-color: #ddeeff } tr.blue-row { background-color: #eeeeff }
+  </style>
+  <title>Wiseman Technical Background</title>
+
+
+</head>
+
+
+<body>
+
+
+<h3>Background Information</h3>
+
+<p>The specifications implemented in the wiseman project include:</p>
+
+<p><a href="http://www.dmtf.org/standards/wsman">WS-Management,
+</a><a href="http://www.dmtf.org/standards/published_documents/DSP0226.pdf">DMTF
+DSP0226</a></p>
+
+<p>This specification identifies a core set of Web service
+specifications and usage requirements to expose a common set of
+operations that are central to all systems management. This comprises
+the abilities to:</p>
+
+<ul>
+
+  <li>Discover the presence of management resources and navigate
+between them</li>
+
+  <li>Get, Put, Create, Rename, and Delete individual management
+resources, such as settings and dynamic values</li>
+
+  <li>Enumerate the contents of containers and collections, such
+as large tables and logs</li>
+
+  <li>Subscribe to events emitted by managed resources</li>
+
+  <li>Execute specific management methods with strongly typed
+input and output parameters</li>
+
+</ul>
+
+<p><a href="specs/2005/06/catalog.pdf">WS-Management
+Catalog, 2005/06</a></p>
+
+<p>This specification defines a metadata format for the discovery
+of management functionality of resources, or endpoints. As
+WS-Management supports the concept of multiple logical endpoints
+residing at the same network address, this specification defines a
+construct for a list of available logical endpoints or "resources",
+their summary forms, compatible actions, schemas, and WSDL
+representations.<br></br><b>***NOTE: This specification was never updated
+to use the DMTF namespace and is currently incompatible with the 
+WS-Management specification defined above.  When the Catalog specification
+is updated to be compatible then code supporting such changes 
+will be included.</b>
+</p>
+
+<p><a href="specs/2004/08/addressing.pdf">WS-Addressing,
+2004/08</a></p>
+
+<p>This specification defines a construct to identify/reference a
+Web service endpoint for access and for addressing messages between
+endpoints, and it defines a construct of message information headers
+allowing uniform addressing of messages independent of underlying
+transport.</p>
+
+<p><a href="http://msdn.microsoft.com/ws/2004/09/ws-enumeration/">WS-Enumeration,
+2004/09</a></p>
+
+<p>This specification defines a simple SOAP-based protocol for
+the transfer of large data sets. Enumeration of the data by the
+consumer is facilitated through a session abstraction, allowing the
+consumer to request XML element information items from the data source
+over the span of one or more SOAP messages.</p>
+
+<p><a href="specs/2004/08/eventing.pdf">WS-Eventing,
+2004/08</a></p>
+
+<p>This specification defines a protocol for a Web service to
+register interest with another Web service in order to receive messages
+about events. The subscriber may manage the subscription by interacting
+with a Web service designated by the event source.</p>
+
+<p><a href="http://msdn.microsoft.com/ws/2004/09/ws-transfer/">WS-Transfer,
+2004/09</a></p>
+
+<p>This specification defines operations using Web services
+infrastructure for sending and receiving XML representations of a
+resource and for creating and deleting a resource and its corresponding
+representation.</p>
+
+</body>
+</html>
