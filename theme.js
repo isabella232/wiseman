@@ -58,9 +58,7 @@ var regions = [
   		makeProjectLink("JAX-WS"),
   		makeProjectLink("WSIT"),
   		makeProjectLink("JAXB"),
-  		makeProjectLink("JAXP"),
-  		makeProjectLink("Wiseman")
-
+  		makeProjectLink("JAXP")
   	]
   },
   {
