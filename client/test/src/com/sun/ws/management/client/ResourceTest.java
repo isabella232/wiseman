@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2006, 2007, 2008 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@
  * limitations under the License.
  *
  *
- ** Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+ ** Copyright (C) 2006, 2007, 2008 Hewlett-Packard Development Company, L.P.
  **  
  ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com), 
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/12/03 09:15:10  denis_rachal
+ **General cleanup of Unit tests to make them easier to run and faster.
+ **
  **Revision 1.6  2007/11/30 14:32:37  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -72,7 +75,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.7 2007-12-03 09:15:10 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.7.6.1 2008-02-11 07:25:31 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -130,6 +133,12 @@ import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
+import com.sun.ws.management.client.message.SOAPResponse;
+import com.sun.ws.management.client.message.transfer.WSManCreateRequest;
+import com.sun.ws.management.client.message.transfer.WSManCreateResponse;
+import com.sun.ws.management.client.message.transfer.WSManDeleteRequest;
+import com.sun.ws.management.client.message.transfer.WSManGetRequest;
+import com.sun.ws.management.client.message.transfer.WSManGetResponse;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
@@ -303,6 +312,79 @@ public class ResourceTest extends WsManTestBaseSupport {
 		assertEquals(returnedUser.getZip(), user.getZip());
 		assertEquals(returnedUser.getAge(), user.getAge());
 		resource.delete();
+	}
+	
+	public void testGet2() throws Exception {
+
+		// now build Create XML body contents.
+		String fName = "Get";
+		String lName = "Guy";
+		String address = "Smoky Lane";
+
+		// Create a JAXB type representing a User's internal state
+		UserType user = userFactory.createUserType();
+		user.setLastname(lName);
+		user.setFirstname(fName);
+		user.setAddress(address);
+		user.setCity("Mount Laurel");
+		user.setState("NJ");
+		user.setZip("08054");
+		user.setAge(16);
+
+		JAXBElement<UserType> userElement = userFactory.createUser(user);
+
+		final EndpointReferenceType epr = WSManCreateRequest
+				.createEndpointReference(ResourceTest.DESTINATION, null, null,
+						null, null);
+
+		// Create the resource
+		final WSManCreateRequest createRequest = new WSManCreateRequest(epr,
+				null, binding);
+		createRequest.setResourceURI(ResourceTest.resourceUri);
+		createRequest.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
+		createRequest.setPayload(userElement);
+		final SOAPResponse createResponse = createRequest.invoke();
+
+		assertNotNull("Create response is NULL.", createResponse);
+
+		final EndpointReferenceType resourceEPR = ((WSManCreateResponse) createResponse)
+				.getCreateResponse();
+
+		assertNotNull("Create response EPR is NULL.", resourceEPR);
+
+		// Read the resource just created
+		final WSManGetRequest readRequest = new WSManGetRequest(resourceEPR,
+				null, binding);
+		readRequest.setResourceURI(ResourceTest.resourceUri);
+		readRequest.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
+		final SOAPResponse readResponse = readRequest.invoke();
+
+		assertNotNull("Read response is NULL.", readResponse);
+
+		final Object resource = ((WSManGetResponse) readResponse).getPayload();
+
+		assertNotNull("Retrieved resource is NULL.", resource);
+
+		assertTrue("Wrong object type returned.",
+				(resource instanceof JAXBElement));
+		UserType returnedUser = ((JAXBElement<UserType>) resource).getValue();
+
+		// Compare the created state to the returned state
+		assertEquals(returnedUser.getLastname(), user.getLastname());
+		assertEquals(returnedUser.getFirstname(), user.getFirstname());
+		assertEquals(returnedUser.getAddress(), user.getAddress());
+		assertEquals(returnedUser.getCity(), user.getCity());
+		assertEquals(returnedUser.getState(), user.getState());
+		assertEquals(returnedUser.getZip(), user.getZip());
+		assertEquals(returnedUser.getAge(), user.getAge());
+
+		// Delete the resource
+		final WSManDeleteRequest deleteRequest = new WSManDeleteRequest(
+				resourceEPR, null, binding);
+		deleteRequest.setResourceURI(ResourceTest.resourceUri);
+		deleteRequest.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
+		final SOAPResponse deleteResponse = deleteRequest.invoke();
+
 	}
 
 	/*
