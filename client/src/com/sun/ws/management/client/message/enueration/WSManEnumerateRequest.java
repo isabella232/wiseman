@@ -55,9 +55,13 @@ import com.sun.ws.management.xml.XmlBinding;
 public class WSManEnumerateRequest extends WSManEnumerationRequest {
 	
 	public static final String ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate";
+	
+	private final EndpointReferenceType epr;
+	private int maxElements = -1;	
 
 	WSManEnumerateRequest() {
 		super(null);
+		this.epr = null;
 	}
 	
 	public WSManEnumerateRequest(final EndpointReferenceType epr,
@@ -65,18 +69,23 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 	throws Exception {
 		super(epr, context, binding);
 		setAction(ACTION_URI);
+		this.epr = epr;
 	}
 
+	// TODO: Remove this constructor.
 	public WSManEnumerateRequest(final String endpoint,
 			final Map<String, ?> context, final QName serviceName,
 			final QName portName, final XmlBinding binding) throws Exception {
 		super(endpoint, context, serviceName, portName, binding);
 		setAction(ACTION_URI);
+		this.epr = null;
 	}
 
+	// TODO: Remove this constructor.
 	public WSManEnumerateRequest(final SOAPRequest request) throws JAXBException {
 		super(request);
 		setAction(ACTION_URI);
+		this.epr = null;
 	}
 	
 	public Enumerate createEnumerate(final EndpointReferenceType endTo,
@@ -86,6 +95,10 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 			 final int maxElements,
 			 final EnumerationModeType mode,
 			 final Object... anys) {
+		
+		// Save maxElements for use with pull
+		this.maxElements = maxElements;
+		
         // Create the Enumeration element
         final Enumerate enumerate = WSManEnumerationRequest.FACTORY.createEnumerate();
         if (endTo != null) {
@@ -117,9 +130,11 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
         }
         
         // Any the anys elements
-        for (int i = 0; i < anys.length; i++) {
-            list.add(anys[i]);
-        }
+        if (anys != null) {
+			for (int i = 0; i < anys.length; i++) {
+				list.add(anys[i]);
+			}
+		}
         
         return enumerate;
 	}
@@ -179,12 +194,18 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 			                 final boolean optimize,
 			                 final int maxElements,
 			                 final EnumerationModeType mode) {
+		// Save maxElements for use with pull
+		this.maxElements = maxElements;
+		
 		final Enumerate enumerate = createEnumerate(null, expires, filter, optimize,
 				maxElements, mode, (Object[])null);
 		setEnumerate(enumerate);
 	}
 	
 	public void setEnumerate(final Enumerate enumerate) {
+		// TODO: Save maxElements for use with pull
+		this.maxElements = -1;
+		
 		setPayload(enumerate);
 	}
 	
@@ -197,6 +218,10 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 	
 	public SOAPResponse invoke() throws Exception {
 		// TODO: Message sanity checks go here.
-		return new WSManEnumerateResponse(super.invoke());
+		return new WSManEnumerateResponse(super.invoke(),
+				                          this.epr,
+				                          this.getRequestContext(),
+				                          this.getXmlBinding(),
+				                          this.maxElements);
 	}
 }

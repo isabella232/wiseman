@@ -28,6 +28,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -42,6 +43,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.client.message.wsman.WSManResponse;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.xml.XmlBinding;
 
 public class WSManPullResponse extends WSManResponse {
 
@@ -63,14 +65,37 @@ public class WSManPullResponse extends WSManResponse {
 	private boolean isEosRead;
 	private boolean isEos;
 
+	private final EndpointReferenceType epr;
+	private final Map<String, ?> context;
+	private final XmlBinding binding;
+	private int maxElements = -1;
+	
 	WSManPullResponse() {
 		super(null);
+		this.epr = null;
+		this.context = null;
+		this.binding = null;
 	}
 
 	public WSManPullResponse(final SOAPResponse response) {
 		super(response);
+		this.epr = null;
+		this.context = null;
+		this.binding = null;
 	}
-
+	
+	protected WSManPullResponse(final SOAPResponse response,
+			                      final EndpointReferenceType epr,
+			                      final Map<String, ?> context,
+			                      final XmlBinding binding,
+			                      final int maxElements) {
+		super(response);
+		this.epr = epr;
+		this.context = context;
+		this.binding = binding;
+		this.maxElements = maxElements;
+	}
+	
 	public PullResponse getPullResponse() throws Exception {
 		if (!pullResponseRead) {
 			pullResponseRead = true;
@@ -192,5 +217,34 @@ public class WSManPullResponse extends WSManResponse {
 			item = obj;
 		}
 		return new EnumerationItem(item, eprt);
+	}
+	
+	public WSManPullRequest createPullRequest() throws Exception {
+		if (isEndOfSequence())
+			return null;
+		
+		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
+		request.setPull(getPullResponse().getEnumerationContext().getContent().get(0),
+				0, this.maxElements, null);
+		return request;
+	}
+	
+	public WSManPullRequest createPullRequest(final int maxElements) throws Exception {
+		if (isEndOfSequence())
+			return null;
+		
+		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
+		request.setPull(getPullResponse().getEnumerationContext().getContent().get(0),
+				0, maxElements, null);
+		return request;
+	}
+	
+	public WSManReleaseResponse release() throws Exception {
+		// TODO: Should I throw an IllegalStateException ?
+		if (isEndOfSequence())
+			return null;
+		
+		final WSManReleaseRequest release = new WSManReleaseRequest(epr, context, binding);
+		return new WSManReleaseResponse(release.invoke());
 	}
 }

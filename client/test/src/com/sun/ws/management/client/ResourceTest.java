@@ -20,6 +20,119 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7.6.1  2008/02/11 07:25:31  denis_rachal
+ **This is an initial submittal of a proposed new client API. It takes ideas from
+ **Jean-Francois, Simeon and myself. It is based upon work done in the original
+ **Wiseman client API, a low level client stub factory created by Jean-Francois,
+ **and the "Settings/BuildMessage" classes from Simeon.
+ **
+ **It is also partly due to the request from users for a higher level client API.
+ **
+ **This work is just a proposal and is being submitted into the client_api_proposal
+ **branch in order to get feedback on its direction.
+ **
+ **While working on this I have tried to keep the following goals in mind:
+ **
+ **   * Make it easily extendable
+ **   * Make it able to support many clients: J2SE, JAX-WS, & Apache HttpClient
+ **   * Make it simpler & more intuitive to use
+ **   * Retain the power to easily set all possible options in a request
+ **
+ **At the lowest level, base upon work from Jean-Francois, I have:
+ **
+ **   * WSManMessageFactory
+ **   * SOAPRequest interface
+ **   * SOAPResponse interface
+ **
+ **There are impelmentations for J2SE & JAX-WS. Default is currently set to use
+ **JAX-WS.
+ **
+ **Next I have a middle layer set of message classes. I have created a class for every
+ **operation, e.g. Create, Get, Update, Delete, Enumerate, Pull, Release, etc...
+ **
+ **Some classes, such as those for Eventing, are just stubs and not yet complete.
+ **This is more to give you an idea where this is headed. Look into the "com.sun.ws.management.client.message" package for details. Sorry, there is
+ **little to no javadoc at the moment.
+ **
+ **The base classes are WSAddressingRequest & WSAddressingResponse. They implement
+ **the SOAPRequest & SOAPResponss interfaces and use the message factory
+ **during construction. All the other message classes are built upon these
+ **two classes. The hierarchy is as follows:
+ **
+ **  - SOAPRequest interface
+ **    - WSAddressingRequest
+ **      - WSManRequest
+ **        - WsManTransferRequest
+ **          - WSManCreateRequest
+ **          - WSManGetRequest
+ **          - WSManPutRequest
+ **          - WSManDeleteRequest
+ **        - WSManEnumerationRequest
+ **          - WSManEnumerateRequest
+ **          - WSManPullRequest
+ **          - WSManReleaseRequest
+ **        - WSManEventingRequest
+ **          ...
+ **
+ **  - SOAPResponse interface
+ **    - WSAddressingResponse
+ **      - WSManResponse
+ **        - WsManTransferResponse
+ **          - WSManCreateResponse
+ **          - WSManGetResponse
+ **          - WSManPutResponse
+ **          - WSManDeleteResponse
+ **        - WSManEnumerationResponse
+ **          - WSManEnumerateResponse
+ **          - WSManPullResponse
+ **          - WSManReleaseResponse
+ **        - WSManEventingResponse
+ **          ...
+ **
+ **
+ **The classes, for the most part, do not depend upon the current classes such as
+ **Management, Trasfer, TransferExtensions, Enumeration, EnumerationsExtensions, etc...
+ **Rather, any code needed from them has been copied over to create an independent set
+ **of client classes.
+ **
+ **These classes are easily extendable, so someone could easily create a set of
+ **custom classes, for eample the Traffic Light resource:
+ **
+ **          - TrafficLightCreateRequest (subclass of WSManCreateRequest)
+ **          - TrafficLightGetRequest (subclass of WSManGetRequest)
+ **          - TrafficLightPutRequest (subclass of WSManPutRequest)
+ **          - TrafficLightDeleteRequest (subclass of WSManDeleteRequest)
+ **          - etc...
+ **
+ **These could also be easily generated automatically for the user.
+ **
+ **It also makes it easy to create classes for custom operations.
+ **
+ **
+ **A JUnit test has been added to test Create/Get/Delete. That is the only parts
+ **that have been tested, but I ran a test for both JAX-WS & J2SE. Both work.
+ **
+ **At the higher layer is a modified version of an API I already had, but was not
+ **part of Wiseman:
+ **
+ **   * WSManClient
+ **   * ResourceIterator
+ **
+ **This has only partially benn ported to use the newer message classes, but I
+ **think this can give you an idea of what the highest level will look like. The
+ **ResourceIterator does not work at all at the moment, but I think the stubs
+ **and the javadoc can give you an idea on how it would work. You just basically
+ **create an iterator and it takes care of all the enumerate/pull/release messages
+ **for you.
+ **
+ **This is my last week before 3 weeks of vacation and I will not have a lot of
+ **time to work on this before my vacation, so you can take you time on feedback.
+ **I'll work on this again when I return in March.
+ **
+ **Any and all feedback is welcome.
+ **
+ **Denis Rachal
+ **
  **Revision 1.7  2007/12/03 09:15:10  denis_rachal
  **General cleanup of Unit tests to make them easier to run and faster.
  **
@@ -75,7 +188,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.7.6.1 2008-02-11 07:25:31 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.7.6.2 2008-02-13 07:37:53 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -110,6 +223,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
@@ -133,7 +247,10 @@ import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
+import com.sun.ws.management.client.impl.j2se.J2SEMessageFactory;
+import com.sun.ws.management.client.impl.jaxws.JAXWSMessageFactory;
 import com.sun.ws.management.client.message.SOAPResponse;
+import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
 import com.sun.ws.management.client.message.transfer.WSManCreateRequest;
 import com.sun.ws.management.client.message.transfer.WSManCreateResponse;
 import com.sun.ws.management.client.message.transfer.WSManDeleteRequest;
@@ -334,13 +451,14 @@ public class ResourceTest extends WsManTestBaseSupport {
 		JAXBElement<UserType> userElement = userFactory.createUser(user);
 
 		final EndpointReferenceType epr = WSManCreateRequest
-				.createEndpointReference(ResourceTest.DESTINATION, null, null,
-						null, null);
+				.createEndpointReference(ResourceTest.DESTINATION, 
+						                 ResourceTest.resourceUri,
+						                 new QName("user", "User"),
+						                 "Port", null);
 
 		// Create the resource
 		final WSManCreateRequest createRequest = new WSManCreateRequest(epr,
 				null, binding);
-		createRequest.setResourceURI(ResourceTest.resourceUri);
 		createRequest.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
 		createRequest.setPayload(userElement);
 		final SOAPResponse createResponse = createRequest.invoke();
@@ -355,7 +473,6 @@ public class ResourceTest extends WsManTestBaseSupport {
 		// Read the resource just created
 		final WSManGetRequest readRequest = new WSManGetRequest(resourceEPR,
 				null, binding);
-		readRequest.setResourceURI(ResourceTest.resourceUri);
 		readRequest.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
 		final SOAPResponse readResponse = readRequest.invoke();
 
@@ -381,10 +498,44 @@ public class ResourceTest extends WsManTestBaseSupport {
 		// Delete the resource
 		final WSManDeleteRequest deleteRequest = new WSManDeleteRequest(
 				resourceEPR, null, binding);
-		deleteRequest.setResourceURI(ResourceTest.resourceUri);
 		deleteRequest.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
 		final SOAPResponse deleteResponse = deleteRequest.invoke();
 
+	}
+	
+	public void testEnumeration2() throws Exception {
+		final EndpointReferenceType epr = WSManCreateRequest
+				.createEndpointReference(ResourceTest.DESTINATION,
+						ResourceTest.resourceUri, new QName("user", "User"),
+						"Port", null);
+
+		// Run with JAX-WS
+		WSManMessageFactory.setDefaultFactory(JAXWSMessageFactory.class.getCanonicalName());
+		enumerate(epr);
+		
+		// Run again with J2SE
+		WSManMessageFactory.setDefaultFactory(J2SEMessageFactory.class.getCanonicalName());
+        enumerate(epr);
+	}
+	
+	private void enumerate(final EndpointReferenceType epr) throws Exception {
+		// Create the initial request
+		final WSManEnumerateRequest request = new WSManEnumerateRequest(epr, null, binding);
+		request.setEnumerate(null, null, true, 5, EnumerationModeType.ENUMERATE_OBJECT_AND_EPR);
+		request.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
+		final ResourceIterator iterator = new ResourceIterator(request);
+		
+		int i = 0;
+		while (iterator.hasNext()) {
+			i++;
+			final EnumerationItem item = iterator.next();
+			if (item == null)
+				System.out.println("Null item returned.");
+			assertTrue("Wrong item type returned: " + item.getItem().getClass().getName(),
+					(item.getItem() instanceof JAXBElement));
+		}
+		assertTrue("Only " + i + " items returned. Expected > 100.", (i > 100));
+		// System.out.println(i + " items fectched.");
 	}
 
 	/*

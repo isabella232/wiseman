@@ -21,6 +21,7 @@
 package com.sun.ws.management.client;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.bind.JAXBException;
@@ -29,11 +30,12 @@ import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
 import javax.xml.validation.Schema;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.client.exceptions.FaultException;
-import com.sun.ws.management.client.message.enueration.WSManEnumerationRequest;
+import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
 import com.sun.ws.management.client.message.transfer.WSManCreateRequest;
 import com.sun.ws.management.client.message.transfer.WSManCreateResponse;
 import com.sun.ws.management.client.message.transfer.WSManDeleteRequest;
@@ -325,24 +327,27 @@ public class WSManClient {
 	 * @param maxElements the maximum number of elements to buffer at one time
 	 * 
 	 * @return the iterator
-	 * 
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 * @throws TimedOutFault
-	 * @throws FaultException
-	 * @throws DatatypeConfigurationException
+	 * @throws Exception 
 	 */
 	public ResourceIterator newIterator(final EndpointReferenceType resourceEPR,
-			                            final String filter, 
+			                            final List<Object> filter, 
 			                            final Map<String, String> filterNamespaces, 
 			                            final String filterDialect,
 			                            final int maxElements,
 			                            final Duration timeout)
-			throws SOAPException, JAXBException, IOException, TimedOutFault,
-			       FaultException, DatatypeConfigurationException {
-		// TODO:
-		return null;
+			throws Exception {
+		final WSManEnumerateRequest request = 
+			new WSManEnumerateRequest(resourceEPR, null, binding);
+		Object filterObject = request.createFilter(filterDialect,
+				                                   filter,
+				                                   filterNamespaces);
+		request.setEnumerate(null,
+				             filterObject,
+				             true,
+				             maxElements,
+				             EnumerationModeType.ENUMERATE_OBJECT_AND_EPR);
+		request.setOperationTimeout(timeout);
+		return newIterator(request);
 	}
 	
 	/**
@@ -355,21 +360,10 @@ public class WSManClient {
 	 *        Default is just the resource.
 	 * 
 	 * @return the iterator
-	 * 
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 * @throws TimedOutFault
-	 * @throws FaultException
-	 * @throws DatatypeConfigurationException
+	 * @throws Exception 
 	 */
-	public ResourceIterator newIterator(final WSManEnumerationRequest request,
-					                    final EndpointReferenceType resourceEPR,
-                                        final int maxElements,
-                                        final Duration timeout)
-			throws SOAPException, JAXBException, IOException, TimedOutFault,
-			       FaultException, DatatypeConfigurationException {
-        // TODO:
-		return null;
+	public ResourceIterator newIterator(final WSManEnumerateRequest request)
+			throws Exception {
+		return new ResourceIterator(request);
 	}
 }

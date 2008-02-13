@@ -24,7 +24,9 @@
 package com.sun.ws.management.client.message.wsman;
 
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -41,7 +43,11 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.ObjectFactory;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionSet;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorSetType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedQName;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
+import org.xmlsoap.schemas.ws._2004._08.addressing.ServiceNameType;
 
 import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.SOAPResponse;
@@ -119,6 +125,76 @@ public class WSManRequest extends WSAddressingRequest {
 
 	public void setOptions(final OptionSet options) throws JAXBException {
 		addHeader(options);
+	}
+	
+    /**
+	 * Utility method to create an EPR that complies with the
+	 * WS Management Default Addressing Model.
+	 * 
+	 * @param address
+	 *            The transport address of the service. This parameter is
+	 *            required.
+	 * @param resourceURI
+	 *            The resource being addressed. This parameter is required.
+	 * @param serviceName
+	 *            The qualified name of the service. May be null.
+	 * @param portName
+	 *            The name of the port at the service. May be null.
+	 * @param selectorMap
+	 *            Selectors used to identify the resource. May be null.
+	 */
+    public static EndpointReferenceType createEndpointReference(final String address,
+            final String resourceURI,
+            final QName serviceName,
+			final String portName,
+            final Map<String, String> selectorMap) {
+    	
+    	if ((address == null) || (address.trim().length() == 0))
+    		throw new IllegalArgumentException("Parameter 'address' may not be null or an empty string.");
+    	if ((resourceURI == null) || (resourceURI.trim().length() == 0))
+    		throw new IllegalArgumentException("Parameter 'resource' may not be null or an empty string.");
+
+		final ReferenceParametersType refp = WSAddressingRequest.FACTORY
+				.createReferenceParametersType();
+
+		final AttributableURI attributableURI = FACTORY.createAttributableURI();
+		attributableURI.setValue(resourceURI);
+		refp.getAny().add(FACTORY.createResourceURI(attributableURI));
+		
+		final ServiceNameType serviceNameType;
+		
+		if ((serviceName != null) &&
+				(serviceName.getLocalPart() != null) &&
+				(serviceName.getLocalPart().trim().length() > 0)) {
+
+			serviceNameType = WSAddressingRequest.FACTORY
+					.createServiceNameType();
+
+			serviceNameType.setValue(serviceName);
+			serviceNameType.setPortName(portName);
+		} else {
+			serviceNameType = null;
+		}
+
+		if (selectorMap != null) {
+			final SelectorSetType selectorSet = FACTORY.createSelectorSetType();
+			final Iterator<Entry<String, String>> si = selectorMap.entrySet()
+					.iterator();
+			while (si.hasNext()) {
+				final Entry<String, String> entry = si.next();
+				final SelectorType selector = FACTORY.createSelectorType();
+				selector.setName(entry.getKey());
+				selector.getContent().add(entry.getValue());
+				selectorSet.getSelector().add(selector);
+			}
+			refp.getAny().add(FACTORY.createSelectorSet(selectorSet));
+		}
+
+		return WSAddressingRequest.createEndpointReference(address, 
+				                                           null, /* properties */
+				                                           refp,
+				                                           null, /* portType */
+				                                           serviceNameType);
 	}
 	
 	// TODO: Add a createEndpointReference() method...

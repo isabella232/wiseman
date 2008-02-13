@@ -25,6 +25,7 @@ package com.sun.ws.management.client.message.enueration;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -32,12 +33,13 @@ import javax.xml.namespace.QName;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AnyListType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
-
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
 
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.client.message.wsman.WSManResponse;
 import com.sun.ws.management.server.EnumerationItem;
+import com.sun.ws.management.xml.XmlBinding;
 
 public class WSManEnumerateResponse extends WSManEnumerationResponse {
 
@@ -57,13 +59,36 @@ public class WSManEnumerateResponse extends WSManEnumerationResponse {
 	private List<EnumerationItem> items;
 	private boolean isEosRead;
 	private boolean isEos;
+	
+	private final EndpointReferenceType epr;
+	private final Map<String, ?> context;
+	private final XmlBinding binding;
+	private int maxElements = -1;
 
 	WSManEnumerateResponse() {
 		super(null);
+		this.epr = null;
+		this.context = null;
+		this.binding = null;
 	}
 
 	public WSManEnumerateResponse(final SOAPResponse response) {
 		super(response);
+		this.epr = null;
+		this.context = null;
+		this.binding = null;
+	}
+	
+	protected WSManEnumerateResponse(final SOAPResponse response,
+			                      final EndpointReferenceType epr,
+			                      final Map<String, ?> context,
+			                      final XmlBinding binding,
+			                      final int maxElements) {
+		super(response);
+		this.epr = epr;
+		this.context = context;
+		this.binding = binding;
+		this.maxElements = maxElements;
 	}
 
 	public EnumerateResponse getEnumerateResponse() throws Exception {
@@ -123,5 +148,25 @@ public class WSManEnumerateResponse extends WSManEnumerationResponse {
 			}
 		}
 		return isEos;
+	}
+	
+	public WSManPullRequest createPullRequest() throws Exception {
+		if (isEndOfSequence())
+			return null;
+		
+		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
+		request.setPull(getEnumerateResponse().getEnumerationContext().getContent().get(0),
+				0, this.maxElements, null);
+		return request;
+	}
+	
+	public WSManPullRequest createPullRequest(final int maxElements) throws Exception {
+		if (isEndOfSequence())
+			return null;
+		
+		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
+		request.setPull(getEnumerateResponse().getEnumerationContext().getContent().get(0),
+				0, maxElements, null);
+		return request;
 	}
 }

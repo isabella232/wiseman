@@ -41,10 +41,14 @@ import com.sun.ws.management.xml.XmlBinding;
 
 public class WSManPullRequest extends WSManRequest {
 	
+	private final EndpointReferenceType epr;
+	private int maxElements = -1;
+	
     public static final String ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Pull";
 	
 	WSManPullRequest() {
         super(null);
+        this.epr = null;
 	}
 	
 	public WSManPullRequest(final EndpointReferenceType epr,
@@ -52,6 +56,7 @@ public class WSManPullRequest extends WSManRequest {
 	throws Exception {
 		super(epr, context, binding);
 		setAction(ACTION_URI);
+		this.epr = epr;
 	}
 
 	public WSManPullRequest(final String endpoint,
@@ -60,11 +65,13 @@ public class WSManPullRequest extends WSManRequest {
 	throws Exception {
 		super(endpoint, context, serviceName, portName, binding);
 		setAction(ACTION_URI);
+		this.epr = null;
 	}
 	
 	public WSManPullRequest(final SOAPRequest request) throws JAXBException {
 		super(request);
 		setAction(ACTION_URI);
+		this.epr = null;
 	}
 
 	public void setPull(final Object context, final int maxChars,
@@ -90,6 +97,10 @@ public class WSManPullRequest extends WSManRequest {
 	
 	public SOAPResponse invoke() throws Exception {
 		// TODO: Message sanity checks go here.
-		return new WSManPullResponse(super.invoke());
+		return new WSManPullResponse(super.invoke(),
+                this.epr,
+                this.getRequestContext(),
+                this.getXmlBinding(),
+                this.maxElements);
 	}
 }
