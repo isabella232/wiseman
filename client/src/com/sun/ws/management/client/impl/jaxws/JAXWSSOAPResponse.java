@@ -90,8 +90,8 @@ class JAXWSSOAPResponse implements SOAPResponse {
 		Header header = headers.get(name, true);
 		if (header != null)
 			try {
-				return ((JAXBElement<Object>) header
-						.readAsJAXB(newUnmarshaller())).getValue();
+				// Return the JAXBElement
+				return header.readAsJAXB(newUnmarshaller());
 			} catch (JAXBException ex) {
 				// OK will return XMLStreamReader
 				try {
