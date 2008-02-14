@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.10  2007/12/03 09:15:09  denis_rachal
+ **General cleanup of Unit tests to make them easier to run and faster.
+ **
  **Revision 1.9  2007/11/30 14:32:37  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -45,7 +48,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationFilterTest.java,v 1.10 2007-12-03 09:15:09 denis_rachal Exp $
+ * $Id: EnumerationFilterTest.java,v 1.10.8.1 2008-02-14 08:26:28 denis_rachal Exp $
  */
 
 package management;
@@ -54,8 +57,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import javax.xml.bind.JAXBException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
@@ -74,7 +75,6 @@ import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.transport.HttpClient;
 import com.sun.ws.management.xml.XPath;
-import com.sun.ws.management.xml.XmlBinding;
 
 import framework.models.UserEnumerationHandler;
 import framework.models.UserFilterFactory;
@@ -83,8 +83,6 @@ import framework.models.UserFilterFactory;
  * Unit test for WS-Enumeration extensions in WS-Management
  */
 public class EnumerationFilterTest extends TestBase {
-
-	XmlBinding binding;
 
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -173,6 +171,7 @@ public class EnumerationFilterTest extends TestBase {
     	settings.setRequestForOptimizedEnumeration(true);
     	settings.setRequestForTotalItemsCount(true);
     	settings.setEnumerationMode(mode);
+    	settings.setXmlBinding(binding);
 
         if ((expression != null) && (expression.length() > 0)) {
             if ((dialect != null) && (dialect.length() > 0))
@@ -194,7 +193,6 @@ public class EnumerationFilterTest extends TestBase {
         enu.prettyPrint(logfile);
         final Addressing response = HttpClient.sendRequest(enu);
 
-        response.setXmlBinding(binding);
         response.prettyPrint(logfile);
         if (response.getBody().hasFault()) {
             response.prettyPrint(System.err);
@@ -246,24 +244,24 @@ public class EnumerationFilterTest extends TestBase {
             final AttributableNonNegativeInteger pe = pullResponse.getTotalItemsCountEstimate();
             assertNotNull(pe);
             assertTrue(pe.getValue().intValue() > 0);
-        }
+            
+            if (pullResponse.isEndOfSequence() == false) {
 
-        if (enuResponse.isEndOfSequence() == false) {
+            	settings.setEnumerationMessageActionType(Enumeration.RELEASE_ACTION_URI);
 
-        	settings.setEnumerationMessageActionType(Enumeration.RELEASE_ACTION_URI);
+            	final Enumeration enuRelease = EnumerationUtility.buildMessage(null, settings);
 
-        	final Enumeration enuRelease = EnumerationUtility.buildMessage(null, settings);
+                final Management mp = new Management(enuRelease);
+                mp.setTo(DESTINATION);
+                mp.setResourceURI(resource);
 
-            final Management mp = new Management(enuRelease);
-            mp.setTo(DESTINATION);
-            mp.setResourceURI(resource);
-
-            mp.prettyPrint(logfile);
-            final Addressing praddr = HttpClient.sendRequest(mp);
-            praddr.prettyPrint(logfile);
-            if (praddr.getBody().hasFault()) {
-                praddr.prettyPrint(System.err);
-                fail(praddr.getBody().getFault().getFaultString());
+                mp.prettyPrint(logfile);
+                final Addressing relResp = HttpClient.sendRequest(mp);
+                relResp.prettyPrint(logfile);
+                if (relResp.getBody().hasFault()) {
+                	relResp.prettyPrint(System.err);
+                    fail(relResp.getBody().getFault().getFaultString());
+                }
             }
         }
     }
