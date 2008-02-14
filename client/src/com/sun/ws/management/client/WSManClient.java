@@ -101,10 +101,10 @@ public class WSManClient {
 	/**
 	 * Create a new resource
 	 * 
-	 * @param content the resource to be created. This must be a JAXBElement
+	 * @param resource the resource to be created. This must be a JAXBElement
 	 *        located in a package specified in the constructor, or a w3c Node
 	 *        object.
-	 * @param epr EndpointReference of the resource creation factory.
+	 * @param factoryEPR EndpointReference of the resource creation factory.
 	 * 
 	 * @return EndpointReference pointing to the resource created.
 	 * @throws FaultException 
@@ -132,19 +132,7 @@ public class WSManClient {
 	/**
 	 * Create a new resource
 	 * 
-	 * @param content resource to be created. This must be a JAXBElement
-	 *        located in a package specified in the constructor, or a w3c Node
-	 *        object. If a filter is specified this is expected to be an
-	 *        XmlFragment.
-	 * @param epr EndpointReference of the resource creation factory.
-	 * @param filter filter used if only a fragment of the resource is to be created
-	 * @param filterNamespaces namespace declarations for any namespaces used
-	 *        in the filter.
-	 * @param filterDialect filter dialect used. Default is XPath 1.0
-	 * @param maxTime the maximum amount of time to wait for the completion
-	 *        of this request. If this time is exceeded before the resource is created
-	 *        a TimedOutFault will be thrown.
-	 * @param options a set of WS Management application options.
+	 * @param request
 	 * 
 	 * @return EndpointReference pointing to the resource created.
 	 * 
@@ -163,7 +151,7 @@ public class WSManClient {
 	/**
 	 * Read resource
 	 * 
-	 * @param epr EndpointReference pointing to the resource
+	 * @param resourceEPR EndpointReference pointing to the resource
 	 * 
 	 * @return requested resource
 	 * 
@@ -186,16 +174,7 @@ public class WSManClient {
 	/**
 	 * Read resource
 	 * 
-	 * @param epr EndpointReference pointing to the resource
-	 * @param filter filter used if only a fragment of the resource is desired
-	 * @param filterNamespaces namespace declarations for any namespaces used
-	 *        in the filter.
-	 * @param filterDialect filter dialect used. Default is XPath 1.0
-	 * @param maxTime the maximum amount of time to wait for the completion
-	 *        of this request. If this time is exceeded before the resource is read
-	 *        a TimedOutFault will be thrown.
-	 * @param options a set of WS Management application options.
-	 * 
+	 * @param request
 	 * @return requested resource
 	 * 
 	 * @throws SOAPException
@@ -213,11 +192,11 @@ public class WSManClient {
 	/**
 	 * Update resource
 	 * 
-	 * @param content resource to be updated. This must be a JAXBElement
+	 * @param resource resource to be updated. This must be a JAXBElement
 	 *        located in a package specified in the constructor, or a w3c Node
 	 *        object. If a filter is specified this is expected to be an
 	 *        XmlFragment.
-	 * @param epr EndpointReference pointing to the resource
+	 * @param resourceEPR EndpointReference pointing to the resource
 	 * 
 	 * @return updated resource. Server may optionally return null
 	 * 
@@ -242,19 +221,7 @@ public class WSManClient {
 	/**
 	 * Update resource
 	 * 
-	 * @param content resource to be updated. This must be a JAXBElement
-	 *        located in a package specified in the constructor, or a w3c Node
-	 *        object. If a filter is specified this is expected to be an
-	 *        XmlFragment.
-	 * @param epr EndpointReference pointing to the resource
-	 * @param filter filter used if only a fragment of the resource is to be updated
-	 * @param filterNamespaces namespace declarations for any namespaces used
-	 *        in the filter.
-	 * @param filterDialect filter dialect used. Default is XPath 1.0
-	 * @param maxTime the maximum amount of time to wait for the completion
-	 *        of this request. If this time is exceeded before the resource is updated
-	 *        a TimedOutFault will be thrown.
-	 * @param options a set of WS Management application options
+	 * @param request
 	 * 
 	 * @return updated resource. Server may optionally return null
 	 * 
@@ -273,7 +240,7 @@ public class WSManClient {
 	/**
 	 * Delete resource
 	 * 
-	 * @param epr EndpointReference pointing to the resource
+	 * @param resourceEPR EndpointReference pointing to the resource
 	 * 
 	 * @throws IOException
 	 * @throws JAXBException
@@ -294,15 +261,7 @@ public class WSManClient {
 	/**
 	 * Delete resource
 	 *  
-	 * @param epr EndpointReference pointing to the resource
-	 * @param filter filter used if only a fragment of the resource is to be deleted
-	 * @param filterNamespaces namespace declarations for any namespaces used
-	 *        in the filter.
-	 * @param filterDialect filter dialect used. Default is XPath 1.0
-	 * @param maxTime the maximum amount of time to wait for the completion
-	 *        of this request. If this time is exceeded before the resource is deleted
-	 *        a TimedOutFault will be thrown.
-	 * @param options a set of WS Management application options
+	 * @param request
 	 * 
 	 * @throws IOException
 	 * @throws JAXBException
@@ -319,7 +278,7 @@ public class WSManClient {
 	/**
 	 * Create an iterator to iterate over a resource
 	 * 
-	 * @param epr EndpointReference pointing to a set of resources
+	 * @param resourceEPR EndpointReference pointing to a set of resources
 	 * @param filter filter used if only a subset of the set of resources is desired
 	 * @param filterNamespaces namespace declarations for any namespaces used
 	 *        in the filter.
@@ -353,11 +312,7 @@ public class WSManClient {
 	/**
 	 * Create an iterator to iterate over a resource
 	 * 
-	 * @param epr EndpointReference pointing to a set of resources
-	 * @param maxElements the maximum number of elements to buffer at one time
-	 * @param maxTime the maximum amount of time to wait for a block of resources
-	 * @param mode specifies if the resource and/or its EPR are requested.
-	 *        Default is just the resource.
+	 * @param request
 	 * 
 	 * @return the iterator
 	 * @throws Exception 

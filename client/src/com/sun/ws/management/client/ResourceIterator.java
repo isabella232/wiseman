@@ -58,19 +58,8 @@ public class ResourceIterator implements EnumerationIterator {
 	private boolean eos = false;
 
 	/**
-	 * @param epr
-	 * @param filter
-	 * @param filterNamespaces
-	 * @param filterDialect
-	 * @param expires
-	 * @param maxElements
-	 * @param maxCharacters
-	 * @param maxTime
-	 * @param mode
-	 * @param getItemCount
-	 * @param options
-	 * @param binding
-	 * @param params
+	 * @param request WSManEnumerateRequest object that is to be invoked
+	 *        to initiate the request.
 	 * @throws Exception
 	 */
 	public ResourceIterator(final WSManEnumerateRequest request)

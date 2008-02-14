@@ -48,7 +48,7 @@ public interface IWSManMessageFactory {
      * @param serviceName
      * @param portName
      * @param binding
-     * @return
+     * @return an object that implements the SOAPRequest interface
      * @throws IOException
      * @throws SOAPException 
      */
@@ -64,7 +64,7 @@ public interface IWSManMessageFactory {
      * @param epr
      * @param context
      * @param binding
-     * @return
+     * @return an object that implements the SOAPResponse interface
      * @throws IOException
      * @throws SOAPException 
      */
