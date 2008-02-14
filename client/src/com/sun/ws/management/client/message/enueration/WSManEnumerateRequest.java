@@ -25,6 +25,7 @@ package com.sun.ws.management.client.message.enueration;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +48,6 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.client.message.wsman.WSManRequest;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
 import com.sun.ws.management.xml.XmlBinding;
@@ -55,7 +55,7 @@ import com.sun.ws.management.xml.XmlBinding;
 public class WSManEnumerateRequest extends WSManEnumerationRequest {
 	
 	public static final String ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate";
-	
+    
 	private final EndpointReferenceType epr;
 	private int maxElements = -1;	
 
@@ -164,7 +164,7 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 				Boolean.TRUE.toString());
 
 		// add the query string to the content of the FragmentTransfer Header
-		dialectableMixedDataType.getContent().add(expression);
+		dialectableMixedDataType.getContent().addAll(expression);
 
 		final JAXBElement<DialectableMixedDataType> filter = WSManRequest.FACTORY
 				.createFilter(dialectableMixedDataType);
@@ -176,13 +176,14 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 			// TODO: This is J2EE dependent not J2SE! Change to use J2SE API.
 			final SOAPMessage msg = MessageFactory.newInstance(
 					SOAPConstants.SOAP_1_2_PROTOCOL).createMessage();
-			final SOAPElement element = 
-				msg.getSOAPBody().addChildElement(EnumerationExtensions.FILTER);
+			final SOAPElement body = msg.getSOAPBody();
+			getXmlBinding().getJAXBContext().createMarshaller().marshal(
+					filter, body);
+			final Iterator<SOAPElement> iter = body.getChildElements();
+			final SOAPElement element = iter.next();
 			for (Map.Entry<String, String> decl : namespaces.entrySet()) {
 				element.addNamespaceDeclaration(decl.getKey(), decl.getValue());
 			}
-			getXmlBinding().getJAXBContext().createMarshaller().marshal(
-					filter.getValue(), element);
 			return element;
 		} else
 			return filter;

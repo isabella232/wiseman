@@ -132,6 +132,10 @@ public class WSManEnumerateResponse extends WSManEnumerationResponse {
 		}
 		return items;
 	}
+	
+	public String getEnumerationContext() throws Exception {
+		return (String)getEnumerateResponse().getEnumerationContext().getContent().get(0);
+	}
 
 	public boolean isEndOfSequence() throws Exception  {
 		if (!isEosRead) {
@@ -155,7 +159,7 @@ public class WSManEnumerateResponse extends WSManEnumerationResponse {
 			return null;
 		
 		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
-		request.setPull(getEnumerateResponse().getEnumerationContext().getContent().get(0),
+		request.setPull(getEnumerationContext(),
 				0, this.maxElements, null);
 		return request;
 	}
@@ -165,8 +169,18 @@ public class WSManEnumerateResponse extends WSManEnumerationResponse {
 			return null;
 		
 		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
-		request.setPull(getEnumerateResponse().getEnumerationContext().getContent().get(0),
+		request.setPull(getEnumerationContext(),
 				0, maxElements, null);
 		return request;
+	}
+	
+	public WSManReleaseResponse release() throws Exception {
+		// TODO: Should I throw an IllegalStateException ?
+		if (isEndOfSequence())
+			return null;
+		
+		final WSManReleaseRequest release = new WSManReleaseRequest(epr, context, binding);
+		release.setRelease(getEnumerationContext());
+		return new WSManReleaseResponse(release.invoke());
 	}
 }

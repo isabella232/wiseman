@@ -137,6 +137,10 @@ public class WSManPullResponse extends WSManResponse {
 		}
 		return items;
 	}
+		
+	public String getEnumerationContext() throws Exception {
+		return (String)getPullResponse().getEnumerationContext().getContent().get(0);
+	}
 
 	public boolean isEndOfSequence() throws Exception {
 		if (!isEosRead) {
@@ -224,7 +228,7 @@ public class WSManPullResponse extends WSManResponse {
 			return null;
 		
 		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
-		request.setPull(getPullResponse().getEnumerationContext().getContent().get(0),
+		request.setPull(getEnumerationContext(),
 				0, this.maxElements, null);
 		return request;
 	}
@@ -234,7 +238,7 @@ public class WSManPullResponse extends WSManResponse {
 			return null;
 		
 		final WSManPullRequest request = new WSManPullRequest(epr, context, binding);
-		request.setPull(getPullResponse().getEnumerationContext().getContent().get(0),
+		request.setPull(getEnumerationContext(),
 				0, maxElements, null);
 		return request;
 	}
@@ -245,6 +249,7 @@ public class WSManPullResponse extends WSManResponse {
 			return null;
 		
 		final WSManReleaseRequest release = new WSManReleaseRequest(epr, context, binding);
+		release.setRelease(getEnumerationContext());
 		return new WSManReleaseResponse(release.invoke());
 	}
 }

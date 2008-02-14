@@ -26,10 +26,12 @@ package com.sun.ws.management.client.message.enueration;
 import java.math.BigInteger;
 import java.util.Map;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerationContextType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Pull;
@@ -93,6 +95,13 @@ public class WSManPullRequest extends WSManRequest {
             pull.setMaxTime(maxDuration);
         }
         setPayload(pull);
+	}
+	
+	public void requestTotalItemsCountEstimate() throws JAXBException {
+        final AttributableEmpty empty = new AttributableEmpty();
+        final JAXBElement<AttributableEmpty> emptyElement =
+        	WSManRequest.FACTORY.createRequestTotalItemsCountEstimate(empty);
+        addHeader(emptyElement);
 	}
 	
 	public SOAPResponse invoke() throws Exception {
