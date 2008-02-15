@@ -205,19 +205,18 @@ public class JAXWSMessageResponse implements WSManagementResponse {
             if(payload instanceof Element)
                 msg = Messages.createUsingPayload((Element) payload, SOAPVersion.SOAP_12);
             else {
-                
                 JAXBRIContext ctx = payloadContext != null ? payloadContext :  jaxbContext;
                 msg = Messages.create(ctx, payload, SOAPVersion.SOAP_12);
             }
         
         //Headers
-        if(action == null)
-            throw new IllegalArgumentException("Can't create Message for null Action");
-        
         HeaderList headerList = msg.getHeaders();
-        
-        //Headers
-        headerList.add(new StringHeader(Addressing.ACTION, action));
+        if(action != null) {
+            //Headers
+            headerList.add(new StringHeader(Addressing.ACTION, action)); 
+        } else
+            if(!isIdentifyResponse())
+                throw new IllegalArgumentException("Can't create Message for null Action");
         
         if(extraHeaders != null)
             headerList.addAll(extraHeaders);
@@ -226,6 +225,14 @@ public class JAXWSMessageResponse implements WSManagementResponse {
             headerList.addAll(headers);
         
         return msg;
+    }
+    
+    private boolean isIdentifyResponse() {
+        if(payload == null) return false;
+        if(!(payload instanceof JAXBElement)) return false;
+        JAXBElement element = (JAXBElement)payload ;
+        if(!(element.getValue() instanceof IdentifyResponseType)) return false;
+        return true;
     }
     
     public void setPayload(Object jaxb, JAXBContext ctx) {

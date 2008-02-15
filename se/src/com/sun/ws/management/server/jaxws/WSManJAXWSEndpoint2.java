@@ -13,25 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManJAXWSEndpoint2.java,v 1.1 2007-10-30 09:28:23 jfdenise Exp $
+ * $Id: WSManJAXWSEndpoint2.java,v 1.2 2008-02-15 14:00:25 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.jaxws;
 
 import com.sun.ws.management.InternalErrorFault;
+import com.sun.ws.management.addressing.Addressing;
+import com.sun.ws.management.addressing.MessageInformationHeaderRequiredFault;
+import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.HandlerContextImpl;
 import com.sun.ws.management.server.WSManAgentSupport;
 import com.sun.ws.management.server.message.JAXWSMessageRequest;
 import com.sun.ws.management.server.message.JAXWSMessageResponse;
+import com.sun.ws.management.soap.FaultException;
 import com.sun.xml.bind.api.JAXBRIContext;
+import com.sun.xml.ws.api.SOAPVersion;
+import com.sun.xml.ws.api.WSBinding;
+import com.sun.xml.ws.api.addressing.AddressingVersion;
 import com.sun.xml.ws.api.message.Message;
+import com.sun.xml.ws.api.message.Messages;
+import com.sun.xml.ws.api.server.WSEndpoint;
+import com.sun.xml.ws.developer.JAXWSProperties;
 import com.sun.xml.ws.developer.MemberSubmissionAddressing;
+import java.lang.reflect.Method;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBContext;
+import javax.xml.namespace.QName;
 import javax.xml.ws.BindingType;
 import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.Provider;
@@ -48,12 +60,19 @@ import org.xml.sax.SAXException;
 @WebServiceProvider()
 @ServiceMode(value=Service.Mode.MESSAGE)
 @BindingType(value=SOAPBinding.SOAP12HTTP_BINDING)
-@MemberSubmissionAddressing(required=true)
+@MemberSubmissionAddressing(required=false)
 public abstract class WSManJAXWSEndpoint2 implements Provider<Message> {
     
     private static final Logger LOG = Logger.getLogger(WSManJAXWSEndpoint2.class.getName());
     private WSManAgentSupport agent;
-    
+    private static Method msgWSAFaultFactory; 
+    static {
+        try {
+            msgWSAFaultFactory = Messages.class.getMethod("createAddressingFaultMessage", WSBinding.class, QName.class);
+        }catch(Exception x) {
+            // OK, not running on JAX-WS 2.1.4+
+        }
+    }
     /**
      * JAX-WS Endpoint constructor
      */
@@ -64,6 +83,22 @@ public abstract class WSManJAXWSEndpoint2 implements Provider<Message> {
         HandlerContext ctx = null;
         
         try {
+            // Special case where no WS-A header present.
+            if ((message.getHeaders().getAction(AddressingVersion.MEMBER,
+                    SOAPVersion.SOAP_12) == null) && 
+                    !Identify.NS_URI.equals(message.getPayloadNamespaceURI())) {
+                
+                // We should get rid-off this case, one day.
+                if(msgWSAFaultFactory == null)
+                    throw new MessageInformationHeaderRequiredFault(Addressing.ACTION);
+                
+                WSEndpoint endpoint = (WSEndpoint) getWebServiceContext().
+                        getMessageContext().get(JAXWSProperties.WSENDPOINT);
+                return (Message) msgWSAFaultFactory.invoke(null, 
+                        endpoint.getBinding(), 
+                        endpoint.getBinding().getAddressingVersion().actionTag);
+            }
+            
             Principal principal = getWebServiceContext().getUserPrincipal();
             
             Object servletContext = getWebServiceContext().getMessageContext().get(MessageContext.SERVLET_CONTEXT);
@@ -79,10 +114,12 @@ public abstract class WSManJAXWSEndpoint2 implements Provider<Message> {
             
             return response.buildMessage();
         }catch(Exception ex) {
-            ex.printStackTrace();
             try {
                 JAXWSMessageResponse response = new JAXWSMessageResponse((JAXBRIContext)getAgent().getJAXBContext());
-                response.setFault(new InternalErrorFault(ex.getMessage()));
+                if(ex instanceof FaultException)
+                    response.setFault((FaultException) ex);
+                else
+                    response.setFault(new InternalErrorFault(ex.getMessage()));
                 return response.buildMessage();
             }catch(Exception ex2) {
                 // Is supposed to be handled by JAX-WS

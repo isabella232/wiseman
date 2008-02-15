@@ -162,7 +162,8 @@ public class JAXWSMessageRequest implements WSManagementRequest {
             	Duration result = null;
             	
             	// Check if this is a wsen:Pull & wsen:MaxTime is set.
-                if(getAction().equals(Enumeration.PULL_ACTION_URI)) {
+                String action = getAction();
+                if(action != null && action.equals(Enumeration.PULL_ACTION_URI)) {
                     final Pull pull = getPull();
                     if (pull != null)
                         result = pull.getMaxTime();
@@ -189,8 +190,8 @@ public class JAXWSMessageRequest implements WSManagementRequest {
     public boolean isIdentify() throws JAXBException, SOAPException {
         if(!isIdentifyRead) {
             isIdentifyRead = true;
-            Header h = headers.get(Identify.IDENTIFY, true);
-            isIdentify = (h == null) ? Boolean.FALSE : Boolean.TRUE;
+            isIdentify = Identify.IDENTIFY.getNamespaceURI().equals(message.getPayloadNamespaceURI()) &&
+                    Identify.IDENTIFY.getLocalPart().equals(message.getPayloadLocalPart());
         }
         return isIdentify;
     }

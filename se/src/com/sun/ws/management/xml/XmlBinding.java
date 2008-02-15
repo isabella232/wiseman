@@ -19,11 +19,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.22  2007/10/30 09:27:47  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.21  2007/05/30 20:31:06  nbeers
  **Add HP copyright header
  **
  **
- * $Id: XmlBinding.java,v 1.22 2007-10-30 09:27:47 jfdenise Exp $
+ * $Id: XmlBinding.java,v 1.23 2008-02-15 14:00:24 jfdenise Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -56,7 +60,8 @@ public final class XmlBinding {
         "org.xmlsoap.schemas.ws._2004._08.eventing",
         "org.xmlsoap.schemas.ws._2004._09.enumeration",
         "org.xmlsoap.schemas.ws._2004._09.transfer",
-        "org.dmtf.schemas.wbem.wsman._1.wsman"
+        "org.dmtf.schemas.wbem.wsman._1.wsman",
+        "org.dmtf.schemas.wbem.wsman.identity._1.wsmanidentity"
     };
     
     static{//determine whether additional packages should be added to default binding
