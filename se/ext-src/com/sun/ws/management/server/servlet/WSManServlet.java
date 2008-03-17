@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.10  2007/11/09 12:33:33  denis_rachal
+ **Performance enhancements that better reuse the XmlBinding.
+ **
  **Revision 1.9  2007/09/18 20:08:56  nbeers
  **Add support for SOAP with attachments.  Issue #136.
  **
@@ -65,7 +68,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.10 2007-11-09 12:33:33 denis_rachal Exp $
+ * $Id: WSManServlet.java,v 1.10.8.1 2008-03-17 07:24:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -100,6 +103,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBException;
+import javax.xml.soap.MimeHeaders;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
@@ -220,7 +224,6 @@ public abstract class WSManServlet extends HttpServlet {
 		}
 
         resp.setStatus(HttpServletResponse.SC_OK);
-        resp.setContentType(contentType.toString());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         InputStream is = null;
@@ -540,7 +543,16 @@ public abstract class WSManServlet extends HttpServlet {
         final Management request = new Management(is);
         request.setXmlBinding(agent.getXmlBinding());
 
+        final MimeHeaders headers = request.getMessage().getMimeHeaders();
+        
         request.setContentType(contentType);
+        
+        // Copy all the HTTP headers into the request
+        final Enumeration<String> reqHeaders = req.getHeaderNames();
+        while (reqHeaders.hasMoreElements()) {
+        	final String name = reqHeaders.nextElement();
+        	headers.addHeader(name, req.getHeader(name));
+        }
 
         final String contentype = req.getContentType();
         final Principal user = req.getUserPrincipal();

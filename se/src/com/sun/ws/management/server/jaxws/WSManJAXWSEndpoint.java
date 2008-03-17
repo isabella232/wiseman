@@ -13,10 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManJAXWSEndpoint.java,v 1.1 2007-04-06 09:57:51 jfdenise Exp $
+ * ** Copyright (C) 2006, 2007, 2008 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Denis Rachal (denis.rachal@hp.com)
+ **
+ *
+ * $Id: WSManJAXWSEndpoint.java,v 1.1.8.1 2008-03-17 07:24:37 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.jaxws;
+
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.xml.soap.SOAPMessage;
+import javax.xml.ws.Provider;
+import javax.xml.ws.Service;
+import javax.xml.ws.ServiceMode;
+import javax.xml.ws.WebServiceContext;
+import javax.xml.ws.WebServiceProvider;
+import javax.xml.ws.handler.MessageContext;
+
+import org.xml.sax.SAXException;
 
 import com.sun.ws.management.InternalErrorFault;
 import com.sun.ws.management.Management;
@@ -25,31 +46,6 @@ import com.sun.ws.management.server.HandlerContext;
 import com.sun.ws.management.server.HandlerContextImpl;
 import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.transport.ContentType;
-import com.sun.ws.management.xml.XmlBinding;
-import java.net.URL;
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.security.auth.Subject;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.transform.Source;
-import javax.xml.validation.Schema;
-import javax.xml.ws.WebServiceContext;
-import java.lang.management.ManagementFactory;
-import javax.annotation.Resource;
-import javax.management.MBeanServer;
-import javax.xml.soap.SOAPMessage;
-import javax.xml.ws.Provider;
-import javax.xml.ws.Service;
-import javax.xml.ws.ServiceMode;
-import javax.xml.ws.WebServiceProvider;
-import javax.xml.ws.handler.MessageContext;
-import org.xml.sax.SAXException;
 
 /**
  * JAX-WS Compliant endpoint.
@@ -72,20 +68,21 @@ public abstract class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
         HandlerContext ctx = null;
         
         try {
+            final WebServiceContext webctx = getWebServiceContext();
             request = new Management(message);
             request.setXmlBinding(getAgent().getXmlBinding());
-            Principal principal = getWebServiceContext().getUserPrincipal();
+            Principal principal = webctx.getUserPrincipal();
             String contentType = ContentType.DEFAULT_CONTENT_TYPE.getMimeType();
             String encoding = request.getContentType() == null ? null : request.getContentType().getEncoding();
             String url = request.getTo();
-            Object servletContext = getWebServiceContext().getMessageContext().get(MessageContext.SERVLET_CONTEXT);
-            WebServiceContext webctx = getWebServiceContext();
+            Object servletContext = webctx.getMessageContext().get(MessageContext.SERVLET_CONTEXT);
+
             Map<String, Object> props = new HashMap<String, Object>(1);
             props.put(HandlerContext.SERVLET_CONTEXT, servletContext);
             props.put(HandlerContext.JAX_WS_CONTEXT, webctx);
             
             if (LOG.isLoggable(Level.FINE))
-                LOG.fine("Context properties : " + " contentType " + contentType + 
+                LOG.fine("Request context properties : " + " contentType " + contentType + 
                         ", encoding " + encoding + ", url " + url + ", servletContext"
                         + servletContext + ", webctx " + 
                         webctx);
@@ -98,9 +95,17 @@ public abstract class WSManJAXWSEndpoint implements Provider<SOAPMessage> {
             if(reply == null)
                 return null;
             
-            return reply.getMessage();
+            final SOAPMessage replyMsg = reply.getMessage();
+            // TODO: This does not actually work. How do you do this with JAX-WS?
+            ContentType ct = reply.getContentType();
+            replyMsg.setProperty(SOAPMessage.CHARACTER_SET_ENCODING,
+            		ct.getEncoding());
+            if (LOG.isLoggable(Level.FINE))
+                LOG.fine("Response context properties : " + " contentType " + ct +
+                		", encoding " + ct.getEncoding());
+            return replyMsg;
             
-        }catch(Exception ex) {
+        } catch(Exception ex) {
             try {
                 Management response = new Management();
                 response.setXmlBinding(getAgent().getXmlBinding());

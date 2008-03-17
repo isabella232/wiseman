@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.24  2007/12/03 09:15:09  denis_rachal
+ **General cleanup of Unit tests to make them easier to run and faster.
+ **
  **Revision 1.23  2007/11/30 14:32:37  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -35,7 +38,7 @@
  **Add HP copyright header
  **
  **
- * $Id: ManagementTest.java,v 1.24 2007-12-03 09:15:09 denis_rachal Exp $
+ * $Id: ManagementTest.java,v 1.24.8.1 2008-03-17 07:24:35 denis_rachal Exp $
  */
 
 package management;
@@ -278,18 +281,37 @@ public class ManagementTest extends TestBase {
         mgmt.setSelectors(selectorSet);
 
         // send this message encoded in UTF-16
-        mgmt.setContentType(ContentType.UTF16_CONTENT_TYPE);
+        // mgmt.setContentType(ContentType.UTF16_CONTENT_TYPE);
+        System.setProperty(HttpClient.CHARACTER_SET_ENCODING, "utf-16");
 
         // prettyPrint does not preserve encoding
         mgmt.writeTo(logfile);
-        final Addressing response = HttpClient.sendRequest(mgmt);
+        Addressing response = HttpClient.sendRequest(mgmt);
         response.writeTo(logfile);
+        System.clearProperty(HttpClient.CHARACTER_SET_ENCODING);
         if (response.getBody().hasFault()) {
             fail(response.getBody().getFault().getFaultString());
         }
 
         // verify that the response is received encoded in UTF-16
         assertEquals("Incorrect Encoding type returned.",ContentType.UTF16_CONTENT_TYPE, response.getContentType());
+
+        logfile.write("\n\n---- pretty-printed, pretty-printer converts encoding to utf-8 ----\n\n".getBytes());
+        response.prettyPrint(logfile);
+        
+        // Now try ISO-8859-1
+        System.setProperty(HttpClient.CHARACTER_SET_ENCODING, "iso-8859-1");
+        mgmt.writeTo(logfile);
+        response = HttpClient.sendRequest(mgmt);
+        response.writeTo(logfile);
+        System.clearProperty(HttpClient.CHARACTER_SET_ENCODING);
+        if (response.getBody().hasFault()) {
+            fail(response.getBody().getFault().getFaultString());
+        }
+
+        // verify that the response is received encoded in UTF-16
+        assertEquals("Incorrect Encoding type returned.", ContentType.ISO_8859_1_CONTENT_TYPE,
+        		response.getContentType());
 
         logfile.write("\n\n---- pretty-printed, pretty-printer converts encoding to utf-8 ----\n\n".getBytes());
         response.prettyPrint(logfile);

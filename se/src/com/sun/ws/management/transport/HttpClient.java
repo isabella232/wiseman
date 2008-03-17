@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.24  2007/12/20 20:47:53  jfdenise
+ **Removal of ACK contribution. The contribution has been commited in the trunk instead of the branch.
+ **
  **Revision 1.22  2007/10/30 09:52:56  denis_rachal
  **Fix for NullPointerExection caused during error handling.
  **
@@ -40,7 +43,7 @@
  **Add HP copyright header
  **
  **
- * $Id: HttpClient.java,v 1.24 2007-12-20 20:47:53 jfdenise Exp $
+ * $Id: HttpClient.java,v 1.24.4.1 2008-03-17 07:24:36 denis_rachal Exp $
  */
 
 package com.sun.ws.management.transport;
@@ -73,6 +76,9 @@ import com.sun.ws.management.Message;
 import com.sun.ws.management.addressing.Addressing;
 
 public final class HttpClient {
+	
+    public static final String CHARACTER_SET_ENCODING = "com.sun.ws.management.client.soap.character-set-encoding";
+    public static final String USERAGENT_PROPERTY = "com.sun.ws.management.client.http.useragent";
 
     private static final Logger LOG = Logger.getLogger(HttpClient.class.getName());
 //    private static boolean useApacheCommonsHttpClient = true;
@@ -111,8 +117,10 @@ public final class HttpClient {
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type",
                 ct == null ? ContentType.DEFAULT_CONTENT_TYPE.toString() : ct.toString());
-        // TODO: get this from the properties
-        conn.setRequestProperty("User-Agent", "https://wiseman.dev.java.net");
+        String userAgent = System.getProperty(USERAGENT_PROPERTY);
+        if ((userAgent == null) || (userAgent.length() == 0))
+        	userAgent = "https://wiseman.dev.java.net";
+        conn.setRequestProperty("User-Agent", userAgent);
 
         final HttpURLConnection http = (HttpURLConnection) conn;
         http.setRequestMethod("POST");
@@ -333,6 +341,10 @@ public final class HttpClient {
 
         final HttpURLConnection http = initConnection(destination, contentType);
         http.setRequestProperty("Accept", ContentType.ACCEPTABLE_CONTENT_TYPES);
+        String charset = System.getProperty(CHARACTER_SET_ENCODING);
+        if ((charset == null) || (charset.length() == 0))
+        	charset = AcceptCharset.ACCEPTABLE_CHARSETS;
+        http.setRequestProperty("Accept-Charset", charset);
         http.setInstanceFollowRedirects(false);
         return http;
     }

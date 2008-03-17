@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.22.8.1  2008/02/14 08:25:03  denis_rachal
+ **Enhancement to trace the incoming request at the server.
+ **
  **Revision 1.22  2007/11/30 14:32:38  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -51,7 +54,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgent.java,v 1.22.8.1 2008-02-14 08:25:03 denis_rachal Exp $
+ * $Id: WSManAgent.java,v 1.22.8.2 2008-03-17 07:24:37 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -65,6 +68,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
+import javax.xml.soap.MimeHeaders;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.Source;
 
@@ -82,6 +86,8 @@ import com.sun.ws.management.server.message.SAAJMessage;
 import com.sun.ws.management.server.message.WSManagementRequest;
 import com.sun.ws.management.server.message.WSManagementResponse;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.transport.AcceptCharset;
+import com.sun.ws.management.transport.ContentType;
 import com.sun.ws.management.transport.HttpClient;
 
 /**
@@ -153,10 +159,14 @@ public abstract class WSManAgent extends WSManAgentSupport {
             Management saajResponse = new Management(response.toSOAPMessage());
             saajResponse.setXmlBinding(getXmlBinding());
             fillReturnAddress(request, saajResponse);
-            if(LOG.isLoggable(Level.FINE))
-                LOG.log(Level.FINE, "Request / Response content type " +
-                        request.getContentType());
-            saajResponse.setContentType(request.getContentType());
+            final ContentType responseContentType = getResponseContentType(request);
+            if(LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, "Request content type: " +
+                		request.getContentType());
+                LOG.log(Level.FINE, "Response content type: " +
+                		responseContentType);
+            }
+            saajResponse.setContentType(responseContentType);
             
             Message ret = handleResponse(saajResponse, getValidEnvelopeSize(request));
             return ret;
@@ -178,7 +188,23 @@ public abstract class WSManAgent extends WSManAgentSupport {
         }
     }
     
-    private static void fillReturnAddress(Addressing request,
+    private ContentType getResponseContentType(final Management request) {
+    	// Create the response content type based upon what the caller will accept
+		final MimeHeaders headers = request.getMessage().getMimeHeaders();
+		final String[] accept = headers.getHeader("accept-charset");
+		
+		// Concatenate multiple headers into one
+		final StringBuffer charsets = new StringBuffer();
+		if (accept != null) {
+			for (int i = 0; i < accept.length; i++) {
+				charsets.append(accept[i]);
+			}
+		}
+		final String encoding = AcceptCharset.getPrefferedCharset(charsets.toString());
+		return ContentType.createFromEncoding(encoding);
+	}
+    
+	private static void fillReturnAddress(Addressing request,
             Addressing response)
             throws JAXBException, SOAPException {
         response.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());

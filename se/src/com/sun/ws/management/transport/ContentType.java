@@ -20,12 +20,15 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.4  2007/09/18 20:08:56  nbeers
+ **Add support for SOAP with attachments.  Issue #136.
+ **
  **Revision 1.3  2007/05/30 20:31:07  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: ContentType.java,v 1.4 2007-09-18 20:08:56 nbeers Exp $
+ * $Id: ContentType.java,v 1.4.8.1 2008-03-17 07:24:36 denis_rachal Exp $
  */
 package com.sun.ws.management.transport;
 
@@ -36,15 +39,16 @@ public final class ContentType {
     private static final String CHARSET = "charset";
     private static final String DEFAULT_CHARSET= "utf-8";
     private static final String UTF16_CHARSET= "utf-16";
+    private static final String ISO_8859_1_CHARSET= "iso-8859-1";
     
     public static final ContentType DEFAULT_CONTENT_TYPE = new ContentType();
     public static final ContentType UTF16_CONTENT_TYPE = createFromEncoding(UTF16_CHARSET);
+    public static final ContentType ISO_8859_1_CONTENT_TYPE = createFromEncoding(ISO_8859_1_CHARSET);
     public static final ContentType ATTACHMENT_CONTENT_TYPE = createFromAttachment();
 
-    // either utf-8 or utf-16 is acceptable
+    // either SOAP mime or attach type is acceptable
     public static final String ACCEPTABLE_CONTENT_TYPES =
-            SOAP_MIME_TYPE + ";" + CHARSET + "=" + DEFAULT_CHARSET + ", " +
-            SOAP_MIME_TYPE + ";" + CHARSET + "=" + UTF16_CHARSET + ", " +
+            SOAP_MIME_TYPE + ", " +
             SOAP_ATTACH_TYPE;
     
     private boolean acceptable = true;
@@ -71,7 +75,8 @@ public final class ContentType {
                             CHARSET.equals(charset[i].trim())) {
                         final String value = unquote(charset[i + 1].trim());
                         if (DEFAULT_CHARSET.equalsIgnoreCase(value) ||
-                                UTF16_CHARSET.equalsIgnoreCase(value)) {
+                                UTF16_CHARSET.equalsIgnoreCase(value) ||
+                                ISO_8859_1_CHARSET.equalsIgnoreCase(value)) {
                             foundCharSet = true;
                             contentType.encoding = value;
                             break;
