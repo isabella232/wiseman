@@ -22,7 +22,9 @@
 
 package com.sun.ws.management.client.impl.j2se;
 
+import java.io.OutputStream;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
@@ -37,29 +39,31 @@ import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
- *
+ * 
  * JAX-WS Message API based implementation.
  */
 class J2SESOAPResponse implements SOAPResponse {
-    
-    private final Addressing message;
-    private final XmlBinding binding;
-    private final Map<String, ?> context;
-    
-    private boolean payloadRead = false;
-    private Object payload = null;
-    
-    /** Creates a new instance of WSMessage */
-    public J2SESOAPResponse(final Addressing message,
-    		final XmlBinding binding, 
-    		final Map<String, ?> context) {
-        this.message = message;
-        this.binding = binding;
-        this.context = context;
-    }
 
-    public Object getPayload() {
-         if (!payloadRead) {
+	private final static Logger logger = Logger
+			.getLogger(J2SESOAPResponse.class.getCanonicalName());
+
+	private final Addressing message;
+	private final XmlBinding binding;
+	private final Map<String, ?> context;
+
+	private boolean payloadRead = false;
+	private Object payload = null;
+
+	/** Creates a new instance of WSMessage */
+	public J2SESOAPResponse(final Addressing message, final XmlBinding binding,
+			final Map<String, ?> context) {
+		this.message = message;
+		this.binding = binding;
+		this.context = context;
+	}
+
+	public Object getPayload() {
+		if (!payloadRead) {
 			payloadRead = true;
 			final SOAPBody body = message.getBody();
 			if (body != null) {
@@ -74,27 +78,36 @@ class J2SESOAPResponse implements SOAPResponse {
 				}
 			}
 		}
-        return payload;
-    }
-    
+		return payload;
+	}
+
 	public Map<String, ?> getResponseContext() {
 		return this.context;
 	}
 
 	public Object getHeader(QName name) throws SOAPException, JAXBException {
-        final SOAPElement[] headers = message.getChildren(message.getHeader(), name);
-        if ((headers == null) || (headers.length == 0))
-        	return null;
-        return binding.unmarshal(headers[0]);
-	}
-
-	public Map<String, String> getNamespaceDeclarations() {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO: Can have multiple entries for some headers
+		final SOAPElement[] headers = message.getChildren(message.getHeader(),
+				name);
+		if ((headers == null) || (headers.length == 0))
+			return null;
+		return binding.unmarshal(headers[0]);
 	}
 
 	public boolean isFault() throws JAXBException, SOAPException {
-		// TODO Auto-generated method stub
 		return ((message.getFault() == null) ? false : true);
+	}
+
+	public void writeTo(final OutputStream os, final boolean formatted)
+			throws Exception {
+		if (formatted == true) {
+			message.prettyPrint(os);
+		} else {
+			message.writeTo(os);
+		}
+	}
+
+	public String toString() {
+		return message.toString();
 	}
 }

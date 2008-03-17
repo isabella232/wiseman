@@ -29,7 +29,6 @@ import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.namespace.QName;
 import javax.xml.soap.MessageFactory;
 import javax.xml.soap.SOAPConstants;
 import javax.xml.soap.SOAPException;
@@ -41,7 +40,6 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.transfer.ObjectFactory;
 
 import com.sun.ws.management.Management;
-import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.wsman.WSManRequest;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.xml.XPath;
@@ -51,25 +49,10 @@ public class WSManTransferRequest extends WSManRequest {
 
 	public static final ObjectFactory FACTORY = new ObjectFactory();
 
-	WSManTransferRequest() {
-		super(null);
-	}
-
 	public WSManTransferRequest(final EndpointReferenceType epr,
 			final Map<String, ?> context, final XmlBinding binding)
 	throws Exception  {
 		super(epr, context, binding);
-	}
-
-	public WSManTransferRequest(final String endpoint,
-			final Map<String, ?> context, final QName serviceName,
-			final QName portName, final XmlBinding binding)
-			throws Exception  {
-		super(endpoint, context, serviceName, portName, binding);
-	}
-
-	public WSManTransferRequest(final SOAPRequest request) {
-		super(request);
 	}
 
 	public void setFragmentHeader(final String xpath) throws SOAPException,

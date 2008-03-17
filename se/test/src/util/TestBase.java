@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: TestBase.java,v 1.1 2007-12-03 09:15:10 denis_rachal Exp $
+ * $Id: TestBase.java,v 1.1.8.1 2008-03-17 07:31:37 denis_rachal Exp $
  */
 
 package util;
 
 import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,6 +42,13 @@ public abstract class TestBase extends TestCase {
     public static final String UUID_SCHEME = "uuid:";
     public static final String JAXB_PACKAGE_FOO_TEST = "foo.test";
     public static final String JAXB_PACKAGE_USER_TEST = "com.hp.examples.ws.wsman.user";
+    public static final String USER_NS_PREFIX = "user";
+    public static final String USER_NS_URI = "http://examples.hp.com/ws/wsman/user";
+    public static final String FOO_NS_PREFIX = "foo";
+    public static final String FOO_NS_URI = "http://test.foo";
+    
+    public static final Map<String, String> NS_MAP = new HashMap<String, String>();
+    
 	public static final Logger LOG = Logger.getLogger("com.sun.ws.management");
 	
     public static String DESTINATION =
@@ -71,6 +80,8 @@ public abstract class TestBase extends TestCase {
 		} catch (JAXBException e) {
 			fail("Cannot initialize XmlBinding");
 		}
+		NS_MAP.put(USER_NS_PREFIX, USER_NS_URI);
+		NS_MAP.put(FOO_NS_PREFIX, FOO_NS_URI);
 	}
     
     public TestBase(final String testName) {

@@ -23,15 +23,13 @@
 
 package com.sun.ws.management.client.message.addressing;
 
+import java.io.OutputStream;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.AttributedQName;
@@ -42,10 +40,17 @@ import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferencePropertiesType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ServiceNameType;
 
+import com.sun.ws.management.Management;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.WSManMessageFactory;
 import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.SOAPResponse;
+import com.sun.ws.management.enumeration.Enumeration;
+import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.server.WSManAgent;
 import com.sun.ws.management.soap.SOAP;
+import com.sun.ws.management.transfer.Transfer;
+import com.sun.ws.management.xml.XMLSchema;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
@@ -63,40 +68,21 @@ public class WSAddressingRequest implements SOAPRequest {
 	
 	private final SOAPRequest request;
 	
-	private boolean isToSet = false;
-	private boolean isActionSet = false;
-	private boolean isReplyToSet = false;
-	private boolean isMessageIdSet = false;
 	private boolean isFromSet = false;
 	private boolean isFaultToSet = false;
 	private boolean isPayloadSet = false;
 
+	private static Map<String,String> extensionNamespaces = WSManAgent.locateExtensionNamespaces();
 	
-	WSAddressingRequest() {
+	protected WSAddressingRequest() {
         this.request = null;
-	}
-	
-	// TODO: Remove this constructor.
-	public WSAddressingRequest(final SOAPRequest request) {
-		this.request = request;
 	}
 	
 	public WSAddressingRequest(final EndpointReferenceType epr,
                                final Map<String, ?> context,
                                final XmlBinding binding) throws Exception {
 		this.request = WSManMessageFactory.newInstance().newRequest(epr, context, binding);
-		setTo(epr);
-	}
-	
-	public WSAddressingRequest(final String endpoint,
-                               final Map<String, ?> context,
-                               final QName serviceName,
-                               final QName portName,
-                               final XmlBinding binding)
-			throws Exception {
-		this.request = WSManMessageFactory.newInstance().newRequest(endpoint,
-				context, serviceName, portName, binding);
-		setTo(endpoint);
+		addNamespaceDeclarations();
 	}
 	
 	public void addNamespaceDeclaration(String prefix, String uri) {
@@ -104,90 +90,34 @@ public class WSAddressingRequest implements SOAPRequest {
 	}
 	
 	public void addNamespaceDeclarations(Map<String, String> declarations) {
-		this.request.addNamespaceDeclarations(declarations);
-	}
-	
-	public void setPayload(final Object content) {
-		this.setPayload(content, null);
+		if ((declarations != null) && (declarations.size() > 0)) {
+			final Set<String> prefixes = declarations.keySet();
+			final Iterator<String> iter = prefixes.iterator();
+			while (iter.hasNext()) {
+				final String prefix = iter.next();
+				final String uri = declarations.get(prefix);
+				this.request.addNamespaceDeclaration(prefix, uri);
+			}
+		}
 	}
 
-	public synchronized void setPayload(final Object content, final JAXBContext ctx) {
+	public synchronized void setPayload(final Object content) {
 		if (isPayloadSet)
 			throw new IllegalStateException("env:Body payload is already set.");
-		this.request.setPayload(content, ctx);
+		this.request.setPayload(content);
 		isPayloadSet = true;
 	}
 
-	public synchronized void setAction(final String action) throws JAXBException {
-		if (isActionSet)
-			throw new IllegalStateException("Header wsa:Action is already set.");
-        final AttributedURI actionURI = FACTORY.createAttributedURI();
-        actionURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
-        actionURI.setValue(action.trim());
-        final JAXBElement<AttributedURI> actionElement = FACTORY.createAction(actionURI);
-        this.request.addHeader(actionElement, null);
-        isActionSet = true;
-	}
-	
-	private void setTo(final EndpointReferenceType epr) throws JAXBException {
-		// Set the different parts of the EPR
-		setTo(epr.getAddress().getValue());
-		
-		final ReferenceParametersType refParams = epr.getReferenceParameters();
-		if (refParams != null) {
-			final List<Object> refs = refParams.getAny();
-			addHeaders(refs);
-		}
-		
-		final ReferencePropertiesType properties = epr.getReferenceProperties();
-		if (properties != null) {
-			final List<Object> props = refParams.getAny();
-			addHeaders(props);
-		}
-		
-		final List<Object> any = epr.getAny();
-		if (any != null) {
-			addHeaders(any);
-		}
-	}
-	
-	private void addHeaders(final List<Object> headers) throws JAXBException {
-		if (headers == null)
-			return;
-		final Iterator<Object> iterator = headers.iterator();
-		while (iterator.hasNext())
-			addHeader(iterator.next());
+	public void setAction(final String action) throws JAXBException {
+		this.request.setAction(action);
 	}
 
-	private void setTo(final String address) throws JAXBException {
-		if (isToSet)
-			throw new IllegalStateException("Header wsa:To is already set.");
-        final AttributedURI toURI = FACTORY.createAttributedURI();
-        toURI.setValue(address.trim());
-        toURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
-        final JAXBElement<AttributedURI> toElement = FACTORY.createTo(toURI);
-        this.request.addHeader(toElement, null);
-        isToSet = true;
-	}
-
-	public synchronized void setReplyTo(final EndpointReferenceType replyToEPR) throws JAXBException {
-		if (isReplyToSet)
-			throw new IllegalStateException("Header wsa:ReplyTo is already set.");
-		final JAXBElement<EndpointReferenceType> replyToElement = 
-			FACTORY.createReplyTo(replyToEPR);
-		this.request.addHeader(replyToElement, null);
-		isReplyToSet = true;
+	public void setReplyTo(final EndpointReferenceType replyToEPR) throws JAXBException {
+		this.request.setReplyTo(replyToEPR);
 	}
 	
-    public synchronized void setMessageId(final String msgId) throws JAXBException, SOAPException {
-		if (isMessageIdSet)
-			throw new IllegalStateException("Header wsa:MessageID is already set.");
-        final AttributedURI msgIdURI = FACTORY.createAttributedURI();
-        msgIdURI.getOtherAttributes().put(SOAP.MUST_UNDERSTAND, Boolean.TRUE.toString());
-        msgIdURI.setValue(msgId.trim());
-        final JAXBElement<AttributedURI> msgIdElement = FACTORY.createMessageID(msgIdURI);
-        this.request.addHeader(msgIdElement, null);
-        isMessageIdSet = true;
+    public void setMessageId(final String msgId) throws JAXBException, SOAPException {
+        this.request.setMessageId(msgId);
     }
 
 	public synchronized void setFaultTo(final EndpointReferenceType faultToEPR) throws JAXBException {
@@ -195,7 +125,7 @@ public class WSAddressingRequest implements SOAPRequest {
 			throw new IllegalStateException("Header wsa:From is already set.");
 		final JAXBElement<EndpointReferenceType> faultToElement =
 			FACTORY.createFaultTo(faultToEPR);
-		this.request.addHeader(faultToElement, null);
+		this.request.addHeader(faultToElement);
 		isFaultToSet = true;
 	}
 
@@ -204,21 +134,14 @@ public class WSAddressingRequest implements SOAPRequest {
 			throw new IllegalStateException("Header wsa:From is already set.");
 		final JAXBElement<EndpointReferenceType> fromElement = 
 			FACTORY.createFrom(from);
-		this.request.addHeader(fromElement, null);
+		this.request.addHeader(fromElement);
 		isFromSet = true;
 	}
 	
 
-	public synchronized void addHeader(Object header)
+	public void addHeader(Object header)
 			throws JAXBException {
-		this.addHeader(header, null);
-	}
-
-	// TODO: This should probably be protected.
-	public synchronized void addHeader(Object header, JAXBContext ctx)
-			throws JAXBException {
-		// TODO: Add checks for known headers.
-		this.request.addHeader(header, null);
+		this.request.addHeader(header);
 	}
 
 	public Map<String, ?> getRequestContext() {
@@ -229,25 +152,11 @@ public class WSAddressingRequest implements SOAPRequest {
 		return this.request.getXmlBinding();
 	}
 	
-	public synchronized SOAPResponse invoke() throws Exception {
-		if (!isToSet)
-			throw new IllegalStateException("Message is missing required wsa:To header.");
-		if (!isActionSet)
-			throw new IllegalStateException("Message is missing required wsa:Action header.");
-		if (!isReplyToSet)
-		    setReplyTo(createEndpointReference(ANONYMOUS_ENDPOINT_URI, null, null, null, null)); // Replying to creator
-		if (!isMessageIdSet)
-			setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+	public SOAPResponse invoke() throws Exception {
 		return new WSAddressingResponse(this.request.invoke());
 	}
 	
-	public synchronized void invokeOneWay() throws Exception {
-		if (!isToSet)
-			throw new IllegalStateException("Message is missing required wsa:To header.");
-		if (!isActionSet)
-			throw new IllegalStateException("Message is missing required wsa:Action header.");
-		if (!isMessageIdSet)
-			setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
+	public void invokeOneWay() throws Exception {
 		this.request.invokeOneWay();
 	}
 	
@@ -285,4 +194,33 @@ public class WSAddressingRequest implements SOAPRequest {
 
         return epr;
     }
+
+	public void writeTo(OutputStream os, boolean formatted) throws Exception {
+		this.request.writeTo(os, formatted);
+	}
+	
+	public String toString() {
+		return this.request.toString();
+	}
+	
+    private void addNamespaceDeclarations() throws SOAPException {
+		// TODO: Find a better place for this?
+		// Having all the namespace declarations in the envelope keeps
+		// JAXB from putting these on every element
+		addNamespaceDeclaration(XMLSchema.NS_PREFIX, XMLSchema.NS_URI);
+		addNamespaceDeclaration(SOAP.NS_PREFIX, SOAP.NS_URI);
+		addNamespaceDeclaration(Addressing.NS_PREFIX, Addressing.NS_URI);
+		addNamespaceDeclaration(Eventing.NS_PREFIX, Eventing.NS_URI);
+		addNamespaceDeclaration(Enumeration.NS_PREFIX, Enumeration.NS_URI);
+		addNamespaceDeclaration(Transfer.NS_PREFIX, Transfer.NS_URI);
+		addNamespaceDeclaration(Management.NS_PREFIX, Management.NS_URI);
+
+		//Check to see if there are additional namespaces to add
+		if ((extensionNamespaces != null) && (extensionNamespaces.size() > 0)) {
+			for (String key : extensionNamespaces.keySet()) {
+				addNamespaceDeclaration(key.trim(), extensionNamespaces
+						.get(key).trim());
+			}
+		}
+	}
 }

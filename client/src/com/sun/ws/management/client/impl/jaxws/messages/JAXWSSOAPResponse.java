@@ -20,19 +20,28 @@
  *
  */
 
-package com.sun.ws.management.client.impl.jaxws;
+package com.sun.ws.management.client.impl.jaxws.messages;
 
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.OutputStream;
 import java.util.Map;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import javax.xml.ws.Dispatch;
 
+import org.w3c.dom.Document;
+
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.xml.XmlBinding;
 import com.sun.xml.ws.api.message.Header;
@@ -104,13 +113,32 @@ class JAXWSSOAPResponse implements SOAPResponse {
 			return null;
 	}
 
-	public Map<String, String> getNamespaceDeclarations() {
-		// TODO Auto-generated method stub
-		return new HashMap<String, String>();
+	public boolean isFault() {
+		return message.isFault();
 	}
 
-	public boolean isFault() {
-		// TODO Auto-generated method stub
-		return false;
+	public void writeTo(OutputStream os, boolean formatted) throws Exception {
+		final Message msg = message.copy();
+		final XMLOutputFactory factory = XMLOutputFactory.newInstance();
+		if (formatted == true) {
+			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			final XMLStreamWriter writer = factory.createXMLStreamWriter(bos);
+			msg.writeTo(writer);
+			writer.flush();
+			writer.close();
+			final byte[] content = bos.toByteArray();
+			final ByteArrayInputStream bis = new ByteArrayInputStream(content);
+			final Document doc = Addressing.getDocumentBuilder().parse(bis);
+			final OutputFormat format = new OutputFormat(doc);
+			format.setLineWidth(72);
+			format.setIndenting(true);
+			format.setIndent(2);
+			final XMLSerializer serializer = new XMLSerializer(os, format);
+			serializer.serialize(doc);
+			os.write("\n".getBytes());
+		} else {
+			final XMLStreamWriter writer = factory.createXMLStreamWriter(os);
+			msg.writeTo(writer);
+		}
 	}
 }

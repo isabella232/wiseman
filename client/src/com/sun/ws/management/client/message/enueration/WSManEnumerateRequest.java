@@ -25,18 +25,13 @@ package com.sun.ws.management.client.message.enueration;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
-import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPConstants;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPMessage;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableEmpty;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
@@ -45,7 +40,6 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 
-import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.client.message.wsman.WSManRequest;
 import com.sun.ws.management.soap.SOAP;
@@ -55,37 +49,16 @@ import com.sun.ws.management.xml.XmlBinding;
 public class WSManEnumerateRequest extends WSManEnumerationRequest {
 	
 	public static final String ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Enumerate";
-    
+	
 	private final EndpointReferenceType epr;
 	private int maxElements = -1;	
 
-	WSManEnumerateRequest() {
-		super(null);
-		this.epr = null;
-	}
-	
 	public WSManEnumerateRequest(final EndpointReferenceType epr,
 			final Map<String, ?> context, final XmlBinding binding)
 	throws Exception {
 		super(epr, context, binding);
 		setAction(ACTION_URI);
 		this.epr = epr;
-	}
-
-	// TODO: Remove this constructor.
-	public WSManEnumerateRequest(final String endpoint,
-			final Map<String, ?> context, final QName serviceName,
-			final QName portName, final XmlBinding binding) throws Exception {
-		super(endpoint, context, serviceName, portName, binding);
-		setAction(ACTION_URI);
-		this.epr = null;
-	}
-
-	// TODO: Remove this constructor.
-	public WSManEnumerateRequest(final SOAPRequest request) throws JAXBException {
-		super(request);
-		setAction(ACTION_URI);
-		this.epr = null;
 	}
 	
 	public Enumerate createEnumerate(final EndpointReferenceType endTo,
@@ -162,6 +135,16 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 
 		dialectableMixedDataType.getOtherAttributes().put(SOAP.MUST_UNDERSTAND,
 				Boolean.TRUE.toString());
+		
+		// We add any namspaces to the object.
+		// This is needed for namespaces used in the expression itself, e.g.
+		// the XPath expression can have namespace qualifiers.
+		if (namespaces != null) {
+			Map<QName, String> attributeMap = dialectableMixedDataType.getOtherAttributes();
+			for (Map.Entry<String, String> decl : namespaces.entrySet()) {
+				addNamespaceDeclaration(decl.getKey(), decl.getValue());
+			}
+		}
 
 		// add the query string to the content of the FragmentTransfer Header
 		dialectableMixedDataType.getContent().addAll(expression);
@@ -169,24 +152,7 @@ public class WSManEnumerateRequest extends WSManEnumerationRequest {
 		final JAXBElement<DialectableMixedDataType> filter = WSManRequest.FACTORY
 				.createFilter(dialectableMixedDataType);
 
-		// We need a special treatment for this header in order
-		// to add the specified namespace declarations to the
-		// wsman:FragmentTransfer header
-		if (namespaces != null) {
-			// TODO: This is J2EE dependent not J2SE! Change to use J2SE API.
-			final SOAPMessage msg = MessageFactory.newInstance(
-					SOAPConstants.SOAP_1_2_PROTOCOL).createMessage();
-			final SOAPElement body = msg.getSOAPBody();
-			getXmlBinding().getJAXBContext().createMarshaller().marshal(
-					filter, body);
-			final Iterator<SOAPElement> iter = body.getChildElements();
-			final SOAPElement element = iter.next();
-			for (Map.Entry<String, String> decl : namespaces.entrySet()) {
-				element.addNamespaceDeclaration(decl.getKey(), decl.getValue());
-			}
-			return element;
-		} else
-			return filter;
+		return filter;
 	}
 	
 	

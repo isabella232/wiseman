@@ -24,20 +24,19 @@
 package com.sun.ws.management.client.message.eventing;
 
 import java.net.URI;
+import java.util.Map;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.wsman.WSManRequest;
+import com.sun.ws.management.xml.XmlBinding;
 
 public class WSManEventingRequest extends WSManRequest {
-
-	WSManEventingRequest() {
-        super(null);
-	}
 	
-	public WSManEventingRequest(final SOAPRequest request) {
-		super(request);
+	public WSManEventingRequest(final EndpointReferenceType epr,
+			final Map<String, ?> context, final XmlBinding binding)
+	throws Exception  {
+		super(epr, context, binding);
 	}
 	
 	public void setSubscribe(final URI deliveryMode, final String expires) {

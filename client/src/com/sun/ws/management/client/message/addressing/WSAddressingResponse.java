@@ -23,7 +23,7 @@
 
 package com.sun.ws.management.client.message.addressing;
 
-import java.util.Map;
+import java.io.OutputStream;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -56,8 +56,6 @@ public class WSAddressingResponse implements SOAPResponse {
 		
 	private final SOAPResponse response;
 	
-    private boolean namespacesRead;
-    private Map<String, String> namespaces;
     private boolean payloadRead;
     private Object payload;
     private boolean isFaultRead;
@@ -79,14 +77,6 @@ public class WSAddressingResponse implements SOAPResponse {
 	
 	public WSAddressingResponse(final SOAPResponse response) {
 		this.response = response;
-	}
-
-	public synchronized Map<String, String> getNamespaceDeclarations() {
-        if(!namespacesRead) {
-        	namespacesRead = true;
-            namespaces = this.response.getNamespaceDeclarations();
-        }
-        return namespaces;
 	}
 
 	public synchronized Object getPayload() throws Exception  {
@@ -175,5 +165,13 @@ public class WSAddressingResponse implements SOAPResponse {
 			}
 		}
 		return value;
+	}
+
+	public void writeTo(OutputStream os, boolean formatted) throws Exception {
+		this.response.writeTo(os, formatted);
+	}
+	
+	public String toString() {
+		return this.response.toString();
 	}
 }

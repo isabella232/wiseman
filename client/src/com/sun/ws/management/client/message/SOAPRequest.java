@@ -22,22 +22,33 @@
 
 package com.sun.ws.management.client.message;
 
+import java.io.OutputStream;
 import java.util.Map;
 
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.soap.SOAPException;
+
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import com.sun.ws.management.xml.XmlBinding;
 
 public interface SOAPRequest {
 	
 	void addNamespaceDeclaration(final String prefix, final String uri);
+
+	void addHeader(final Object header) throws JAXBException;
 	
-	void addNamespaceDeclarations(Map<String, String> declarations);
+	void setAction(final String action) throws JAXBException;
+	
+	void setFaultTo(final EndpointReferenceType faultToEPR) throws JAXBException;
+	
+	void setFrom(final EndpointReferenceType from) throws JAXBException;
+	
+	void setMessageId(final String msgId) throws JAXBException, SOAPException;
+	
+	void setReplyTo(final EndpointReferenceType replyToEPR) throws JAXBException;
 
-	void addHeader(final Object header, final JAXBContext ctx) throws JAXBException;
-
-	void setPayload(final Object content, final JAXBContext ctx);
+	void setPayload(final Object content);
 	
 	Map<String, ?> getRequestContext();
 	
@@ -46,4 +57,6 @@ public interface SOAPRequest {
 	SOAPResponse invoke() throws Exception;
 	
 	void invokeOneWay() throws Exception;
+	
+	void writeTo(final OutputStream os, final boolean formatted) throws Exception;
 }

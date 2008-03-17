@@ -22,16 +22,16 @@
 
 package com.sun.ws.management.client.message;
 
-import java.util.Map;
+import java.io.OutputStream;
 
 import javax.xml.namespace.QName;
 
 public interface SOAPResponse {
-	Map<String, String> getNamespaceDeclarations();
-
 	Object getPayload() throws Exception;
 
 	Object getHeader(final QName name) throws Exception;
 
-	boolean isFault() throws Exception ;
+	boolean isFault() throws Exception;
+	
+	void writeTo(final OutputStream os, final boolean formatted) throws Exception;
 }

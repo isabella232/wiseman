@@ -20,6 +20,12 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7.6.2  2008/02/13 07:37:53  denis_rachal
+ **Enumeration & ResourceIterator now work. For working examples see:
+ **
+ **   ResourceIterator.testGet2()
+ **	ResourceTest.testEnumeration2()
+ **
  **Revision 1.7.6.1  2008/02/11 07:25:31  denis_rachal
  **This is an initial submittal of a proposed new client API. It takes ideas from
  **Jean-Francois, Simeon and myself. It is based upon work done in the original
@@ -188,7 +194,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.7.6.2 2008-02-13 07:37:53 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.7.6.3 2008-03-17 07:31:33 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -248,7 +254,7 @@ import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
 import com.sun.ws.management.client.impl.j2se.J2SEMessageFactory;
-import com.sun.ws.management.client.impl.jaxws.JAXWSMessageFactory;
+import com.sun.ws.management.client.impl.jaxws.messages.JAXWSMessageFactory;
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
 import com.sun.ws.management.client.message.transfer.WSManCreateRequest;

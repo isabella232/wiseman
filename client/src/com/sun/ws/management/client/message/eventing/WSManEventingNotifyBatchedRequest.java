@@ -23,15 +23,18 @@
 
 package com.sun.ws.management.client.message.eventing;
 
-import com.sun.ws.management.client.message.SOAPRequest;
+import java.util.Map;
+
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+
+import com.sun.ws.management.xml.XmlBinding;
+
 
 public class WSManEventingNotifyBatchedRequest extends WSManEventingNotifyRequest {
 	
-	WSManEventingNotifyBatchedRequest() {
-        super();
-	}
-	
-	public WSManEventingNotifyBatchedRequest(final SOAPRequest request) {
-		super(request);
+	public WSManEventingNotifyBatchedRequest(final EndpointReferenceType epr,
+			final Map<String, ?> context, final XmlBinding binding)
+	throws Exception  {
+		super(epr, context, binding);
 	}
 }

@@ -26,7 +26,6 @@ package com.sun.ws.management.client;
 import java.io.IOException;
 import java.util.Map;
 
-import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPException;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -39,24 +38,6 @@ import com.sun.ws.management.xml.XmlBinding;
  * A IWSManMessageFactory for creating SOAPMessage instances.
  */
 public interface IWSManMessageFactory {
-    
-    /**
-     * Create a new request.
-     * 
-     * @param endpoint
-     * @param context
-     * @param serviceName
-     * @param portName
-     * @param binding
-     * @return an object that implements the SOAPRequest interface
-     * @throws IOException
-     * @throws SOAPException 
-     */
-    SOAPRequest newRequest(final String endpoint,
-	                       final Map<String, ?> context,
-	                       final QName serviceName,
-	                       final QName portName,
-	                       final XmlBinding binding) throws Exception;
     
     /**
      * Create a new request.

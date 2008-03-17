@@ -25,12 +25,8 @@ package com.sun.ws.management.client.message.transfer;
 
 import java.util.Map;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.namespace.QName;
-
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -38,26 +34,10 @@ public class WSManDeleteRequest extends WSManTransferRequest {
 	
     public static final String ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete";
 	
-	WSManDeleteRequest() {
-        super();
-	}
-	
 	public WSManDeleteRequest(final EndpointReferenceType epr,
 			final Map<String, ?> context, final XmlBinding binding)
 	throws Exception  {
 		super(epr, context, binding);
-		setAction(ACTION_URI);
-	}
-
-	public WSManDeleteRequest(final String endpoint,
-			final Map<String, ?> context, final QName serviceName,
-			final QName portName, final XmlBinding binding) throws Exception {
-		super(endpoint, context, serviceName, portName, binding);
-		setAction(ACTION_URI);
-	}
-	
-	public WSManDeleteRequest(final SOAPRequest request) throws JAXBException {
-		super(request);
 		setAction(ACTION_URI);
 	}
 	

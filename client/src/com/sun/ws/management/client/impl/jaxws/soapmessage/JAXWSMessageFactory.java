@@ -19,7 +19,8 @@
  **
  *
  */
-package com.sun.ws.management.client.impl.j2se;
+
+package com.sun.ws.management.client.impl.jaxws.soapmessage;
 
 import java.io.IOException;
 import java.util.Map;
@@ -29,7 +30,7 @@ import javax.xml.soap.SOAPException;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-import com.sun.ws.management.client.IWSManMessageFactory;
+import com.sun.ws.management.client.WSManMessageFactory;
 import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -37,15 +38,35 @@ import com.sun.ws.management.xml.XmlBinding;
  *
  * Default JAX-WS message factory.
  */
-public class J2SEMessageFactory implements IWSManMessageFactory {
+public class JAXWSMessageFactory extends WSManMessageFactory {
+
+    /**
+     * Map entry specifying the SSL Socket factory to be used by JAX-WS stub.
+     */
+    public static final String JAXWS_SSL_SOCKET_FACTORY =
+            "com.sun.xml.ws.transport.https.client.SSLSocketFactory";
+    /**
+     * Map entry to disable Fast-Infoset. Value is meaningless.
+     * By default, Fast-Infoset is enabled.
+     */
+    public static final String JAXWS_NO_FAST_INFOSET =
+            "com.sun.wiseman.jaxws.fastinfoset.disable";
+    /**
+     * Map entry specifying a
+     * List&lt;{@link javax.xml.ws.handler.Handler Handler}&gt;
+     * that will be passed to JAX-WS.
+     */
+    public static final String JAXWS_HANDLER_CHAIN =
+            "com.sun.wiseman.jaxws.handlerchain";
 
     /** Creates a new instance of JAXWSMessageFactory */
-    public J2SEMessageFactory() {
+    public JAXWSMessageFactory() {
     }
 
 	public SOAPRequest newRequest(EndpointReferenceType epr,
 			Map<String, ?> context, XmlBinding binding) throws IOException, SOAPException, JAXBException {
-		return new J2SESOAPRequest(epr, context, binding);
+		// TODO Auto-generated method stub
+		return new JAXWSSOAPRequest(epr, context, binding);
 	}
 
 }

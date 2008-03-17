@@ -40,27 +40,11 @@ import com.sun.ws.management.xml.XmlBinding;
 public class WSManReleaseRequest extends WSManRequest {
 	
     public static final String ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/enumeration/Release";
-
-	WSManReleaseRequest() {
-        super(null);
-	}
 	
 	public WSManReleaseRequest(final EndpointReferenceType epr,
 			final Map<String, ?> context, final XmlBinding binding)
 	throws Exception  {
 		super(epr, context, binding);
-		setAction(ACTION_URI);
-	}
-
-	public WSManReleaseRequest(final String endpoint,
-			final Map<String, ?> context, final QName serviceName,
-			final QName portName, final XmlBinding binding) throws Exception {
-		super(endpoint, context, serviceName, portName, binding);
-		setAction(ACTION_URI);
-	}
-	
-	public WSManReleaseRequest(final SOAPRequest request) throws JAXBException {
-		super(request);
 		setAction(ACTION_URI);
 	}
 

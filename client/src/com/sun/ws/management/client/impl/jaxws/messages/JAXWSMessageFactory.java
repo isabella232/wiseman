@@ -20,12 +20,13 @@
  *
  */
 
-package com.sun.ws.management.client.impl.jaxws;
+package com.sun.ws.management.client.impl.jaxws.messages;
 
 import java.io.IOException;
 import java.util.Map;
 
-import javax.xml.namespace.QName;
+import javax.xml.bind.JAXBException;
+import javax.xml.soap.SOAPException;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
@@ -62,15 +63,8 @@ public class JAXWSMessageFactory implements IWSManMessageFactory {
     public JAXWSMessageFactory() {
     }
 
-	public SOAPRequest newRequest(String endpoint, Map<String, ?> context,
-			QName serviceName, QName portName, XmlBinding binding)
-			throws IOException {
-		// TODO Auto-generated method stub
-		return new JAXWSSOAPRequest(endpoint, context, serviceName, portName, binding);
-	}
-
 	public SOAPRequest newRequest(EndpointReferenceType epr,
-			Map<String, ?> context, XmlBinding binding) throws IOException {
+			Map<String, ?> context, XmlBinding binding) throws IOException, JAXBException, SOAPException {
 		// TODO Auto-generated method stub
 		return new JAXWSSOAPRequest(epr, context, binding);
 	}

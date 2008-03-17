@@ -25,12 +25,9 @@ package com.sun.ws.management.client.message.enueration;
 
 import java.util.Map;
 
-import javax.xml.namespace.QName;
-
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.ObjectFactory;
 
-import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.client.message.wsman.WSManRequest;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -38,24 +35,11 @@ public class WSManEnumerationRequest extends WSManRequest {
 	
 	public static final ObjectFactory FACTORY = new ObjectFactory();
 	
-	WSManEnumerationRequest() {
-        super(null);
-	}
-	
 	public WSManEnumerationRequest(final EndpointReferenceType epr,
 			final Map<String, ?> context, final XmlBinding binding)
 	throws Exception {
 		super(epr, context, binding);
-	}
-
-	public WSManEnumerationRequest(final String endpoint,
-			final Map<String, ?> context, final QName serviceName,
-			final QName portName, final XmlBinding binding) 
-	throws Exception {
-		super(endpoint, context, serviceName, portName, binding);
-	}
-	
-	public WSManEnumerationRequest(final SOAPRequest request) {
-		super(request);
+		addNamespaceDeclaration(WSManEnumerationResponse.NS_PREFIX,
+				WSManEnumerationResponse.NS_URI);
 	}
 }

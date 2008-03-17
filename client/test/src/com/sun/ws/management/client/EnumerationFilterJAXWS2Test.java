@@ -51,7 +51,7 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationFilterJ2SETest.java,v 1.1.2.2 2008-03-17 07:31:33 denis_rachal Exp $
+ * $Id: EnumerationFilterJAXWS2Test.java,v 1.1.2.1 2008-03-17 07:31:33 denis_rachal Exp $
  */
 
 package com.sun.ws.management.client;
@@ -76,7 +76,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import util.TestBase;
 
-import com.sun.ws.management.client.impl.j2se.J2SEMessageFactory;
+import com.sun.ws.management.client.impl.jaxws.messages.JAXWSMessageFactory;
 import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
 import com.sun.ws.management.client.message.enueration.WSManEnumerateResponse;
 import com.sun.ws.management.client.message.enueration.WSManPullRequest;
@@ -93,7 +93,7 @@ import framework.models.UserFilterFactory;
 /**
  * Unit test for WS-Enumeration extensions in WS-Management
  */
-public class EnumerationFilterJ2SETest extends TestBase {
+public class EnumerationFilterJAXWS2Test extends TestBase {
 
 	// XmlBinding binding;
 
@@ -101,13 +101,13 @@ public class EnumerationFilterJ2SETest extends TestBase {
 		super.setUp();
 	}
 
-    public EnumerationFilterJ2SETest(final String testName) {
+    public EnumerationFilterJAXWS2Test(final String testName) {
         super(testName);
 
     }
 
     public static junit.framework.Test suite() {
-        final junit.framework.TestSuite suite = new junit.framework.TestSuite(EnumerationFilterJ2SETest.class);
+        final junit.framework.TestSuite suite = new junit.framework.TestSuite(EnumerationFilterJAXWS2Test.class);
         return suite;
     }
 
@@ -115,8 +115,8 @@ public class EnumerationFilterJ2SETest extends TestBase {
     	String xpath = XPath.NS_URI;
     	String custom = UserFilterFactory.DIALECT;
     	
-		// Run with J2SE
-		WSManMessageFactory.setDefaultFactory(J2SEMessageFactory.class.getCanonicalName());
+		// Run with JAX-WS
+		WSManMessageFactory.setDefaultFactory(JAXWSMessageFactory.class.getCanonicalName());
 
     	filterEnumerationTest(xpath, ".");
     	filterEnumerationTest(xpath, "/user:user");
@@ -140,8 +140,9 @@ public class EnumerationFilterJ2SETest extends TestBase {
     	filterEnumerationTest(custom, "Gates");
     	filterEnumerationTest(custom, "Washington");
     	filterEnumerationTest(custom, "Ritter");
+
     }
-    
+
     public void filterEnumerationTest(final String dialect, final String expression) throws Exception {
 
     	final String resource = "wsman:auth/user";
@@ -194,6 +195,7 @@ public class EnumerationFilterJ2SETest extends TestBase {
 			// Add the namespace for the filter
 			Map<String, String> map = new HashMap<String, String>();
 			map.put("user", UserEnumerationHandler.NS_URI);
+        	// Map<String, String> map = null;
 
 			final List<Object> filterExpression = new ArrayList<Object>();
 			filterExpression.add(expression);
@@ -225,7 +227,7 @@ public class EnumerationFilterJ2SETest extends TestBase {
 
         response.writeTo(logfile, true);
         if (response.isFault()) {
-            response.writeTo(logfile, true);
+        	response.writeTo(System.err, true);
             // this test fails with an AccessDenied fault if the server is
             // running in the sun app server with a security manager in
             // place (the default), which disallows enumeration of
@@ -240,20 +242,19 @@ public class EnumerationFilterJ2SETest extends TestBase {
 
         final BigInteger ee = response.getTotalItemsCountEstimate();
         assertNotNull(ee);
-        assertTrue("Wrong number returned: " + ee.longValue(), (ee.longValue() > 0));
+        assertTrue(ee.longValue() > 0);
 
         if (response.isEndOfSequence() == false) {
 
-        	final WSManPullRequest enuPull = response.createPullRequest(3);
+        	WSManPullRequest enuPull = response.createPullRequest(3);
         	enuPull.addNamespaceDeclarations(NS_MAP);
         	enuPull.requestTotalItemsCountEstimate();
-        	enuPull.addNamespaceDeclarations(NS_MAP);
 
         	enuPull.writeTo(logfile, true);
-        	final WSManPullResponse pullResponse = (WSManPullResponse)enuPull.invoke();
-        	pullResponse.writeTo(logfile, true);
+        	WSManPullResponse pullResponse = (WSManPullResponse)enuPull.invoke();
+            pullResponse.writeTo(logfile, true);
             if (pullResponse.isFault()) {
-                pullResponse.writeTo(System.err, true);
+            	pullResponse.writeTo(System.err, true);
                 fail("Fault");
             }
 

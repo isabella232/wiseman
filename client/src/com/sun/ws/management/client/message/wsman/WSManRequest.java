@@ -63,24 +63,11 @@ public class WSManRequest extends WSAddressingRequest {
 
 	public static final ObjectFactory FACTORY = new ObjectFactory();
 
-	WSManRequest() {
-		super(null);
-	}
-
-	public WSManRequest(final SOAPRequest request) {
-		super(request);
-	}
-
 	public WSManRequest(final EndpointReferenceType epr,
 			final Map<String, ?> context, final XmlBinding binding)
 	throws Exception  {
 		super(epr, context, binding);
-	}
-
-	public WSManRequest(final String endpoint, final Map<String, ?> context,
-			final QName serviceName, final QName portName,
-			final XmlBinding binding) throws Exception  {
-		super(endpoint, context, serviceName, portName, binding);
+		addNamespaceDeclaration(WSManResponse.NS_PREFIX, WSManResponse.NS_URI);
 	}
 
 	public void setResourceURI(final String resourceURI) throws JAXBException {

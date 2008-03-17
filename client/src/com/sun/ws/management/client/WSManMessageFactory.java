@@ -31,7 +31,6 @@ import javax.xml.namespace.QName;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
 import com.sun.ws.management.client.impl.j2se.J2SEMessageFactory;
-import com.sun.ws.management.client.impl.jaxws.JAXWSMessageFactory;
 import com.sun.ws.management.client.message.SOAPRequest;
 import com.sun.ws.management.xml.XmlBinding;
 
@@ -41,7 +40,13 @@ import com.sun.ws.management.xml.XmlBinding;
  */
 public abstract class WSManMessageFactory implements IWSManMessageFactory {
 	
-	private static String defaultFactory = JAXWSMessageFactory.class.getCanonicalName();
+    public static final String USERNAME_PROPERTY = "com.sun.ws.management.client.security.auth.username";
+    public static final String PASSWORD_PROPERTY = "com.sun.ws.management.client.security.auth.password";
+    public static final String CHARACTER_SET_ENCODING = "com.sun.ws.management.client.soap.character-set-encoding";
+    public static final String USERAGENT_PROPERTY = "com.sun.ws.management.client.http.useragent";
+	
+	private static String defaultFactory = 
+		com.sun.ws.management.client.impl.jaxws.messages.JAXWSMessageFactory.class.getCanonicalName();
 	
 	protected WSManMessageFactory() {		
 	}
@@ -53,26 +58,17 @@ public abstract class WSManMessageFactory implements IWSManMessageFactory {
     
 	static public IWSManMessageFactory newInstance() {
 		// TODO: Use reflection to create the default factory.
-		if (defaultFactory.equals(JAXWSMessageFactory.class.getCanonicalName()))
-			return new JAXWSMessageFactory();
+		if (defaultFactory.equals(com.sun.ws.management.client.impl.jaxws.messages.JAXWSMessageFactory.class.getCanonicalName()))
+			return new com.sun.ws.management.client.impl.jaxws.messages.JAXWSMessageFactory();
+		if (defaultFactory.equals(com.sun.ws.management.client.impl.jaxws.soapmessage.JAXWSMessageFactory.class.getCanonicalName()))
+			return new com.sun.ws.management.client.impl.jaxws.soapmessage.JAXWSMessageFactory();
 		if (defaultFactory.equals(J2SEMessageFactory.class.getCanonicalName()))
 			return new J2SEMessageFactory();
 		return null;
 	}
-	
-    /**
-     * Create a new request. 
-     * @return a new SOAPRequest object
-     * @throws IOException 
-     */
-    public abstract SOAPRequest newRequest(final String endpoint,
-	                                     final Map<String, ?> context,
-	                                     final QName serviceName,
-	                                     final QName portName,
-	                                     final XmlBinding binding) throws IOException;
     
     public abstract SOAPRequest newRequest(final EndpointReferenceType epr,
 	                                     final Map<String, ?> context,
-	                                     final XmlBinding binding) throws IOException;
+	                                     final XmlBinding binding) throws Exception;
     
 }

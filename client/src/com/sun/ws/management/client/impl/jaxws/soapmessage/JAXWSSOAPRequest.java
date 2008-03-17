@@ -20,12 +20,14 @@
  *
  */
 
-package com.sun.ws.management.client.impl.jaxws;
+package com.sun.ws.management.client.impl.jaxws.soapmessage;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +36,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocketFactory;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.SOAPConstants;
+import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Dispatch;
@@ -47,31 +52,27 @@ import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 import javax.xml.ws.soap.SOAPBinding;
 
-import org.w3c.dom.Element;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ServiceNameType;
 
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.sun.ws.management.Management;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.WSManMessageConfiguration;
-import com.sun.ws.management.client.message.SOAPRequest;
+import com.sun.ws.management.client.impl.SOAPRequestBase;
 import com.sun.ws.management.client.message.SOAPResponse;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XmlBinding;
-import com.sun.xml.bind.api.JAXBRIContext;
-import com.sun.xml.ws.api.SOAPVersion;
-import com.sun.xml.ws.api.message.Header;
-import com.sun.xml.ws.api.message.HeaderList;
-import com.sun.xml.ws.api.message.Headers;
-import com.sun.xml.ws.api.message.Message;
-import com.sun.xml.ws.api.message.Messages;
 import com.sun.xml.ws.developer.MemberSubmissionAddressingFeature;
 
 /**
  * 
  * JAX-WS Message API based implementation.
  */
-class JAXWSSOAPRequest implements SOAPRequest {
+class JAXWSSOAPRequest extends SOAPRequestBase {
 
 	/**
 	 * Map entry specifying the SSL Socket factory to be used by JAX-WS stub.
@@ -89,17 +90,13 @@ class JAXWSSOAPRequest implements SOAPRequest {
 	public static final String JAXWS_HANDLER_CHAIN = "com.sun.wiseman.jaxws.handlerchain";
 
 	private final static Logger logger = Logger
-			.getLogger("com.sun.ws.management.client");
-
-	private Object payload;
-	private XmlBinding binding;
-	private JAXBRIContext jaxbContext;
-	private JAXBRIContext payloadContext;
-	private HeaderList headers = new HeaderList();
-	private SOAPMessage soapMessage;
-	private Map<String, String> namespaces;
+			.getLogger(JAXWSSOAPRequest.class.getCanonicalName());
 	
-	private final Dispatch<Message> proxy;
+	private final Dispatch<SOAPMessage> proxy;
+	
+	private String action;
+	private boolean isActionSet = false;
+	private boolean isToSet = false;
 
 	private static class WSManHeadersHandler implements
 			SOAPHandler<SOAPMessageContext> {
@@ -138,16 +135,9 @@ class JAXWSSOAPRequest implements SOAPRequest {
 		}
 	}
 
-	public JAXWSSOAPRequest(String endpoint, Map<String, ?> context,
-			QName serviceName, QName portName, XmlBinding binding) throws IOException {
-		
-		this.proxy = createJAXWSStub(endpoint, context, serviceName, portName);
-		this.jaxbContext = (JAXBRIContext) binding.getJAXBContext();
-		this.namespaces = new HashMap<String, String>();
-	}
-
 	public JAXWSSOAPRequest(EndpointReferenceType epr, Map<String, ?> context,
-			XmlBinding binding) throws IOException {
+			XmlBinding binding) throws IOException, SOAPException, JAXBException {
+		super(epr, context, binding);
 		
 		final ServiceNameType service = epr.getServiceName();
 		
@@ -166,100 +156,111 @@ class JAXWSSOAPRequest implements SOAPRequest {
 			portName = new QName(serviceName.getNamespaceURI(), port, serviceName.getPrefix());
 		}
 		this.proxy = createJAXWSStub(epr.getAddress().getValue(), context, serviceName, portName);
-		this.binding = binding;
-		this.jaxbContext = (JAXBRIContext) binding.getJAXBContext();
-		this.namespaces = new HashMap<String, String>();
 	}
 
-	public Message buildMessage() {
-		if (soapMessage != null)
-			return Messages.create(soapMessage);
-
-		Message msg;
-		if (payload == null)
-			msg = Messages.createEmpty(SOAPVersion.SOAP_12);
-		else if (payload instanceof Element)
-			msg = Messages.createUsingPayload((Element) payload,
-					SOAPVersion.SOAP_12);
-		else {
-			msg = Messages.create(payloadContext, payload, SOAPVersion.SOAP_12);
+	protected SOAPMessage buildSOAPMessage() throws SOAPException, JAXBException {
+		final SOAPMessage request = MessageFactory.newInstance(
+				SOAPConstants.SOAP_1_2_PROTOCOL).createMessage();
+		
+		// Add the namespaces
+		for (Map.Entry<String, String> decl : getNamespaceDeclarations().entrySet()) {
+			request.getSOAPPart().getEnvelope().addNamespaceDeclaration(
+					decl.getKey(), decl.getValue());
 		}
-
-		HeaderList headerList = msg.getHeaders();
-
-		if (headers.size() > 0)
-			headerList.addAll(headers);
-
-		return msg;
+		
+		// Add the headers
+		addMsgHeaders(getHeaders(), request);
+		if (getPayload() != null)
+			getXmlBinding().getJAXBContext().createMarshaller().marshal(getPayload(), request.getSOAPBody());
+		return request;
+	}
+    
+	public synchronized void setAction(final String action) throws JAXBException {
+		if (isActionSet)
+			throw new IllegalStateException("Header wsa:Action is already set.");
+        this.action = action;
+        isActionSet = true;
+	}
+	
+	protected synchronized String getAction() {
+		return this.action;
 	}
 
-	public void setPayload(Object jaxb, JAXBContext ctx) {
-		payload = jaxb;
-		payloadContext = (ctx != null) ? (JAXBRIContext) ctx : jaxbContext;
+    public boolean isReplyToSet() {
+    	return true;
+    }
+    
+    public boolean isMessageIdSet() {
+    	return true;
+    }
+	
+	protected void setTo(final String address) throws JAXBException {
+		if (isToSet)
+			throw new IllegalStateException("Header wsa:To is already set.");
+        isToSet = true;
+	}
+	
+	protected synchronized boolean isToSet() {
+		return this.isToSet;
 	}
 
-	public void addHeader(Object obj, JAXBContext ctx)
-			throws JAXBException {
-		final JAXBRIContext context = 
-			(ctx != null) ? (JAXBRIContext) ctx : jaxbContext;
-		if (obj instanceof Element)
-			headers.add(Headers.create((Element) obj));
-		else
-			headers.add(Headers.create(context, obj));
-	}
-
-	public void addNamespaceDeclaration(final String prefix, final String uri) {
-		// TODO: I believe this can be ignored for JAX-WS
-		this.namespaces.put(prefix, uri);
-	}
-
-	public void addNamespaceDeclarations(Map<String, String> declarations) {
-		// TODO: I believe this can be ignored for JAX-WS
-		if ((declarations != null) && (declarations.size() > 0))
-			this.namespaces.putAll(declarations);
-	}
-
-	public void setSOAPMessage(SOAPMessage msg) {
-		soapMessage = msg;
-	}
-
-	public SOAPResponse invoke() {
-		final Header action = headers.get(Addressing.ACTION, true);
-		if (action == null)
+	public SOAPResponse invoke() throws SOAPException, IOException, JAXBException {
+		final SOAPMessage request = this.buildSOAPMessage();
+		final String action = getAction();
+		if ((action == null) || (action.length() == 0))
 			throw new IllegalStateException("wsa:Action header has not been set.");
 		proxy.getRequestContext().put(BindingProvider.SOAPACTION_URI_PROPERTY,
-				action.getStringContent());
+				action);
 		proxy.getRequestContext().put(BindingProvider.SOAPACTION_USE_PROPERTY,
 				true);
-		final Message request = this.buildMessage();
-		final Message response = proxy.invoke(request);
+		if (logger.isLoggable(Level.FINE))
+			logger.fine("<request>\n" + toString(request) + "</request>\n");
+		final SOAPMessage response = proxy.invoke(request);
 		if (response == null) {
 			return null;
 		}
-		return new JAXWSSOAPResponse(response, binding, proxy);
+		if (logger.isLoggable(Level.FINE))
+			logger.fine("<response>\n" + toString(response) + "</response>\n");
+		return new JAXWSSOAPResponse(response, getXmlBinding(), proxy);
 	}
 
-	public void invokeOneWay() {
-		final Header action = headers.get(Addressing.ACTION, true);
-		if (action == null)
+	public void invokeOneWay() throws SOAPException, JAXBException {
+		final String action = getAction();
+		if ((action == null) || (action.length() == 0))
 			throw new IllegalStateException("wsa:Action header has not been set.");
 		proxy.getRequestContext().put(BindingProvider.SOAPACTION_URI_PROPERTY,
-				action.getStringContent());
+				action);
 		proxy.getRequestContext().put(BindingProvider.SOAPACTION_USE_PROPERTY,
 				true);
-		final Message message = buildMessage();
+		final SOAPMessage message = buildSOAPMessage();
+		if (logger.isLoggable(Level.FINE))
+			logger.fine("<request>\n" + toString(message) + "</request>\n");
 		proxy.invokeOneWay(message);
 	}
-
-	public Map<String, ?> getRequestContext() {
-		return proxy.getRequestContext();
-	}
 	
-	public XmlBinding getXmlBinding() {
-		return binding;
+	
+    private void addMsgHeaders(final List<Object> anyList,
+    		final SOAPMessage msg)
+			throws JAXBException, SOAPException {
+		if ((anyList == null) || (anyList.size() == 0)) {
+			return;
+		}
+
+		final SOAPHeader header = msg.getSOAPHeader();
+		final XmlBinding binding = getXmlBinding();
+		for (final Object any : anyList) {
+			if (any instanceof Node) {
+				final Node node = (Node) any;
+				// NOTE: can be a performance hog if the node is deeply nested
+				header.appendChild(header.getOwnerDocument().importNode(node,
+						true));
+			} else {
+				binding.marshal(any, header);
+			}
+		}
 	}
 
-	private static Dispatch<Message> createJAXWSStub(String endpoint,
+	private static Dispatch<SOAPMessage> createJAXWSStub(String endpoint,
 			Map<String, ?> reqContext, QName serviceName, QName portName)
 			throws IOException {
 		try {
@@ -275,8 +276,8 @@ class JAXWSSOAPRequest implements SOAPRequest {
 
 			service.addPort(portName, binding, endpoint);
 
-			Dispatch<Message> port = service.createDispatch(portName,
-					Message.class, Service.Mode.MESSAGE,
+			Dispatch<SOAPMessage> port = service.createDispatch(portName,
+					SOAPMessage.class, Service.Mode.MESSAGE,
 					new MemberSubmissionAddressingFeature(true, true));
 
 			BindingProvider provider = (BindingProvider) port;
@@ -364,5 +365,58 @@ class JAXWSSOAPRequest implements SOAPRequest {
 			}
 			throw e;
 		}
+	}
+
+	public void writeTo(final OutputStream os, final boolean formatted)
+			throws Exception {
+		final SOAPMessage message = buildSOAPMessage();
+		if (formatted == true) {
+			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			message.writeTo(bos);
+			final byte[] content = bos.toByteArray();
+			final ByteArrayInputStream bis = new ByteArrayInputStream(content);
+			final Document doc = Addressing.getDocumentBuilder().parse(bis);
+			final OutputFormat format = new OutputFormat(doc);
+			format.setLineWidth(72);
+			format.setIndenting(true);
+			format.setIndent(2);
+			final XMLSerializer serializer = new XMLSerializer(os, format);
+			serializer.serialize(doc);
+			os.write("\n".getBytes());
+		} else {
+			message.writeTo(os);
+		}
+	}
+
+	public String toString() {
+		try {
+			return toString(buildSOAPMessage());
+		} catch (SOAPException e) {
+			logger
+					.severe("Could not serialize message due to unexpected SOAPException: "
+							+ e.getMessage());
+		} catch (JAXBException e) {
+			logger
+					.severe("Could not serialize message due to unexpected JAXBException: "
+							+ e.getMessage());
+		}
+		return "";
+	}
+	
+	private static String toString(final SOAPMessage message) {
+		try {
+			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			message.writeTo(bos);
+			return bos.toString();
+		} catch (SOAPException e) {
+			logger
+					.severe("Could not serialize message due to unexpected SOAPException: "
+							+ e.getMessage());
+		}  catch (IOException e) {
+			logger
+					.severe("Could not serialize message due to unexpected IOException: "
+							+ e.getMessage());
+		}
+		return "";
 	}
 }
