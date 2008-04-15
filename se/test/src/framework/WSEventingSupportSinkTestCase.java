@@ -46,8 +46,8 @@ import com.sun.ws.management.addressing.Addressing;
 
 import com.sun.ws.management.soap.SOAP;
 
-public class WSEventingSupportSinkTest extends TestBase {
-	public WSEventingSupportSinkTest(final String testName) {
+public class WSEventingSupportSinkTestCase extends TestBase {
+	public WSEventingSupportSinkTestCase(final String testName) {
 		super(testName);
 	}
 

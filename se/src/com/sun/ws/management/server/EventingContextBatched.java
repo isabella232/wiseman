@@ -34,13 +34,14 @@ import com.sun.ws.management.Management;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.DatatypeFactory;
-
+import java.util.Timer;
 
 public class EventingContextBatched extends EventingContextWithAck {
 
 	private int maxElements;	 //reference the WS-Management Spec Line 3399
 	private Duration maxTime;  //reference the WS-Management Spec Line 3414
 	private final EventsType events;
+	private Timer maxTimer = null;
 
 	private static final int DEFAULT_MAXELEMENTS = 1; // The default value is not mentioned in WS-Management Spec .
 	private static final long DEFAULT_MAXTIME_MINUTES = 5; // The default value is not mentioned in WS-Management Spec .
@@ -57,7 +58,7 @@ public class EventingContextBatched extends EventingContextWithAck {
         super(expiration, filter, notifyTo, listener , eventReplyTo, operationTimeout);
         this.maxElements = maxElements;
         this.maxTime = maxTime;
-        this.events = Management.FACTORY.createEventsType();
+        this.events = Management.FACTORY.createEventsType();       
     }
 
 	EventingContextBatched(final XMLGregorianCalendar expiration,
@@ -84,28 +85,55 @@ public class EventingContextBatched extends EventingContextWithAck {
        	this.events = Management.FACTORY.createEventsType();
 	}
 	
-	int getMaxElements(){
+	int getMaxElements() {
 		return this.maxElements;
 	}
-	void setMaxElements(int maxElements){
-		this.maxElements = maxElements;
+	void setMaxElements(int maxElements) {
+		if (maxElements <= 0)
+			this.maxElements = DEFAULT_MAXELEMENTS;
+		else
+			this.maxElements = maxElements;
 	}
 	
-	Duration getMaxTime(){
+	Duration getMaxTime() {
 		return this.maxTime;
 	}
 
-	void setMaxTime(Duration maxTime){
+	void setMaxTime(Duration maxTime) {
 		this.maxTime = maxTime;
 	}
 	
 	EventsType getEvents() {
-		return this.events;
+		synchronized (this.events) {
+			return this.events;
+		}
 	}
 	
 	void clearEvents() {
 		synchronized (this.events) {
+			cancelMaxTimer();
 			this.events.getEvent().clear();
+		}
+	}
+	
+	Timer getMaxTimer() {
+		synchronized (this.events) {
+			return this.maxTimer;
+		}
+	}
+	
+	void cancelMaxTimer() {
+		synchronized (this.events) {
+			if (this.maxTimer != null) {
+				this.maxTimer.cancel();
+				this.maxTimer = null;
+			}
+		}
+	}
+	
+	void setMaxTimer(final Timer timer) {
+		synchronized (this.events) {
+			this.maxTimer = timer;
 		}
 	}
 }

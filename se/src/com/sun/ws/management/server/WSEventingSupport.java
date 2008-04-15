@@ -23,6 +23,14 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.3.2.4  2008/02/01 21:01:34  denis_rachal
+ **Issue number:  157
+ **Obtained from:
+ **Submitted by:  Chuan Xiao
+ **Reviewed by:
+ **
+ **Prototype methods added for handling batched events.
+ **
  **Revision 1.3.2.3  2008/01/29 07:52:07  denis_rachal
  **Correct order in sendEvent() of check for context intance type.
  **
@@ -112,16 +120,21 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.3.2.4 2008-02-01 21:01:34 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.3.2.5 2008-04-15 11:32:31 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -135,10 +148,13 @@ import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableDuration;
+import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableURI;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EventType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -177,6 +193,119 @@ import com.sun.ws.management.transport.HttpClient;
  * subscriptions using the WS-Eventing protocol.
  */
 public final class WSEventingSupport extends WSEventingBaseSupport {
+	
+	/**
+	 * Denis Rachal provides the algorithm to solve the race conditions between MaxTime and MaxElements in Batched Delivery mode.
+	 * The algorithm is as followed.
+	 * 1. Create a SendEventsTask.
+	 * 2. When sending an event on a EventingContextBatched synchronize the EventingContextBatched.events:
+	 *    a. If EventingContextBatched.events.getEvent().size() goes from 0 to 1 schedule a SendEventTask to run in MaxTime.
+	 *    b. else if EventingContextBatched.events.getEvent().size() now equals maxElements:
+     *       1) Send the events and reset the count to 0.
+     *       2) cancel the SendEventsTask
+     * 3. When/if the SendEventsTask runs synchronize the EventingContextBatched.events:
+     *    a. If the EventingContextBatched.events.getEvent().size() > 0 Send the events and reset the count to 0.
+     *    b. else just exit.
+     *    
+	 * @author Denis Rachal
+	 * @implementor Chuan Xiao of Fudan-Hitach InsTech Joint Laboratory
+	 *  
+	 */
+	static class SendEventsTask extends TimerTask {
+        private UUID context;
+        
+        SendEventsTask(UUID context) throws InvalidSubscriptionException {
+        	final BaseContext baseContext = retrieveContext(context);
+        	if (baseContext instanceof EventingContextBatched)
+                this.context = context;
+        	else
+        		throw new InvalidSubscriptionException("SendEventsTask(): Internal error. Subscription must be of type EventingContextBatched.");
+        }
+        
+        public void run() {
+        	EventingContextBatched ctxbatched;
+			try {
+				ctxbatched = (EventingContextBatched)retrieveContext(context);
+			} catch (InvalidSubscriptionException e) {
+				LOG.info("Subscription expired.");
+				return;
+			}
+			
+			sendEvents(ctxbatched);
+        }
+
+		private void sendEvents(EventingContextBatched ctxbatched) {
+			
+			final EventsType events = ctxbatched.getEvents();
+			
+			synchronized(events) {
+				// Check that this subscription has not been deleted
+				if (ctxbatched.isDeleted() == false) {
+					try {
+						// Check if we were canceled after we started
+						final Timer maxTimer = ctxbatched.getMaxTimer();
+						if ((maxTimer == null)
+								|| (maxTimer.equals(this) == false))
+							return;
+
+						final List<EventType> eventList = events.getEvent();
+
+						// Check if nothing to send
+						if (eventList.size() == 0)
+							return;
+
+						final Addressing msg = createEventMessageBatched(
+								ctxbatched, events);
+
+						if (msg != null) {
+							int rc = 0;
+							
+							// Send the events
+							if ((ctxbatched.getUsername() != null)
+									&& (ctxbatched.getPassword() != null))
+								rc = HttpClient.sendResponse(msg, ctxbatched
+										.getUsername(), ctxbatched
+										.getPassword());
+							else
+								rc = HttpClient.sendResponse(msg);
+							
+							// TODO: Handle 3xx error codes (redirection).
+							//       Currently not supported.
+							if ((rc >= 200) && (rc < 300)) {
+								LOG.fine(eventList.size()
+										+ " batched events sent. HTTP Status="
+										+ rc);
+								ctxbatched.clearEvents(); // reset the count to 0
+							} else {
+								// Non-recoverable error contacting subscriber
+								LOG
+										.warning("Subscriber not reachable. HTTP Status="
+												+ rc
+												+ ". Deleting subscription.");
+								ctxbatched.clearEvents();
+								removeContext(null, this.context);
+							}
+						}
+					} catch (SOAPException e) {
+						logExceptionStackTrace(
+								e,
+								"Unexpected SOAPException encountered while attempting to send events to subscriber: ");
+						removeContext(null, this.context);
+					} catch (JAXBException e) {
+						logExceptionStackTrace(
+								e,
+								"Unexpected JAXBException encountered while attempting to send events to subscriber: ");
+						removeContext(null, this.context);
+					} catch (IOException e) {
+						// TODO: Subscriber not reachable now. Add retry mechanism.
+						LOG.warning("IOException encountered while attempting to send events to subscriber. Deleting subscription. ");
+						removeContext(null, this.context);
+					}
+				}
+        	}
+		}
+    }
+
 	
 	private static final Logger LOG = Logger.getLogger(WSEventingSupport.class.getName());
     
@@ -579,7 +708,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             	// Here we use the default eventReplyTo and operationTimeout.
             	// Customers will set explicitly eventReplyTo and 
             	// operationTimeout using the setSendXXX(UUID,xxx)
-            	// after this subscribe(...) was called. 
+            	// after this subscribe(...) is called. 
             	ctx = new EventingContextWithAck (expiration,
             			                          filter,
             			                          notifyTo,
@@ -587,24 +716,43 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
             	
             } else if (deliveryMode.equals(EventingExtensions.EVENTS_DELIVERY_MODE)) {
             	// Batched Delivery Mode
-            
-            	// TODO: get the MaxElements and MaxTime from the variable delivery 
-            	//      then use them as the parameters of the constructor.  
-                // int maxElements;
-                // Duration maxTime;
             	
-            	// Here we use the default eventReplyTo,default operationTimeout,
-            	// default maxElements,default maxTime. After the Batched
-            	// Delivery Mode is supported, the maxElements and the maxTime
-            	// should be set in the EventingContextBatched constructor.
-            	// But the eventReplyTo and operationTimeout are set explicitly using
-            	// the setSendXXX(UUID,xxx) after this subscribe(...) was called.
+            	// Here we use a default eventReplyTo, & default operationTimeout.
+            	// MaxElements & MaxTime are obtained from the Delivery object.
+            	// The eventReplyTo and operationTimeout are set explicitly using
+            	// the setSendXXX(UUID,xxx) after this subscribe(...) is called.
             	// because the eventReplyTo and operationTimeout are not in the
             	// Subscribe Action request.
-                ctx = new EventingContextBatched(expiration,
-                		                         filter,
-                		                         notifyTo,
-                		                         listener);  
+            	final EventingContextBatched contextBatched = new EventingContextBatched(expiration,
+                		                                                                 filter,
+                		                                                                 notifyTo,
+                		                                                                 listener);
+                int maxElements = 0;
+                Duration maxTime = null;
+                MaxEnvelopeSizeType maxEnvelope = null;
+                
+                for (final Object content : delivery.getContent()) {
+                    if (JAXBElement.class.equals(content.getClass())) {
+                        final JAXBElement element = (JAXBElement) content;
+                        final QName name = element.getName();
+                        if (Management.MAX_ELEMENTS.equals(name)) {
+                        	maxElements = ((AttributablePositiveInteger)element.getValue()).getValue().intValue();
+                        } else if (Management.MAX_TIME.equals(name)) {
+                        	maxTime = ((AttributableDuration)element.getValue()).getValue();
+                        } else if (Management.MAX_ENVELOPE_SIZE.equals(name)) {
+                        	maxEnvelope = ((MaxEnvelopeSizeType)element.getValue());
+                        }
+                    }
+                }
+                if (maxElements > 0)
+                	contextBatched.setMaxElements(maxElements);
+                if (maxTime != null)
+                	contextBatched.setMaxTime(maxTime);
+                if (maxEnvelope != null) {
+                	// TODO: Add support for MaxEnvelopeSize.
+                	throw new UnsupportedFeatureFault(UnsupportedFeatureFault.Detail.MAX_ENVELOPE_SIZE);
+                }
+            	ctx = contextBatched;
             } else {
             	// Not one of the supported delivery modes
             	throw new DeliveryModeRequestedUnavailableFault(SUPPORTED_DELIVERY_MODES);
@@ -1021,10 +1169,10 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 			}
 		} else if (bctx instanceof EventingContextBatched) {
 			// Batched delivery mode
-			final EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
+			final EventingContextBatched ctxbatched = (EventingContextBatched) bctx;			
 			final EventsType events = ctxbatched.getEvents();
 			
-			synchronized (events) {
+			synchronized(events) {
 				final List<EventType> eventList = events.getEvent();
 				final EventType eventType = Management.FACTORY.createEventType();
 				if (filtered instanceof Document)
@@ -1032,28 +1180,27 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 				else
 					eventType.getAny().add(filtered);
 				eventList.add(eventType);
-
-				// TODO: Must set a timer to handle MaxTime case
-
-				// Check if the maximum number of elements has been reached.
-				if (ctxbatched.getMaxElements() >= eventList.size()) {
-					// Time to send the batch of events
-					final Addressing msg = createEventMessageBatched(ctxbatched, events);
-
-					if (msg != null) {
-						int rc = 0;
-						if ((ctxbatched.getUsername() != null)
-								&& (ctxbatched.getPassword() != null))
-							rc = HttpClient.sendResponse(msg, ctxbatched
-									.getUsername(), ctxbatched.getPassword());
-						else
-							rc = HttpClient.sendResponse(msg);
-						LOG.fine(eventList.size() + " batched events sent. HTTP Status=" + rc);
-						eventList.clear();
-						result = ((rc >= 200) && (rc < 300));
-					}
+				
+				final SendEventsTask task = new SendEventsTask(id);
+				
+				if (eventList.size() == ctxbatched.getMaxElements()) {
+					// Cancel any outstanding timer
+					ctxbatched.cancelMaxTimer();
+					
+					// Create a new Timer task to handle the send now in the background
+					final Timer nowTimer = new Timer(true);
+					ctxbatched.setMaxTimer(nowTimer);
+					nowTimer.schedule(task, 0);
+				} else if (eventList.size() == 1) { //from 0 to 1
+					// Cancel any outstanding timer (should not be any outstanding)
+					ctxbatched.cancelMaxTimer();
+					
+					// Create a new Timer task to handle the send at MaxTime
+					final Timer maxTimer = new Timer(true);
+					ctxbatched.setMaxTimer(maxTimer);
+					maxTimer.schedule(task, ctxbatched.getMaxTime().getTimeInMillis(new Date()));
 				}
-			}
+			}			
 		} else if (bctx instanceof EventingContextWithAck) {
 			// Push with acknowledge delivery mode
 			final EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
@@ -1068,7 +1215,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 				result = parseEventResponse(response);
 
 				if (!result)
-					WSEventingSupport.unsubscribe(id.toString());
+					removeContext(null, id);
 			}
 		} else if (bctx instanceof EventingContext) {
 			// Standard Push mode, send the data
@@ -1081,8 +1228,16 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 					rc = HttpClient.sendResponse(msg, ctx.getUsername(), ctx.getPassword());
 				else
 					rc = HttpClient.sendResponse(msg);
-				LOG.fine("Event sent. HTTP Status=" + rc);
 				result = ((rc >= 200) && (rc < 300));
+				// TODO: Handle 3xx error codes (redirection). Currently not supported.
+				if (result) {
+				    LOG.fine("Event sent. HTTP Status=" + rc);
+				} else {
+					// Non-recoverable error contacting subscriber
+					LOG.warning("Subscriber not reachable. HTTP Status=" +
+							rc + ". Deleting subscription.");
+					removeContext(null, id);
+				}
 			}
 		} else {
 			// Not an Eventing subscription. Throw an exception.
@@ -1155,8 +1310,17 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 			rc = HttpClient.sendResponse(msg, ctx.getUsername(), ctx.getPassword());
 		else
 			rc = HttpClient.sendResponse(msg);
-		LOG.fine("Event sent. HTTP Status=" + rc);
-		return ((rc >= 200) && (rc < 300));
+		boolean result = ((rc >= 200) && (rc < 300));
+		// TODO: Handle 3xx error codes (redirection). Currently not supported.
+		if (result) {
+		    LOG.fine("Event sent. HTTP Status=" + rc);
+		} else {
+			// Non-recoverable error contacting subscriber
+			LOG.warning("Subscriber not reachable. HTTP Status=" +
+					rc + ". Deleting subscription.");
+			removeContext(null, id);
+		}
+		return result;
     }
     
     private synchronized static EnumerationIterator newIterator(
@@ -1278,5 +1442,20 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
 		} else
 			throw new IllegalArgumentException(
 					"Subscription does not have an option named MaxTime");
+	}
+	
+	private static void logExceptionStackTrace(Exception e, final String message) {
+		if (e.getMessage() != null)
+		   LOG.severe(message + e.getMessage());
+		else if (e.getLocalizedMessage() != null)
+			LOG.severe(message + e.getLocalizedMessage());
+		else
+			LOG.severe(message);
+		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		final PrintWriter pw = new PrintWriter(bos);
+		e.printStackTrace(pw);
+		pw.flush();
+		pw.close();
+		LOG.severe(bos.toString());
 	}
 }
