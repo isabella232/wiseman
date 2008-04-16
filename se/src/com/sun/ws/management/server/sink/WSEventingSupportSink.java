@@ -47,34 +47,43 @@ import com.sun.ws.management.xml.XMLSchema;
 
 public class WSEventingSupportSink {
 
-    protected static final String UUID_SCHEME = "urn:uuid:";
-	
-    /**
-     *  Create a DeliveryRefusedFault Message like following:
-     *  This function is called When responding from EventSink.  
-     * 	<s:Envelope ... ...>
-	 *	<s:Header>
-	 *		<wsa:Action>http://schemas.dmtf.org/wbem/wsman/1/wsman/fault</wsa:Action>
-	 *		<wsa:MessageID>uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</wsa:MessageID>
-	 *		<wsa:RelatesTo>reference from the messageID field of request</wsa:RelatesTo>
-	 *	</s:Header>
-	 *	<s:Body>
-	 *		<s:Fault>
-	 *			<s:Code>
-	 *				<s:Value>s:Receiver</s:Value>
-	 *				<s:Subcode> 
-	 *					<s:Value>wsman:DeliveryRefused</s:Value>
-	 *				</s:Subcode>
-	 *			</s:Code>
-	 *			<s:Reason>
-	 *				<s:Text xml:lang=en>reference from Spec</s:Text>
-	 *			</s:Reason>
-	 *			<s:Detail/>
-	 *		</s:Fault>
-	 *	<s:Body/>
-	 *  </s:Envelope>
-	 *
-     */
+	protected static final String UUID_SCHEME = "urn:uuid:";
+
+	/**
+	 * This utility function creates a DeliveryRefusedFault message to be used
+	 * when responding to an event sink. The response message is similar to the
+	 * following example:
+	 * 
+	 * <pre>
+	 * 	&lt;s:Envelope ... ...&gt;
+	 * &lt;s:Header&gt;
+	 * 	&lt;wsa:Action&gt;http://schemas.dmtf.org/wbem/wsman/1/wsman/fault&lt;/wsa:Action&gt;
+	 * 	&lt;wsa:MessageID&gt;uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&lt;/wsa:MessageID&gt;
+	 * 	&lt;wsa:RelatesTo&gt;reference from the messageID field of request&lt;/wsa:RelatesTo&gt;
+	 * &lt;/s:Header&gt;
+	 * &lt;s:Body&gt;
+	 * 	&lt;s:Fault&gt;
+	 * 		&lt;s:Code&gt;
+	 * 			&lt;s:Value&gt;s:Receiver&lt;/s:Value&gt;
+	 * 			&lt;s:Subcode&gt; 
+	 * 				&lt;s:Value&gt;wsman:DeliveryRefused&lt;/s:Value&gt;
+	 * 			&lt;/s:Subcode&gt;
+	 * 		&lt;/s:Code&gt;
+	 * 		&lt;s:Reason&gt;
+	 * 			&lt;s:Text xml:lang=en&gt;reference from Spec&lt;/s:Text&gt;
+	 * 		&lt;/s:Reason&gt;
+	 * 		&lt;s:Detail/&gt;
+	 * 	&lt;/s:Fault&gt;
+	 * &lt;s:Body/&gt;
+	 *  &lt;/s:Envelope&gt;
+	 * </pre>
+	 * 
+	 * @deprecated This method is not needed and should be completely removed.
+	 *             The Wiseman toolkit will allow a sink to just throw a
+	 *             DeliveryRefusedFault exception and the proper fault message
+	 *             will be generated and returned to the source.
+	 * 
+	 */
 	public static Addressing createDeliveryRefusedFaultMessage(
 			Addressing request, String reason) throws SOAPException,
 			JAXBException, IOException {
@@ -85,28 +94,38 @@ public class WSEventingSupportSink {
 		final String UUID_fault = "uuid:";
 		fault_msg.setAction(Management.FAULT_ACTION_URI); // set action
 		fault_msg.setMessageId(UUID_fault + UUID.randomUUID().toString()); // set
-																			// messageID
+		// messageID
 		final String request_URI = request.getMessageId(); // set relatesTo
 		fault_msg.addRelatesTo(request_URI);
 		// set fault
 		final FaultException Fault_ex = new FaultException(null, SOAP.RECEIVER,
-				DeliveryRefusedFault.DELIVERY_REFUSED, reason, (Node[])null);
+				DeliveryRefusedFault.DELIVERY_REFUSED, reason, (Node[]) null);
 		fault_msg.setFault(Fault_ex);
 		// System.out.println(fault_msg);
 		return fault_msg;
 
 	}
-	
-    /**
-	 * Create an ACK Message like following: This function is called When
-	 * responding from EventSink. <s:Envelope> <s:Header> ...
-	 * <wsa:To>reference from the ReplyTo field of request</wsa:To>
-	 * <wsa:Action>http://schemas.dmtf.org/wbem/wsman/1/wsman/Ack</wsa:Action>
-	 * <wsa:RelatesTo>reference from the messageID field of request</wsa:RelatesTo>
-	 * ... </s:Header> <s:Body/> </s:Envelope>
-	 */	
+
+	/**
+	 * This utility function creates a sink acknowledge message to be used when
+	 * responding to an event source. The response message is similar to the
+	 * following example:
+	 * 
+	 * <pre>
+	 * &lt;s:Envelope&gt;
+	 *    &lt;s:Header&gt;
+	 *       ... 
+	 *       &lt;wsa:To&gt;reference from the ReplyTo field of request&lt;/wsa:To&gt;
+	 *       &lt;wsa:Action&gt;http://schemas.dmtf.org/wbem/wsman/1/wsman/Ack&lt;/wsa:Action&gt;
+	 *       &lt;wsa:RelatesTo&gt;reference from the messageID field of request&lt;/wsa:RelatesTo&gt;
+	 *       ...
+	 *    &lt;/s:Header&gt;
+	 *    &lt;s:Body/&gt;
+	 * &lt;/s:Envelope&gt;
+	 * </pre>
+	 */
 	public static Addressing createEventACKAcknowledgement(Addressing request)
-	throws SOAPException, JAXBException, IOException {
+			throws SOAPException, JAXBException, IOException {
 
 		final Addressing response = new Addressing();
 		response.getEnvelope().addNamespaceDeclaration(XMLSchema.NS_PREFIX,
@@ -143,5 +162,5 @@ public class WSEventingSupportSink {
 			return response;
 		}
 		return null;
-	}		 
+	}
 }

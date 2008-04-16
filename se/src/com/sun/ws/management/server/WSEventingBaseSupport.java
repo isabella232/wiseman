@@ -23,6 +23,14 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.4.2.3  2008/02/01 21:01:34  denis_rachal
+ **Issue number:  157
+ **Obtained from:
+ **Submitted by:  Chuan Xiao
+ **Reviewed by:
+ **
+ **Prototype methods added for handling batched events.
+ **
  **Revision 1.4.2.2  2008/01/28 08:00:44  denis_rachal
  **The commit adds several prototype changes to the fudan_contribution. They are described below:
  **
@@ -96,7 +104,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingBaseSupport.java,v 1.4.2.3 2008-02-01 21:01:34 denis_rachal Exp $
+ * $Id: WSEventingBaseSupport.java,v 1.4.2.4 2008-04-16 11:41:58 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -107,6 +115,7 @@ import java.util.UUID;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
@@ -114,11 +123,8 @@ import javax.xml.xpath.XPathException;
 
 import org.dmtf.schemas.wbem.wsman._1.wsman.EventsType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
-
 import org.w3c.dom.Document;
-import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
-
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.ReferenceParametersType;
@@ -222,7 +228,7 @@ public class WSEventingBaseSupport extends BaseSupport {
      * 		   otherwise a Document, Element, or JAXBElement<MixedDataType>
      * @throws SOAPException 
      */
-    public static Object filterEvent(final BaseContext ctx,
+    protected static Object filterEvent(final BaseContext ctx,
     		                         final Object content,
     		                         XmlBinding binding) throws SOAPException {
     	
@@ -290,7 +296,7 @@ public class WSEventingBaseSupport extends BaseSupport {
         }
     }
      
-    public static Addressing createEventPushMessage(final EventingContext ctx,
+    protected static Addressing createEventPushMessage(final EventingContext ctx,
 			final Object content) throws SOAPException, JAXBException,
 			IOException, InvalidSubscriptionException {
 		// Push mode, send the data
@@ -324,10 +330,13 @@ public class WSEventingBaseSupport extends BaseSupport {
 	}
     
     /**
-     * Retrieve the Context associated to passed ID, then create
-     * the WS-Man request for the provided content.
+     * Create the WS-Man push event request for the provided content.
+     * 
+     * @param id identifies the subscription.
+     * @param content the event to be marshaled into the message
+     * 
      */
-    public static Addressing createEventPushMessage(UUID id, Object content)
+    public static Addressing createEventPushMessage(final UUID id, final Object content)
     throws SOAPException, JAXBException, IOException, InvalidSubscriptionException {
         
         final BaseContext bctx = retrieveContext(id);
@@ -337,7 +346,7 @@ public class WSEventingBaseSupport extends BaseSupport {
         	throw new InvalidSubscriptionException("ID is not a for a push eveting subscription.");
     }
     
-    public static Addressing createEventMessageBatched(
+    protected static Addressing createEventMessageBatched(
 			final EventingContextBatched ctx,
 			final EventsType events)
     	throws SOAPException, JAXBException {
@@ -345,7 +354,6 @@ public class WSEventingBaseSupport extends BaseSupport {
 		final Management mgmt = new Management();
 		mgmt.setAction(Management.EVENTS_URI);
 		mgmt.setMessageId(UUID_SCHEME + UUID.randomUUID().toString());
-		mgmt.setReplyTo(ctx.getEventReplyTo());
 		mgmt.setTimeout(ctx.getOperationTimeout());
 
 		final EndpointReferenceType notifyTo = ctx.getNotifyTo();
@@ -369,6 +377,13 @@ public class WSEventingBaseSupport extends BaseSupport {
 		return evtx;
 	}
 
+    /**
+     * Create the WS-Man batched event request for the provided event.
+     * 
+     * @param id identifies the subscription.
+     * @param events the events to be marshaled into the message
+     * 
+     */
 	public static Addressing createEventMessageBatched(final UUID id,
 													   final EventsType events) 
 		throws InvalidSubscriptionException, SOAPException, JAXBException {
@@ -390,19 +405,8 @@ public class WSEventingBaseSupport extends BaseSupport {
 		}
 		return wseReq;
 	}
-    
-	/**
-	 * Create the WS-Man event message for the provided content.
-	 * 
-	 * @param ctx
-	 * @param content
-	 * @return
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 * @throws InvalidSubscriptionException
-	 */
-	public static Addressing createEventMessagePushWithAck(
+	
+	protected static Addressing createEventMessagePushWithAck(
 			final EventingContextWithAck ctx, final Object content)
 			throws SOAPException, JAXBException, IOException,
 			InvalidSubscriptionException {
@@ -413,7 +417,6 @@ public class WSEventingBaseSupport extends BaseSupport {
 			return null;
 		
 		final Management mgmt = new Management(msg);
-		mgmt.setReplyTo(ctx.getEventReplyTo());
 		mgmt.setTimeout(ctx.getOperationTimeout());
 		
 		// Set the AckRequested header
@@ -421,5 +424,61 @@ public class WSEventingBaseSupport extends BaseSupport {
 		evt.setAckRequested();
 
 		return evt;
-	}  
+	}
+	
+    /**
+     * Create the WS-Man push event request with acknowledge
+     * for the provided content.
+     * 
+     * @param id identifies the subscription.
+     * @param content the event to be marshaled into the message
+     * 
+     */
+	public static Addressing createEventMessagePushWithAck(final UUID id,
+			final Object content) throws InvalidSubscriptionException,
+			SOAPException, JAXBException, IOException {
+
+		Addressing wseReq = null;
+
+		final BaseContext bctx = retrieveContext(id);
+		if (bctx instanceof EventingContextWithAck) {
+			final EventingContextWithAck ctxAck = (EventingContextWithAck) bctx;
+			try {
+				wseReq = createEventMessagePushWithAck(ctxAck, content);
+			} catch (SOAPException e) {
+				removeContext(null, ctxAck);
+				throw e;
+			} catch (JAXBException e) {
+				removeContext(null, ctxAck);
+				throw e;
+			}
+		}
+		return wseReq;
+	}
+	
+	/**
+	 * Sets the OperationTimeout value for push event 
+	 * with acknowledge delivery
+	 * to the subscriber. This is set per subscription.
+	 * This value may only be set for subscriptions of
+	 * types: EventingExtensions.PUSH_WITH_ACK_DELIVERY_MODE &
+	 * EventingExtensions.EVENTS_DELIVERY_MODE
+	 * 
+	 * Default OperationTimeout value is: 5 seconds
+	 * 
+	 * @param id ID that identifies the subscription.
+	 * @param operationTimeout the wsman:OperationTimeout
+	 *        value to use when pushing events to the subscriber.
+	 */
+	public static void setSendOperationTimeout(final UUID id,
+			final Duration operationTimeout)
+			throws InvalidSubscriptionException {
+		final BaseContext bctx = retrieveContext(id);
+		if (bctx instanceof EventingContext) {
+			EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
+			ctxwithack.setOperationTimeout(operationTimeout);
+		} else
+			throw new IllegalArgumentException(
+					"Subscription does not have an option named OperationTimeout");
+	}
 }

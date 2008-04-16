@@ -23,6 +23,9 @@
  *** Author: Chuan Xiao (cxiao@fudan.edu.cn)
  ***
  **$Log: not supported by cvs2svn $
+ **Revision 1.3.2.5  2008/04/15 11:32:31  denis_rachal
+ **Added MaxTime & MaxElements for Batched Events contribution from Fudan University (Chuan Xiao).
+ **
  **Revision 1.3.2.4  2008/02/01 21:01:34  denis_rachal
  **Issue number:  157
  **Obtained from:
@@ -120,7 +123,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.3.2.5 2008-04-15 11:32:31 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.3.2.6 2008-04-16 11:41:58 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -1353,95 +1356,12 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
         }
     }
     
-    /**
-	 * Parse the event response from Event Sink.
-	 * If the eventResponse message is one ACK message , then true;
-	 * else return false 
-	 * 
-	 * @param eventResponse
-	 * @return
-	 * @throws SOAPException
-	 * @throws JAXBException
-	 * @throws IOException
-	 */
 	private static boolean parseEventResponse(final Addressing eventResponse)
 			throws SOAPException, JAXBException, IOException {
 		if (eventResponse.getAction().equals(Management.ACK_URI))
 			return true;
 		else
 			return false;
-	}
-
-	/**
-	 * Set EventReplyTo in class of EventingContextWithAck.
-	 * This includes EventingContextBatched.
-	 * 
-	 * @param id UUID identifying the subscription this event is for
-	 * @param eventReplyTo
-	 */
-	public static void setSendReplyTo(final UUID id,
-			final EndpointReferenceType eventReplyTo)
-			throws InvalidSubscriptionException {
-		final BaseContext bctx = retrieveContext(id);
-		if (bctx instanceof EventingContextWithAck) {
-			EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
-			ctxwithack.setEventReplyTo(eventReplyTo);
-		} else
-			throw new IllegalArgumentException(
-					"Subscription does not have an option named EventReplyTo");
-	}
-
-	/**
-	 * Set OperationTimeout in class of EventingContextWithAck.
-	 * This includes EventingContextBatched.
-	 * 
-	 * @param id UUID identifying the subscription this event is for
-	 * @param operationTimeout
-	 */
-	public static void setSendOperationTimeout(final UUID id,
-			final Duration operationTimeout)
-			throws InvalidSubscriptionException {
-		final BaseContext bctx = retrieveContext(id);
-		if (bctx instanceof EventingContext) {
-			EventingContextWithAck ctxwithack = (EventingContextWithAck) bctx;
-			ctxwithack.setOperationTimeout(operationTimeout);
-		} else
-			throw new IllegalArgumentException(
-					"Subscription does not have an option named OperationTimeout");
-	}
-
-	/**
-	 * Set MaxElements in class of EventingContextBatched.
-	 * 
-	 * @param id UUID identifying the subscription this event is for
-	 * @param maxElements
-	 */
-	public static void setSendMaxElements(final UUID id, final int maxElements)
-			throws InvalidSubscriptionException {
-		final BaseContext bctx = retrieveContext(id);
-		if (bctx instanceof EventingContextBatched) {
-			EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
-			ctxbatched.setMaxElements(maxElements);
-		} else
-			throw new IllegalArgumentException(
-					"Subscription does not have an option named MaxElements");
-	}
-
-	/**
-	 * Set MaxTime in class of EventingContextBatched.
-	 * 
-	 * @param id UUID identifying the subscription this event is for
-	 * @param maxTime
-	 */
-	public static void setSendMaxTime(final UUID id, final Duration maxTime)
-			throws InvalidSubscriptionException {
-		final BaseContext bctx = retrieveContext(id);
-		if (bctx instanceof EventingContextBatched) {
-			EventingContextBatched ctxbatched = (EventingContextBatched) bctx;
-			ctxbatched.setMaxTime(maxTime);
-		} else
-			throw new IllegalArgumentException(
-					"Subscription does not have an option named MaxTime");
 	}
 	
 	private static void logExceptionStackTrace(Exception e, final String message) {
