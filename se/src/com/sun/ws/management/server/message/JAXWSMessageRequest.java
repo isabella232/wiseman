@@ -200,8 +200,7 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         if(!resourceURIRead) {
             resourceURIRead = true;
             Header h = headers.get(Management.RESOURCE_URI, true);
-            if(h == null) return null;
-            String resURI = h.getStringContent();
+            String resURI = h == null ? null : h.getStringContent();
             resourceURI = MessageUtil.checkResourceURI(resURI);
         }
         return resourceURI;
