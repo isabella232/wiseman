@@ -206,10 +206,15 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         return resourceURI;
     }
     
-    public URI getAddressURI() throws JAXBException, SOAPException {
+    public URI getAddressURI() throws JAXBException, SOAPException, FaultException {
         if(!addressURIRead) {
             addressURIRead = true;
-            String to = headers.getTo(AddressingVersion.MEMBER,  SOAPVersion.SOAP_12);
+            String to = null;
+            try {
+                to = headers.getTo(AddressingVersion.MEMBER,  SOAPVersion.SOAP_12);
+            }catch(Exception ex) {
+                to = null;
+            }
             addressURI = MessageUtil.checkAddressURI(to);
         }
         return addressURI;
