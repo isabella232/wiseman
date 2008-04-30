@@ -383,7 +383,7 @@ public class MessageUtil {
     }
     
     public static URI checkAddressURI(String to)
-    throws JAXBException, SOAPException {
+    throws JAXBException, SOAPException, FaultException {
         URI addressURI = null;
         try {
             if (to == null)
