@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: WSManJAXWSEndpoint2.java,v 1.3 2008-05-16 12:50:30 jfdenise Exp $
+ * $Id: WSManJAXWSEndpoint2.java,v 1.4 2008-05-16 12:51:54 jfdenise Exp $
  */
 
 package com.sun.ws.management.server.jaxws;
@@ -114,7 +114,7 @@ public abstract class WSManJAXWSEndpoint2 implements Provider<Message> {
             
             return response.buildMessage();
         }catch(Exception ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
             try {
                 JAXWSMessageResponse response = new JAXWSMessageResponse((JAXBRIContext)getAgent().getJAXBContext());
                 if(ex instanceof FaultException)
