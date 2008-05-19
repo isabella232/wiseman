@@ -11,6 +11,7 @@
 
 package com.sun.ws.management.server.message;
 
+import com.sun.ws.management.InvalidSelectorsFault;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
@@ -267,9 +268,14 @@ public class JAXWSMessageRequest implements WSManagementRequest {
             selectorsRead = true;
             Header h = headers.get(Management.SELECTOR_SET, true);
             if(h != null) {
-                Object selectorSet = h.readAsJAXB(newUnmarshaller());
-                selectors = (selectorSet == null) ? null :
-                    new HashSet<SelectorType>(((JAXBElement<SelectorSetType>) selectorSet).getValue().getSelector());
+                try {
+                    Object selectorSet = h.readAsJAXB(newUnmarshaller());
+                    selectors = (selectorSet == null) ? null :
+                        new HashSet<SelectorType>(((JAXBElement<SelectorSetType>) selectorSet).getValue().getSelector());
+                }catch(JAXBException ex) {
+                    throw new InvalidSelectorsFault(InvalidSelectorsFault.
+                            Detail.INVALID_VALUE);
+                }
             }
         }
         return selectors;
