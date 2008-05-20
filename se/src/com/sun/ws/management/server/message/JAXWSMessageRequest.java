@@ -49,6 +49,7 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.Release;
 
 import com.sun.ws.management.Management;
 import com.sun.ws.management.MessageUtil;
+import com.sun.ws.management.addressing.InvalidMessageInformationHeaderFault;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationExtensions;
 import com.sun.ws.management.eventing.Eventing;
@@ -157,8 +158,12 @@ public class JAXWSMessageRequest implements WSManagementRequest {
             timeoutRead = true;
             Header h = headers.get(Management.OPERATION_TIMEOUT, true);
             if(h != null) {
-                Object value = h.readAsJAXB(newUnmarshaller());
-                timeout = value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
+                try {
+                    Object value = h.readAsJAXB(newUnmarshaller());
+                    timeout = value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
+                }catch(JAXBException ex) {
+                    throw new InvalidMessageInformationHeaderFault();
+                }
             } else {
             	Duration result = null;
             	
@@ -268,7 +273,7 @@ public class JAXWSMessageRequest implements WSManagementRequest {
             selectorsRead = true;
             Header h = headers.get(Management.SELECTOR_SET, true);
             if(h != null) {
-                try {
+                try{
                     Object selectorSet = h.readAsJAXB(newUnmarshaller());
                     selectors = (selectorSet == null) ? null :
                         new HashSet<SelectorType>(((JAXBElement<SelectorSetType>) selectorSet).getValue().getSelector());
