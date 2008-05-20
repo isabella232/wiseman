@@ -21,36 +21,21 @@
  *
  */
 
-package com.sun.ws.management.client;
+package com.sun.ws.management.message.api.client.eventing;
 
-import java.io.IOException;
 import java.util.Map;
-
-import javax.xml.soap.SOAPException;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-import com.sun.ws.management.message.api.client.soap.SOAPRequest;
 import com.sun.ws.management.xml.XmlBinding;
 
-/**
- *
- * A IWSManMessageFactory for creating SOAPMessage instances.
- */
-public interface IWSManMessageFactory {
-    
-    /**
-     * Create a new request.
-     * 
-     * @param epr
-     * @param context
-     * @param binding
-     * @return an object that implements the SOAPResponse interface
-     * @throws IOException
-     * @throws SOAPException 
-     */
-    SOAPRequest newRequest(final EndpointReferenceType epr,
-	                       final Map<String, ?> context,
-	                       final XmlBinding binding) throws Exception;
-      
+
+public class WSManEventingNotifyBatchedRequest extends WSManEventingNotifyRequest {
+	
+	public WSManEventingNotifyBatchedRequest(final EndpointReferenceType epr,
+			final String action,
+			final Map<String, ?> context, final XmlBinding binding)
+	throws Exception  {
+		super(epr, action, context, binding);
+	}
 }

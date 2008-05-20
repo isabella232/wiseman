@@ -30,20 +30,22 @@ import javax.xml.datatype.Duration;
 import javax.xml.soap.SOAPException;
 import javax.xml.validation.Schema;
 
+import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
 
 import com.sun.ws.management.TimedOutFault;
 import com.sun.ws.management.client.exceptions.FaultException;
-import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
-import com.sun.ws.management.client.message.transfer.WSManCreateRequest;
-import com.sun.ws.management.client.message.transfer.WSManCreateResponse;
-import com.sun.ws.management.client.message.transfer.WSManDeleteRequest;
-import com.sun.ws.management.client.message.transfer.WSManDeleteResponse;
-import com.sun.ws.management.client.message.transfer.WSManGetRequest;
-import com.sun.ws.management.client.message.transfer.WSManGetResponse;
-import com.sun.ws.management.client.message.transfer.WSManPutRequest;
-import com.sun.ws.management.client.message.transfer.WSManPutResponse;
+import com.sun.ws.management.message.api.client.enumeration.WSManEnumerateRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManCreateRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManCreateResponse;
+import com.sun.ws.management.message.api.client.transfer.WSManDeleteRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManDeleteResponse;
+import com.sun.ws.management.message.api.client.transfer.WSManGetRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManGetResponse;
+import com.sun.ws.management.message.api.client.transfer.WSManPutRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManPutResponse;
 import com.sun.ws.management.xml.XmlBinding;
 
 /**
@@ -297,14 +299,16 @@ public class WSManClient {
 			throws Exception {
 		final WSManEnumerateRequest request = 
 			new WSManEnumerateRequest(resourceEPR, null, binding);
-		Object filterObject = request.createFilter(filterDialect,
-				                                   filter,
-				                                   filterNamespaces);
-		request.setEnumerate(null,
-				             filterObject,
-				             true,
-				             maxElements,
-				             EnumerationModeType.ENUMERATE_OBJECT_AND_EPR);
+		DialectableMixedDataType filterObject = request.createFilter(filterDialect,
+				 filter, filterNamespaces);
+		
+		final Enumerate enumerate = request.createEnumerate(null, filterObject,
+	             true,
+	             maxElements,
+	             EnumerationModeType.ENUMERATE_OBJECT_AND_EPR);
+		request.setEnumerate(enumerate);
+		TODO:
+		// request.addNamespaceDeclarations(filterNamespaces);
 		request.setOperationTimeout(timeout);
 		return newIterator(request);
 	}

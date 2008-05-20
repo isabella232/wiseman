@@ -19,20 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.15  2007/10/30 09:27:30  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.14  2007/05/30 20:31:03  nbeers
  **Add HP copyright header
  **
  **
- * $Id: EnumerationExtensions.java,v 1.15 2007-10-30 09:27:30 jfdenise Exp $
+ * $Id: EnumerationExtensions.java,v 1.15.8.1 2008-05-20 15:10:42 denis_rachal Exp $
  */
 
 package com.sun.ws.management.enumeration;
 
-import com.sun.ws.management.MessageUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +45,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPException;
 
@@ -53,8 +54,6 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.AttributableNonNegativeInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.AttributablePositiveInteger;
 import org.dmtf.schemas.wbem.wsman._1.wsman.DialectableMixedDataType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.ItemType;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
@@ -64,9 +63,9 @@ import org.xmlsoap.schemas.ws._2004._09.enumeration.ItemListType;
 import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
 
 import com.sun.ws.management.Management;
+import com.sun.ws.management.MessageUtil;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.xml.XmlBinding;
 
 public class EnumerationExtensions extends Enumeration {
 

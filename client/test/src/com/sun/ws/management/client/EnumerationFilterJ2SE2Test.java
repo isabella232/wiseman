@@ -54,23 +54,22 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationFilterJAXWSTest.java,v 1.1.2.3 2008-05-20 15:10:38 denis_rachal Exp $
+ * $Id: EnumerationFilterJ2SE2Test.java,v 1.1.2.1 2008-05-20 15:10:39 denis_rachal Exp $
  */
 
 package com.sun.ws.management.client;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
 import com.sun.ws.management.spi.client.WSManStub;
-import com.sun.ws.management.spi.client.impl.jaxws.soapmessage.JAXWSWSManStub;
+import com.sun.ws.management.spi.client.impl.j2se.J2SE2WSManStub;
 
 /**
  * Unit test for WS-Enumeration extensions in WS-Management
  */
-public class EnumerationFilterJAXWSTest extends EnumerationFilterBase {
+public class EnumerationFilterJ2SE2Test extends EnumerationFilterBase {
 
-	public EnumerationFilterJAXWSTest(String testName) {
+	public EnumerationFilterJ2SE2Test(String testName) {
 		super(testName);
 	}
 
@@ -78,12 +77,12 @@ public class EnumerationFilterJAXWSTest extends EnumerationFilterBase {
 		super.setUp();
 		
 		// Run with J2SE
-		WSManStub.setDefaultStub(JAXWSWSManStub.class.getCanonicalName());
+		WSManStub.setDefaultStub(J2SE2WSManStub.class.getCanonicalName());
 	}
-	
+
 	public static Test suite() {
 		final TestSuite suite = new TestSuite(
-				EnumerationFilterJAXWSTest.class);
+				EnumerationFilterJ2SE2Test.class);
 		return suite;
 	}
 }

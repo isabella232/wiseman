@@ -36,10 +36,10 @@ import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 
 import com.sun.ws.management.client.exceptions.FaultException;
-import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
-import com.sun.ws.management.client.message.enueration.WSManEnumerateResponse;
-import com.sun.ws.management.client.message.enueration.WSManPullRequest;
-import com.sun.ws.management.client.message.enueration.WSManPullResponse;
+import com.sun.ws.management.message.api.client.enumeration.WSManEnumerateRequest;
+import com.sun.ws.management.message.api.client.enumeration.WSManEnumerateResponse;
+import com.sun.ws.management.message.api.client.enumeration.WSManPullRequest;
+import com.sun.ws.management.message.api.client.enumeration.WSManPullResponse;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.EnumerationIterator;
 

@@ -1,0 +1,63 @@
+/*
+ * Copyright 2005-2008 Sun Microsystems, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ** Copyright (C) 2006, 2007, 2008 Hewlett-Packard Development Company, L.P.
+ **
+ ** Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com),
+ ** Nancy Beers (nancy.beers@hp.com), William Reichardt
+ **
+ *
+ */
+
+package com.sun.ws.management.message.api.client.enumeration;
+
+import java.util.Map;
+
+import javax.xml.namespace.QName;
+
+import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
+import org.xmlsoap.schemas.ws._2004._09.enumeration.ObjectFactory;
+
+import com.sun.ws.management.message.api.client.wsman.WSManRequest;
+import com.sun.ws.management.message.api.constants.WSManEnumerationConstants;
+import com.sun.ws.management.xml.XmlBinding;
+
+public class WSManEnumerationRequest extends WSManRequest {
+
+	public static final ObjectFactory FACTORY = new ObjectFactory();
+
+	public WSManEnumerationRequest(final EndpointReferenceType epr,
+			final String action, final Map<String, ?> context,
+			final XmlBinding binding) throws Exception {
+		super(epr, action, context, binding);
+		addNamespaceDeclaration(WSManEnumerationConstants.NS_PREFIX,
+				WSManEnumerationConstants.NS_URI);
+	}
+
+	public WSManEnumerationRequest(final String to, final String action,
+			final Map<String, ?> context, final XmlBinding binding)
+			throws Exception {
+		this(to, action, null, null, context, binding);
+	}
+
+	public WSManEnumerationRequest(final String to, final String action,
+			final QName service, final QName port,
+			final Map<String, ?> context, final XmlBinding binding)
+			throws Exception {
+		super(to, action, service, port, context, binding);
+		addNamespaceDeclaration(WSManEnumerationConstants.NS_PREFIX,
+				WSManEnumerationConstants.NS_URI);
+	}
+}

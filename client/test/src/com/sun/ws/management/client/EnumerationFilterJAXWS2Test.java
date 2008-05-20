@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1.2.2  2008/03/17 07:31:33  denis_rachal
+ **General updates to the prototype.
+ **
  **Revision 1.1.2.1  2008/02/14 09:43:05  denis_rachal
  **Added new EnumerationFilterTests that use new client API.
  **
@@ -51,248 +54,36 @@
  **Add HP copyright header
  **
  **
- * $Id: EnumerationFilterJAXWS2Test.java,v 1.1.2.1 2008-03-17 07:31:33 denis_rachal Exp $
+ * $Id: EnumerationFilterJAXWS2Test.java,v 1.1.2.2 2008-05-20 15:10:39 denis_rachal Exp $
  */
 
 package com.sun.ws.management.client;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
-import javax.xml.namespace.QName;
-
-import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.OptionSet;
-import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
-import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.Enumerate;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.EnumerateResponse;
-import org.xmlsoap.schemas.ws._2004._09.enumeration.PullResponse;
-
-import util.TestBase;
-
-import com.sun.ws.management.client.impl.jaxws.messages.JAXWSMessageFactory;
-import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
-import com.sun.ws.management.client.message.enueration.WSManEnumerateResponse;
-import com.sun.ws.management.client.message.enueration.WSManPullRequest;
-import com.sun.ws.management.client.message.enueration.WSManPullResponse;
-import com.sun.ws.management.client.message.transfer.WSManCreateRequest;
-import com.sun.ws.management.client.message.wsman.WSManRequest;
-import com.sun.ws.management.enumeration.EnumerationExtensions;
-import com.sun.ws.management.server.EnumerationItem;
-import com.sun.ws.management.xml.XPath;
-
-import framework.models.UserEnumerationHandler;
-import framework.models.UserFilterFactory;
+import com.sun.ws.management.spi.client.WSManStub;
+import com.sun.ws.management.spi.client.impl.jaxws.messages.JAXWSWSManStub;
 
 /**
  * Unit test for WS-Enumeration extensions in WS-Management
  */
-public class EnumerationFilterJAXWS2Test extends TestBase {
+public class EnumerationFilterJAXWS2Test extends EnumerationFilterBase {
 
-	// XmlBinding binding;
+	public EnumerationFilterJAXWS2Test(String testName) {
+		super(testName);
+	}
 
 	protected void setUp() throws Exception {
 		super.setUp();
+		
+		// Run with J2SE
+		WSManStub.setDefaultStub(JAXWSWSManStub.class.getCanonicalName());
 	}
-
-    public EnumerationFilterJAXWS2Test(final String testName) {
-        super(testName);
-
-    }
-
-    public static junit.framework.Test suite() {
-        final junit.framework.TestSuite suite = new junit.framework.TestSuite(EnumerationFilterJAXWS2Test.class);
-        return suite;
-    }
-
-    public void testFilterEnumeration() throws Exception {
-    	String xpath = XPath.NS_URI;
-    	String custom = UserFilterFactory.DIALECT;
-    	
-		// Run with JAX-WS
-		WSManMessageFactory.setDefaultFactory(JAXWSMessageFactory.class.getCanonicalName());
-
-    	filterEnumerationTest(xpath, ".");
-    	filterEnumerationTest(xpath, "/user:user");
-    	filterEnumerationTest(xpath, "/user:user/*");
-    	// TODO: The following XPath does not really work: "/user:user[last()]"
-    	//       This is because the XPath is run against a single user element and
-    	//       not the entire docuemnt. Therefore the last() returns every element.
-    	//       This is a bug, as the specification shows that you may select
-    	//       any element from the entire SOAP document, e.g.
-    	//       "/env:Envelope/env:Body/user:user" should be valid. The envelope
-    	//       is the root, which makes several of the following tests wrong.
-    	//       See examples in secion 13.1 of the DMTF DSP0226 specification 1.0.0a
-    	filterEnumerationTest(xpath, "/user:user[last()]");
-    	filterEnumerationTest(xpath, "//user:lastname");
-    	filterEnumerationTest(xpath, "./user:firstname|./user:lastname");
-    	filterEnumerationTest(xpath, "/user:user/user:firstname/text()|/user:user/user:lastname/text()");
-    	filterEnumerationTest(xpath, "/user:user/user:lastname");
-    	filterEnumerationTest(xpath, "/user:user[user:firstname='James']");
-    	filterEnumerationTest(xpath, "/user:user[user:firstname='James']/user:lastname|/user:user[user:firstname='James']/user:firstname");
-
-    	filterEnumerationTest(custom, "Gates");
-    	filterEnumerationTest(custom, "Washington");
-    	filterEnumerationTest(custom, "Ritter");
-
-    }
-
-    public void filterEnumerationTest(final String dialect, final String expression) throws Exception {
-
-    	final String resource = "wsman:auth/user";
-    	final int max = 10;
-
-
-    	Set<OptionType> handlerFiltered = new HashSet<OptionType>();
-		OptionType element = new OptionType();
-		element.setName("useHandlerFilter");
-		element.setValue("true");
-        element.setMustComply(true);
-        handlerFiltered.add(element);
-
-        // first do the tests with EPRs turned off
-    	optimizedEnumerationTest(null, max, resource, dialect, expression, null);
-    	optimizedEnumerationTest(null, max, resource, dialect, expression, handlerFiltered);
-
-        // now repeat the same tests with EPRs turned on
-    	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, null);
-    	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateObjectAndEPR, max, resource, dialect, expression, handlerFiltered);
-
-        // finally, repeat the same tests with only EPRs (no items)
-    	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, null);
-    	optimizedEnumerationTest(EnumerationExtensions.Mode.EnumerateEPR, max, resource, dialect, expression, handlerFiltered);
-
-    }
-
-    public void optimizedEnumerationTest(
-    		final EnumerationExtensions.Mode mode,
-            final int maxElements,
-            final String resource,
-    		final String dialect,
-    		final String expression,
-    		final Set<OptionType> options) throws Exception {
-    	
-		final EndpointReferenceType epr = WSManCreateRequest
-		.createEndpointReference(ResourceTest.DESTINATION,
-				ResourceTest.resourceUri, new QName("user", "User"),
-				"Port", null);
-
-    	final WSManEnumerateRequest request = new WSManEnumerateRequest(epr, null, binding);
-    	request.addNamespaceDeclarations(NS_MAP);
-    	request.setOperationTimeout(60000);
-    	
-    	final Object filter;
-    	
-        if (((expression != null) && (expression.length() > 0))
-				&& ((dialect != null) && (dialect.length() > 0))) {
-        	
-			// Add the namespace for the filter
-			Map<String, String> map = new HashMap<String, String>();
-			map.put("user", UserEnumerationHandler.NS_URI);
-        	// Map<String, String> map = null;
-
-			final List<Object> filterExpression = new ArrayList<Object>();
-			filterExpression.add(expression);
-			filter = request.createFilter(dialect, filterExpression, map);
-		} else {
-			filter = null;
-		}
-
-        final EnumerationModeType enumMode;
-        if (mode == null)
-        	enumMode = null;
-        else
-        	enumMode = mode.toBinding().getValue();
-
-    	final Enumerate enumerate = request.createEnumerate(null, null, filter, true,
-    			maxElements, enumMode, (Object[])null);
-    	request.setEnumerate(enumerate);
-    	request.requestTotalItemsCountEstimate();
-
-        // Add any options
-        if (options != null) {
-        	final OptionSet set = WSManRequest.FACTORY.createOptionSet();
-        	set.getOption().addAll(options);
-        	request.setOptions(set);
-        }
-
-        request.writeTo(logfile, true);
-        WSManEnumerateResponse response = (WSManEnumerateResponse)request.invoke();
-
-        response.writeTo(logfile, true);
-        if (response.isFault()) {
-        	response.writeTo(System.err, true);
-            // this test fails with an AccessDenied fault if the server is
-            // running in the sun app server with a security manager in
-            // place (the default), which disallows enumeration of
-            // system properties
-            fail("Fault");
-        }
-
-        final EnumerateResponse enr = response.getEnumerateResponse();
-        for (final EnumerationItem item : response.getItems()) {
-            assertMode(mode, item);
-        }
-
-        final BigInteger ee = response.getTotalItemsCountEstimate();
-        assertNotNull(ee);
-        assertTrue(ee.longValue() > 0);
-
-        if (response.isEndOfSequence() == false) {
-
-        	WSManPullRequest enuPull = response.createPullRequest(3);
-        	enuPull.addNamespaceDeclarations(NS_MAP);
-        	enuPull.requestTotalItemsCountEstimate();
-
-        	enuPull.writeTo(logfile, true);
-        	WSManPullResponse pullResponse = (WSManPullResponse)enuPull.invoke();
-            pullResponse.writeTo(logfile, true);
-            if (pullResponse.isFault()) {
-            	pullResponse.writeTo(System.err, true);
-                fail("Fault");
-            }
-
-            final PullResponse pr = pullResponse.getPullResponse();
-            // update context for the next pull (if any)
-            for (final EnumerationItem item : pullResponse.getItems()) {
-                assertMode(mode, item);
-            }
-
-            final BigInteger pe = pullResponse.getTotalItemsCountEstimate();
-            assertNotNull(pe);
-            assertTrue(pe.longValue() > 0);
-            
-            if (!pullResponse.isEndOfSequence())
-            	pullResponse.release();
-        } else {
-        	if (!response.isEndOfSequence())
-        		response.release();
-        }
-    }
-    
-    private static void assertMode(final EnumerationExtensions.Mode mode,
-            final EnumerationItem item) {
-
-        final Object elt = item.getItem();
-        final EndpointReferenceType epr = item.getEndpointReference();
-
-        if (mode == null) {
-            assertNotNull(elt);
-            assertNull(epr);
-        } else if (EnumerationExtensions.Mode.EnumerateObjectAndEPR.equals(mode)) {
-            assertNotNull(elt);
-            assertNotNull(epr);
-        } else if (EnumerationExtensions.Mode.EnumerateEPR.equals(mode)) {
-            assertNull(elt);
-            assertNotNull(epr);
-        } else {
-            fail("invalid mode");
-        }
-    }
+	
+	public static Test suite() {
+		final TestSuite suite = new TestSuite(
+				EnumerationFilterJAXWS2Test.class);
+		return suite;
+	}
 }

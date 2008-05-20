@@ -19,23 +19,27 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.22  2007/10/30 09:27:47  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.21  2007/05/30 20:31:06  nbeers
  **Add HP copyright header
  **
  **
- * $Id: XmlBinding.java,v 1.22 2007-10-30 09:27:47 jfdenise Exp $
+ * $Id: XmlBinding.java,v 1.22.8.1 2008-05-20 15:10:35 denis_rachal Exp $
  */
 
 package com.sun.ws.management.xml;
 
-import com.sun.ws.management.SchemaValidationErrorFault;
-import com.sun.ws.management.server.WSManAgent;
-import com.sun.ws.management.soap.FaultException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -44,8 +48,13 @@ import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.ValidationEventHandler;
 import javax.xml.transform.Source;
 import javax.xml.validation.Schema;
+
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
+
+import com.sun.ws.management.SchemaValidationErrorFault;
+import com.sun.ws.management.server.WSManAgent;
+import com.sun.ws.management.soap.FaultException;
 
 public final class XmlBinding {
     
@@ -103,10 +112,10 @@ public final class XmlBinding {
     public static final String VALIDATE =
             XmlBinding.class.getPackage().getName() + ".validate";
     
-    private JAXBContext context;
+    private final JAXBContext context;
     private Schema schema;
     private boolean validate;
-    private Set packageNamesHandled = new HashSet<String>();
+    private Set<String> packageNamesHandled = new HashSet<String>();
     
     private static final class ValidationHandler implements ValidationEventHandler {
         
@@ -126,14 +135,14 @@ public final class XmlBinding {
     
     public XmlBinding(final Schema schema, String... customPackages)
     throws JAXBException {
-        init(schema, null, null, null,
+        context = init(schema, null, null, null,
                 false,
                 customPackages);
     }
     
     public XmlBinding(final Schema schema, Map<String, String> bindingConf)
     throws JAXBException {
-        init(schema, null, bindingConf,
+        context = init(schema, null, bindingConf,
                 Thread.currentThread().getContextClassLoader(), false);
     }
     
@@ -141,8 +150,8 @@ public final class XmlBinding {
             ClassLoader loader,
             String... customPackages)
             throws JAXBException {
-        init(null, customSchemas, bindingConf,
-                loader,true, customPackages);
+        context = init(null, customSchemas, bindingConf,
+                loader, true, customPackages);
     }
     
     public XmlBinding(Schema schema, Source[] customSchemas,
@@ -150,12 +159,13 @@ public final class XmlBinding {
             ClassLoader loader,
             String... customPackages)
             throws JAXBException {
-        init(schema, customSchemas, bindingConf, loader, true,
+        context = init(schema, customSchemas, bindingConf, loader, true,
                 customPackages);
     }
     
     private static Map<String, String> bindingsPropertySet = null;
-    private void init(Schema schema, Source[] customSchemas,
+    
+    private JAXBContext init(Schema schema, Source[] customSchemas,
             Map<String, String> bindingConf,
             ClassLoader loader, boolean validation,
             String... customPackages) throws JAXBException {
@@ -205,8 +215,9 @@ public final class XmlBinding {
             packageNames.append(p);
             packageNamesHandled.add(p);
         }
-        
-        context = JAXBContext.newInstance(packageNames.toString(), loader);
+
+        final JAXBContext jaxbContext =
+        	JAXBContext.newInstance(packageNames.toString(), loader);
         
         // Compute a schema based on passed sources and custom ones.
         if(schema == null && validation) {
@@ -255,6 +266,7 @@ public final class XmlBinding {
         } else
             this.validate = false;
         
+        return jaxbContext;
     }
     
     public void marshal(final Object obj, final Node node) throws JAXBException {
@@ -262,9 +274,38 @@ public final class XmlBinding {
         marshaller.marshal(obj, node);
     }
     
+    public void marshal(final Object obj, final OutputStream os)
+			throws JAXBException {
+		marshal(obj, os, false);
+	}
+    
+    public void marshal(final Object obj, final OutputStream os,
+			final boolean formatted) throws JAXBException {
+		final Marshaller marshaller = createMarshaller();
+		if (formatted == true)
+			marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT,
+					Boolean.TRUE);
+		marshaller.marshal(obj, os);
+	}
+    
+    public void marshal(final Object obj, final OutputStream os,
+			final boolean formatted, final Map<String, String> prefixMap)
+    	throws JAXBException {
+		final Marshaller marshaller = createMarshaller(prefixMap);
+		if (formatted == true)
+			marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT,
+					Boolean.TRUE);
+		marshaller.marshal(obj, os);
+	}
+    
     public Object unmarshal(final Node node) throws JAXBException {
         final Unmarshaller unmarshaller = createUnmarshaller();
         return unmarshaller.unmarshal(node);
+    }
+    
+    public Object unmarshal(final InputStream is) throws JAXBException {
+        final Unmarshaller unmarshaller = createUnmarshaller();
+        return unmarshaller.unmarshal(is);
     }
     
     public boolean isValidating() {
@@ -279,6 +320,20 @@ public final class XmlBinding {
         return context;
     }
     
+	public Marshaller createMarshaller() throws JAXBException {
+		return createMarshaller(null);
+	}
+	
+	public Marshaller createMarshaller(final Map<String, String> prefixMap)
+		throws JAXBException {
+		final Marshaller marshaller = context.createMarshaller();
+		final NamespacePrefixMapperImpl mapper = new NamespacePrefixMapperImpl(
+				prefixMap);
+		marshaller
+				.setProperty("com.sun.xml.bind.namespacePrefixMapper", mapper);
+		return marshaller;
+	}
+	
     public Unmarshaller createUnmarshaller() throws JAXBException {
        final Unmarshaller unmarshaller = context.createUnmarshaller();
         if (this.validate) {

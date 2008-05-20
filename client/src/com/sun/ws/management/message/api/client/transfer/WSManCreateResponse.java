@@ -21,36 +21,37 @@
  *
  */
 
-package com.sun.ws.management.client;
+package com.sun.ws.management.message.api.client.transfer;
 
-import java.io.IOException;
-import java.util.Map;
-
-import javax.xml.soap.SOAPException;
+import javax.xml.bind.JAXBElement;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-import com.sun.ws.management.message.api.client.soap.SOAPRequest;
-import com.sun.ws.management.xml.XmlBinding;
+import com.sun.ws.management.message.api.client.soap.SOAPResponse;
 
-/**
- *
- * A IWSManMessageFactory for creating SOAPMessage instances.
- */
-public interface IWSManMessageFactory {
-    
-    /**
-     * Create a new request.
-     * 
-     * @param epr
-     * @param context
-     * @param binding
-     * @return an object that implements the SOAPResponse interface
-     * @throws IOException
-     * @throws SOAPException 
-     */
-    SOAPRequest newRequest(final EndpointReferenceType epr,
-	                       final Map<String, ?> context,
-	                       final XmlBinding binding) throws Exception;
-      
+public class WSManCreateResponse extends WSManTransferResponse {
+	
+	private boolean eprRead;
+	private EndpointReferenceType epr;
+	
+	WSManCreateResponse() {
+        super();
+	}
+	
+	public WSManCreateResponse(final SOAPResponse response) {
+		super(response);
+	}
+	
+	public EndpointReferenceType getCreateResponse() throws Exception {
+		if (!eprRead) {
+			eprRead = true;
+			final Object payload = getPayload();
+			if ((payload != null) && (payload instanceof JAXBElement)) {
+				final JAXBElement jaxb = (JAXBElement) payload;
+				if (jaxb.getDeclaredType().equals(EndpointReferenceType.class))
+					epr = (EndpointReferenceType) jaxb.getValue();
+			}
+		}
+		return epr;
+	}
 }

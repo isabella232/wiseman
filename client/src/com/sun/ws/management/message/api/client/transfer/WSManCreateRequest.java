@@ -21,36 +21,32 @@
  *
  */
 
-package com.sun.ws.management.client;
+package com.sun.ws.management.message.api.client.transfer;
 
-import java.io.IOException;
 import java.util.Map;
-
-import javax.xml.soap.SOAPException;
 
 import org.xmlsoap.schemas.ws._2004._08.addressing.EndpointReferenceType;
 
-import com.sun.ws.management.message.api.client.soap.SOAPRequest;
+import com.sun.ws.management.message.api.client.soap.SOAPResponse;
 import com.sun.ws.management.xml.XmlBinding;
 
-/**
- *
- * A IWSManMessageFactory for creating SOAPMessage instances.
- */
-public interface IWSManMessageFactory {
-    
-    /**
-     * Create a new request.
-     * 
-     * @param epr
-     * @param context
-     * @param binding
-     * @return an object that implements the SOAPResponse interface
-     * @throws IOException
-     * @throws SOAPException 
-     */
-    SOAPRequest newRequest(final EndpointReferenceType epr,
-	                       final Map<String, ?> context,
-	                       final XmlBinding binding) throws Exception;
-      
+public class WSManCreateRequest extends WSManTransferRequest {
+	
+    public static final String ACTION_URI = "http://schemas.xmlsoap.org/ws/2004/09/transfer/Create";
+	
+	public WSManCreateRequest(final EndpointReferenceType epr,
+			final Map<String, ?> context, final XmlBinding binding)
+	throws Exception  {
+		super(epr, ACTION_URI, context, binding);
+	}
+	
+	public void setCreate(final Object resource) {
+		setPayload(resource);
+	}
+	
+	public SOAPResponse invoke() throws Exception {
+		// TODO: Message sanity checks go here.
+		return new WSManCreateResponse(super.invoke());
+	}
+
 }

@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7.6.3  2008/03/17 07:31:33  denis_rachal
+ **General updates to the prototype.
+ **
  **Revision 1.7.6.2  2008/02/13 07:37:53  denis_rachal
  **Enumeration & ResourceIterator now work. For working examples see:
  **
@@ -194,7 +197,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.7.6.3 2008-03-17 07:31:33 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.7.6.4 2008-05-20 15:10:38 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -253,27 +256,28 @@ import com.sun.ws.management.ManagementUtility;
 import com.sun.ws.management.addressing.Addressing;
 import com.sun.ws.management.client.exceptions.FaultException;
 import com.sun.ws.management.client.exceptions.NoMatchFoundException;
-import com.sun.ws.management.client.impl.j2se.J2SEMessageFactory;
-import com.sun.ws.management.client.impl.jaxws.messages.JAXWSMessageFactory;
-import com.sun.ws.management.client.message.SOAPResponse;
-import com.sun.ws.management.client.message.enueration.WSManEnumerateRequest;
-import com.sun.ws.management.client.message.transfer.WSManCreateRequest;
-import com.sun.ws.management.client.message.transfer.WSManCreateResponse;
-import com.sun.ws.management.client.message.transfer.WSManDeleteRequest;
-import com.sun.ws.management.client.message.transfer.WSManGetRequest;
-import com.sun.ws.management.client.message.transfer.WSManGetResponse;
 import com.sun.ws.management.enumeration.Enumeration;
 import com.sun.ws.management.enumeration.EnumerationMessageValues;
 import com.sun.ws.management.enumeration.EnumerationUtility;
 import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingMessageValues;
 import com.sun.ws.management.eventing.EventingUtility;
+import com.sun.ws.management.message.api.client.enumeration.WSManEnumerateRequest;
+import com.sun.ws.management.message.api.client.soap.SOAPResponse;
+import com.sun.ws.management.message.api.client.transfer.WSManCreateRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManCreateResponse;
+import com.sun.ws.management.message.api.client.transfer.WSManDeleteRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManGetRequest;
+import com.sun.ws.management.message.api.client.transfer.WSManGetResponse;
 import com.sun.ws.management.metadata.annotations.AnnotationProcessor;
 import com.sun.ws.management.mex.Metadata;
 import com.sun.ws.management.mex.MetadataUtility;
 import com.sun.ws.management.server.EnumerationItem;
 import com.sun.ws.management.server.handler.wsman.eventsubman_Handler;
 import com.sun.ws.management.server.handler.wsman.auth.eventcreator_Handler;
+import com.sun.ws.management.spi.client.WSManStub;
+import com.sun.ws.management.spi.client.impl.j2se.J2SEWSManStub;
+import com.sun.ws.management.spi.client.impl.jaxws.messages.JAXWSWSManStub;
 import com.sun.ws.management.transfer.InvalidRepresentationFault;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.transport.HttpClient;
@@ -516,18 +520,18 @@ public class ResourceTest extends WsManTestBaseSupport {
 						"Port", null);
 
 		// Run with JAX-WS
-		WSManMessageFactory.setDefaultFactory(JAXWSMessageFactory.class.getCanonicalName());
+		WSManStub.setDefaultStub(JAXWSWSManStub.class.getCanonicalName());;
 		enumerate(epr);
 		
 		// Run again with J2SE
-		WSManMessageFactory.setDefaultFactory(J2SEMessageFactory.class.getCanonicalName());
+		WSManStub.setDefaultStub(J2SEWSManStub.class.getCanonicalName());
         enumerate(epr);
 	}
 	
 	private void enumerate(final EndpointReferenceType epr) throws Exception {
 		// Create the initial request
 		final WSManEnumerateRequest request = new WSManEnumerateRequest(epr, null, binding);
-		request.setEnumerate(null, null, true, 5, EnumerationModeType.ENUMERATE_OBJECT_AND_EPR);
+		request.setEnumerate(null, null, null, true, 5, EnumerationModeType.ENUMERATE_OBJECT_AND_EPR);
 		request.setOperationTimeout(ResourceTest.timeoutInMilliseconds);
 		final ResourceIterator iterator = new ResourceIterator(request);
 		
