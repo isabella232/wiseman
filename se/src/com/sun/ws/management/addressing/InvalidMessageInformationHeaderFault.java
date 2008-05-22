@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InvalidMessageInformationHeaderFault.java,v 1.3 2008-05-22 13:07:00 jfdenise Exp $
+ * $Id: InvalidMessageInformationHeaderFault.java,v 1.4 2008-05-22 13:34:18 jfdenise Exp $
  */
 
 package com.sun.ws.management.addressing;
@@ -32,11 +32,7 @@ public class InvalidMessageInformationHeaderFault extends SenderFault {
             "A message information header is not valid and the message cannot be processed.";
     
     public InvalidMessageInformationHeaderFault(final String invalidHeader) {
-        this(SOAP.createFaultDetail(null, null, null, null, invalidHeader));
-    }
-    
-    public InvalidMessageInformationHeaderFault(final QName invalidHeader) {
-        this(Message.createElement(Message.newDocument(), invalidHeader));
+        this(SOAP.createFaultDetail(null, invalidHeader, null, null));
     }
     
     public InvalidMessageInformationHeaderFault(final Node... details) {
