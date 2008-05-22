@@ -56,6 +56,7 @@ import com.sun.ws.management.eventing.Eventing;
 import com.sun.ws.management.eventing.EventingExtensions;
 import com.sun.ws.management.identify.Identify;
 import com.sun.ws.management.soap.FaultException;
+import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.transfer.TransferExtensions;
 import com.sun.ws.management.xml.XmlBinding;
 import com.sun.xml.ws.api.SOAPVersion;
@@ -162,7 +163,7 @@ public class JAXWSMessageRequest implements WSManagementRequest {
                     Object value = h.readAsJAXB(newUnmarshaller());
                     timeout = value == null ? null : ((JAXBElement<AttributableDuration>) value).getValue().getValue();
                 }catch(JAXBException ex) {
-                    throw new InvalidMessageInformationHeaderFault();
+                    throw new InvalidMessageInformationHeaderFault("wsman:OperationTimeout");
                 }
             } else {
             	Duration result = null;
