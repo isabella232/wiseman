@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InvalidMessageInformationHeaderFault.java,v 1.2 2006-05-01 23:32:20 akhilarora Exp $
+ * $Id: InvalidMessageInformationHeaderFault.java,v 1.3 2008-05-22 13:07:00 jfdenise Exp $
  */
 
 package com.sun.ws.management.addressing;
 
+import com.sun.ws.management.Message;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
 import javax.xml.namespace.QName;
@@ -32,6 +33,10 @@ public class InvalidMessageInformationHeaderFault extends SenderFault {
     
     public InvalidMessageInformationHeaderFault(final String invalidHeader) {
         this(SOAP.createFaultDetail(null, null, null, null, invalidHeader));
+    }
+    
+    public InvalidMessageInformationHeaderFault(final QName invalidHeader) {
+        this(Message.createElement(Message.newDocument(), invalidHeader));
     }
     
     public InvalidMessageInformationHeaderFault(final Node... details) {
