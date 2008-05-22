@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * $Id: InvalidMessageInformationHeaderFault.java,v 1.4 2008-05-22 13:34:18 jfdenise Exp $
+ * $Id: InvalidMessageInformationHeaderFault.java,v 1.5 2008-05-22 13:34:40 jfdenise Exp $
  */
 
 package com.sun.ws.management.addressing;
 
-import com.sun.ws.management.Message;
 import com.sun.ws.management.soap.SOAP;
 import com.sun.ws.management.soap.SenderFault;
 import javax.xml.namespace.QName;
