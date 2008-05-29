@@ -87,7 +87,7 @@ public class JAXWSMessageRequest implements WSManagementRequest {
     private URI resourceURI;
     private boolean addressURIRead;
     private URI addressURI;
-    private Set<OptionType> options;
+    private OptionSet options;
     private Locale locale;
     private boolean optionsRead;
     private boolean localeRead;
@@ -227,17 +227,20 @@ public class JAXWSMessageRequest implements WSManagementRequest {
         return addressURI;
     }
     
-    public Set<OptionType> getOptions()throws JAXBException, SOAPException {
+    public OptionSet getOptionSet() throws JAXBException, SOAPException {
         if(!optionsRead) {
             optionsRead = true;
             Header h = headers.get(Management.OPTION_SET, true);
             Object value = null;
             if(h != null)
                 value = h.readAsJAXB(newUnmarshaller());
-            if(value != null)
-                options = new HashSet<OptionType>(((OptionSet) value).getOption());
+            if(value != null) {
+                OptionSet orig = (OptionSet) value;
+                options = new OptionSet();
+                options.getOtherAttributes().putAll(orig.getOtherAttributes());
+                options.getOption().addAll(orig.getOption());
+            }
         }
-        
         return options;
     }
     

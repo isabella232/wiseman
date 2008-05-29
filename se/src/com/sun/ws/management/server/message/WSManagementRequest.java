@@ -11,16 +11,14 @@ package com.sun.ws.management.server.message;
 
 import com.sun.ws.management.soap.FaultException;
 import java.net.URI;
-import java.util.List;
 import java.util.Set;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.Duration;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.soap.SOAPException;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
-import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionSet;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 
 /**
@@ -32,7 +30,7 @@ public interface WSManagementRequest extends WSEventingRequest, WSTransferReques
     public MaxEnvelopeSizeType getMaxEnvelopeSize() throws SOAPException, JAXBException;
     public boolean isIdentify() throws SOAPException, JAXBException;
     public URI getResourceUri() throws SOAPException, JAXBException, FaultException;
-    public Set<OptionType> getOptions() throws SOAPException, JAXBException;
+    public OptionSet getOptionSet() throws SOAPException, JAXBException;
     public Locale getLocale() throws SOAPException, JAXBException;
     public Set<SelectorType> getSelectors() throws Exception;
     public void validate() throws SOAPException, JAXBException, FaultException;

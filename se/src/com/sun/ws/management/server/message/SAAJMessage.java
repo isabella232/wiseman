@@ -49,6 +49,7 @@ import org.dmtf.schemas.wbem.wsman._1.wsman.EnumerationModeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.Locale;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MaxEnvelopeSizeType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.MixedDataType;
+import org.dmtf.schemas.wbem.wsman._1.wsman.OptionSet;
 import org.dmtf.schemas.wbem.wsman._1.wsman.OptionType;
 import org.dmtf.schemas.wbem.wsman._1.wsman.SelectorType;
 import org.w3c.dom.Element;
@@ -119,8 +120,16 @@ public class SAAJMessage implements WSManagementRequest, WSManagementResponse {
         return mgt.getSelectors();
     }
     
-    public Set<OptionType> getOptions() throws JAXBException, SOAPException {
-        return mgt.getOptions();
+    public OptionSet getOptionSet() throws JAXBException, SOAPException {
+        SOAPElement[] elements = mgt.getChildren(mgt.getHeader());
+        for (SOAPElement header : elements) {
+            if(header.getLocalName().equals(Management.OPTION_SET.getLocalPart()) 
+                    && header.getNamespaceURI().equals(Management.OPTION_SET.getNamespaceURI())) {
+               OptionSet os = (OptionSet) mgt.getXmlBinding().unmarshal(header);
+               return os;
+            }
+        }
+        return null;
     }
     
     public MaxEnvelopeSizeType getMaxEnvelopeSize() throws JAXBException, SOAPException {
