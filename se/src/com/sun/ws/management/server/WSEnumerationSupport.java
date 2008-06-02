@@ -19,6 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.10  2008/01/17 15:19:09  denis_rachal
+ **Issue number:  151, 152, 153, 154, & 155
+ **Obtained from:
+ **Submitted by:  cahei (151), jfdenise (152-155)
+ **Reviewed by:
+ **
+ **The following issues have been resolved with this commit:
+ **
+ **Issue 151: Eventing-Renew request returns without error for an enumeration context from Enumerate
+ **Issue 152: Eventing subscription infinite expiration is not well supported
+ **Issue 153: RenewResponse is not set when sending back the response
+ **Issue 154: Subscribe response expires is not of the same type as the request
+ **Issue 155: Expiration scheduling fails after renewal with no expires
+ **
+ **Unit tests have been appropriately updated to test for these issues.
+ **
  **Revision 1.9  2007/12/18 11:55:45  denis_rachal
  **Changes to ensure access to member variables in context are synchronized properly for multi-thread access.
  **
@@ -90,7 +106,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEnumerationSupport.java,v 1.10 2008-01-17 15:19:09 denis_rachal Exp $
+ * $Id: WSEnumerationSupport.java,v 1.11 2008-06-02 07:20:25 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -981,6 +997,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
         if (factory == null) {
             return null;
         }
+        final Filter filter = createFilter(request);
         final Boolean includeItem;
         final Boolean includeEPR;
         
@@ -990,7 +1007,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
             includeEPR = false;
         } else {
             if (mode.equals(EnumerationExtensions.Mode.EnumerateEPR)) {
-                includeItem = false;
+                includeItem = (filter == null) ? false : true;
                 includeEPR = true;
             } else if (mode.equals(EnumerationExtensions.Mode.EnumerateObjectAndEPR)) {
                 includeItem = true;
@@ -1000,6 +1017,7 @@ public final class WSEnumerationSupport extends WSEnumerationBaseSupport {
                         UnsupportedFeatureFault.Detail.ENUMERATION_MODE);
             }
         }
+        
         if(factory instanceof IteratorFactory) {
             IteratorFactory fact = (IteratorFactory) factory;
             Management req;
