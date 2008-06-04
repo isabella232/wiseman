@@ -19,6 +19,22 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.3  2008/01/17 15:19:09  denis_rachal
+ **Issue number:  151, 152, 153, 154, & 155
+ **Obtained from:
+ **Submitted by:  cahei (151), jfdenise (152-155)
+ **Reviewed by:
+ **
+ **The following issues have been resolved with this commit:
+ **
+ **Issue 151: Eventing-Renew request returns without error for an enumeration context from Enumerate
+ **Issue 152: Eventing subscription infinite expiration is not well supported
+ **Issue 153: RenewResponse is not set when sending back the response
+ **Issue 154: Subscribe response expires is not of the same type as the request
+ **Issue 155: Expiration scheduling fails after renewal with no expires
+ **
+ **Unit tests have been appropriately updated to test for these issues.
+ **
  **Revision 1.2  2007/11/07 11:15:35  denis_rachal
  **Issue number:  142 & 146
  **Obtained from:
@@ -65,7 +81,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSEventingSupport.java,v 1.3 2008-01-17 15:19:09 denis_rachal Exp $
+ * $Id: WSEventingSupport.java,v 1.4 2008-06-04 08:06:30 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server;
@@ -955,7 +971,7 @@ public final class WSEventingSupport extends WSEventingBaseSupport {
                 Eventing evt = new Eventing(mgt);
                 return ((EventingIteratorFactory)factory).newIterator(context, evt, Message.getDocumentBuilder(), true, false);
             } else {
-               return ((WSEventingIteratorFactory)factory).newIterator(context, request, true, false);
+               return ((WSEventingIteratorFactory)factory).newIterator(context, request);
             }
         }
     }

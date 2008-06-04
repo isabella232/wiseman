@@ -20,20 +20,21 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.1  2007/10/30 09:28:22  jfdenise
+ **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
+ **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
+ **
  **Revision 1.3  2007/05/30 20:31:04  nbeers
  **Add HP copyright header
  **
  ** 
  *
- * $Id: WSEventingIteratorFactory.java,v 1.1 2007-10-30 09:28:22 jfdenise Exp $
+ * $Id: WSEventingIteratorFactory.java,v 1.2 2008-06-04 08:06:30 denis_rachal Exp $
  */
 package com.sun.ws.management.server;
 
-import com.sun.ws.management.server.message.WSEventingRequest;
-import javax.xml.parsers.DocumentBuilder;
-
 import com.sun.ws.management.UnsupportedFeatureFault;
-import com.sun.ws.management.eventing.Eventing;
+import com.sun.ws.management.server.message.WSEventingRequest;
 import com.sun.ws.management.soap.FaultException;
 
 public interface WSEventingIteratorFactory {
@@ -42,19 +43,11 @@ public interface WSEventingIteratorFactory {
      * 
      * @param context the HandlerContext
      * @param request the Enumeration request that this iterator is to fufill
-     * @param includeItem if true the requester wants the item returned, otherwise
-     * just the EPR if includeEPR is true
-     * @param includeEPR if true the requestor wants the EPR for each item returned, otherwise
-     * just the item if includeItem is true. If EPRs are not supported by the iterator,
-     * the iterator should throw an UnsupportedFeatureFault.
      * 
-     * @throws com.sun.ws.management.UnsupportedFeatureFault If EPRs are not supported.
      * @throws com.sun.ws.management.soap.FaultException If a WS-MAN protocol related exception occurs.
      * @return An enumeration iterator for the request
      */
     public EnumerationIterator newIterator(final HandlerContext context, 
-			final WSEventingRequest request, 
-			final boolean includeItem,
-			final boolean includeEPR)
+			final WSEventingRequest request)
     throws UnsupportedFeatureFault, FaultException;
 }

@@ -165,8 +165,7 @@ public class WSEventingSupportTestCase extends WsManTestBaseSupport {
 	public class TestEventingIteratorFactory implements WSEventingIteratorFactory {
 
 		public EnumerationIterator newIterator(HandlerContext context,
-				WSEventingRequest request, boolean includeItem,
-				boolean includeEPR) throws UnsupportedFeatureFault,
+				WSEventingRequest request) throws UnsupportedFeatureFault,
 				FaultException {
 			return new TestEventingIterator();
 		}
