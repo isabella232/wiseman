@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.23  2008/05/16 12:50:29  jfdenise
+ **It appears that we could map JAXBException better than InternalError. InvalidMessageInformationHeader is much more appropriate.
+ **
  **Revision 1.22  2007/11/30 14:32:38  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -51,7 +54,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManAgent.java,v 1.23 2008-05-16 12:50:29 jfdenise Exp $
+ * $Id: WSManAgent.java,v 1.24 2008-07-17 13:30:55 jfdenise Exp $
  */
 
 package com.sun.ws.management.server;
@@ -163,6 +166,7 @@ public abstract class WSManAgent extends WSManAgentSupport {
         }catch(Exception ex) {
             try {
                 Management response = new Management();
+                response.setXmlBinding(request.getXmlBinding());
                 if(ex instanceof SecurityException)
                     response.setFault(new AccessDeniedFault());
                 else
