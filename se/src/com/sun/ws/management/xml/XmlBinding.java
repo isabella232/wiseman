@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.23  2008/02/15 14:00:24  jfdenise
+ **Fix for : https://wiseman.dev.java.net/issues/show_bug.cgi?id=159
+ **
  **Revision 1.22  2007/10/30 09:27:47  jfdenise
  **WiseMan to take benefit of Sun JAX-WS RI Message API and WS-A offered support.
  **Commit a new JAX-WS Endpoint and a set of Message abstractions to implement WS-Management Request and Response processing on the server side.
@@ -27,7 +30,7 @@
  **Add HP copyright header
  **
  **
- * $Id: XmlBinding.java,v 1.23 2008-02-15 14:00:24 jfdenise Exp $
+ * $Id: XmlBinding.java,v 1.24 2009-06-05 06:47:15 denis_rachal Exp $
  */
 
 package com.sun.ws.management.xml;
@@ -246,20 +249,10 @@ public final class XmlBinding {
         
         // Allow enabling and disabling validation via properties
         if (this.schema != null) {
-            String doValidate = null;
-            // Check System properties for validate flag first
-            doValidate = System.getProperty(VALIDATE);
-            if ((doValidate == null) || (doValidate.length() == 0)) {
-                // Check for the validation flag in 'binding.properties'
-                doValidate = propertySet.get(VALIDATE);
-            }
-            if(doValidate == null)
-                this.validate = true;
-            else
-                this.validate = Boolean.getBoolean(doValidate);
-        } else
+            this.validate = Boolean.getBoolean(VALIDATE);
+        } else {
             this.validate = false;
-        
+        }  
     }
     
     public void marshal(final Object obj, final Node node) throws JAXBException {
