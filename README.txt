@@ -1,6 +1,6 @@
-WISEMAN 1.0
+WISEMAN 1.1.0-SNAPSHOT
 
-This is the 1.0 binary release of Wiseman, an open-source implementation of the WS-Management 
+This is the 1.1.0-SNAPSHOT binary release of Wiseman, an open-source implementation of the WS-Management 
 protocol for JDK 5.0 and better.
 
 This release provides full coverage of the WS-Management 1.0(version a) specification
@@ -21,4 +21,4 @@ Please send any questions or comments to:
 ###NOTE: Due to bugs uncovered in tools that we depend upon(JDK and ANT releases), you are 
 encouraged to use JDK 1.5.0_12 version(or better) and ANT 1.6.5 for best results. 
 
-Thank you for using Wiseman 1.0.  We look forward to your feedback.		
+Thank you for using Wiseman 1.1.0-SNAPSHOT.  We look forward to your feedback.		

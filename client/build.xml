@@ -1,18 +1,41 @@
 <?xml version="1.0"?>
+<!--
+ Copyright 2005 Sun Microsystems, Inc.
+ 
+ Licensed under the Apache License, Version 2.0 (the "License"); 
+ you may not use this file except in compliance with the License. 
+ You may obtain a copy of the License at 
+ 
+         http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software 
+ distributed under the License is distributed on an "AS IS" BASIS, 
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ See the License for the specific language governing permissions and 
+ limitations under the License.
+ 
+  Copyright (C) 2006-2009 Hewlett-Packard Development Company, L.P.
+ 
+  Authors: Simeon Pinder, Denis Rachal (denis.rachal@hp.com), 
+           Nancy Beers, William Reichardt 
+ 
+ $Id: build.xml,v 1.13 2009-06-06 06:39:32 denis_rachal Exp $
+-->
+
 <!-- ====================================================================== 
      Mar 22, 2006 9:55:07 AM                                                        
 
-     Wiseman-Man Client    
+     Wiseman Client
      ====================================================================== 
 -->
-<project name="Wiseman Client" default="dist">
+<project name="wiseman client" default="dist">
     <description>
             This is a build file for the Wiseman client implementation.
     </description>
 	
 	<!-- Load the properties -->
-	<property file="project.properties"/>
 	<property file="${user.home}/.ant.properties"/>
+	<property file="project.properties"/>
 
 	<!-- Compilation classpath -->
 	  <path id="compile.classpath">
@@ -25,7 +48,13 @@
 	    <fileset dir="${wiseman.root}/${dist.dir}">
 	      <include name="**/*.jar"/>
 	    </fileset>
-	  </path>	
+	  </path>
+	
+	  <path id="compile.junit.classpath">
+ 	     <fileset dir="${junit.library.dir}">
+ 	        <include name="junit.jar"/>
+ 	     </fileset>
+	  </path>
 
 	<!-- Test that a valid ant version is being used -->
 	<condition property="valid.ant.version">
@@ -65,19 +94,19 @@
 	<!-- Compile -->
 	<target name="compile" depends="init">
 	  	<javac destdir="${build.classes.dir}"
-	           debug="${debug}">
+	           debug="${debug}"
+	  		   fork="yes">
 	      <classpath refid="compile.classpath" />
 		  <src path="${src.dir}" />
 	    </javac>
 		
 	  	<javac destdir="${test.build.classes.dir}"
-	  		   debug="${debug}">
+	  		   debug="${debug}"
+	  		   fork="yes">
 	      <classpath> 
 	      		<path refid="compile.classpath" />
+      	        <path refid="compile.junit.classpath" />
           		<path path="${build.classes.dir}" />
-	      	    <fileset dir="${wiseman.root}/${test.lib.dir}">
-	      	        <include name="junit.jar"/>
-	      	    </fileset>
 	      	</classpath>
 	      	<src path="${test.src.dir}" />
 	    </javac>

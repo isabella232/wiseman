@@ -20,6 +20,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt 
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.7  2007/12/03 09:15:10  denis_rachal
+ **General cleanup of Unit tests to make them easier to run and faster.
+ **
  **Revision 1.6  2007/11/30 14:32:37  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -72,7 +75,7 @@
  **
  ** 
  *
- * $Id: ResourceTest.java,v 1.7 2007-12-03 09:15:10 denis_rachal Exp $
+ * $Id: ResourceTest.java,v 1.8 2009-06-06 06:39:34 denis_rachal Exp $
  */
 package com.sun.ws.management.client;
 
@@ -185,7 +188,8 @@ public class ResourceTest extends WsManTestBaseSupport {
 				"The Wiseman Project - https://wiseman.dev.java.net");
 		// assertEquals(serverInfo.getProductVersion(),"0.6");
 		// assertEquals(serverInfo.getProductVersion(),"1.0_RC1");
-		assertEquals(serverInfo.getProductVersion(), "1.0");
+		// assertEquals(serverInfo.getProductVersion(), "1.0");
+		assertEquals("1.1.0", serverInfo.getProductVersion());
 		assertEquals(serverInfo.getProtocolVersion(),
 				"http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd");
 		assertEquals(serverInfo.getSpecVersion(), "1.0.0a");

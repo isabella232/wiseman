@@ -15,18 +15,21 @@
  See the License for the specific language governing permissions and 
  limitations under the License.
  
-  Copyright (C) 2006, 2007 Hewlett-Packard Development Company, L.P.
+  Copyright (C) 2006-2009 Hewlett-Packard Development Company, L.P.
  
-  Authors: Simeon Pinder (simeon.pinder@hp.com), Denis Rachal (denis.rachal@hp.com), 
-  Nancy Beers (nancy.beers@hp.com), William Reichardt 
+  Authors: Simeon Pinder, Denis Rachal (denis.rachal@hp.com), 
+           Nancy Beers, William Reichardt 
  
- $Id: build.xml,v 1.71 2007-06-19 12:29:34 simeonpinder Exp $
+ $Id: build.xml,v 1.72 2009-06-06 06:39:33 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
+    <description>
+            This is a build file for the Wiseman implementation.
+    </description>
 
-    <property file="project.properties"/>
     <property file="${user.home}/.ant.properties"/>
+    <property file="project.properties"/>
 
     <!-- Test that a valid ant version is being used -->
     <condition property="valid.ant.version">
@@ -64,6 +67,7 @@
 
     <!-- use this target to (re)compile schemas and regenerate the WS Management JAXB artifacts -->
     <target name="generate-wsman-jaxb" depends="init">
+    	<mkdir dir="${gen.src.dir}"/>
         <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
             <classpath refid="jaxws.compile.classpath" />
         </taskdef>
@@ -75,6 +79,8 @@
             <arg value="-httpproxy" />
             <arg value="${http.proxy}" />
             -->
+        	<arg value="-episode" />
+        	<arg value="${gen.src.dir}/sun.jaxb-episode" />
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="xml.xsd" /> 
             <schema dir="${basedir}/src/com/sun/ws/management/resources/schemas" includes="soap.xsd" /> 
             <produces dir="${gen.src.dir}" includes="org/w3/_2003/_05/soap_envelope/*.java" />
@@ -98,6 +104,7 @@
 
     <!-- use this target to (re)compile schemas and regenerate the test JAXB artifacts -->
     <target name="generate-test-jaxb" depends="init">
+    	<mkdir dir="${test.dir}/${gen.src.dir}"/>
         <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
             <classpath refid="jaxws.compile.classpath" />
         </taskdef>
@@ -109,6 +116,8 @@
             <arg value="-httpproxy" />
             <arg value="${http.proxy}" />
             -->
+        	<arg value="-episode" />
+        	<arg value="${test.dir}/${gen.src.dir}/sun.jaxb-episode" />
             <schema dir="${test.dir}/etc/xsd" includes="user.xsd" />
             <produces dir="${test.gen.src.dir}" includes="com/hp/examples/ws/wsman/user/*.java" />
             <schema dir="${test.dir}/etc/xsd" includes="6-test-foo.xsd" />
@@ -119,9 +128,6 @@
     <path id="compile.core.classpath">
         <path refid="jaxws.compile.classpath" />
         <path path="${build.classes.dir}" />
-       <!-- <fileset dir="${lib.dir}">
-            <include name="**/*.jar"/>
-        </fileset>-->
     </path>
     
     <path id="compile.ext.classpath">
@@ -136,16 +142,20 @@
     </path>
 	
 	<path id="compile.ant.classpath">
- 	   <fileset dir="../tools/lib">
+	   <fileset dir="${ant.library.dir}">
  	      <include name="ant.jar"/>
- 	      <include name="ant-launcher.jar"/>
+ 	      <include name="ant-launcher.jar"/> 	      
  	   </fileset>
+ 	   <!-- <fileset dir="${user.home}/.m2/repository">
+ 	      <include name="ant/ant/${ant.version}/ant-${ant.version}.jar"/>
+ 	      <include name="ant/ant-launcher/${ant.version}/ant-launcher-${ant.version}.jar"/> -->
 	</path>
     
     <target name="compile-core" depends="init">
         <javac destdir="${build.classes.dir}/"
             target="1.5"
-            debug="${debug}">
+            debug="${debug}"
+        	fork="yes">
             <classpath refid="compile.core.classpath" />
             <src path="${gen.src.dir}" />
             <src path="${src.dir}"/>   
@@ -194,7 +204,8 @@
     <target name="compile" depends="lib-core">
         <javac destdir="${build.classes.ext.dir}"
             target="1.5" 
-            debug="${debug}">
+            debug="${debug}"
+        	fork="yes">
         	<classpath>
         	   <path refid="compile.ext.classpath" />
         	   <path refid="compile.ant.classpath" />
@@ -249,6 +260,9 @@
                 <include name="LICENSE" />
                 <include name="NOTICE" />
             </metainf>
+            <metainf dir="${gen.src.dir}">
+                <include name="sun.jaxb-episode" />
+            </metainf>
         </jar>
 
         <!-- Build src Jar -->
@@ -299,6 +313,9 @@
             <metainf dir=".">
                 <include name="LICENSE" />
                 <include name="NOTICE" />
+            </metainf>
+            <metainf dir="${test.dir}/${gen.src.dir}">
+                <include name="sun.jaxb-episode" />
             </metainf>
         </jar>
     	
@@ -556,7 +573,7 @@
 
     <!-- verify that catalina.home is set in "${user.home}/.ant.properties" -->
     <fail message="Please set catalina.home in '${user.home}/.ant.properties'"
-    unless="catalina.home" />
+          unless="catalina.home" />
 
     <path id="deployer.classpath">
         <pathelement path="${catalina.home}/server/lib/catalina-ant.jar" />
@@ -650,18 +667,21 @@
   
     <target name="test-compile" depends="compile,test-init">
         <javac destdir="${test.build.classes.dir}"
-            debug="${debug}">
+            debug="${debug}"
+        	fork="yes">
             <classpath refid="test.compile.classpath" />
             <src path="${test.dir}/${gen.src.dir}" />
         </javac>
         <javac destdir="${test.build.classes.dir}"
-            debug="${debug}">
+            debug="${debug}"
+        	fork="yes">
             <classpath refid="test.compile.classpath" />
             <src path="${src.ext.dir}" />
             <include name="com/sun/ws/management/server/handler/**" />
         </javac>
         <javac destdir="${test.build.classes.dir}"
-            debug="${debug}">
+            debug="${debug}"
+        	fork="yes">
             <classpath refid="test.compile.classpath" />
             <src path="${test.src.dir}" />
         </javac>
