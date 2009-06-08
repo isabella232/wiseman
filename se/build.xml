@@ -20,7 +20,7 @@
   Authors: Simeon Pinder, Denis Rachal (denis.rachal@hp.com), 
            Nancy Beers, William Reichardt 
  
- $Id: build.xml,v 1.72 2009-06-06 06:39:33 denis_rachal Exp $
+ $Id: build.xml,v 1.73 2009-06-08 19:07:45 denis_rachal Exp $
 -->
 
 <project name="wiseman" default="war" basedir=".">
@@ -649,7 +649,7 @@
         </fileset>
         <fileset dir="${dist.dir}">
            <include name="wiseman.jar"/>
-           <include name="wiseman-tools.jar"/>
+           <!-- <include name="wiseman-tools.jar"/> -->
        </fileset>
     </path>
 
@@ -730,8 +730,8 @@
             </assertions>
             <batchtest todir="${test.run.dir}">
                 <fileset dir="${test.src.dir}">
-                    <include name="management/*Test.java" />
-                    <include name="framework/*TestCase.java" />
+                    <include name="management/**/*Test.java" />
+                    <include name="framework/**/*TestCase.java" />
                 </fileset>
             </batchtest>
             <classpath refid="test.run.classpath" />
@@ -779,8 +779,8 @@
             </assertions>
             <batchtest todir="${test.run.dir}">
                 <fileset dir="${test.src.dir}">
-                    <include name="management/*Test.java" />
-                    <include name="framework/*TestCase.java" />
+                    <include name="management/**/*Test.java" />
+                    <include name="framework/**/*TestCase.java" />
                 </fileset>
             </batchtest>
             <classpath refid="test.run.classpath" />
@@ -808,8 +808,8 @@
             </assertions>
             <batchtest todir="${test.run.dir}">
                 <fileset dir="${test.src.dir}">
-                    <include name="management/*Test.java" />
-                    <include name="framework/*TestCase.java" />
+                    <include name="management/**/*Test.java" />
+                    <include name="framework/**/*TestCase.java" />
                 </fileset>
             </batchtest>
             <classpath refid="test.run.classpath" />
@@ -890,7 +890,7 @@
             </assertions>
             <batchtest todir="${test.run.dir}">
                 <fileset dir="${test.src.dir}">
-                    <include name="interop/_06/*Test.java" />
+                    <include name="interop/_06/**/*Test.java" />
                 </fileset>
             </batchtest>
             <classpath refid="test.run.classpath" />
