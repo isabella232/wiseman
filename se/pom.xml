@@ -16,16 +16,16 @@
 	
 	Copyright (C) 2006-2009 Hewlett-Packard Development Company, L.P.
 	
-	Authors: Seth Leger (seth.leger@raritan.com), Denis Rachal (denis.rachal@hp.com)
+	Authors: Seth Leger (sleger@java.net), Denis Rachal (denis_rachal@java.net)
 	
-	$Id: pom.xml,v 1.4 2009-06-08 19:07:45 denis_rachal Exp $
+	$Id: pom.xml,v 1.5 2009-06-15 05:17:21 denis_rachal Exp $
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<name>Wiseman WS-Management Implementation</name>
+	<name>Wiseman WS Management Implementation</name>
 	<groupId>com.sun.ws.management</groupId>
 	<artifactId>wiseman</artifactId>
 	<version>1.1.0-SNAPSHOT</version>
@@ -34,10 +34,13 @@
 	<inceptionYear>2005</inceptionYear>
 
 	<description>
-		The Wiseman project is an implementation of the WS-Management
-		specification for the Java platform. The project scope includes
-		server-side and client-side implementations of the WS-Management
-		specification and its dependent specifications.
+		The Wiseman project is an implementation of the Web Services for
+		Management (WS Management) specification for the Java platform.
+		The project scope includes server-side and client-side
+		implementations of the WS Management specification and its
+		dependent specifications. See:
+		http://www.dmtf.org/standards/wsman
+		for details on WS Management.
 	</description>
 	<scm>
 		<connection>
@@ -52,6 +55,11 @@
 		<system>issueZilla</system>
 		<url>https://wiseman.java.net/servlets/ProjectIssues</url>
 	</issueManagement>
+	<contributors>
+		<contributor>
+			<url>https://wiseman.dev.java.net/contributors.html</url>
+		</contributor>
+	</contributors>
 	<mailingLists>
 		<mailingList>
 			<name>Wiseman Users List</name>
@@ -171,11 +179,15 @@
 						<manifestEntries>
 							<Build-Time>${timestamp}</Build-Time>
 							<Specification-Title>
-								WS-Management
+								Web Services for Management (WS
+								Management)
 							</Specification-Title>
 							<Specification-Version>
 								${specification.version}
 							</Specification-Version>
+							<Specification-URL>
+								http://www.dmtf.org/standards/wsman
+							</Specification-URL>
 							<Implementation-Title>
 								Wiseman SE Library
 							</Implementation-Title>
@@ -207,11 +219,15 @@
 						<manifestEntries>
 							<Build-Time>${timestamp}</Build-Time>
 							<Specification-Title>
-								WS-Management
+								Web Services for Management (WS
+								Management)
 							</Specification-Title>
 							<Specification-Version>
 								${specification.version}
 							</Specification-Version>
+							<Specification-URL>
+								http://www.dmtf.org/standards/wsman
+							</Specification-URL>
 							<Implementation-Title>
 								Wiseman SE Library Source
 							</Implementation-Title>

@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.12  2007/12/03 09:15:09  denis_rachal
+ **General cleanup of Unit tests to make them easier to run and faster.
+ **
  **Revision 1.11  2007/11/30 14:32:36  denis_rachal
  **Issue number:  140
  **Obtained from:
@@ -50,7 +53,7 @@
  **Add HP copyright header
  **
  **
- * $Id: MetadataTest.java,v 1.12 2007-12-03 09:15:09 denis_rachal Exp $
+ * $Id: MetadataTest.java,v 1.13 2009-06-15 05:17:22 denis_rachal Exp $
  */
 
 package management;
@@ -225,6 +228,7 @@ public class MetadataTest extends TestBase {
 		//############ PROCESS THE METADATA RESPONSE ######################
 		//Parse the getResponse for the MetaData
 		final Addressing getResponse = HttpClient.sendRequest(m);
+		getResponse.prettyPrint(logfile);
 		Management mResp = new Management(getResponse);
 		assertNull("A fault was detected.", mResp.getFault());
 
