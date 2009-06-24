@@ -19,6 +19,9 @@
  ** Nancy Beers (nancy.beers@hp.com), William Reichardt
  **
  **$Log: not supported by cvs2svn $
+ **Revision 1.10  2007/11/09 12:33:33  denis_rachal
+ **Performance enhancements that better reuse the XmlBinding.
+ **
  **Revision 1.9  2007/09/18 20:08:56  nbeers
  **Add support for SOAP with attachments.  Issue #136.
  **
@@ -65,7 +68,7 @@
  **Add HP copyright header
  **
  **
- * $Id: WSManServlet.java,v 1.10 2007-11-09 12:33:33 denis_rachal Exp $
+ * $Id: WSManServlet.java,v 1.11 2009-06-24 10:57:40 denis_rachal Exp $
  */
 
 package com.sun.ws.management.server.servlet;
@@ -75,7 +78,6 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -164,7 +166,7 @@ public abstract class WSManServlet extends HttpServlet {
 	}
 
     private List<String> getFilenames(ServletContext context, String path) {
-    	final List<String> xsdFilenames =  new ArrayList<String>();
+		final List<String> xsdFilenames = new ArrayList<String>();
 		final Set<String> xsdLocSet = context.getResourcePaths(path);
 
 		if ((xsdLocSet == null) || (xsdLocSet.size() == 0))
@@ -177,14 +179,12 @@ public abstract class WSManServlet extends HttpServlet {
 		// make a recursive call for directories
 		for (int i = 0; xsdLocIterator.hasNext(); i++) {
 			String xsdLoc = xsdLocIterator.next();
-			final File f = new File(context.getRealPath(xsdLoc));
-			if (f.isFile()) {
-				xsdFilenames.add(xsdLoc);
-			} else {
-				if (xsdLoc.charAt(xsdLoc.length() - 1) == '/')
-					xsdLoc = xsdLoc.substring(0, xsdLoc.length() - 1);
+			if (xsdLoc.charAt(xsdLoc.length() - 1) == '/') {
+				// Entry is a directory
 				List<String> subList = getFilenames(context, xsdLoc);
 				xsdFilenames.addAll(subList);
+			} else {
+				xsdFilenames.add(xsdLoc);
 			}
 		}
 		return xsdFilenames;
@@ -426,8 +426,13 @@ public abstract class WSManServlet extends HttpServlet {
 
 				// check if the file exists and is readable
 				final String name = "/wsdls" + filename;
-				final File f = new File(getServletContext().getRealPath(name));
-				if (f.canRead() == true) {
+				InputStream is = getServletContext().getResourceAsStream(name);
+				if (is != null) {
+					try {
+						is.close();
+					} catch (IOException e) {
+						// ignore
+					}
 					filename = name;
 				} else {
 					// assume it is in the wiseman diretory
@@ -444,8 +449,13 @@ public abstract class WSManServlet extends HttpServlet {
 
 				// check if the file exists and is readable
 				final String name = "/schemas" + filename;
-				final File f = new File(getServletContext().getRealPath(name));
-				if (f.canRead() == true) {
+				InputStream is = getServletContext().getResourceAsStream(name);
+				if (is != null) {
+					try {
+						is.close();
+					} catch (IOException e) {
+						// ignore
+					}
 					filename = name;
 				} else {
 					// assume it is in the wiseman diretory
